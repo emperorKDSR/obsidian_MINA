@@ -43,6 +43,7 @@ The "MINA V1" plugin has been developed with the following features and implemen
      - Dynamic Context Tags: Add/remove tags directly in the UI.
 
 2. **Functionality & Data Integrity**
+   - **Git Tracking:** The codebase is now tracked with Git for version control and development history.
    - **Segregated Table-Based Storage:**
      - **Thoughts Table:** `| Date | Time | Thought | Context |` (saved to `Thoughts.md`).
      - **Tasks Table:** `| Status | Date | Time | Due Date | Task | Context |` (saved to `Tasks.md`).
