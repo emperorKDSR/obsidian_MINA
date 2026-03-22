@@ -20,37 +20,39 @@ The "MINA V1" plugin has been developed with the following features and implemen
    - **Tabbed Navigation:** The MINA V1 window features three primary modes: **Capture**, **Tasks**, and **Thoughts**.
    - **Capture Mode:**
      - **Input Form:** A text area for quick capture, persistent context tag selection, and a "Sync" button.
-     - **Due Date Picker:** When "As Task" is checked, a date selector appears allowing you to set a due date.
-     - **Recent Tasks (List View):** Recent tasks are displayed as a clean list with interactive checkboxes. Metadata includes Capture Date, Time, Due Date, and Context.
-     - **Recent Thoughts (Table View):** Recent thoughts are displayed in a proper HTML table with column headers for `Date`, `Time`, `Thought`, and `Context`.
+     - **Due Date Picker:** When "As Task" is checked, a native calendar date selector appears.
+     - **Recent Tasks (List View):** Recent tasks are displayed as a clean list with interactive checkboxes and metadata (Capture Date, Time, Due Date, and Context).
+     - **Recent Thoughts (Table View):** Recent thoughts are displayed in a proper HTML table with column headers.
    - **Review Tasks Mode:**
-     - **Full Task Review:** A dedicated interface to review ALL tasks from your `Tasks.md` file.
-     - **Smart Filters:**
+     - **Full Task Review:** A dedicated interface to review ALL tasks from the `mina_2.md` file.
+     - **Interactive Filters:**
        - **Status Filter:** Filter by "All Status", "Pending", or "Completed".
        - **Context Filter:** Filter by any dynamic context tags.
-       - **Date Filter:** Find tasks due **"Today"**, **"This Week"**, **"Next Week"**, or **"Overdue"** (overdue filters for pending tasks with a due date before today).
-     - **Interactive List:** Supports real-time checkbox toggling and double-click editing.
+       - **Date Filter:** Find tasks due **"Today"**, **"This Week"**, **"Next Week"**, or **"Overdue"** (pending tasks with a past due date).
+     - **Editable Due Dates:** Click on any task's due date to update it directly via a native date picker.
+     - **Interactive List:** Supports real-time checkbox toggling and double-click editing of raw rows.
    - **Review Thoughts Mode:**
-     - **Full Thoughts Review:** A dedicated interface to review ALL thoughts from your `Thoughts.md` file.
-     - **Filter Bar:** Filters by Context and Date (Today/This Week).
-     - **Structured Table View:** Displays thoughts in a formatted HTML table.
+     - **Full Thoughts Review:** A dedicated interface to review ALL thoughts from the `mina_1.md` file.
+     - **Filter Bar:** Filter by Context and Date (Today/This Week).
+     - **Mobile-Optimized Table:** Displays thoughts in a formatted HTML table with horizontal scrolling support for small screens.
+     - **Inline Editing:** Double-click any thought cell to edit the raw table row.
    - **Standalone Window & Mobile Support:** 
      - **Desktop:** Opens in a separate popout window.
      - **Mobile:** Opens in the right sidebar with auto-scroll and focus optimizations.
    - **Form Features:**
-     - Image/File support (paste/drag-and-drop).
+     - Image/File support (paste/drag-and-drop) with auto-saving to the vault's attachment folder.
      - Keyboard shortcuts: `Enter` to sync, `Shift+Enter` for new lines.
-     - Dynamic Context Tags: Add/remove tags directly in the UI.
+     - Dynamic Context Tags: Add (`+ add`) or remove (Right-click) tags directly in the UI.
 
 2. **Functionality & Data Integrity**
-   - **Git Tracking:** The codebase is now tracked with Git for version control and development history.
+   - **Git Tracking:** The codebase is fully tracked with Git for version control.
    - **Segregated Table-Based Storage:**
-     - **Thoughts Table:** `| Date | Time | Thought | Context |` (saved to `Thoughts.md`).
-     - **Tasks Table:** `| Status | Date | Time | Due Date | Task | Context |` (saved to `Tasks.md`).
+     - **Thoughts Table:** `| Date | Time | Thought | Context |` (default file: `mina_1.md`).
+     - **Tasks Table:** `| Status | Date | Time | Due Date | Task | Context |` (default file: `mina_2.md`).
    - **Due Date Handling:** Due dates are automatically enclosed in `[[ ]]` (e.g., `[[2026-03-22]]`) for daily note linking.
-   - **Smart Insertion:** New entries are inserted at the top of the table (below the header).
-   - **Newline Handling:** Newlines are converted to `<br>` tags to preserve Markdown table integrity.
-   - **Iron-Clad Settings Protection:** Fail-safe "Lock" mechanism ensures custom contexts and settings are never wiped during updates or sync errors.
+   - **Smart Insertion:** New entries are inserted at the top of the table (just below the header).
+   - **Newline Handling:** Newlines within entries are converted to `<br>` tags to preserve table integrity.
+   - **Iron-Clad Settings Protection:** Fail-safe "Lock" mechanism ensures settings and custom contexts are never wiped during updates or iCloud sync errors.
 
 3. **Settings Tab**
    - **Capture Folder:** Target directory for all MINA files (default: `000 Bin`).
