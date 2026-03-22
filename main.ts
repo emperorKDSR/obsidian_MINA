@@ -197,7 +197,7 @@ class MinaView extends ItemView {
     // Tasks Review Filters
     tasksFilterStatus: 'all' | 'pending' | 'completed' = 'all';
     tasksFilterContext: string = 'all';
-    tasksFilterDate: 'all' | 'today' | 'this-week' = 'all';
+    tasksFilterDate: 'all' | 'today' | 'this-week' | 'next-week' | 'overdue' = 'all';
 
     // Thoughts Review Filters
     thoughtsFilterContext: string = 'all';
@@ -354,22 +354,26 @@ class MinaView extends ItemView {
 
         const controlsDiv = container.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; margin-bottom: 10px;' } });
         
-        const taskToggleDiv = controlsDiv.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 10px;' } });
+        const taskToggleDiv = controlsDiv.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px;' } });
         const taskCheckbox = taskToggleDiv.createEl('input', { type: 'checkbox', attr: { id: 'is-task-checkbox' } });
         taskCheckbox.checked = this.isTask;
-        taskToggleDiv.createEl('label', { attr: { for: 'is-task-checkbox', style: 'margin-left: 5px;' }, text: 'As Task' });
+        taskToggleDiv.createEl('label', { attr: { for: 'is-task-checkbox', style: 'cursor: pointer;' }, text: 'As Task' });
 
-        // Due Date Picker (only for tasks)
-        const datePicker = taskToggleDiv.createEl('input', { 
+        // Due Date Section (only for tasks)
+        const dueDateContainer = taskToggleDiv.createEl('div', { 
+            attr: { style: `display: ${this.isTask ? 'flex' : 'none'}; align-items: center; gap: 5px; margin-left: 10px;` } 
+        });
+        dueDateContainer.createSpan({ text: 'Due:', attr: { style: 'font-size: 0.85em; color: var(--text-muted);' } });
+        const datePicker = dueDateContainer.createEl('input', { 
             type: 'date', 
-            attr: { style: `font-size: 0.8em; padding: 2px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); ${this.isTask ? '' : 'display: none;'}` } 
+            attr: { style: 'font-size: 0.85em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;' } 
         });
         datePicker.value = this.dueDate;
         datePicker.addEventListener('change', (e) => { this.dueDate = (e.target as HTMLInputElement).value; });
 
         taskCheckbox.addEventListener('change', (e) => { 
             this.isTask = (e.target as HTMLInputElement).checked; 
-            datePicker.style.display = this.isTask ? 'inline-block' : 'none';
+            dueDateContainer.style.display = this.isTask ? 'flex' : 'none';
         });
 
         const submitBtn = controlsDiv.createEl('button', { text: 'Sync', attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent);' } });
@@ -417,7 +421,7 @@ class MinaView extends ItemView {
         contextSel.addEventListener('change', (e) => { this.tasksFilterContext = (e.target as HTMLSelectElement).value; this.updateReviewTasksList(); });
 
         const dateSel = filterBar.createEl('select');
-        [['all', 'All Dates'], ['today', 'Today'], ['this-week', 'This Week']].forEach(([val, label]) => {
+        [['all', 'All Dates'], ['today', 'Today'], ['this-week', 'This Week'], ['next-week', 'Next Week'], ['overdue', 'Overdue']].forEach(([val, label]) => {
             const opt = dateSel.createEl('option', { value: val, text: label });
             if (this.tasksFilterDate === val) opt.selected = true;
         });
@@ -511,6 +515,15 @@ class MinaView extends ItemView {
                             if (!taskDate.isSame(todayMoment, 'day')) continue;
                         } else if (this.tasksFilterDate === 'this-week') {
                             if (!taskDate.isBetween(startOfWeek, endOfWeek, 'day', '[]')) continue;
+                        } else if (this.tasksFilterDate === 'next-week') {
+                            // @ts-ignore
+                            const startOfNextWeek = window.moment().add(1, 'week').startOf('week');
+                            // @ts-ignore
+                            const endOfNextWeek = window.moment().add(1, 'week').endOf('week');
+                            if (!taskDate.isBetween(startOfNextWeek, endOfNextWeek, 'day', '[]')) continue;
+                        } else if (this.tasksFilterDate === 'overdue') {
+                            // Overdue = Date is before today AND not completed
+                            if (isDone || !taskDate.isBefore(todayMoment, 'day')) continue;
                         }
                     }
 

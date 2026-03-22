@@ -28,7 +28,7 @@ The "MINA V1" plugin has been developed with the following features and implemen
      - **Smart Filters:**
        - **Status Filter:** Filter by "All Status", "Pending", or "Completed".
        - **Context Filter:** Filter by any dynamic context tags.
-       - **Date Filter:** Find tasks due **"Today"** or **"This Week"** (uses the Due Date column).
+       - **Date Filter:** Find tasks due **"Today"**, **"This Week"**, **"Next Week"**, or **"Overdue"** (overdue filters for pending tasks with a due date before today).
      - **Interactive List:** Supports real-time checkbox toggling and double-click editing.
    - **Review Thoughts Mode:**
      - **Full Thoughts Review:** A dedicated interface to review ALL thoughts from your `Thoughts.md` file.
