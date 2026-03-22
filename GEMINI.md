@@ -53,7 +53,8 @@ The "MINA V1" plugin has been developed with the following features and implemen
    - **Iron-Clad Settings Protection:** Fail-safe "Lock" mechanism ensures custom contexts and settings are never wiped during updates or sync errors.
 
 3. **Settings Tab**
-   - **Capture Folder:** Target directory for all MINA files.
-   - **Thoughts/Tasks File Names:** Customizable filenames.
+   - **Capture Folder:** Target directory for all MINA files (default: `000 Bin`).
+   - **Thoughts File Name:** Customize where thoughts are saved (default: `mina_1.md`).
+   - **Tasks File Name:** Customize where tasks are saved (default: `mina_2.md`).
    - **Date/Time Formats:** Configurable moment.js format strings.
    - **Capture Contexts:** Global management of context tags.

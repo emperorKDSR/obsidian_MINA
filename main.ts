@@ -13,9 +13,9 @@ interface MinaSettings {
 }
 
 const DEFAULT_SETTINGS: MinaSettings = {
-    captureFolder: '',
-	captureFilePath: 'Thoughts.md',
-    tasksFilePath: 'Tasks.md',
+    captureFolder: '000 Bin',
+	captureFilePath: 'mina_1.md',
+    tasksFilePath: 'mina_2.md',
 	dateFormat: 'YYYY-MM-DD',
     timeFormat: 'HH:mm',
     contexts: [], 
@@ -473,7 +473,7 @@ class MinaView extends ItemView {
             let count = 0;
 
             // @ts-ignore
-            const today = window.moment().format('YYYY-MM-DD');
+            const todayMoment = window.moment().startOf('day');
             // @ts-ignore
             const startOfWeek = window.moment().startOf('week');
             // @ts-ignore
@@ -483,25 +483,39 @@ class MinaView extends ItemView {
                 const line = lines[i].trim();
                 if (line.startsWith('|') && !line.includes('---') && !line.includes('| Date |') && !line.includes('| Status |')) {
                     const parts = line.split('|');
+                    if (parts.length < 5) continue;
+
                     const statusPart = parts[1].trim();
                     const isDone = statusPart.includes('x') || statusPart.includes('X');
                     
-                    // Logic: Use Due Date (index 4) for filtering if available, fallback to Date (index 2)
-                    let filterDateRaw = parts[4]?.trim().replace(/\[\[|\]\]/g, ''); 
-                    if (!filterDateRaw) filterDateRaw = parts[2].trim().replace(/\[\[|\]\]/g, '');
-                    
-                    const contextPart = parts[parts.length - 2]?.trim() || '';
-
                     if (this.tasksFilterStatus === 'pending' && isDone) continue;
                     if (this.tasksFilterStatus === 'completed' && !isDone) continue;
-                    if (this.tasksFilterContext !== 'all' && !contextPart.includes(`#${this.tasksFilterContext}`)) continue;
+
+                    // Determine Date Column: Index 4 (Due Date) if 6-column table, else Index 2 (Capture Date)
+                    let dateRaw = '';
+                    if (parts.length >= 8) {
+                        dateRaw = parts[4]?.trim().replace(/[\[\]]/g, '');
+                        if (!dateRaw) dateRaw = parts[2]?.trim().replace(/[\[\]]/g, '');
+                    } else {
+                        dateRaw = parts[2]?.trim().replace(/[\[\]]/g, '');
+                    }
 
                     if (this.tasksFilterDate !== 'all') {
+                        if (!dateRaw) continue;
                         // @ts-ignore
-                        const taskDate = window.moment(filterDateRaw, 'YYYY-MM-DD');
-                        if (this.tasksFilterDate === 'today' && filterDateRaw !== today) continue;
-                        if (this.tasksFilterDate === 'this-week' && !taskDate.isBetween(startOfWeek, endOfWeek, 'day', '[]')) continue;
+                        let taskDate = window.moment(dateRaw, ['YYYY-MM-DD', this.plugin.settings.dateFormat], true);
+                        
+                        if (!taskDate.isValid()) continue;
+                        
+                        if (this.tasksFilterDate === 'today') {
+                            if (!taskDate.isSame(todayMoment, 'day')) continue;
+                        } else if (this.tasksFilterDate === 'this-week') {
+                            if (!taskDate.isBetween(startOfWeek, endOfWeek, 'day', '[]')) continue;
+                        }
                     }
+
+                    const contextPart = parts[parts.length - 2]?.trim() || '';
+                    if (this.tasksFilterContext !== 'all' && !contextPart.includes(`#${this.tasksFilterContext}`)) continue;
 
                     await this.renderTaskRow(line, i, this.reviewTasksContainer, file.path, true);
                     count++;
