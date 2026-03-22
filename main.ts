@@ -567,11 +567,13 @@ class MinaView extends ItemView {
             // @ts-ignore
             const endOfWeek = window.moment().endOf('week');
 
-            const tableEl = this.reviewThoughtsContainer.createEl('table', { attr: { style: 'width: 100%; border-collapse: collapse; font-size: 0.9em;' } });
+            // Mobile-optimized table container
+            const tableWrapper = this.reviewThoughtsContainer.createEl('div', { attr: { style: 'width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;' } });
+            const tableEl = tableWrapper.createEl('table', { attr: { style: 'width: 100%; border-collapse: collapse; font-size: 0.85em; min-width: 400px;' } });
             const thead = tableEl.createEl('thead');
             const headerRow = thead.createEl('tr');
             ['Date', 'Time', 'Thought', 'Context'].forEach(h => {
-                headerRow.createEl('th', { text: h, attr: { style: 'border-bottom: 2px solid var(--background-modifier-border); text-align: left; padding: 4px;' } });
+                headerRow.createEl('th', { text: h, attr: { style: 'border-bottom: 2px solid var(--background-modifier-border); text-align: left; padding: 6px 4px; color: var(--text-muted); font-weight: 600;' } });
             });
             const tbodyEl = tableEl.createEl('tbody');
 
@@ -579,6 +581,8 @@ class MinaView extends ItemView {
                 const line = lines[i].trim();
                 if (line.startsWith('|') && !line.includes('---') && !line.includes('| Date |')) {
                     const parts = line.split('|');
+                    if (parts.length < 5) continue;
+                    
                     const dateRaw = parts[1].trim().replace(/\[\[|\]\]/g, ''); 
                     const contextPart = parts[4]?.trim() || '';
 
@@ -744,7 +748,35 @@ class MinaView extends ItemView {
         }
 
         const contentDiv = el.createEl('div', { attr: { style: 'flex-grow: 1;' } });
-        contentDiv.createEl('div', { text: metaText, attr: { style: 'font-size: 0.8em; color: var(--text-muted); margin-bottom: 3px;' } });
+        const metaDiv = contentDiv.createEl('div', { attr: { style: 'font-size: 0.8em; color: var(--text-muted); margin-bottom: 3px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap;' } });
+        
+        // Capture Date & Time
+        metaDiv.createSpan({ text: `${parts[2].trim()} ${parts[3].trim()}` });
+
+        if (parts.length >= 8) {
+            // New structure: | Status | Date | Time | Due Date | Task | Context |
+            metaDiv.createSpan({ text: '| Due:' });
+            const dueDateRaw = parts[4].trim().replace(/[\[\]]/g, '');
+            const dateInput = metaDiv.createEl('input', { 
+                type: 'date', 
+                attr: { style: 'font-size: 1em; padding: 0 2px; background: transparent; border: 1px solid transparent; color: var(--text-accent); cursor: pointer;' } 
+            });
+            dateInput.value = dueDateRaw;
+            dateInput.addEventListener('change', async () => {
+                const newVal = dateInput.value;
+                parts[4] = newVal ? ` [[${newVal}]] ` : ' ';
+                await this.updateLineInFile(true, lineIndex, parts.join('|'));
+                if (isReview) await this.updateReviewTasksList();
+            });
+            
+            metaDiv.createSpan({ text: `| ${parts[6]?.trim() || ''}` });
+            textToRender = parts[5]?.trim() || '';
+        } else {
+            // Legacy structure
+            metaDiv.createSpan({ text: `| ${parts[5]?.trim() || ''}` });
+            textToRender = parts[4]?.trim() || '';
+        }
+
         const renderTarget = contentDiv.createEl('div', { attr: { style: 'cursor: text;' } });
         await MarkdownRenderer.render(this.plugin.app, textToRender, renderTarget, filePath, this);
 
