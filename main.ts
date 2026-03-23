@@ -72,11 +72,12 @@ export default class MinaPlugin extends Plugin {
                     const lines = content.split('\n');
                     for (const line of lines) {
                         if (line.trim().startsWith('|') && !line.includes('---')) {
-                            // Extract contexts using regex that matches `#context`
-                            const matches = line.match(/#[a-zA-Z0-9_-]+/g);
+                            // Extract contexts using regex that matches `#context` (including spaces until next # or |)
+                            const matches = line.match(/#[^#|]+/g);
                             if (matches) {
                                 for (const match of matches) {
-                                    extractedContexts.add(match.substring(1));
+                                    const cleaned = match.substring(1).trim();
+                                    if (cleaned) extractedContexts.add(cleaned);
                                 }
                             }
                         }
@@ -277,7 +278,7 @@ export class EditEntryModal extends Modal {
         super(app);
         this.plugin = plugin;
         this.initialText = initialText.replace(/<br>/g, '\n');
-        this.initialContexts = initialContext ? initialContext.split(' ').map(c => c.replace(/^#/, '').trim()).filter(c => c.length > 0) : [];
+        this.initialContexts = initialContext ? initialContext.split('#').map(c => c.trim()).filter(c => c.length > 0) : [];
         this.initialDueDate = initialDueDate;
         this.isTask = isTask;
         this.onSave = onSave;
