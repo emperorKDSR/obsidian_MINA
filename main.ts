@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, TFile, Notice, ItemView, WorkspaceLeaf, MarkdownRenderer, Platform, FuzzySuggestModal } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, TFile, Notice, ItemView, WorkspaceLeaf, MarkdownRenderer, Platform, FuzzySuggestModal, Modal } from 'obsidian';
 
 export const VIEW_TYPE_MINA = "mina-view";
 
@@ -254,6 +254,81 @@ export class FileSuggestModal extends FuzzySuggestModal<TFile> {
 
     onChooseItem(file: TFile, evt: MouseEvent | KeyboardEvent) {
         this.onChoose(file);
+    }
+}
+
+export class EditEntryModal extends Modal {
+    initialText: string;
+    initialContext: string;
+    initialDueDate: string | null;
+    isTask: boolean;
+    onSave: (newText: string, newContext: string, newDueDate: string | null) => void;
+
+    constructor(
+        app: App, 
+        initialText: string, 
+        initialContext: string, 
+        initialDueDate: string | null, 
+        isTask: boolean, 
+        onSave: (newText: string, newContext: string, newDueDate: string | null) => void
+    ) {
+        super(app);
+        this.initialText = initialText.replace(/<br>/g, '\n');
+        this.initialContext = initialContext;
+        this.initialDueDate = initialDueDate;
+        this.isTask = isTask;
+        this.onSave = onSave;
+    }
+
+    onOpen() {
+        const { contentEl } = this;
+        contentEl.empty();
+        
+        contentEl.createEl('h3', { text: this.isTask ? 'Edit Task' : 'Edit Thought' });
+
+        const textArea = contentEl.createEl('textarea', {
+            text: this.initialText,
+            attr: { style: 'width: 100%; min-height: 120px; font-family: var(--font-text); margin-bottom: 10px; padding: 8px; resize: vertical; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal);' }
+        });
+
+        const metadataContainer = contentEl.createEl('div', { attr: { style: 'display: flex; gap: 10px; margin-bottom: 15px; align-items: center; flex-wrap: wrap;' } });
+
+        let dateInput: HTMLInputElement | null = null;
+        if (this.isTask) {
+            dateInput = metadataContainer.createEl('input', {
+                type: 'date',
+                value: this.initialDueDate || '',
+                attr: { style: 'font-size: 0.9em; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;' }
+            });
+        }
+
+        const contextInput = metadataContainer.createEl('input', {
+            type: 'text',
+            value: this.initialContext,
+            attr: { placeholder: 'Context tags (e.g. #work)', style: 'flex-grow: 1; font-family: var(--font-text); font-size: 0.9em; border: 1px solid var(--background-modifier-border); border-radius: 4px; padding: 4px 8px; background: var(--background-primary); color: var(--text-normal);' }
+        });
+
+        const btnContainer = contentEl.createEl('div', { attr: { style: 'display: flex; justify-content: flex-end; gap: 10px;' } });
+        const saveBtn = btnContainer.createEl('button', { text: 'Save', attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); padding: 6px 16px; border-radius: 4px;' } });
+        const cancelBtn = btnContainer.createEl('button', { text: 'Cancel', attr: { style: 'padding: 6px 16px; border-radius: 4px;' } });
+
+        const saveChanges = () => {
+            const newText = textArea.value.replace(/\n/g, '<br>');
+            const newContext = contextInput.value.trim();
+            const newDate = dateInput ? dateInput.value : null;
+            this.onSave(newText, newContext, newDate);
+            this.close();
+        };
+
+        saveBtn.addEventListener('click', saveChanges);
+        cancelBtn.addEventListener('click', () => this.close());
+        textArea.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveChanges(); } });
+        contextInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveChanges(); } });
+    }
+
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
     }
 }
 
@@ -1003,77 +1078,41 @@ class MinaView extends ItemView {
         await MarkdownRenderer.render(this.plugin.app, textToRender, renderTarget, filePath, this);
 
         const startEdit = () => {
-            renderTarget.empty();
-            const inputContainer = renderTarget.createEl('div', { 
-                attr: { style: 'position: relative; width: 100%; display: flex; flex-direction: column; gap: 5px; background: var(--background-primary); border: 2px solid var(--interactive-accent); border-radius: 4px; padding: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10;' } 
-            });
+            const initialContext = (parts.length >= 7 ? parts[6] : parts[5])?.trim() || '';
+            const initialDueDate = parts.length >= 8 ? parts[4].trim().replace(/[\[\]]/g, '') : null;
             
-            const input = inputContainer.createEl('textarea', {
-                text: textToRender.replace(/<br>/g, '\n'),
-                attr: { style: 'width: 100%; min-height: 80px; font-family: var(--font-text); background: transparent; border: none; outline: none; resize: vertical;' }
-            });
-            
-            const metadataContainer = inputContainer.createEl('div', { attr: { style: 'display: flex; gap: 10px; align-items: center;' } });
+            const modal = new EditEntryModal(
+                this.plugin.app,
+                textToRender,
+                initialContext,
+                initialDueDate,
+                true,
+                async (newText, newContext, newDueDate) => {
+                    let changed = false;
 
-            const dueDateRaw = parts.length >= 8 ? parts[4].trim().replace(/[\[\]]/g, '') : '';
-            const dueDateInput = metadataContainer.createEl('input', {
-                type: 'date',
-                value: dueDateRaw,
-                attr: { style: `font-size: 0.9em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer; ${parts.length >= 8 ? '' : 'display: none;'}` }
-            });
-            
-            const contextInput = metadataContainer.createEl('input', {
-                type: 'text',
-                value: (parts.length >= 7 ? parts[6] : parts[5])?.trim() || '',
-                attr: { placeholder: 'Context tags (e.g. #work #important)', style: 'flex-grow: 1; font-family: var(--font-text); font-size: 0.9em; border: 1px solid var(--background-modifier-border); border-radius: 4px; padding: 4px;' }
-            });
-
-            const btnContainer = inputContainer.createEl('div', { attr: { style: 'display: flex; justify-content: flex-end; gap: 5px; margin-top: 5px;' } });
-            const saveBtn = btnContainer.createEl('button', { text: 'Save', attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); padding: 4px 12px; font-size: 0.9em;' } });
-            const cancelBtn = btnContainer.createEl('button', { text: 'Cancel', attr: { style: 'padding: 4px 12px; font-size: 0.9em;' } });
-            
-            input.focus();
-            
-            if (Platform.isMobile) {
-                setTimeout(() => {
-                    inputContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 300);
-            }
-
-            const commitChanges = async () => {
-                const newText = input.value.replace(/\n/g, '<br>');
-                const newContext = contextInput.value.trim();
-                let changed = false;
-
-                if (newText !== textToRender) {
-                    parts[contentIndex] = ` ${newText} `;
-                    changed = true;
-                }
-
-                if (parts.length >= 8) {
-                    const newDueDate = dueDateInput.value ? ` [[${dueDateInput.value}]] ` : ' ';
-                    if (newDueDate !== parts[4]) {
-                        parts[4] = newDueDate;
+                    if (newText !== textToRender) {
+                        parts[contentIndex] = ` ${newText} `;
                         changed = true;
                     }
-                }
 
-                const ctxIndex = parts.length >= 7 ? 6 : 5;
-                if (newContext !== (parts[ctxIndex]?.trim() || '')) {
-                    parts[ctxIndex] = ` ${newContext} `;
-                    changed = true;
-                }
+                    if (parts.length >= 8 && newDueDate !== initialDueDate) {
+                        parts[4] = newDueDate ? ` [[${newDueDate}]] ` : ' ';
+                        changed = true;
+                    }
 
-                if (changed) {
-                    await this.updateLineInFile(true, lineIndex, parts.join('|'));
-                }
-                await this.updatePreview();
-            };
+                    const ctxIndex = parts.length >= 7 ? 6 : 5;
+                    if (newContext !== initialContext) {
+                        parts[ctxIndex] = ` ${newContext} `;
+                        changed = true;
+                    }
 
-            saveBtn.addEventListener('click', commitChanges);
-            cancelBtn.addEventListener('click', () => this.updatePreview());
-            input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitChanges(); } });
-            contextInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commitChanges(); } });
+                    if (changed) {
+                        await this.updateLineInFile(true, lineIndex, parts.join('|'));
+                        await this.updatePreview();
+                    }
+                }
+            );
+            modal.open();
         };
         renderTarget.addEventListener('dblclick', startEdit);
         editBtn.addEventListener('click', startEdit);
@@ -1106,59 +1145,34 @@ class MinaView extends ItemView {
         await MarkdownRenderer.render(this.plugin.app, textToRender, thoughtCell, filePath, this);
 
         const startEdit = () => {
-            thoughtCell.empty();
-            const inputContainer = thoughtCell.createEl('div', { 
-                attr: { style: 'position: relative; width: 100%; display: flex; flex-direction: column; gap: 5px; background: var(--background-primary); border: 2px solid var(--interactive-accent); border-radius: 4px; padding: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10;' } 
-            });
+            const initialContext = parts[4]?.trim() || '';
             
-            const input = inputContainer.createEl('textarea', {
-                text: textToRender.replace(/<br>/g, '\n'),
-                attr: { style: 'width: 100%; min-height: 80px; font-family: var(--font-text); background: transparent; border: none; outline: none; resize: vertical;' }
-            });
-            
-            const contextInput = inputContainer.createEl('input', {
-                type: 'text',
-                value: parts[4]?.trim() || '',
-                attr: { placeholder: 'Context tags (e.g. #work #important)', style: 'width: 100%; font-family: var(--font-text); font-size: 0.9em; border: 1px solid var(--background-modifier-border); border-radius: 4px; padding: 4px;' }
-            });
+            const modal = new EditEntryModal(
+                this.plugin.app,
+                textToRender,
+                initialContext,
+                null,
+                false,
+                async (newText, newContext, _) => {
+                    let changed = false;
 
-            const btnContainer = inputContainer.createEl('div', { attr: { style: 'display: flex; justify-content: flex-end; gap: 5px; margin-top: 5px;' } });
-            const saveBtn = btnContainer.createEl('button', { text: 'Save', attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); padding: 4px 12px; font-size: 0.9em;' } });
-            const cancelBtn = btnContainer.createEl('button', { text: 'Cancel', attr: { style: 'padding: 4px 12px; font-size: 0.9em;' } });
+                    if (newText !== textToRender) {
+                        parts[3] = ` ${newText} `;
+                        changed = true;
+                    }
 
-            input.focus();
-            
-            if (Platform.isMobile) {
-                setTimeout(() => {
-                    inputContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 300);
-            }
+                    if (newContext !== initialContext) {
+                        parts[4] = ` ${newContext} `;
+                        changed = true;
+                    }
 
-            const commitChanges = async () => {
-                const newText = input.value.replace(/\n/g, '<br>');
-                const newContext = contextInput.value.trim();
-                let changed = false;
-
-                if (newText !== textToRender) {
-                    parts[3] = ` ${newText} `;
-                    changed = true;
+                    if (changed) {
+                        await this.updateLineInFile(false, lineIndex, parts.join('|'));
+                        await this.updatePreview();
+                    }
                 }
-
-                if (newContext !== (parts[4]?.trim() || '')) {
-                    parts[4] = ` ${newContext} `;
-                    changed = true;
-                }
-
-                if (changed) {
-                    await this.updateLineInFile(false, lineIndex, parts.join('|'));
-                }
-                await this.updatePreview();
-            };
-
-            saveBtn.addEventListener('click', commitChanges);
-            cancelBtn.addEventListener('click', () => this.updatePreview());
-            input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitChanges(); } });
-            contextInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commitChanges(); } });
+            );
+            modal.open();
         };
         thoughtCell.addEventListener('dblclick', startEdit);
         editBtn.addEventListener('click', startEdit);
