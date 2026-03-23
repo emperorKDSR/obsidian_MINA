@@ -281,10 +281,16 @@ export class EditEntryModal extends Modal {
     }
 
     onOpen() {
-        const { contentEl } = this;
+        const { contentEl, modalEl } = this;
         contentEl.empty();
         
-        contentEl.createEl('h3', { text: this.isTask ? 'Edit Task' : 'Edit Thought' });
+        if (Platform.isMobile) {
+            modalEl.style.marginTop = '5vh';
+            modalEl.style.marginBottom = 'auto';
+            modalEl.style.alignSelf = 'flex-start';
+        }
+        
+        contentEl.createEl('h3', { text: this.isTask ? 'Edit Task' : 'Edit Thought', attr: { style: 'margin-top: 0;' } });
 
         const textArea = contentEl.createEl('textarea', {
             text: this.initialText,
