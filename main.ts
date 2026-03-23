@@ -29,6 +29,10 @@ export default class MinaPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
+        this.app.workspace.onLayoutReady(() => {
+            this.scanForContexts();
+        });
+
         this.registerView(
             VIEW_TYPE_MINA,
             (leaf) => new MinaView(leaf, this)
@@ -49,6 +53,51 @@ export default class MinaPlugin extends Plugin {
 
 		this.addSettingTab(new MinaSettingTab(this.app, this));
 	}
+
+    async scanForContexts() {
+        const { vault } = this.app;
+        const folderPath = this.settings.captureFolder.trim();
+        const filesToScan = [this.settings.captureFilePath.trim(), this.settings.tasksFilePath.trim()];
+        
+        let newContextsFound = false;
+        const extractedContexts = new Set<string>();
+
+        for (const fileName of filesToScan) {
+            const fullPath = folderPath && folderPath !== '/' ? `${folderPath}/${fileName}` : fileName;
+            const file = vault.getAbstractFileByPath(fullPath) as TFile;
+            
+            if (file) {
+                try {
+                    const content = await vault.read(file);
+                    const lines = content.split('\n');
+                    for (const line of lines) {
+                        if (line.trim().startsWith('|') && !line.includes('---')) {
+                            // Extract contexts using regex that matches `#context`
+                            const matches = line.match(/#[a-zA-Z0-9_-]+/g);
+                            if (matches) {
+                                for (const match of matches) {
+                                    extractedContexts.add(match.substring(1).toLowerCase());
+                                }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.log(`Error scanning file ${fullPath} for contexts`, error);
+                }
+            }
+        }
+
+        for (const ctx of extractedContexts) {
+            if (!this.settings.contexts.includes(ctx)) {
+                this.settings.contexts.push(ctx);
+                newContextsFound = true;
+            }
+        }
+
+        if (newContextsFound) {
+            await this.saveSettings();
+        }
+    }
 
     async activateView() {
         const { workspace } = this.app;
@@ -881,6 +930,5 @@ class MinaSettingTab extends PluginSettingTab {
         new Setting(containerEl).setName('Tasks File Name').setDesc('File for tasks.').addText(text => text.setPlaceholder('Tasks.md').setValue(this.plugin.settings.tasksFilePath).onChange(async (value) => { this.plugin.settings.tasksFilePath = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('Date format').addText(text => text.setPlaceholder('YYYY-MM-DD').setValue(this.plugin.settings.dateFormat).onChange(async (value) => { this.plugin.settings.dateFormat = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('Time format').addText(text => text.setPlaceholder('HH:mm').setValue(this.plugin.settings.timeFormat).onChange(async (value) => { this.plugin.settings.timeFormat = value; await this.plugin.saveSettings(); }));
-        new Setting(containerEl).setName('Capture Contexts').addText(text => text.setPlaceholder('work, personal...').setValue(this.plugin.settings.contexts.join(', ')).onChange(async (value) => { this.plugin.settings.contexts = value.split(',').map(c => c.trim()).filter(c => c.length > 0); await this.plugin.saveSettings(); }));
 	}
 }
