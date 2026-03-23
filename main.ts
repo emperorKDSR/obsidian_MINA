@@ -1013,10 +1013,19 @@ class MinaView extends ItemView {
                 attr: { style: 'width: 100%; min-height: 80px; font-family: var(--font-text); background: transparent; border: none; outline: none; resize: vertical;' }
             });
             
-            const contextInput = inputContainer.createEl('input', {
+            const metadataContainer = inputContainer.createEl('div', { attr: { style: 'display: flex; gap: 10px; align-items: center;' } });
+
+            const dueDateRaw = parts.length >= 8 ? parts[4].trim().replace(/[\[\]]/g, '') : '';
+            const dueDateInput = metadataContainer.createEl('input', {
+                type: 'date',
+                value: dueDateRaw,
+                attr: { style: `font-size: 0.9em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer; ${parts.length >= 8 ? '' : 'display: none;'}` }
+            });
+            
+            const contextInput = metadataContainer.createEl('input', {
                 type: 'text',
                 value: (parts.length >= 7 ? parts[6] : parts[5])?.trim() || '',
-                attr: { placeholder: 'Context tags (e.g. #work #important)', style: 'width: 100%; font-family: var(--font-text); font-size: 0.9em; border: 1px solid var(--background-modifier-border); border-radius: 4px; padding: 4px;' }
+                attr: { placeholder: 'Context tags (e.g. #work #important)', style: 'flex-grow: 1; font-family: var(--font-text); font-size: 0.9em; border: 1px solid var(--background-modifier-border); border-radius: 4px; padding: 4px;' }
             });
 
             const btnContainer = inputContainer.createEl('div', { attr: { style: 'display: flex; justify-content: flex-end; gap: 5px; margin-top: 5px;' } });
@@ -1039,6 +1048,14 @@ class MinaView extends ItemView {
                 if (newText !== textToRender) {
                     parts[contentIndex] = ` ${newText} `;
                     changed = true;
+                }
+
+                if (parts.length >= 8) {
+                    const newDueDate = dueDateInput.value ? ` [[${dueDateInput.value}]] ` : ' ';
+                    if (newDueDate !== parts[4]) {
+                        parts[4] = newDueDate;
+                        changed = true;
+                    }
                 }
 
                 const ctxIndex = parts.length >= 7 ? 6 : 5;
