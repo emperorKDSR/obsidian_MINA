@@ -525,7 +525,7 @@ class MinaView extends ItemView {
 
         const customDateInput = dateContainer.createEl('input', { 
             type: 'date', 
-            attr: { style: `display: ${this.tasksFilterDate.includes('-') ? 'block' : 'none'}; font-size: 0.9em; padding: 2px 5px; border-radius: 4px;` } 
+            attr: { style: `display: ${this.tasksFilterDate.includes('-') ? 'block' : 'none'}; font-size: 0.9em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;` } 
         });
         if (this.tasksFilterDate.includes('-')) customDateInput.value = this.tasksFilterDate;
 
