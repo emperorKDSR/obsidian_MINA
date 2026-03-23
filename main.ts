@@ -76,7 +76,7 @@ export default class MinaPlugin extends Plugin {
                             const matches = line.match(/#[a-zA-Z0-9_-]+/g);
                             if (matches) {
                                 for (const match of matches) {
-                                    extractedContexts.add(match.substring(1).toLowerCase());
+                                    extractedContexts.add(match.substring(1));
                                 }
                             }
                         }
