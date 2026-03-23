@@ -734,7 +734,7 @@ class MinaView extends ItemView {
         }
     }
 
-    async updateLineInFile(isTask: boolean, lineIndex: number, newText: string) {
+    async updateLineInFile(isTask: boolean, lineIndex: number, newText: string | null) {
         const { vault } = this.plugin.app;
         const folderPath = this.plugin.settings.captureFolder.trim();
         const fileName = isTask ? this.plugin.settings.tasksFilePath.trim() : this.plugin.settings.captureFilePath.trim();
@@ -745,9 +745,15 @@ class MinaView extends ItemView {
             const content = await vault.read(file);
             const lines = content.split('\n');
             if (lineIndex >= 0 && lineIndex < lines.length) {
-                lines[lineIndex] = newText;
-                await vault.modify(file, lines.join('\n'));
-                new Notice('Updated successfully');
+                if (newText === null) {
+                    lines.splice(lineIndex, 1);
+                    await vault.modify(file, lines.join('\n'));
+                    new Notice('Deleted successfully');
+                } else {
+                    lines[lineIndex] = newText;
+                    await vault.modify(file, lines.join('\n'));
+                    new Notice('Updated successfully');
+                }
             }
         } catch (error) { new Notice('Error updating file.'); }
     }
@@ -831,15 +837,18 @@ class MinaView extends ItemView {
 
         let textToRender = '';
         let metaText = '';
+        let contentIndex = -1;
 
         if (parts.length >= 7) {
             // New structure: | Status | Date | Time | Due Date | Task | Context |
             const dueDate = parts[4].trim();
             textToRender = parts[5]?.trim() || '';
+            contentIndex = 5;
             metaText = `${parts[2].trim()} ${parts[3].trim()} ${dueDate ? `| Due: ${dueDate}` : ''} | ${parts[6]?.trim() || ''}`;
         } else {
             // Legacy structure: | Status | Date | Time | Task | Context |
             textToRender = parts[4]?.trim() || '';
+            contentIndex = 4;
             metaText = `${parts[2].trim()} ${parts[3].trim()} | ${parts[5]?.trim() || ''}`;
         }
 
@@ -866,12 +875,19 @@ class MinaView extends ItemView {
             });
             
             metaDiv.createSpan({ text: `| ${parts[6]?.trim() || ''}` });
-            textToRender = parts[5]?.trim() || '';
         } else {
             // Legacy structure
             metaDiv.createSpan({ text: `| ${parts[5]?.trim() || ''}` });
-            textToRender = parts[4]?.trim() || '';
         }
+
+        const deleteBtn = metaDiv.createSpan({ text: '🗑️', attr: { style: 'cursor: pointer; margin-left: auto; font-size: 0.9em; filter: grayscale(1); opacity: 0.7;' } });
+        deleteBtn.addEventListener('click', async () => {
+            if (window.confirm('Delete this task?')) {
+                await this.updateLineInFile(true, lineIndex, null);
+                if (isReview) await this.updateReviewTasksList();
+                else await this.updatePreview();
+            }
+        });
 
         const renderTarget = contentDiv.createEl('div', { attr: { style: 'cursor: text;' } });
         await MarkdownRenderer.render(this.plugin.app, textToRender, renderTarget, filePath, this);
@@ -879,13 +895,16 @@ class MinaView extends ItemView {
         renderTarget.addEventListener('dblclick', () => {
             renderTarget.empty();
             const input = renderTarget.createEl('textarea', {
-                text: line.replace(/<br>/g, '\n'),
+                text: textToRender.replace(/<br>/g, '\n'),
                 attr: { style: 'width: 100%; min-height: 60px; font-family: var(--font-text); background: transparent; border: 1px solid var(--background-modifier-border);' }
             });
             input.focus();
             input.addEventListener('blur', async () => {
-                const newRaw = input.value.replace(/\n/g, '<br>');
-                if (newRaw !== line) await this.updateLineInFile(true, lineIndex, newRaw);
+                const newText = input.value.replace(/\n/g, '<br>');
+                if (newText !== textToRender) {
+                    parts[contentIndex] = ` ${newText} `;
+                    await this.updateLineInFile(true, lineIndex, parts.join('|'));
+                }
                 await this.updatePreview();
             });
             input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); input.blur(); } });
@@ -898,20 +917,34 @@ class MinaView extends ItemView {
         tr.createEl('td', { text: parts[1].trim(), attr: { style: 'padding: 4px; white-space: nowrap;' } });
         tr.createEl('td', { text: parts[2].trim(), attr: { style: 'padding: 4px; white-space: nowrap;' } });
         const thoughtCell = tr.createEl('td', { attr: { style: 'padding: 4px; cursor: text;' } });
-        tr.createEl('td', { text: parts[4].trim(), attr: { style: 'padding: 4px;' } });
+        
+        const contextCell = tr.createEl('td', { attr: { style: 'padding: 4px; white-space: nowrap;' } });
+        contextCell.createSpan({ text: parts[4]?.trim() || '' });
+        const deleteBtn = contextCell.createSpan({ text: '🗑️', attr: { style: 'cursor: pointer; font-size: 0.9em; filter: grayscale(1); opacity: 0.7; margin-left: 8px;' } });
+        deleteBtn.addEventListener('click', async () => {
+            if (window.confirm('Delete this thought?')) {
+                await this.updateLineInFile(false, lineIndex, null);
+                await this.updatePreview();
+            }
+        });
 
-        await MarkdownRenderer.render(this.plugin.app, parts[3].trim(), thoughtCell, filePath, this);
+        const textToRender = parts[3]?.trim() || '';
+
+        await MarkdownRenderer.render(this.plugin.app, textToRender, thoughtCell, filePath, this);
 
         thoughtCell.addEventListener('dblclick', () => {
             thoughtCell.empty();
             const input = thoughtCell.createEl('textarea', {
-                text: line.replace(/<br>/g, '\n'),
+                text: textToRender.replace(/<br>/g, '\n'),
                 attr: { style: 'width: 100%; min-height: 60px; font-family: var(--font-text); background: transparent; border: 1px solid var(--background-modifier-border);' }
             });
             input.focus();
             input.addEventListener('blur', async () => {
-                const newRaw = input.value.replace(/\n/g, '<br>');
-                if (newRaw !== line) await this.updateLineInFile(false, lineIndex, newRaw);
+                const newText = input.value.replace(/\n/g, '<br>');
+                if (newText !== textToRender) {
+                    parts[3] = ` ${newText} `;
+                    await this.updateLineInFile(false, lineIndex, parts.join('|'));
+                }
                 await this.updatePreview();
             });
             input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); input.blur(); } });
