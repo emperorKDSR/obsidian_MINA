@@ -1005,30 +1005,58 @@ class MinaView extends ItemView {
         const startEdit = () => {
             renderTarget.empty();
             const inputContainer = renderTarget.createEl('div', { 
-                attr: { style: 'position: relative; width: 100%;' } 
+                attr: { style: 'position: relative; width: 100%; display: flex; flex-direction: column; gap: 5px; background: var(--background-primary); border: 2px solid var(--interactive-accent); border-radius: 4px; padding: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10;' } 
             });
+            
             const input = inputContainer.createEl('textarea', {
                 text: textToRender.replace(/<br>/g, '\n'),
-                attr: { style: 'width: 100%; min-height: 80px; font-family: var(--font-text); background: var(--background-primary); border: 2px solid var(--interactive-accent); border-radius: 4px; padding: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10; position: relative;' }
+                attr: { style: 'width: 100%; min-height: 80px; font-family: var(--font-text); background: transparent; border: none; outline: none; resize: vertical;' }
             });
+            
+            const contextInput = inputContainer.createEl('input', {
+                type: 'text',
+                value: (parts.length >= 7 ? parts[6] : parts[5])?.trim() || '',
+                attr: { placeholder: 'Context tags (e.g. #work #important)', style: 'width: 100%; font-family: var(--font-text); font-size: 0.9em; border: 1px solid var(--background-modifier-border); border-radius: 4px; padding: 4px;' }
+            });
+
+            const btnContainer = inputContainer.createEl('div', { attr: { style: 'display: flex; justify-content: flex-end; gap: 5px; margin-top: 5px;' } });
+            const saveBtn = btnContainer.createEl('button', { text: 'Save', attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); padding: 4px 12px; font-size: 0.9em;' } });
+            const cancelBtn = btnContainer.createEl('button', { text: 'Cancel', attr: { style: 'padding: 4px 12px; font-size: 0.9em;' } });
             
             input.focus();
             
             if (Platform.isMobile) {
                 setTimeout(() => {
-                    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    inputContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 300);
             }
 
-            input.addEventListener('blur', async () => {
+            const commitChanges = async () => {
                 const newText = input.value.replace(/\n/g, '<br>');
+                const newContext = contextInput.value.trim();
+                let changed = false;
+
                 if (newText !== textToRender) {
                     parts[contentIndex] = ` ${newText} `;
+                    changed = true;
+                }
+
+                const ctxIndex = parts.length >= 7 ? 6 : 5;
+                if (newContext !== (parts[ctxIndex]?.trim() || '')) {
+                    parts[ctxIndex] = ` ${newContext} `;
+                    changed = true;
+                }
+
+                if (changed) {
                     await this.updateLineInFile(true, lineIndex, parts.join('|'));
                 }
                 await this.updatePreview();
-            });
-            input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); input.blur(); } });
+            };
+
+            saveBtn.addEventListener('click', commitChanges);
+            cancelBtn.addEventListener('click', () => this.updatePreview());
+            input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitChanges(); } });
+            contextInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commitChanges(); } });
         };
         renderTarget.addEventListener('dblclick', startEdit);
         editBtn.addEventListener('click', startEdit);
@@ -1063,30 +1091,57 @@ class MinaView extends ItemView {
         const startEdit = () => {
             thoughtCell.empty();
             const inputContainer = thoughtCell.createEl('div', { 
-                attr: { style: 'position: relative; width: 100%;' } 
-            });
-            const input = inputContainer.createEl('textarea', {
-                text: textToRender.replace(/<br>/g, '\n'),
-                attr: { style: 'width: 100%; min-height: 80px; font-family: var(--font-text); background: var(--background-primary); border: 2px solid var(--interactive-accent); border-radius: 4px; padding: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10; position: relative;' }
+                attr: { style: 'position: relative; width: 100%; display: flex; flex-direction: column; gap: 5px; background: var(--background-primary); border: 2px solid var(--interactive-accent); border-radius: 4px; padding: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10;' } 
             });
             
+            const input = inputContainer.createEl('textarea', {
+                text: textToRender.replace(/<br>/g, '\n'),
+                attr: { style: 'width: 100%; min-height: 80px; font-family: var(--font-text); background: transparent; border: none; outline: none; resize: vertical;' }
+            });
+            
+            const contextInput = inputContainer.createEl('input', {
+                type: 'text',
+                value: parts[4]?.trim() || '',
+                attr: { placeholder: 'Context tags (e.g. #work #important)', style: 'width: 100%; font-family: var(--font-text); font-size: 0.9em; border: 1px solid var(--background-modifier-border); border-radius: 4px; padding: 4px;' }
+            });
+
+            const btnContainer = inputContainer.createEl('div', { attr: { style: 'display: flex; justify-content: flex-end; gap: 5px; margin-top: 5px;' } });
+            const saveBtn = btnContainer.createEl('button', { text: 'Save', attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); padding: 4px 12px; font-size: 0.9em;' } });
+            const cancelBtn = btnContainer.createEl('button', { text: 'Cancel', attr: { style: 'padding: 4px 12px; font-size: 0.9em;' } });
+
             input.focus();
             
             if (Platform.isMobile) {
                 setTimeout(() => {
-                    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    inputContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 300);
             }
 
-            input.addEventListener('blur', async () => {
+            const commitChanges = async () => {
                 const newText = input.value.replace(/\n/g, '<br>');
+                const newContext = contextInput.value.trim();
+                let changed = false;
+
                 if (newText !== textToRender) {
                     parts[3] = ` ${newText} `;
+                    changed = true;
+                }
+
+                if (newContext !== (parts[4]?.trim() || '')) {
+                    parts[4] = ` ${newContext} `;
+                    changed = true;
+                }
+
+                if (changed) {
                     await this.updateLineInFile(false, lineIndex, parts.join('|'));
                 }
                 await this.updatePreview();
-            });
-            input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); input.blur(); } });
+            };
+
+            saveBtn.addEventListener('click', commitChanges);
+            cancelBtn.addEventListener('click', () => this.updatePreview());
+            input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitChanges(); } });
+            contextInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commitChanges(); } });
         };
         thoughtCell.addEventListener('dblclick', startEdit);
         editBtn.addEventListener('click', startEdit);
