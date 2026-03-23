@@ -259,22 +259,25 @@ export class FileSuggestModal extends FuzzySuggestModal<TFile> {
 
 export class EditEntryModal extends Modal {
     initialText: string;
-    initialContext: string;
+    initialContexts: string[];
     initialDueDate: string | null;
     isTask: boolean;
-    onSave: (newText: string, newContext: string, newDueDate: string | null) => void;
+    plugin: MinaPlugin;
+    onSave: (newText: string, newContexts: string, newDueDate: string | null) => void;
 
     constructor(
         app: App, 
+        plugin: MinaPlugin,
         initialText: string, 
         initialContext: string, 
         initialDueDate: string | null, 
         isTask: boolean, 
-        onSave: (newText: string, newContext: string, newDueDate: string | null) => void
+        onSave: (newText: string, newContexts: string, newDueDate: string | null) => void
     ) {
         super(app);
+        this.plugin = plugin;
         this.initialText = initialText.replace(/<br>/g, '\n');
-        this.initialContext = initialContext;
+        this.initialContexts = initialContext ? initialContext.split(' ').map(c => c.replace(/^#/, '').trim()).filter(c => c.length > 0) : [];
         this.initialDueDate = initialDueDate;
         this.isTask = isTask;
         this.onSave = onSave;
@@ -297,39 +300,100 @@ export class EditEntryModal extends Modal {
             attr: { style: 'width: 100%; min-height: 120px; font-family: var(--font-text); margin-bottom: 10px; padding: 8px; resize: vertical; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal);' }
         });
 
-        const metadataContainer = contentEl.createEl('div', { attr: { style: 'display: flex; gap: 10px; margin-bottom: 15px; align-items: center; flex-wrap: wrap;' } });
+        let currentTextValue = this.initialText;
+        textArea.addEventListener('input', (e) => { 
+            const target = e.target as HTMLTextAreaElement;
+            const val = target.value;
+            
+            if (val.length > currentTextValue.length) {
+                const cursorPosition = target.selectionStart;
+                if (cursorPosition > 0 && val.charAt(cursorPosition - 1) === '\\') {
+                    const modal = new FileSuggestModal(this.plugin.app, (file) => {
+                        const before = val.substring(0, cursorPosition - 1);
+                        const after = val.substring(cursorPosition);
+                        const insertText = `[[${file.basename}]]`;
+                        target.value = before + insertText + after;
+                        currentTextValue = target.value;
+                        
+                        setTimeout(() => {
+                            target.focus();
+                            target.setSelectionRange(before.length + insertText.length, before.length + insertText.length);
+                        }, 50);
+                    });
+                    modal.open();
+                }
+            }
+            currentTextValue = val;
+        });
+
+        // Contexts Selector
+        const contextsDiv = contentEl.createEl('div', { attr: { style: 'margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center;' } });
+        
+        const renderContextTags = () => {
+            contextsDiv.empty();
+            this.plugin.settings.contexts.forEach(ctx => {
+                const isSelected = this.initialContexts.includes(ctx);
+                const tagEl = contextsDiv.createEl('span', {
+                    text: `#${ctx}`,
+                    attr: { 
+                        style: `cursor: pointer; padding: 2px 8px; border-radius: 12px; font-size: 0.85em; user-select: none; border: 1px solid var(--background-modifier-border); ${isSelected ? 'background-color: var(--interactive-accent); color: var(--text-on-accent); border-color: var(--interactive-accent);' : 'background-color: var(--background-secondary); color: var(--text-muted);'}` 
+                    }
+                });
+                tagEl.addEventListener('click', () => {
+                    if (isSelected) this.initialContexts = this.initialContexts.filter(c => c !== ctx);
+                    else this.initialContexts.push(ctx);
+                    renderContextTags();
+                });
+            });
+            const newCtxInput = contextsDiv.createEl('input', { type: 'text', placeholder: '+ add', attr: { style: 'padding: 2px 8px; border-radius: 12px; font-size: 0.85em; border: 1px dashed var(--background-modifier-border); background: transparent; width: 60px; outline: none;' } });
+            newCtxInput.addEventListener('keydown', async (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const val = newCtxInput.value.trim().replace(/^#/, '');
+                    if (val && !this.plugin.settings.contexts.includes(val)) {
+                        this.plugin.settings.contexts.push(val);
+                        this.initialContexts.push(val);
+                        await this.plugin.saveSettings();
+                        renderContextTags();
+                    } else if (val && !this.initialContexts.includes(val)) {
+                        this.initialContexts.push(val);
+                        renderContextTags();
+                    }
+                }
+            });
+        };
+        renderContextTags();
+
+        const metadataContainer = contentEl.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;' } });
 
         let dateInput: HTMLInputElement | null = null;
         if (this.isTask) {
-            dateInput = metadataContainer.createEl('input', {
+            const dueDateContainer = metadataContainer.createEl('div', { attr: { style: 'display: flex; gap: 5px; align-items: center;' } });
+            dueDateContainer.createSpan({ text: 'Due:', attr: { style: 'font-size: 0.85em; color: var(--text-muted);' } });
+            dateInput = dueDateContainer.createEl('input', {
                 type: 'date',
                 value: this.initialDueDate || '',
                 attr: { style: 'font-size: 0.9em; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;' }
             });
+        } else {
+            metadataContainer.createEl('div'); // Spacer
         }
 
-        const contextInput = metadataContainer.createEl('input', {
-            type: 'text',
-            value: this.initialContext,
-            attr: { placeholder: 'Context tags (e.g. #work)', style: 'flex-grow: 1; font-family: var(--font-text); font-size: 0.9em; border: 1px solid var(--background-modifier-border); border-radius: 4px; padding: 4px 8px; background: var(--background-primary); color: var(--text-normal);' }
-        });
-
-        const btnContainer = contentEl.createEl('div', { attr: { style: 'display: flex; justify-content: flex-end; gap: 10px;' } });
+        const btnContainer = metadataContainer.createEl('div', { attr: { style: 'display: flex; justify-content: flex-end; gap: 10px;' } });
         const saveBtn = btnContainer.createEl('button', { text: 'Save', attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); padding: 6px 16px; border-radius: 4px;' } });
         const cancelBtn = btnContainer.createEl('button', { text: 'Cancel', attr: { style: 'padding: 6px 16px; border-radius: 4px;' } });
 
         const saveChanges = () => {
             const newText = textArea.value.replace(/\n/g, '<br>');
-            const newContext = contextInput.value.trim();
+            const newContextString = this.initialContexts.map(c => `#${c}`).join(' ');
             const newDate = dateInput ? dateInput.value : null;
-            this.onSave(newText, newContext, newDate);
+            this.onSave(newText, newContextString, newDate);
             this.close();
         };
 
         saveBtn.addEventListener('click', saveChanges);
         cancelBtn.addEventListener('click', () => this.close());
         textArea.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveChanges(); } });
-        contextInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveChanges(); } });
     }
 
     onClose() {
@@ -1089,11 +1153,12 @@ class MinaView extends ItemView {
             
             const modal = new EditEntryModal(
                 this.plugin.app,
+                this.plugin,
                 textToRender,
                 initialContext,
                 initialDueDate,
                 true,
-                async (newText, newContext, newDueDate) => {
+                async (newText: string, newContext: string, newDueDate: string | null) => {
                     let changed = false;
 
                     if (newText !== textToRender) {
@@ -1155,11 +1220,12 @@ class MinaView extends ItemView {
             
             const modal = new EditEntryModal(
                 this.plugin.app,
+                this.plugin,
                 textToRender,
                 initialContext,
                 null,
                 false,
-                async (newText, newContext, _) => {
+                async (newText: string, newContext: string, _: string | null) => {
                     let changed = false;
 
                     if (newText !== textToRender) {
