@@ -42,7 +42,7 @@ The "MINA V1" plugin has been developed with the following features and implemen
    - **Form Features:**
      - Image/File support (paste/drag-and-drop) with auto-saving to the vault's attachment folder.
      - Keyboard shortcuts: `Enter` to sync, `Shift+Enter` for new lines.
-     - Dynamic Context Tags: Add (`+ add`) or remove (Right-click) tags directly in the UI.
+     - Dynamic Context Tags: Add (`+ add`) or remove (Right-click) tags directly in the UI. Supports **multi-word tags** and preserves **original letter casing**.
      - Autocomplete File Suggestion: Typing `\` in any capture or edit text area opens a fuzzy search to reference existing vault notes.
 
 2. **Functionality & Data Integrity**
@@ -53,7 +53,7 @@ The "MINA V1" plugin has been developed with the following features and implemen
    - **Due Date Handling:** Due dates are automatically enclosed in `[[ ]]` (e.g., `[[2026-03-22]]`) for daily note linking.
    - **Smart Insertion:** New entries are inserted at the top of the table (just below the header).
    - **Newline Handling:** Newlines within entries are converted to `<br>` tags to preserve table integrity.
-   - **Automatic Context Pre-loading:** On load, the plugin scans the thoughts and tasks files to automatically discover and extract all used tags, making them available as context options.
+   - **Automatic Context Pre-loading:** On load, the plugin scans the thoughts and tasks files to automatically discover and extract all used tags (including multi-word tags), preserving their original casing and making them available as context options.
    - **Iron-Clad Settings Protection:** Fail-safe "Lock" mechanism ensures settings and custom contexts are never wiped during updates or iCloud sync errors.
 
 3. **Settings Tab**
