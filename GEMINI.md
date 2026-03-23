@@ -28,12 +28,12 @@ The "MINA V1" plugin has been developed with the following features and implemen
      - **Interactive Filters:**
        - **Status Filter:** Filter by "All Status", "Pending", or "Completed".
        - **Context Filter:** Filter by any dynamic context tags.
-       - **Date Filter:** Find tasks due **"Today"**, **"This Week"**, **"Next Week"**, **"Overdue"**, or select a **"Custom Date"** via a native calendar picker.
+       - **Date Filter:** Find tasks due **"Today"**, **"This Week"**, **"Next Week"**, **"Overdue"**, or select a **"Custom Date Range"** via native calendar pickers.
      - **Editable Due Dates:** Click on any task's due date to update it directly via a native date picker.
      - **Interactive List:** Supports real-time checkbox toggling, dedicated inline edit (✏️) and delete (🗑️) buttons optimized for mobile, and smooth double-click editing on desktop isolated strictly to the task description text.
    - **Review Thoughts Mode:**
      - **Full Thoughts Review:** A dedicated interface to review ALL thoughts from the `mina_1.md` file.
-     - **Filter Bar:** Filter by Context and Date (Today, This Week, Custom Date).
+     - **Filter Bar:** Filter by Context and Date (Today, This Week, Custom Date Range).
      - **Mobile-Optimized Table:** Displays thoughts in a formatted HTML table with horizontal scrolling support for small screens.
      - **Inline Editing & Deletion:** Double-click any thought text to edit its description smoothly on desktop, or use the dedicated edit (✏️) and delete (🗑️) buttons in the context cell for mobile-friendly interaction.
    - **Standalone Window & Mobile Support:** 

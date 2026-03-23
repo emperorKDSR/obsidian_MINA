@@ -267,11 +267,15 @@ class MinaView extends ItemView {
     // Tasks Review Filters
     tasksFilterStatus: 'all' | 'pending' | 'completed' = 'all';
     tasksFilterContext: string = 'all';
-    tasksFilterDate: string = 'all'; // 'all' | 'today' | 'this-week' | 'next-week' | 'overdue' | YYYY-MM-DD
+    tasksFilterDate: string = 'all'; // 'all' | 'today' | 'this-week' | 'next-week' | 'overdue' | 'custom'
+    tasksFilterDateStart: string = '';
+    tasksFilterDateEnd: string = '';
 
     // Thoughts Review Filters
     thoughtsFilterContext: string = 'all';
-    thoughtsFilterDate: string = 'all'; // 'all' | 'today' | 'this-week' | YYYY-MM-DD
+    thoughtsFilterDate: string = 'all'; // 'all' | 'today' | 'this-week' | 'custom'
+    thoughtsFilterDateStart: string = '';
+    thoughtsFilterDateEnd: string = '';
 
     thoughtsPreviewContainer: HTMLElement;
     tasksPreviewContainer: HTMLElement;
@@ -516,35 +520,55 @@ class MinaView extends ItemView {
         });
         contextSel.addEventListener('change', (e) => { this.tasksFilterContext = (e.target as HTMLSelectElement).value; this.updateReviewTasksList(); });
 
-        const dateContainer = filterBar.createEl('div', { attr: { style: 'display: flex; gap: 5px; align-items: center;' } });
+        const dateContainer = filterBar.createEl('div', { attr: { style: 'display: flex; gap: 5px; align-items: center; flex-wrap: wrap;' } });
         const dateSel = dateContainer.createEl('select');
         [['all', 'All Dates'], ['today', 'Today'], ['this-week', 'This Week'], ['next-week', 'Next Week'], ['overdue', 'Overdue'], ['custom', 'Custom Date']].forEach(([val, label]) => {
             const opt = dateSel.createEl('option', { value: val, text: label });
-            if (this.tasksFilterDate === val || (val === 'custom' && this.tasksFilterDate.includes('-'))) opt.selected = true;
+            if (this.tasksFilterDate === val) opt.selected = true;
         });
 
-        const customDateInput = dateContainer.createEl('input', { 
-            type: 'date', 
-            attr: { style: `display: ${this.tasksFilterDate.includes('-') ? 'block' : 'none'}; font-size: 0.9em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;` } 
+        const customDateContainer = dateContainer.createEl('div', { 
+            attr: { style: `display: ${this.tasksFilterDate === 'custom' ? 'flex' : 'none'}; gap: 5px; align-items: center; flex-wrap: wrap;` } 
         });
-        if (this.tasksFilterDate.includes('-')) customDateInput.value = this.tasksFilterDate;
+
+        const customDateStartInput = customDateContainer.createEl('input', { 
+            type: 'date', 
+            attr: { style: `font-size: 0.9em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;` } 
+        });
+        if (this.tasksFilterDateStart) customDateStartInput.value = this.tasksFilterDateStart;
+
+        customDateContainer.createSpan({ text: 'to', attr: { style: 'font-size: 0.9em; color: var(--text-muted); padding: 0 2px;' } });
+
+        const customDateEndInput = customDateContainer.createEl('input', { 
+            type: 'date', 
+            attr: { style: `font-size: 0.9em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;` } 
+        });
+        if (this.tasksFilterDateEnd) customDateEndInput.value = this.tasksFilterDateEnd;
 
         dateSel.addEventListener('change', (e) => { 
             const val = (e.target as HTMLSelectElement).value;
+            this.tasksFilterDate = val;
             if (val === 'custom') {
-                customDateInput.style.display = 'block';
+                customDateContainer.style.display = 'flex';
                 // @ts-ignore
-                this.tasksFilterDate = customDateInput.value || window.moment().format('YYYY-MM-DD');
-                if (!customDateInput.value) customDateInput.value = this.tasksFilterDate;
+                this.tasksFilterDateStart = customDateStartInput.value || window.moment().format('YYYY-MM-DD');
+                if (!customDateStartInput.value) customDateStartInput.value = this.tasksFilterDateStart;
+                // @ts-ignore
+                this.tasksFilterDateEnd = customDateEndInput.value || window.moment().format('YYYY-MM-DD');
+                if (!customDateEndInput.value) customDateEndInput.value = this.tasksFilterDateEnd;
             } else {
-                customDateInput.style.display = 'none';
-                this.tasksFilterDate = val;
+                customDateContainer.style.display = 'none';
             }
             this.updateReviewTasksList(); 
         });
 
-        customDateInput.addEventListener('change', (e) => {
-            this.tasksFilterDate = (e.target as HTMLInputElement).value;
+        customDateStartInput.addEventListener('change', (e) => {
+            this.tasksFilterDateStart = (e.target as HTMLInputElement).value;
+            this.updateReviewTasksList();
+        });
+
+        customDateEndInput.addEventListener('change', (e) => {
+            this.tasksFilterDateEnd = (e.target as HTMLInputElement).value;
             this.updateReviewTasksList();
         });
 
@@ -566,35 +590,55 @@ class MinaView extends ItemView {
         });
         contextSel.addEventListener('change', (e) => { this.thoughtsFilterContext = (e.target as HTMLSelectElement).value; this.updateReviewThoughtsList(); });
 
-        const dateContainer = filterBar.createEl('div', { attr: { style: 'display: flex; gap: 5px; align-items: center;' } });
+        const dateContainer = filterBar.createEl('div', { attr: { style: 'display: flex; gap: 5px; align-items: center; flex-wrap: wrap;' } });
         const dateSel = dateContainer.createEl('select');
         [['all', 'All Dates'], ['today', 'Today'], ['this-week', 'This Week'], ['custom', 'Custom Date']].forEach(([val, label]) => {
             const opt = dateSel.createEl('option', { value: val, text: label });
-            if (this.thoughtsFilterDate === val || (val === 'custom' && this.thoughtsFilterDate.includes('-'))) opt.selected = true;
+            if (this.thoughtsFilterDate === val) opt.selected = true;
         });
 
-        const customDateInput = dateContainer.createEl('input', { 
-            type: 'date', 
-            attr: { style: `display: ${this.thoughtsFilterDate.includes('-') ? 'block' : 'none'}; font-size: 0.9em; padding: 2px 5px; border-radius: 4px;` } 
+        const customDateContainer = dateContainer.createEl('div', { 
+            attr: { style: `display: ${this.thoughtsFilterDate === 'custom' ? 'flex' : 'none'}; gap: 5px; align-items: center; flex-wrap: wrap;` } 
         });
-        if (this.thoughtsFilterDate.includes('-')) customDateInput.value = this.thoughtsFilterDate;
+
+        const customDateStartInput = customDateContainer.createEl('input', { 
+            type: 'date', 
+            attr: { style: `font-size: 0.9em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;` } 
+        });
+        if (this.thoughtsFilterDateStart) customDateStartInput.value = this.thoughtsFilterDateStart;
+
+        customDateContainer.createSpan({ text: 'to', attr: { style: 'font-size: 0.9em; color: var(--text-muted); padding: 0 2px;' } });
+
+        const customDateEndInput = customDateContainer.createEl('input', { 
+            type: 'date', 
+            attr: { style: `font-size: 0.9em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;` } 
+        });
+        if (this.thoughtsFilterDateEnd) customDateEndInput.value = this.thoughtsFilterDateEnd;
 
         dateSel.addEventListener('change', (e) => { 
             const val = (e.target as HTMLSelectElement).value;
+            this.thoughtsFilterDate = val;
             if (val === 'custom') {
-                customDateInput.style.display = 'block';
+                customDateContainer.style.display = 'flex';
                 // @ts-ignore
-                this.thoughtsFilterDate = customDateInput.value || window.moment().format('YYYY-MM-DD');
-                if (!customDateInput.value) customDateInput.value = this.thoughtsFilterDate;
+                this.thoughtsFilterDateStart = customDateStartInput.value || window.moment().format('YYYY-MM-DD');
+                if (!customDateStartInput.value) customDateStartInput.value = this.thoughtsFilterDateStart;
+                // @ts-ignore
+                this.thoughtsFilterDateEnd = customDateEndInput.value || window.moment().format('YYYY-MM-DD');
+                if (!customDateEndInput.value) customDateEndInput.value = this.thoughtsFilterDateEnd;
             } else {
-                customDateInput.style.display = 'none';
-                this.thoughtsFilterDate = val;
+                customDateContainer.style.display = 'none';
             }
             this.updateReviewThoughtsList(); 
         });
 
-        customDateInput.addEventListener('change', (e) => {
-            this.thoughtsFilterDate = (e.target as HTMLInputElement).value;
+        customDateStartInput.addEventListener('change', (e) => {
+            this.thoughtsFilterDateStart = (e.target as HTMLInputElement).value;
+            this.updateReviewThoughtsList();
+        });
+
+        customDateEndInput.addEventListener('change', (e) => {
+            this.thoughtsFilterDateEnd = (e.target as HTMLInputElement).value;
             this.updateReviewThoughtsList();
         });
 
@@ -670,10 +714,12 @@ class MinaView extends ItemView {
                         } else if (this.tasksFilterDate === 'overdue') {
                             // Overdue = Date is before today AND not completed
                             if (isDone || !taskDate.isBefore(todayMoment, 'day')) continue;
-                        } else if (this.tasksFilterDate.includes('-')) { // Custom Date
+                        } else if (this.tasksFilterDate === 'custom') { // Custom Date Range
                             // @ts-ignore
-                            const customMoment = window.moment(this.tasksFilterDate, 'YYYY-MM-DD');
-                            if (!taskDate.isSame(customMoment, 'day')) continue;
+                            const startMoment = window.moment(this.tasksFilterDateStart, 'YYYY-MM-DD').startOf('day');
+                            // @ts-ignore
+                            const endMoment = window.moment(this.tasksFilterDateEnd, 'YYYY-MM-DD').endOf('day');
+                            if (!taskDate.isBetween(startMoment, endMoment, 'day', '[]')) continue;
                         }
                     }
 
@@ -743,10 +789,12 @@ class MinaView extends ItemView {
                         const thoughtDate = window.moment(dateRaw, this.plugin.settings.dateFormat);
                         if (this.thoughtsFilterDate === 'today' && dateRaw !== today) continue;
                         if (this.thoughtsFilterDate === 'this-week' && !thoughtDate.isBetween(startOfWeek, endOfWeek, 'day', '[]')) continue;
-                        if (this.thoughtsFilterDate.includes('-')) {
+                        if (this.thoughtsFilterDate === 'custom') {
                             // @ts-ignore
-                            const customMoment = window.moment(this.thoughtsFilterDate, 'YYYY-MM-DD');
-                            if (!thoughtDate.isSame(customMoment, 'day')) continue;
+                            const startMoment = window.moment(this.thoughtsFilterDateStart, 'YYYY-MM-DD').startOf('day');
+                            // @ts-ignore
+                            const endMoment = window.moment(this.thoughtsFilterDateEnd, 'YYYY-MM-DD').endOf('day');
+                            if (!thoughtDate.isBetween(startMoment, endMoment, 'day', '[]')) continue;
                         }
                     }
 
