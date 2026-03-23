@@ -1004,11 +1004,22 @@ class MinaView extends ItemView {
 
         const startEdit = () => {
             renderTarget.empty();
-            const input = renderTarget.createEl('textarea', {
-                text: textToRender.replace(/<br>/g, '\n'),
-                attr: { style: 'width: 100%; min-height: 60px; font-family: var(--font-text); background: transparent; border: 1px solid var(--background-modifier-border);' }
+            const inputContainer = renderTarget.createEl('div', { 
+                attr: { style: 'position: relative; width: 100%;' } 
             });
+            const input = inputContainer.createEl('textarea', {
+                text: textToRender.replace(/<br>/g, '\n'),
+                attr: { style: 'width: 100%; min-height: 80px; font-family: var(--font-text); background: var(--background-primary); border: 2px solid var(--interactive-accent); border-radius: 4px; padding: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10; position: relative;' }
+            });
+            
             input.focus();
+            
+            if (Platform.isMobile) {
+                setTimeout(() => {
+                    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            }
+
             input.addEventListener('blur', async () => {
                 const newText = input.value.replace(/\n/g, '<br>');
                 if (newText !== textToRender) {
@@ -1051,11 +1062,22 @@ class MinaView extends ItemView {
 
         const startEdit = () => {
             thoughtCell.empty();
-            const input = thoughtCell.createEl('textarea', {
-                text: textToRender.replace(/<br>/g, '\n'),
-                attr: { style: 'width: 100%; min-height: 60px; font-family: var(--font-text); background: transparent; border: 1px solid var(--background-modifier-border);' }
+            const inputContainer = thoughtCell.createEl('div', { 
+                attr: { style: 'position: relative; width: 100%;' } 
             });
+            const input = inputContainer.createEl('textarea', {
+                text: textToRender.replace(/<br>/g, '\n'),
+                attr: { style: 'width: 100%; min-height: 80px; font-family: var(--font-text); background: var(--background-primary); border: 2px solid var(--interactive-accent); border-radius: 4px; padding: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10; position: relative;' }
+            });
+            
             input.focus();
+            
+            if (Platform.isMobile) {
+                setTimeout(() => {
+                    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            }
+
             input.addEventListener('blur', async () => {
                 const newText = input.value.replace(/\n/g, '<br>');
                 if (newText !== textToRender) {
