@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, TFile, Notice, ItemView, WorkspaceLeaf, MarkdownRenderer, Platform } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, TFile, Notice, ItemView, WorkspaceLeaf, MarkdownRenderer, Platform, FuzzySuggestModal } from 'obsidian';
 
 export const VIEW_TYPE_MINA = "mina-view";
 
@@ -187,6 +187,27 @@ export default class MinaPlugin extends Plugin {
     }
 }
 
+export class FileSuggestModal extends FuzzySuggestModal<TFile> {
+    onChoose: (file: TFile) => void;
+
+    constructor(app: App, onChoose: (file: TFile) => void) {
+        super(app);
+        this.onChoose = onChoose;
+    }
+
+    getItems(): TFile[] {
+        return this.app.vault.getFiles().filter(f => f.extension === 'md');
+    }
+
+    getItemText(file: TFile): string {
+        return file.basename;
+    }
+
+    onChooseItem(file: TFile, evt: MouseEvent | KeyboardEvent) {
+        this.onChoose(file);
+    }
+}
+
 class MinaView extends ItemView {
     plugin: MinaPlugin;
     content: string;
@@ -288,7 +309,33 @@ class MinaView extends ItemView {
             });
         }
 
-        textArea.addEventListener('input', (e) => { this.content = (e.target as HTMLTextAreaElement).value; });
+        let lastValue = this.content;
+        textArea.addEventListener('input', (e) => { 
+            const target = e.target as HTMLTextAreaElement;
+            const val = target.value;
+            
+            if (val.length > lastValue.length) {
+                const cursorPosition = target.selectionStart;
+                if (cursorPosition > 0 && val.charAt(cursorPosition - 1) === '\\') {
+                    const modal = new FileSuggestModal(this.plugin.app, (file) => {
+                        const before = val.substring(0, cursorPosition - 1);
+                        const after = val.substring(cursorPosition);
+                        const insertText = `[[${file.basename}]]`;
+                        target.value = before + insertText + after;
+                        this.content = target.value;
+                        
+                        // Use a short timeout to ensure mobile keyboards and focus behave correctly after the modal closes
+                        setTimeout(() => {
+                            target.focus();
+                            target.setSelectionRange(before.length + insertText.length, before.length + insertText.length);
+                        }, 50);
+                    });
+                    modal.open();
+                }
+            }
+            lastValue = val;
+            this.content = val;
+        });
 
         // Event listeners for drag/paste
         textArea.addEventListener('paste', async (e: ClipboardEvent) => {
