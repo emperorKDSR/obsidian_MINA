@@ -869,18 +869,49 @@ class MinaView extends ItemView {
     }
 
     renderReviewTasksMode(container: HTMLElement) {
-        const headerSection = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 15px; background-color: var(--background-secondary); padding: 10px; border-radius: 5px;' } });
+        const headerSection = container.createEl('div', { 
+            attr: { style: `flex-shrink: 0; display: flex; ${Platform.isMobile ? 'flex-direction: column; align-items: flex-start;' : 'flex-wrap: wrap; align-items: center;'} gap: 10px; margin-bottom: 15px; background-color: var(--background-secondary); padding: 10px; border-radius: 5px;` } 
+        });
         
+        // On mobile, show Capture toggle first
+        const renderCaptureToggle = (parent: HTMLElement) => {
+            const captureToggleContainer = parent.createEl('div', { attr: { style: `${Platform.isMobile ? '' : 'margin-left: auto;'} display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;` } });
+            captureToggleContainer.createSpan({ text: 'Capture' });
+            
+            const captureToggleLabel = captureToggleContainer.createEl('label', { 
+                attr: { style: 'position: relative; display: inline-block; width: 30px; height: 16px; cursor: pointer;' } 
+            });
+            const captureCb = captureToggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
+            captureCb.checked = this.showCaptureInTasks;
+            const captureSlider = captureToggleLabel.createEl('span', { 
+                attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${this.showCaptureInTasks ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 16px;` } 
+            });
+            const captureKnob = captureToggleLabel.createEl('span', { 
+                attr: { style: `position: absolute; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${this.showCaptureInTasks ? 'translateX(14px)' : 'translateX(0)'};` } 
+            });
+
+            captureCb.addEventListener('change', (e) => {
+                this.showCaptureInTasks = (e.target as HTMLInputElement).checked;
+                captureSlider.style.backgroundColor = this.showCaptureInTasks ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
+                captureKnob.style.transform = this.showCaptureInTasks ? 'translateX(14px)' : 'translateX(0)';
+                if (this.reviewTasksContainer.previousElementSibling) {
+                    (this.reviewTasksContainer.previousElementSibling as HTMLElement).style.display = this.showCaptureInTasks ? 'block' : 'none';
+                }
+            });
+        };
+
+        if (Platform.isMobile) renderCaptureToggle(headerSection);
+
         const filterBar = headerSection.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 10px; align-items: center;' } });
         
-        const statusSel = filterBar.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px;' }});
+        const statusSel = filterBar.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px; text-align: center; text-align-last: center;' }});
         [['all', 'All Status'], ['pending', 'Pending'], ['completed', 'Completed']].forEach(([val, label]) => {
             const opt = statusSel.createEl('option', { value: val, text: label });
             if (this.tasksFilterStatus === val) opt.selected = true;
         });
         statusSel.addEventListener('change', (e) => { this.tasksFilterStatus = (e.target as HTMLSelectElement).value as any; this.updateReviewTasksList(); });
 
-        const contextSel = filterBar.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px;' }});
+        const contextSel = filterBar.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px; text-align: center; text-align-last: center;' }});
         contextSel.createEl('option', { value: 'all', text: 'All Contexts' });
         this.plugin.settings.contexts.forEach(ctx => {
             const opt = contextSel.createEl('option', { value: ctx, text: `#${ctx}` });
@@ -889,7 +920,7 @@ class MinaView extends ItemView {
         contextSel.addEventListener('change', (e) => { this.tasksFilterContext = (e.target as HTMLSelectElement).value; this.updateReviewTasksList(); });
 
         const dateContainer = filterBar.createEl('div', { attr: { style: 'display: flex; gap: 5px; align-items: center; flex-wrap: wrap;' } });
-        const dateSel = dateContainer.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px;' }});
+        const dateSel = dateContainer.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px; text-align: center; text-align-last: center;' }});
         [['all', 'All Dates'], ['today', 'Today'], ['this-week', 'This Week'], ['next-week', 'Next Week'], ['overdue', 'Overdue'], ['custom', 'Custom Date']].forEach(([val, label]) => {
             const opt = dateSel.createEl('option', { value: val, text: label });
             if (this.tasksFilterDate === val) opt.selected = true;
@@ -940,31 +971,10 @@ class MinaView extends ItemView {
             this.updateReviewTasksList();
         });
 
-        // Toggle Capture
-        const captureToggleContainer = headerSection.createEl('div', { attr: { style: 'margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;' } });
-        captureToggleContainer.createSpan({ text: 'Capture' });
-        
-        const captureToggleLabel = captureToggleContainer.createEl('label', { 
-            attr: { style: 'position: relative; display: inline-block; width: 30px; height: 16px; cursor: pointer;' } 
-        });
-        const captureCb = captureToggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
-        captureCb.checked = this.showCaptureInTasks;
-        const captureSlider = captureToggleLabel.createEl('span', { 
-            attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${this.showCaptureInTasks ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 16px;` } 
-        });
-        const captureKnob = captureToggleLabel.createEl('span', { 
-            attr: { style: `position: absolute; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${this.showCaptureInTasks ? 'translateX(14px)' : 'translateX(0)'};` } 
-        });
+        if (!Platform.isMobile) renderCaptureToggle(headerSection);
 
         const captureContainer = container.createEl('div', { attr: { style: `flex-shrink: 0; display: ${this.showCaptureInTasks ? 'block' : 'none'};` } });
         this.renderCaptureMode(captureContainer, false, true);
-
-        captureCb.addEventListener('change', (e) => {
-            this.showCaptureInTasks = (e.target as HTMLInputElement).checked;
-            captureSlider.style.backgroundColor = this.showCaptureInTasks ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
-            captureKnob.style.transform = this.showCaptureInTasks ? 'translateX(14px)' : 'translateX(0)';
-            captureContainer.style.display = this.showCaptureInTasks ? 'block' : 'none';
-        });
 
         this.reviewTasksContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; overflow-y: auto; padding: 5px;' } });
         this.updateReviewTasksList();
@@ -975,7 +985,7 @@ class MinaView extends ItemView {
         
         const filterBar = headerSection.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 10px; align-items: center;' } });
         
-        const contextSel = filterBar.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px;' }});
+        const contextSel = filterBar.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px; text-align: center; text-align-last: center;' }});
         contextSel.createEl('option', { value: 'all', text: 'All Contexts' });
         this.plugin.settings.contexts.forEach(ctx => {
             const opt = contextSel.createEl('option', { value: ctx, text: `#${ctx}` });
@@ -984,7 +994,7 @@ class MinaView extends ItemView {
         contextSel.addEventListener('change', (e) => { this.thoughtsFilterContext = (e.target as HTMLSelectElement).value; this.updateReviewThoughtsList(); });
 
         const dateContainer = filterBar.createEl('div', { attr: { style: 'display: flex; gap: 5px; align-items: center; flex-wrap: wrap;' } });
-        const dateSel = dateContainer.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px;' }});
+        const dateSel = dateContainer.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px; text-align: center; text-align-last: center;' }});
         [['all', 'All Dates'], ['today', 'Today'], ['this-week', 'This Week'], ['custom', 'Custom Date']].forEach(([val, label]) => {
             const opt = dateSel.createEl('option', { value: val, text: label });
             if (this.thoughtsFilterDate === val) opt.selected = true;
@@ -1662,8 +1672,9 @@ class MinaView extends ItemView {
     }
 
     async renderThoughtRow(entry: ThoughtEntry, container: HTMLElement, filePath: string, level: number = 0) {
+        const indentStep = Platform.isMobile ? 12 : 24;
         const itemEl = container.createEl('div', {
-            attr: { style: `margin-bottom: 8px; padding-bottom: 8px; display: flex; align-items: flex-start; ${level > 0 ? `margin-left: ${level * 24}px; border-left: 2px solid var(--background-modifier-border); padding-left: 12px;` : ''}` }
+            attr: { style: `margin-bottom: 8px; padding-bottom: 8px; display: flex; align-items: flex-start; ${level > 0 ? `margin-left: ${level * indentStep}px; border-left: 2px solid var(--background-modifier-border); padding-left: 8px;` : ''}` }
         });
 
         // Icon Section (Collapse + Thinking Icon)
@@ -1713,7 +1724,7 @@ class MinaView extends ItemView {
 
         const actionsDiv = mainContentRow.createEl('div', { attr: { style: 'display: flex; gap: 8px; align-items: center; flex-shrink: 0; margin-top: 2px;' } });
         
-        const replyBtn = actionsDiv.createSpan({ text: '💬', attr: { style: 'cursor: pointer; font-size: 0.85em; opacity: 0.7; transition: opacity 0.2s;' } });
+        const replyBtn = actionsDiv.createSpan({ text: '↩️', attr: { style: 'cursor: pointer; font-size: 0.85em; opacity: 0.7; transition: opacity 0.2s;' } });
         const editBtn = actionsDiv.createSpan({ text: '✏️', attr: { style: 'cursor: pointer; font-size: 0.85em; opacity: 0.7; transition: opacity 0.2s;' } });
         
         let deleteBtn: HTMLElement | null = null;
