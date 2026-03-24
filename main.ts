@@ -165,7 +165,7 @@ export default class MinaPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-    async appendCapture(content: string, contexts: string[], isTask: boolean, dueDate?: string) {
+    async appendCapture(content: string, contexts: string[], isTask: boolean, dueDate?: string, parentId: string = '') {
         const { vault } = this.app;
         const folderPath = this.settings.captureFolder.trim();
         const fileName = isTask ? this.settings.tasksFilePath.trim() : this.settings.captureFilePath.trim();
@@ -208,15 +208,16 @@ export default class MinaPlugin extends Plugin {
 
         if (isTask) {
             const dueDateCol = dueDate ? `[[${dueDate}]]` : '';
-            // Task Table Structure: | Status | Date | Time | Due Date | Task | Context |
-            newRow = `| [ ] | ${dateCol} | ${timeCol} | ${dueDateCol} | ${sanitizedContent} | ${contextsCol} |`;
-            header = `| Status | Date | Time | Due Date | Task | Context |`;
-            separator = `| :---: | --- | --- | --- | --- | --- |`;
+            // Task Table Structure: | Status | Date | Time | Modified Date | Modified Time | Due Date | Task | Context |
+            newRow = `| [ ] | ${dateCol} | ${timeCol} | ${dateCol} | ${timeCol} | ${dueDateCol} | ${sanitizedContent} | ${contextsCol} |`;
+            header = `| Status | Date | Time | Modified Date | Modified Time | Due Date | Task | Context |`;
+            separator = `| :---: | --- | --- | --- | --- | --- | --- | --- |`;
         } else {
-            // Thought Table Structure: | Date | Time | Thought | Context |
-            newRow = `| ${dateCol} | ${timeCol} | ${sanitizedContent} | ${contextsCol} |`;
-            header = `| Date | Time | Thought | Context |`;
-            separator = `| --- | --- | --- | --- |`;
+            // Thought Table Structure: | ID | Parent ID | Date | Time | Modified Date | Modified Time | Thought | Context |
+            const id = Date.now().toString() + Math.random().toString(36).substring(2, 7);
+            newRow = `| ${id} | ${parentId} | ${dateCol} | ${timeCol} | ${dateCol} | ${timeCol} | ${sanitizedContent} | ${contextsCol} |`;
+            header = `| ID | Parent ID | Date | Time | Modified Date | Modified Time | Thought | Context |`;
+            separator = `| --- | --- | --- | --- | --- | --- | --- | --- |`;
         }
 
         try {
@@ -226,7 +227,32 @@ export default class MinaPlugin extends Plugin {
             if (lines.length < 2 || !lines[0].includes('Date') || !lines[1].includes('---')) {
                 newContent = header + '\n' + separator + '\n' + newRow + (currentContent ? '\n' + currentContent : '');
             } else {
+                // If existing file schema differs, update header/separator
+                lines[0] = header;
+                lines[1] = separator;
                 lines.splice(2, 0, newRow);
+
+                // Bubble up modification time to parent
+                if (!isTask && parentId) {
+                    let currentParentToFind = parentId;
+                    while (currentParentToFind) {
+                        let found = false;
+                        for (let i = 2; i < lines.length; i++) {
+                            const rowParts = lines[i].split('|');
+                            if (rowParts.length >= 2 && rowParts[1].trim() === currentParentToFind) {
+                                // Found parent, update its Modified Date/Time (Columns 5 and 6)
+                                rowParts[5] = ` ${dateCol} `;
+                                rowParts[6] = ` ${timeCol} `;
+                                lines[i] = rowParts.join('|');
+                                currentParentToFind = rowParts[2].trim(); // Move to grandparent
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) break;
+                    }
+                }
+
                 newContent = lines.join('\n');
             }
             await vault.modify(file, newContent);
@@ -543,6 +569,20 @@ class ConfirmModal extends Modal {
     }
 }
 
+interface ThoughtEntry {
+    id: string;
+    parentId: string;
+    date: string;
+    time: string;
+    modifiedDate: string;
+    modifiedTime: string;
+    text: string;
+    context: string;
+    lineIndex: number;
+    children: ThoughtEntry[];
+    lastThreadUpdate?: number;
+}
+
 class MinaView extends ItemView {
     plugin: MinaPlugin;
     content: string;
@@ -558,6 +598,11 @@ class MinaView extends ItemView {
     tasksFilterDateEnd: string = '';
     showPreviousTasks: boolean = true;
     showCaptureInTasks: boolean = true;
+
+    // Threads State
+    collapsedThreads: Set<string> = new Set();
+    replyToId: string | null = null;
+    replyToText: string | null = null;
 
     // Thoughts Review Filters
     thoughtsFilterContext: string = 'all';
@@ -648,6 +693,20 @@ class MinaView extends ItemView {
     }
 
     renderCaptureMode(container: HTMLElement, isThoughtsOnly: boolean = false, isTasksOnly: boolean = false) {
+        if (this.replyToId) {
+            const replyBanner = container.createEl('div', { attr: { style: 'background-color: var(--background-secondary-alt); padding: 8px 12px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid var(--interactive-accent); display: flex; justify-content: space-between; align-items: center; font-size: 0.85em;' } });
+            const bannerText = replyBanner.createEl('div', { attr: { style: 'overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-grow: 1; margin-right: 10px;' } });
+            bannerText.createSpan({ text: 'Replying to: ', attr: { style: 'font-weight: bold; color: var(--text-accent);' } });
+            bannerText.createSpan({ text: this.replyToText || '' });
+            
+            const cancelReply = replyBanner.createEl('button', { text: '✕', attr: { style: 'padding: 2px 6px; font-size: 0.8em; background: transparent; border: none; cursor: pointer;' } });
+            cancelReply.addEventListener('click', () => {
+                this.replyToId = null;
+                this.replyToText = null;
+                this.renderView();
+            });
+        }
+
         const inputSection = container.createEl('div', { attr: { style: 'flex-shrink: 0; margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-end;' } });
         const textAreaWrapper = inputSection.createEl('div', { attr: { style: 'flex-grow: 1;' } });
         const textArea = textAreaWrapper.createEl('textarea', {
@@ -797,13 +856,12 @@ class MinaView extends ItemView {
 
         const submitAction = async () => {
             if (this.content.trim().length > 0) {
-                await this.plugin.appendCapture(this.content.trim(), this.selectedContexts, this.isTask, this.isTask ? this.dueDate : undefined);
-                this.content = ''; textArea.value = '';
-                if (this.activeTab === 'review-tasks') {
-                    await this.updateReviewTasksList();
-                } else if (this.activeTab === 'review-thoughts') {
-                    await this.updateReviewThoughtsList();
-                }
+                await this.plugin.appendCapture(this.content.trim(), this.selectedContexts, this.isTask, this.isTask ? this.dueDate : undefined, this.replyToId || '');
+                this.content = ''; 
+                textArea.value = '';
+                this.replyToId = null;
+                this.replyToText = null;
+                this.renderView();
             } else { new Notice('Please enter some text'); }
         };
         submitBtn.addEventListener('click', submitAction);
@@ -1051,14 +1109,24 @@ class MinaView extends ItemView {
         try {
             const content = await vault.read(file);
             const lines = content.split('\n');
-            let count = 0;
-
+            
             // @ts-ignore
             const todayMoment = window.moment().startOf('day');
             // @ts-ignore
             const startOfWeek = window.moment().startOf('week');
             // @ts-ignore
             const endOfWeek = window.moment().endOf('week');
+
+            interface TaskLine {
+                line: string;
+                index: number;
+                modTimestamp: number;
+                isDone: boolean;
+                dateRaw: string;
+                context: string;
+            }
+
+            const taskLines: TaskLine[] = [];
 
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
@@ -1079,13 +1147,25 @@ class MinaView extends ItemView {
                         if (capDate.isValid() && !capDate.isSame(todayMoment, 'day')) continue;
                     }
 
-                    // Determine Date Column: Index 4 (Due Date) if 6-column table, else Index 2 (Capture Date)
+                    // Determine Date Column: Index 6 (Due Date) if 8-column table, else Index 4 (Due Date) or Index 2 (Capture Date)
                     let dateRaw = '';
-                    if (parts.length >= 8) {
+                    let modDateStr = '';
+                    let modTimeStr = '';
+
+                    if (parts.length >= 9) { // 8-column schema
+                        modDateStr = parts[4].trim().replace(/[\[\]]/g, '');
+                        modTimeStr = parts[5].trim();
+                        dateRaw = parts[6]?.trim().replace(/[\[\]]/g, '');
+                        if (!dateRaw) dateRaw = parts[2]?.trim().replace(/[\[\]]/g, '');
+                    } else if (parts.length >= 7) { // 6-column legacy
                         dateRaw = parts[4]?.trim().replace(/[\[\]]/g, '');
                         if (!dateRaw) dateRaw = parts[2]?.trim().replace(/[\[\]]/g, '');
-                    } else {
+                        modDateStr = parts[2].trim().replace(/[\[\]]/g, '');
+                        modTimeStr = parts[3].trim();
+                    } else { // 4-column extreme legacy
                         dateRaw = parts[2]?.trim().replace(/[\[\]]/g, '');
+                        modDateStr = parts[2].trim().replace(/[\[\]]/g, '');
+                        modTimeStr = parts[3].trim();
                     }
 
                     if (this.tasksFilterDate !== 'all') {
@@ -1106,9 +1186,8 @@ class MinaView extends ItemView {
                             const endOfNextWeek = window.moment().add(1, 'week').endOf('week');
                             if (!taskDate.isBetween(startOfNextWeek, endOfNextWeek, 'day', '[]')) continue;
                         } else if (this.tasksFilterDate === 'overdue') {
-                            // Overdue = Date is before today AND not completed
                             if (isDone || !taskDate.isBefore(todayMoment, 'day')) continue;
-                        } else if (this.tasksFilterDate === 'custom') { // Custom Date Range
+                        } else if (this.tasksFilterDate === 'custom') {
                             // @ts-ignore
                             const startMoment = window.moment(this.tasksFilterDateStart, 'YYYY-MM-DD').startOf('day');
                             // @ts-ignore
@@ -1120,10 +1199,24 @@ class MinaView extends ItemView {
                     const contextPart = parts[parts.length - 2]?.trim() || '';
                     if (this.tasksFilterContext !== 'all' && !contextPart.includes(`#${this.tasksFilterContext}`)) continue;
 
-                    await this.renderTaskRow(line, i, this.reviewTasksContainer, file.path, true);
-                    count++;
+                    // Calculate modTimestamp for sorting
+                    // @ts-ignore
+                    const m = window.moment(`${modDateStr} ${modTimeStr}`, ['YYYY-MM-DD HH:mm', `${this.plugin.settings.dateFormat} ${this.plugin.settings.timeFormat}`]);
+                    const modTimestamp = m.isValid() ? m.valueOf() : 0;
+
+                    taskLines.push({ line, index: i, modTimestamp, isDone, dateRaw, context: contextPart });
                 }
             }
+
+            // Sort by modTimestamp descending
+            taskLines.sort((a, b) => b.modTimestamp - a.modTimestamp);
+
+            let count = 0;
+            for (const tl of taskLines) {
+                await this.renderTaskRow(tl.line, tl.index, this.reviewTasksContainer, file.path, true);
+                count++;
+            }
+
             if (count === 0) this.reviewTasksContainer.createEl('p', { text: 'No tasks matching filters.', attr: { style: 'color: var(--text-muted);' } });
         } catch (error) {
             this.reviewTasksContainer.createEl('p', { text: 'Error loading tasks.', attr: { style: 'color: var(--text-error);' } });
@@ -1148,8 +1241,7 @@ class MinaView extends ItemView {
         try {
             const content = await vault.read(file);
             const lines = content.split('\n');
-            let count = 0;
-
+            
             // @ts-ignore
             const today = window.moment().format('YYYY-MM-DD');
             // @ts-ignore
@@ -1157,51 +1249,145 @@ class MinaView extends ItemView {
             // @ts-ignore
             const endOfWeek = window.moment().endOf('week');
 
-            const timelineContainer = this.reviewThoughtsContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
+            const allEntries: ThoughtEntry[] = [];
+            const idMap: Map<string, ThoughtEntry> = new Map();
 
+            // First pass: Parse all entries
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
-                if (line.startsWith('|') && !line.includes('---') && !line.includes('| Date |')) {
+                if (line.startsWith('|') && !line.includes('---') && !line.includes('| Date |') && !line.includes('| ID |')) {
                     const parts = line.split('|');
                     if (parts.length < 5) continue;
+
+                    let id = '', parentId = '', dateStr = '', timeStr = '', modDateStr = '', modTimeStr = '', text = '', context = '';
                     
-                    const dateRaw = parts[1].trim().replace(/\[\[|\]\]/g, ''); 
-                    
+                    if (parts.length >= 9) { // New 8-column schema: | ID | Parent ID | Date | Time | Modified Date | Modified Time | Thought | Context |
+                        id = parts[1].trim();
+                        parentId = parts[2].trim();
+                        dateStr = parts[3].trim();
+                        timeStr = parts[4].trim();
+                        modDateStr = parts[5].trim();
+                        modTimeStr = parts[6].trim();
+                        text = parts[7].trim();
+                        context = parts[8].trim();
+                    } else if (parts.length >= 7) { // Old 6-column schema
+                        id = parts[1].trim();
+                        parentId = parts[2].trim();
+                        dateStr = parts[3].trim();
+                        timeStr = parts[4].trim();
+                        modDateStr = parts[3].trim(); // default to capture date
+                        modTimeStr = parts[4].trim();
+                        text = parts[5].trim();
+                        context = parts[6].trim();
+                    } else { // Legacy 4-column schema: | Date | Time | Thought | Context |
+                        dateStr = parts[1].trim();
+                        timeStr = parts[2].trim();
+                        modDateStr = parts[1].trim();
+                        modTimeStr = parts[2].trim();
+                        text = parts[3].trim();
+                        context = parts[4].trim();
+                        // Generate a stable ID for legacy rows
+                        id = `legacy-${dateStr}-${timeStr}-${text.substring(0, 10)}`;
+                    }
+
+                    // @ts-ignore
+                    const m = window.moment(`${modDateStr.replace(/[\[\]]/g, '')} ${modTimeStr}`, ['YYYY-MM-DD HH:mm', `${this.plugin.settings.dateFormat} ${this.plugin.settings.timeFormat}`]);
+                    const modTimestamp = m.isValid() ? m.valueOf() : 0;
+
+                    const entry: ThoughtEntry = { 
+                        id, parentId, date: dateStr, time: timeStr, 
+                        modifiedDate: modDateStr, modifiedTime: modTimeStr,
+                        text, context, lineIndex: i, children: [],
+                        lastThreadUpdate: modTimestamp
+                    };
+                    allEntries.push(entry);
+                    if (id) idMap.set(id, entry);
+                }
+            }
+
+            // Second pass: Build the tree
+            const roots: ThoughtEntry[] = [];
+            for (const entry of allEntries) {
+                if (entry.parentId && idMap.has(entry.parentId)) {
+                    idMap.get(entry.parentId)?.children.push(entry);
+                } else {
+                    roots.push(entry);
+                }
+            }
+
+            // Third pass: Calculate thread-wide latest update
+            const calculateThreadUpdate = (entry: ThoughtEntry): number => {
+                let latest = entry.lastThreadUpdate || 0;
+                for (const child of entry.children) {
+                    const childLatest = calculateThreadUpdate(child);
+                    if (childLatest > latest) latest = childLatest;
+                }
+                entry.lastThreadUpdate = latest;
+                return latest;
+            };
+
+            for (const root of roots) {
+                calculateThreadUpdate(root);
+            }
+
+            // Sort root entries by their thread-wide latest update descending
+            roots.sort((a, b) => (b.lastThreadUpdate || 0) - (a.lastThreadUpdate || 0));
+
+            const timelineContainer = this.reviewThoughtsContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
+            let count = 0;
+
+            const renderRecursive = async (entry: ThoughtEntry, level: number) => {
+                const dateRaw = entry.date.replace(/\[\[|\]\]/g, ''); 
+                
+                // Filtering only applies to root entries in this implementation for simplicity
+                if (level === 0) {
                     if (!this.showPreviousThoughts && dateRaw) {
                         // @ts-ignore
                         const thoughtDate = window.moment(dateRaw, this.plugin.settings.dateFormat);
                         // @ts-ignore
                         const todayMoment = window.moment().startOf('day');
-                        if (thoughtDate.isValid() && !thoughtDate.isSame(todayMoment, 'day')) continue;
+                        if (thoughtDate.isValid() && !thoughtDate.isSame(todayMoment, 'day')) return;
                     }
 
-                    const contextPart = parts[4]?.trim() || '';
-
-                    if (this.thoughtsFilterContext !== 'all' && !contextPart.includes(`#${this.thoughtsFilterContext}`)) continue;
+                    if (this.thoughtsFilterContext !== 'all' && !entry.context.includes(`#${this.thoughtsFilterContext}`)) return;
 
                     if (this.thoughtsFilterDate !== 'all') {
                         // @ts-ignore
                         const thoughtDate = window.moment(dateRaw, this.plugin.settings.dateFormat);
-                        if (this.thoughtsFilterDate === 'today' && dateRaw !== today) continue;
-                        if (this.thoughtsFilterDate === 'this-week' && !thoughtDate.isBetween(startOfWeek, endOfWeek, 'day', '[]')) continue;
+                        if (this.thoughtsFilterDate === 'today' && dateRaw !== today) return;
+                        if (this.thoughtsFilterDate === 'this-week' && !thoughtDate.isBetween(startOfWeek, endOfWeek, 'day', '[]')) return;
                         if (this.thoughtsFilterDate === 'custom') {
                             // @ts-ignore
                             const startMoment = window.moment(this.thoughtsFilterDateStart, 'YYYY-MM-DD').startOf('day');
                             // @ts-ignore
                             const endMoment = window.moment(this.thoughtsFilterDateEnd, 'YYYY-MM-DD').endOf('day');
-                            if (!thoughtDate.isBetween(startMoment, endMoment, 'day', '[]')) continue;
+                            if (!thoughtDate.isBetween(startMoment, endMoment, 'day', '[]')) return;
                         }
                     }
-
-                    await this.renderThoughtRow(line, i, timelineContainer, file.path);
-                    count++;
                 }
+
+                await this.renderThoughtRow(entry, timelineContainer, file.path, level);
+                count++;
+
+                if (entry.children.length > 0 && !this.collapsedThreads.has(entry.id)) {
+                    // Sort children by modification time ascending (oldest first in thread) or descending?
+                    // Usually threads are chronological. Let's keep capture order for children.
+                    for (const child of entry.children) {
+                        await renderRecursive(child, level + 1);
+                    }
+                }
+            };
+
+            for (const root of roots) {
+                await renderRecursive(root, 0);
             }
+
             if (count === 0) {
                 this.reviewThoughtsContainer.empty();
                 this.reviewThoughtsContainer.createEl('p', { text: 'No thoughts matching filters.', attr: { style: 'color: var(--text-muted);' } });
             }
         } catch (error) {
+            console.error(error);
             this.reviewThoughtsContainer.createEl('p', { text: 'Error loading thoughts.', attr: { style: 'color: var(--text-error);' } });
         }
     }
@@ -1252,7 +1438,48 @@ class MinaView extends ItemView {
                     await vault.modify(file, lines.join('\n'));
                     new Notice('Deleted successfully');
                 } else {
-                    lines[lineIndex] = newText;
+                    // Update Modification Time in the row itself
+                    const parts = newText.split('|');
+                    // @ts-ignore
+                    const dateCol = ` [[${window.moment().format(this.plugin.settings.dateFormat)}]] `;
+                    // @ts-ignore
+                    const timeCol = ` ${window.moment().format(this.plugin.settings.timeFormat)} `;
+                    
+                    let parentId = '';
+                    if (isTask) {
+                        if (parts.length >= 9) { // 8-column schema
+                            parts[4] = dateCol;
+                            parts[5] = timeCol;
+                        }
+                    } else {
+                        if (parts.length >= 9) { // 8-column schema
+                            parts[5] = dateCol;
+                            parts[6] = timeCol;
+                            parentId = parts[2].trim();
+                        }
+                    }
+                    lines[lineIndex] = parts.join('|');
+
+                    // Bubble up modification time to parents if it's a thought
+                    if (!isTask && parentId) {
+                        let currentParentToFind = parentId;
+                        while (currentParentToFind) {
+                            let found = false;
+                            for (let i = 2; i < lines.length; i++) {
+                                const rowParts = lines[i].split('|');
+                                if (rowParts.length >= 2 && rowParts[1].trim() === currentParentToFind) {
+                                    rowParts[5] = dateCol;
+                                    rowParts[6] = timeCol;
+                                    lines[i] = rowParts.join('|');
+                                    currentParentToFind = rowParts[2].trim(); // Move to grandparent
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) break;
+                        }
+                    }
+
                     await vault.modify(file, lines.join('\n'));
                     new Notice('Updated successfully');
                 }
@@ -1312,7 +1539,12 @@ class MinaView extends ItemView {
         let dueDateRaw = '';
         let contextStr = '';
 
-        if (parts.length >= 7) {
+        if (parts.length >= 9) { // 8-column schema
+            dueDateRaw = parts[6].trim().replace(/[\[\]]/g, '');
+            textToRender = parts[7]?.trim() || '';
+            contentIndex = 7;
+            contextStr = (parts[8] || '').trim();
+        } else if (parts.length >= 7) { // 6-column schema
             dueDateRaw = parts.length >= 8 ? parts[4].trim().replace(/[\[\]]/g, '') : '';
             textToRender = parts[5]?.trim() || '';
             contentIndex = 5;
@@ -1429,21 +1661,40 @@ class MinaView extends ItemView {
         editBtn.addEventListener('click', startEdit);
     }
 
-    async renderThoughtRow(line: string, lineIndex: number, container: HTMLElement, filePath: string) {
+    async renderThoughtRow(entry: ThoughtEntry, container: HTMLElement, filePath: string, level: number = 0) {
         const itemEl = container.createEl('div', {
-            attr: { style: 'margin-bottom: 8px; padding-bottom: 8px; display: flex; align-items: flex-start;' }
+            attr: { style: `margin-bottom: 8px; padding-bottom: 8px; display: flex; align-items: flex-start; ${level > 0 ? `margin-left: ${level * 24}px; border-left: 2px solid var(--background-modifier-border); padding-left: 12px;` : ''}` }
         });
-        const parts = line.split('|');
-        const dateStr = parts[1].trim();
-        const timeStr = parts[2].trim();
-        const thoughtText = parts[3]?.trim() || '';
-        const contextStr = parts[4]?.trim() || '';
 
-        // Thinking Icon Container (replaces toggle)
-        const iconContainer = itemEl.createEl('div', { 
-            attr: { style: 'width: 36px; margin-right: 12px; margin-top: 2px; flex-shrink: 0; display: flex; justify-content: center; align-items: flex-start; font-size: 1.2em; opacity: 0.8;' } 
+        // Icon Section (Collapse + Thinking Icon)
+        const iconSection = itemEl.createEl('div', { 
+            attr: { style: 'width: 36px; margin-right: 12px; margin-top: 2px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 4px;' } 
         });
-        iconContainer.createSpan({ text: '💭' });
+
+        if (entry.children.length > 0) {
+            const isCollapsed = this.collapsedThreads.has(entry.id);
+            const collapseBtn = iconSection.createEl('div', { 
+                text: isCollapsed ? '▶' : '▼', 
+                attr: { style: 'cursor: pointer; font-size: 0.7em; opacity: 0.5; transition: 0.2s;' } 
+            });
+            collapseBtn.addEventListener('click', () => {
+                if (isCollapsed) this.collapsedThreads.delete(entry.id);
+                else this.collapsedThreads.add(entry.id);
+                this.updateReviewThoughtsList();
+            });
+        }
+
+        if (level === 0) {
+            const iconContainer = iconSection.createEl('div', { attr: { style: 'font-size: 1.2em; opacity: 0.8;' } });
+            iconContainer.createSpan({ text: '💭' });
+        }
+
+        if (entry.children.length > 0) {
+            iconSection.createEl('div', { 
+                text: `${entry.children.length}`, 
+                attr: { style: 'font-size: 0.65em; color: var(--text-accent); font-weight: bold; background: var(--background-secondary-alt); padding: 1px 4px; border-radius: 4px; margin-top: 2px;' } 
+            });
+        }
 
         const contentDiv = itemEl.createEl('div', { attr: { style: 'flex-grow: 1; display: flex; flex-direction: column; min-width: 0;' } });
 
@@ -1451,7 +1702,7 @@ class MinaView extends ItemView {
         const mainContentRow = contentDiv.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 4px;' } });
 
         const renderTarget = mainContentRow.createEl('div', { cls: 'mina-card', attr: { style: 'cursor: text; font-size: 0.95em; line-height: 1.4; color: var(--text-normal); word-break: break-word; flex-grow: 1;' } });
-        await MarkdownRenderer.render(this.plugin.app, thoughtText, renderTarget, filePath, this);
+        await MarkdownRenderer.render(this.plugin.app, entry.text, renderTarget, filePath, this);
 
         // Remove default margins from the paragraph generated by MarkdownRenderer
         const firstP = renderTarget.querySelector('p');
@@ -1461,20 +1712,39 @@ class MinaView extends ItemView {
         }
 
         const actionsDiv = mainContentRow.createEl('div', { attr: { style: 'display: flex; gap: 8px; align-items: center; flex-shrink: 0; margin-top: 2px;' } });
-        const editBtn = actionsDiv.createSpan({ text: '✏️', attr: { style: 'cursor: pointer; font-size: 0.85em; opacity: 0.7; transition: opacity 0.2s;' } });
-                const deleteBtn = actionsDiv.createSpan({ text: '🗑️', attr: { style: 'cursor: pointer; font-size: 0.85em; opacity: 0.7; transition: opacity 0.2s;' } });
         
+        const replyBtn = actionsDiv.createSpan({ text: '💬', attr: { style: 'cursor: pointer; font-size: 0.85em; opacity: 0.7; transition: opacity 0.2s;' } });
+        const editBtn = actionsDiv.createSpan({ text: '✏️', attr: { style: 'cursor: pointer; font-size: 0.85em; opacity: 0.7; transition: opacity 0.2s;' } });
+        
+        let deleteBtn: HTMLElement | null = null;
+        if (entry.children.length === 0) {
+            deleteBtn = actionsDiv.createSpan({ text: '🗑️', attr: { style: 'cursor: pointer; font-size: 0.85em; opacity: 0.7; transition: opacity 0.2s;' } });
+            deleteBtn.addEventListener('mouseenter', () => deleteBtn!.style.opacity = '1');
+            deleteBtn.addEventListener('mouseleave', () => deleteBtn!.style.opacity = '0.7');
+            deleteBtn.addEventListener('click', async () => {
+                const modal = new ConfirmModal(this.plugin.app, 'Delete this thought?', async () => {
+                    await this.updateLineInFile(false, entry.lineIndex, null);
+                    await this.updatePreview();
+                });
+                modal.open();
+            });
+        }
+        
+        replyBtn.addEventListener('mouseenter', () => replyBtn.style.opacity = '1');
+        replyBtn.addEventListener('mouseleave', () => replyBtn.style.opacity = '0.7');
         editBtn.addEventListener('mouseenter', () => editBtn.style.opacity = '1');
         editBtn.addEventListener('mouseleave', () => editBtn.style.opacity = '0.7');
-        deleteBtn.addEventListener('mouseenter', () => deleteBtn.style.opacity = '1');
-        deleteBtn.addEventListener('mouseleave', () => deleteBtn.style.opacity = '0.7');
 
-        deleteBtn.addEventListener('click', async () => {
-            const modal = new ConfirmModal(this.plugin.app, 'Delete this thought?', async () => {
-                await this.updateLineInFile(false, lineIndex, null);
-                await this.updatePreview();
-            });
-            modal.open();
+        replyBtn.addEventListener('click', () => {
+            this.replyToId = entry.id;
+            this.replyToText = entry.text.length > 50 ? entry.text.substring(0, 50) + '...' : entry.text;
+            this.showCaptureInThoughts = true;
+            this.renderView();
+            // Focus textarea
+            setTimeout(() => {
+                const ta = this.containerEl.querySelector('textarea');
+                if (ta) ta.focus();
+            }, 100);
         });
 
         // Footer: Context (Lower Left) + Capture Date (Lower Right)
@@ -1482,30 +1752,44 @@ class MinaView extends ItemView {
 
         const lowerLeftContainer = footerDiv.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 10px; font-size: 0.75em; color: var(--text-muted);' } });
 
-        if (contextStr) {
+        if (entry.context) {
             lowerLeftContainer.createSpan({ 
-                text: contextStr, 
+                text: entry.context, 
                 attr: { style: 'color: var(--text-accent); font-weight: 500; background-color: var(--background-secondary-alt); padding: 2px 6px; border-radius: 4px;' } 
             });
         }
 
         const captureDateContainer = footerDiv.createEl('div', { attr: { style: 'font-size: 0.65em; color: var(--text-muted); opacity: 0.7;' } });
-        captureDateContainer.createSpan({ text: `${dateStr.replace(/[\[\]]/g, '')} ${timeStr}` });
+        captureDateContainer.createSpan({ text: `${entry.date.replace(/[\[\]]/g, '')} ${entry.time}` });
 
         const startEdit = () => {
             const modal = new EditEntryModal(
                 this.plugin.app,
                 this.plugin,
-                thoughtText,
-                contextStr,
+                entry.text,
+                entry.context,
                 null,
                 false,
                 async (newText: string, newContext: string, _: string | null) => {
+                    const { vault } = this.plugin.app;
+                    const folderPath = this.plugin.settings.captureFolder.trim();
+                    const fileName = this.plugin.settings.captureFilePath.trim();
+                    const fullPath = folderPath && folderPath !== '/' ? `${folderPath}/${fileName}` : fileName;
+                    const file = vault.getAbstractFileByPath(fullPath) as TFile;
+                    if (!file) return;
+
+                    const content = await vault.read(file);
+                    const lines = content.split('\n');
+                    const parts = lines[entry.lineIndex].split('|');
+                    
                     let changed = false;
-                    if (newText !== thoughtText.replace(/\n/g, '<br>')) { parts[3] = ` ${newText} `; changed = true; }
-                    if (newContext !== contextStr) { parts[4] = ` ${newContext} `; changed = true; }
+                    const textIndex = parts.length >= 8 ? 5 : 3;
+                    const ctxIndex = parts.length >= 8 ? 6 : 4;
+
+                    if (newText !== entry.text.replace(/\n/g, '<br>')) { parts[textIndex] = ` ${newText} `; changed = true; }
+                    if (newContext !== entry.context) { parts[ctxIndex] = ` ${newContext} `; changed = true; }
                     if (changed) {
-                        await this.updateLineInFile(false, lineIndex, parts.join('|'));
+                        await this.updateLineInFile(false, entry.lineIndex, parts.join('|'));
                         await this.updatePreview();
                     }
                 }
