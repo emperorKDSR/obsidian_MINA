@@ -557,6 +557,7 @@ class MinaView extends ItemView {
     tasksFilterDateStart: string = '';
     tasksFilterDateEnd: string = '';
     showPreviousTasks: boolean = true;
+    showCaptureInTasks: boolean = true;
 
     // Thoughts Review Filters
     thoughtsFilterContext: string = 'all';
@@ -646,7 +647,7 @@ class MinaView extends ItemView {
         }
     }
 
-    renderCaptureMode(container: HTMLElement, isThoughtsOnly: boolean = false) {
+    renderCaptureMode(container: HTMLElement, isThoughtsOnly: boolean = false, isTasksOnly: boolean = false) {
         const inputSection = container.createEl('div', { attr: { style: 'flex-shrink: 0; margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-end;' } });
         const textAreaWrapper = inputSection.createEl('div', { attr: { style: 'flex-grow: 1;' } });
         const textArea = textAreaWrapper.createEl('textarea', {
@@ -758,7 +759,7 @@ class MinaView extends ItemView {
         };
         renderContextTags();
 
-        if (!isThoughtsOnly) {
+        if (!isThoughtsOnly && !isTasksOnly) {
             const taskToggleDiv = controlsDiv.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px; margin-left: auto;' } });
             const taskCheckbox = taskToggleDiv.createEl('input', { type: 'checkbox', attr: { id: 'is-task-checkbox' } });
             taskCheckbox.checked = this.isTask;
@@ -780,6 +781,16 @@ class MinaView extends ItemView {
                 this.isTask = (e.target as HTMLInputElement).checked; 
                 dueDateContainer.style.display = this.isTask ? 'flex' : 'none';
             });
+        } else if (isTasksOnly) {
+            this.isTask = true;
+            const taskControlsDiv = controlsDiv.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px; margin-left: auto;' } });
+            taskControlsDiv.createSpan({ text: 'Due:', attr: { style: 'font-size: 0.85em; color: var(--text-muted);' } });
+            const datePicker = taskControlsDiv.createEl('input', { 
+                type: 'date', 
+                attr: { style: 'font-size: 0.85em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;' } 
+            });
+            datePicker.value = this.dueDate;
+            datePicker.addEventListener('change', (e) => { this.dueDate = (e.target as HTMLInputElement).value; });
         } else {
             this.isTask = false;
         }
@@ -802,31 +813,6 @@ class MinaView extends ItemView {
     renderReviewTasksMode(container: HTMLElement) {
         const headerSection = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 15px; background-color: var(--background-secondary); padding: 10px; border-radius: 5px;' } });
         
-        const addBtn = headerSection.createEl('button', { 
-            text: '+ Add Task', 
-            attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); font-size: 0.85em; padding: 4px 10px;' } 
-        });
-
-        addBtn.addEventListener('click', () => {
-            const modal = new EditEntryModal(
-                this.plugin.app,
-                this.plugin,
-                '', // initialText
-                '', // initialContext
-                // @ts-ignore
-                window.moment().format('YYYY-MM-DD'), // initialDueDate (default to today)
-                true, // isTask
-                async (newText: string, newContexts: string, newDueDate: string | null) => {
-                    const contexts = newContexts.split('#').map(c => c.trim()).filter(c => c.length > 0);
-                    await this.plugin.appendCapture(newText.replace(/<br>/g, '\n'), contexts, true, newDueDate || undefined);
-                    await this.updateReviewTasksList();
-                },
-                'Add Task',
-                true // stayOpen
-            );
-            modal.open();
-        });
-
         const filterBar = headerSection.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 10px; align-items: center;' } });
         
         const statusSel = filterBar.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px;' }});
@@ -894,6 +880,32 @@ class MinaView extends ItemView {
         customDateEndInput.addEventListener('change', (e) => {
             this.tasksFilterDateEnd = (e.target as HTMLInputElement).value;
             this.updateReviewTasksList();
+        });
+
+        // Toggle Capture
+        const captureToggleContainer = headerSection.createEl('div', { attr: { style: 'margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;' } });
+        captureToggleContainer.createSpan({ text: 'Capture' });
+        
+        const captureToggleLabel = captureToggleContainer.createEl('label', { 
+            attr: { style: 'position: relative; display: inline-block; width: 30px; height: 16px; cursor: pointer;' } 
+        });
+        const captureCb = captureToggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
+        captureCb.checked = this.showCaptureInTasks;
+        const captureSlider = captureToggleLabel.createEl('span', { 
+            attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${this.showCaptureInTasks ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 16px;` } 
+        });
+        const captureKnob = captureToggleLabel.createEl('span', { 
+            attr: { style: `position: absolute; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${this.showCaptureInTasks ? 'translateX(14px)' : 'translateX(0)'};` } 
+        });
+
+        const captureContainer = container.createEl('div', { attr: { style: `flex-shrink: 0; display: ${this.showCaptureInTasks ? 'block' : 'none'};` } });
+        this.renderCaptureMode(captureContainer, false, true);
+
+        captureCb.addEventListener('change', (e) => {
+            this.showCaptureInTasks = (e.target as HTMLInputElement).checked;
+            captureSlider.style.backgroundColor = this.showCaptureInTasks ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
+            captureKnob.style.transform = this.showCaptureInTasks ? 'translateX(14px)' : 'translateX(0)';
+            captureContainer.style.display = this.showCaptureInTasks ? 'block' : 'none';
         });
 
         this.reviewTasksContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; overflow-y: auto; padding: 5px;' } });
