@@ -127,7 +127,7 @@ export default class MinaPlugin extends Plugin {
         this.settings = Object.assign({}, DEFAULT_SETTINGS);
 
         if (!loadedData || Object.keys(loadedData).length === 0) {
-            this.settings.contexts = ['work', 'personal', 'games', 'finances'];
+            this.settings.contexts = [];
             this.settingsInitialized = true;
         } else {
             if (loadedData.captureFolder !== undefined) this.settings.captureFolder = loadedData.captureFolder;
@@ -564,6 +564,7 @@ class MinaView extends ItemView {
     thoughtsFilterDateStart: string = '';
     thoughtsFilterDateEnd: string = '';
     showPreviousThoughts: boolean = true;
+    showCaptureInThoughts: boolean = true;
 
     reviewTasksContainer: HTMLElement;
     reviewThoughtsContainer: HTMLElement;
@@ -576,6 +577,8 @@ class MinaView extends ItemView {
         this.isTask = false;
         // @ts-ignore
         this.dueDate = window.moment().format('YYYY-MM-DD');
+        this.showPreviousThoughts = true;
+        this.showCaptureInThoughts = true;
         this.selectedContexts = Array.isArray(this.plugin.settings.selectedContexts) ? [...this.plugin.settings.selectedContexts] : [];
     }
 
@@ -643,16 +646,14 @@ class MinaView extends ItemView {
         }
     }
 
-    renderCaptureMode(container: HTMLElement) {
-        const headerSection = container.createEl('div', { attr: { style: 'flex-shrink: 0;' } });
-        headerSection.createEl('h2', {text: 'Capture'});
-
-        const inputSection = container.createEl('div', { attr: { style: 'flex-shrink: 0; margin-bottom: 10px;' } });
-        const textArea = inputSection.createEl('textarea', {
+    renderCaptureMode(container: HTMLElement, isThoughtsOnly: boolean = false) {
+        const inputSection = container.createEl('div', { attr: { style: 'flex-shrink: 0; margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-end;' } });
+        const textAreaWrapper = inputSection.createEl('div', { attr: { style: 'flex-grow: 1;' } });
+        const textArea = textAreaWrapper.createEl('textarea', {
             attr: {
                 placeholder: 'Enter your thought, task, or paste/drop an image...',
-                rows: '5',
-                style: 'width: 100%; font-family: var(--font-text); resize: vertical;'
+                rows: '3',
+                style: 'width: 100%; font-family: var(--font-text); resize: vertical; display: block;'
             }
         });
         textArea.value = this.content;
@@ -709,8 +710,12 @@ class MinaView extends ItemView {
             if (e.dataTransfer && e.dataTransfer.files.length > 0) { e.preventDefault(); await this.handleFiles(e.dataTransfer.files); }
         });
 
+        const submitBtn = inputSection.createEl('button', { text: 'Sync', attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); padding: 8px 16px; height: 100%; min-height: 40px;' } });
+        
         // Contexts
-        const contextsDiv = container.createEl('div', { attr: { style: 'margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; flex-shrink: 0;' } });
+        const controlsDiv = container.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; margin-bottom: 15px;' } });
+        
+        const contextsDiv = controlsDiv.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 5px; align-items: center;' } });
         const renderContextTags = () => {
             contextsDiv.empty();
             this.plugin.settings.contexts.forEach(ctx => {
@@ -753,35 +758,41 @@ class MinaView extends ItemView {
         };
         renderContextTags();
 
-        const controlsDiv = container.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; margin-bottom: 10px;' } });
-        
-        const taskToggleDiv = controlsDiv.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px;' } });
-        const taskCheckbox = taskToggleDiv.createEl('input', { type: 'checkbox', attr: { id: 'is-task-checkbox' } });
-        taskCheckbox.checked = this.isTask;
-        taskToggleDiv.createEl('label', { attr: { for: 'is-task-checkbox', style: 'cursor: pointer;' }, text: 'As Task' });
+        if (!isThoughtsOnly) {
+            const taskToggleDiv = controlsDiv.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px; margin-left: auto;' } });
+            const taskCheckbox = taskToggleDiv.createEl('input', { type: 'checkbox', attr: { id: 'is-task-checkbox' } });
+            taskCheckbox.checked = this.isTask;
+            taskToggleDiv.createEl('label', { attr: { for: 'is-task-checkbox', style: 'cursor: pointer;' }, text: 'As Task' });
 
-        // Due Date Section (only for tasks)
-        const dueDateContainer = taskToggleDiv.createEl('div', { 
-            attr: { style: `display: ${this.isTask ? 'flex' : 'none'}; align-items: center; gap: 5px; margin-left: 10px;` } 
-        });
-        dueDateContainer.createSpan({ text: 'Due:', attr: { style: 'font-size: 0.85em; color: var(--text-muted);' } });
-        const datePicker = dueDateContainer.createEl('input', { 
-            type: 'date', 
-            attr: { style: 'font-size: 0.85em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;' } 
-        });
-        datePicker.value = this.dueDate;
-        datePicker.addEventListener('change', (e) => { this.dueDate = (e.target as HTMLInputElement).value; });
+            // Due Date Section (only for tasks)
+            const dueDateContainer = taskToggleDiv.createEl('div', { 
+                attr: { style: `display: ${this.isTask ? 'flex' : 'none'}; align-items: center; gap: 5px; margin-left: 10px;` } 
+            });
+            dueDateContainer.createSpan({ text: 'Due:', attr: { style: 'font-size: 0.85em; color: var(--text-muted);' } });
+            const datePicker = dueDateContainer.createEl('input', { 
+                type: 'date', 
+                attr: { style: 'font-size: 0.85em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;' } 
+            });
+            datePicker.value = this.dueDate;
+            datePicker.addEventListener('change', (e) => { this.dueDate = (e.target as HTMLInputElement).value; });
 
-        taskCheckbox.addEventListener('change', (e) => { 
-            this.isTask = (e.target as HTMLInputElement).checked; 
-            dueDateContainer.style.display = this.isTask ? 'flex' : 'none';
-        });
+            taskCheckbox.addEventListener('change', (e) => { 
+                this.isTask = (e.target as HTMLInputElement).checked; 
+                dueDateContainer.style.display = this.isTask ? 'flex' : 'none';
+            });
+        } else {
+            this.isTask = false;
+        }
 
-        const submitBtn = controlsDiv.createEl('button', { text: 'Sync', attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent);' } });
         const submitAction = async () => {
             if (this.content.trim().length > 0) {
                 await this.plugin.appendCapture(this.content.trim(), this.selectedContexts, this.isTask, this.isTask ? this.dueDate : undefined);
                 this.content = ''; textArea.value = '';
+                if (this.activeTab === 'review-tasks') {
+                    await this.updateReviewTasksList();
+                } else if (this.activeTab === 'review-thoughts') {
+                    await this.updateReviewThoughtsList();
+                }
             } else { new Notice('Please enter some text'); }
         };
         submitBtn.addEventListener('click', submitAction);
@@ -892,30 +903,6 @@ class MinaView extends ItemView {
     renderReviewThoughtsMode(container: HTMLElement) {
         const headerSection = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 15px; background-color: var(--background-secondary); padding: 10px; border-radius: 5px;' } });
         
-        const addBtn = headerSection.createEl('button', { 
-            text: '+ Add Thought', 
-            attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); font-size: 0.85em; padding: 4px 10px;' } 
-        });
-
-        addBtn.addEventListener('click', () => {
-            const modal = new EditEntryModal(
-                this.plugin.app,
-                this.plugin,
-                '', // initialText
-                '', // initialContext
-                null, // initialDueDate
-                false, // isTask
-                async (newText: string, newContexts: string, _: string | null) => {
-                    const contexts = newContexts.split('#').map(c => c.trim()).filter(c => c.length > 0);
-                    await this.plugin.appendCapture(newText.replace(/<br>/g, '\n'), contexts, false);
-                    await this.updateReviewThoughtsList();
-                },
-                'Add Thought',
-                true // stayOpen
-            );
-            modal.open();
-        });
-
         const filterBar = headerSection.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 10px; align-items: center;' } });
         
         const contextSel = filterBar.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px;' }});
@@ -978,27 +965,56 @@ class MinaView extends ItemView {
             this.updateReviewThoughtsList();
         });
 
-        // Toggle Previous Entries
-        const toggleContainer = headerSection.createEl('div', { attr: { style: 'margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;' } });
-        toggleContainer.createSpan({ text: 'History' });
+        // Toggle Group (History + Capture)
+        const toggleGroup = headerSection.createEl('div', { attr: { style: 'margin-left: auto; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;' } });
+
+        // Toggle History
+        const historyToggleContainer = toggleGroup.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;' } });
+        historyToggleContainer.createSpan({ text: 'History' });
         
-        const toggleLabel = toggleContainer.createEl('label', { 
+        const historyToggleLabel = historyToggleContainer.createEl('label', { 
             attr: { style: 'position: relative; display: inline-block; width: 30px; height: 16px; cursor: pointer;' } 
         });
-        const cb = toggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
-        cb.checked = this.showPreviousThoughts;
-        const slider = toggleLabel.createEl('span', { 
+        const historyCb = historyToggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
+        historyCb.checked = this.showPreviousThoughts;
+        const historySlider = historyToggleLabel.createEl('span', { 
             attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${this.showPreviousThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 16px;` } 
         });
-        const knob = toggleLabel.createEl('span', { 
+        const historyKnob = historyToggleLabel.createEl('span', { 
             attr: { style: `position: absolute; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${this.showPreviousThoughts ? 'translateX(14px)' : 'translateX(0)'};` } 
         });
 
-        cb.addEventListener('change', (e) => {
+        historyCb.addEventListener('change', (e) => {
             this.showPreviousThoughts = (e.target as HTMLInputElement).checked;
-            slider.style.backgroundColor = this.showPreviousThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
-            knob.style.transform = this.showPreviousThoughts ? 'translateX(14px)' : 'translateX(0)';
+            historySlider.style.backgroundColor = this.showPreviousThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
+            historyKnob.style.transform = this.showPreviousThoughts ? 'translateX(14px)' : 'translateX(0)';
             this.updateReviewThoughtsList();
+        });
+
+        // Toggle Capture
+        const captureToggleContainer = toggleGroup.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;' } });
+        captureToggleContainer.createSpan({ text: 'Capture' });
+        
+        const captureToggleLabel = captureToggleContainer.createEl('label', { 
+            attr: { style: 'position: relative; display: inline-block; width: 30px; height: 16px; cursor: pointer;' } 
+        });
+        const captureCb = captureToggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
+        captureCb.checked = this.showCaptureInThoughts;
+        const captureSlider = captureToggleLabel.createEl('span', { 
+            attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${this.showCaptureInThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 16px;` } 
+        });
+        const captureKnob = captureToggleLabel.createEl('span', { 
+            attr: { style: `position: absolute; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${this.showCaptureInThoughts ? 'translateX(14px)' : 'translateX(0)'};` } 
+        });
+
+        const captureContainer = container.createEl('div', { attr: { style: `flex-shrink: 0; display: ${this.showCaptureInThoughts ? 'block' : 'none'};` } });
+        this.renderCaptureMode(captureContainer, true);
+
+        captureCb.addEventListener('change', (e) => {
+            this.showCaptureInThoughts = (e.target as HTMLInputElement).checked;
+            captureSlider.style.backgroundColor = this.showCaptureInThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
+            captureKnob.style.transform = this.showCaptureInThoughts ? 'translateX(14px)' : 'translateX(0)';
+            captureContainer.style.display = this.showCaptureInThoughts ? 'block' : 'none';
         });
 
         this.reviewThoughtsContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; overflow-y: auto; padding: 5px;' } });
