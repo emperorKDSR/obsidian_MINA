@@ -265,6 +265,8 @@ export class EditEntryModal extends Modal {
     isTask: boolean;
     plugin: MinaPlugin;
     onSave: (newText: string, newContexts: string, newDueDate: string | null) => void;
+    customTitle?: string;
+    stayOpen: boolean;
 
     constructor(
         app: App, 
@@ -273,7 +275,9 @@ export class EditEntryModal extends Modal {
         initialContext: string, 
         initialDueDate: string | null, 
         isTask: boolean, 
-        onSave: (newText: string, newContexts: string, newDueDate: string | null) => void
+        onSave: (newText: string, newContexts: string, newDueDate: string | null) => void,
+        customTitle?: string,
+        stayOpen: boolean = false
     ) {
         super(app);
         this.plugin = plugin;
@@ -282,6 +286,8 @@ export class EditEntryModal extends Modal {
         this.initialDueDate = initialDueDate;
         this.isTask = isTask;
         this.onSave = onSave;
+        this.customTitle = customTitle;
+        this.stayOpen = stayOpen;
     }
 
     onOpen() {
@@ -289,12 +295,63 @@ export class EditEntryModal extends Modal {
         contentEl.empty();
         
         if (Platform.isMobile) {
-            modalEl.style.marginTop = '5vh';
-            modalEl.style.marginBottom = 'auto';
+            modalEl.style.marginTop = '2vh';
+            modalEl.style.marginBottom = '2vh';
+            modalEl.style.width = '95vw';
+            modalEl.style.maxWidth = '95vw';
+            modalEl.style.maxHeight = '90vh';
             modalEl.style.alignSelf = 'flex-start';
+            contentEl.style.padding = '10px';
         }
         
-        contentEl.createEl('h3', { text: this.isTask ? 'Edit Task' : 'Edit Thought', attr: { style: 'margin-top: 0;' } });
+        const titleText = this.customTitle || (this.isTask ? 'Edit Task' : 'Edit Thought');
+        const header = contentEl.createEl('h3', { text: titleText, attr: { style: 'margin-top: 0; cursor: move; user-select: none;' } });
+
+        // --- Movable Logic ---
+        let isDragging = false;
+        let startX: number, startY: number;
+        let initialLeft: number, initialTop: number;
+
+        header.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            const rect = modalEl.getBoundingClientRect();
+            initialLeft = rect.left;
+            initialTop = rect.top;
+            modalEl.style.position = 'fixed';
+            modalEl.style.margin = '0';
+            modalEl.style.left = initialLeft + 'px';
+            modalEl.style.top = initialTop + 'px';
+            e.preventDefault();
+        });
+
+        const onMouseMove = (e: MouseEvent) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            modalEl.style.left = (initialLeft + dx) + 'px';
+            modalEl.style.top = (initialTop + dy) + 'px';
+        };
+
+        const onMouseUp = () => { isDragging = false; };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+        
+        // Define cleanup
+        const cleanupDrag = () => {
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+        };
+
+        // Wrap onClose to ensure cleanup
+        const originalOnClose = this.onClose.bind(this);
+        this.onClose = () => {
+            cleanupDrag();
+            originalOnClose();
+        };
+        // ---------------------
 
         const textArea = contentEl.createEl('textarea', {
             text: this.initialText,
@@ -325,6 +382,52 @@ export class EditEntryModal extends Modal {
                 }
             }
             currentTextValue = val;
+        });
+
+        const handleModalFiles = async (files: FileList) => {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (!file || file.size === 0) continue;
+                const isImage = file.type.startsWith('image/');
+                const hasValidName = file.name && file.name !== 'image.png' && file.name.trim().length > 0;
+                if (isImage || hasValidName) {
+                    try {
+                        const arrayBuffer = await file.arrayBuffer();
+                        const extension = file.name && file.name.includes('.') ? file.name.split('.').pop() : (file.type.split('/')[1] || 'png');
+                        // @ts-ignore
+                        const baseName = (file.name && file.name.includes('.')) ? file.name.substring(0, file.name.lastIndexOf('.')) : `Pasted image ${window.moment().format('YYYYMMDDHHmmss')}`;
+                        const fileName = `${baseName}.${extension}`;
+                        const attachmentPath = await this.plugin.app.fileManager.getAvailablePathForAttachment(fileName);
+                        const newFile = await this.plugin.app.vault.createBinary(attachmentPath, arrayBuffer);
+                        const isImgExt = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg', 'webp'].includes(extension?.toLowerCase() || '');
+                        const markdownLink = isImgExt ? `![[${newFile.name}]]` : `[[${newFile.name}]]`;
+                        
+                        const startPos = textArea.selectionStart;
+                        const endPos = textArea.selectionEnd;
+                        textArea.value = textArea.value.substring(0, startPos) + markdownLink + textArea.value.substring(endPos);
+                        currentTextValue = textArea.value;
+                        textArea.selectionStart = textArea.selectionEnd = startPos + markdownLink.length;
+                        new Notice(`Attached ${newFile.name}`);
+                    } catch (err) { new Notice('Failed to save attachment.'); }
+                }
+            }
+        };
+
+        textArea.addEventListener('paste', async (e: ClipboardEvent) => {
+            e.stopPropagation();
+            if (e.clipboardData && e.clipboardData.files.length > 0) {
+                let hasImage = false;
+                for (let i = 0; i < e.clipboardData.items.length; i++) {
+                    if (e.clipboardData.items[i].type.startsWith('image/')) { hasImage = true; break; }
+                }
+                if (hasImage) { e.preventDefault(); await handleModalFiles(e.clipboardData.files); }
+            }
+        });
+
+        textArea.addEventListener('dragover', (e) => { e.stopPropagation(); e.preventDefault(); });
+        textArea.addEventListener('drop', async (e: DragEvent) => {
+            e.stopPropagation();
+            if (e.dataTransfer && e.dataTransfer.files.length > 0) { e.preventDefault(); await handleModalFiles(e.dataTransfer.files); }
         });
 
         // Contexts Selector
@@ -389,7 +492,14 @@ export class EditEntryModal extends Modal {
             const newContextString = this.initialContexts.map(c => `#${c}`).join(' ');
             const newDate = dateInput ? dateInput.value : null;
             this.onSave(newText, newContextString, newDate);
-            this.close();
+            
+            if (this.stayOpen) {
+                textArea.value = '';
+                textArea.focus();
+                new Notice(this.isTask ? 'Task added!' : 'Thought added!');
+            } else {
+                this.close();
+            }
         };
 
         saveBtn.addEventListener('click', saveChanges);
@@ -403,28 +513,58 @@ export class EditEntryModal extends Modal {
     }
 }
 
+class ConfirmModal extends Modal {
+    message: string;
+    onConfirm: () => void;
+
+    constructor(app: App, message: string, onConfirm: () => void) {
+        super(app);
+        this.message = message;
+        this.onConfirm = onConfirm;
+    }
+
+    onOpen() {
+        const { contentEl } = this;
+        contentEl.empty();
+        contentEl.createEl('p', { text: this.message });
+        const btnContainer = contentEl.createEl('div', { attr: { style: 'display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;' } });
+        const yesBtn = btnContainer.createEl('button', { text: 'Yes', attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); padding: 4px 15px; border-radius: 4px;' } });
+        const noBtn = btnContainer.createEl('button', { text: 'Cancel', attr: { style: 'padding: 4px 15px; border-radius: 4px;' } });
+        
+        yesBtn.addEventListener('click', () => { 
+            this.onConfirm(); 
+            this.close(); 
+        });
+        noBtn.addEventListener('click', () => this.close());
+    }
+
+    onClose() {
+        this.contentEl.empty();
+    }
+}
+
 class MinaView extends ItemView {
     plugin: MinaPlugin;
     content: string;
     isTask: boolean;
     dueDate: string; // YYYY-MM-DD
-    activeTab: 'capture' | 'review-tasks' | 'review-thoughts' = 'capture';
+    activeTab: 'capture' | 'review-tasks' | 'review-thoughts' = 'review-thoughts';
     
     // Tasks Review Filters
-    tasksFilterStatus: 'all' | 'pending' | 'completed' = 'all';
+    tasksFilterStatus: 'all' | 'pending' | 'completed' = 'pending';
     tasksFilterContext: string = 'all';
-    tasksFilterDate: string = 'all'; // 'all' | 'today' | 'this-week' | 'next-week' | 'overdue' | 'custom'
+    tasksFilterDate: string = 'today'; // 'all' | 'today' | 'this-week' | 'next-week' | 'overdue' | 'custom'
     tasksFilterDateStart: string = '';
     tasksFilterDateEnd: string = '';
+    showPreviousTasks: boolean = true;
 
     // Thoughts Review Filters
     thoughtsFilterContext: string = 'all';
     thoughtsFilterDate: string = 'all'; // 'all' | 'today' | 'this-week' | 'custom'
     thoughtsFilterDateStart: string = '';
     thoughtsFilterDateEnd: string = '';
+    showPreviousThoughts: boolean = true;
 
-    thoughtsPreviewContainer: HTMLElement;
-    tasksPreviewContainer: HTMLElement;
     reviewTasksContainer: HTMLElement;
     reviewThoughtsContainer: HTMLElement;
     selectedContexts: string[];
@@ -445,6 +585,25 @@ class MinaView extends ItemView {
 
     async onOpen() {
         this.renderView();
+
+        // Hide headers for a cleaner standalone window on desktop
+        if (!Platform.isMobile) {
+            const headerEl = this.containerEl.querySelector('.view-header');
+            if (headerEl) {
+                (headerEl as HTMLElement).style.display = 'none';
+            }
+            
+            // Try to hide the tab container if we are the only tab
+            setTimeout(() => {
+                const tabContainer = this.containerEl.closest('.workspace-tabs');
+                if (tabContainer) {
+                    const tabHeader = tabContainer.querySelector('.workspace-tab-header-container');
+                    if (tabHeader) {
+                        (tabHeader as HTMLElement).style.display = 'none';
+                    }
+                }
+            }, 100);
+        }
     }
 
     renderView() {
@@ -456,16 +615,20 @@ class MinaView extends ItemView {
             container.style.flexDirection = 'column';
             container.style.height = '100%';
             container.style.overflow = 'hidden';
+        } else {
+            // Drag handle for desktop
+            const dragHandle = container.createEl('div', { attr: { style: 'height: 14px; width: 100%; -webkit-app-region: drag; flex-shrink: 0; display: flex; justify-content: center; align-items: center; margin-bottom: 8px; cursor: grab;' } });
+            dragHandle.createEl('div', { attr: { style: 'width: 40px; height: 4px; background-color: var(--background-modifier-border); border-radius: 4px;' }});
         }
 
         // --- Navigation Tabs ---
         const nav = container.createEl('div', { attr: { style: 'display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 10px; flex-shrink: 0;' } });
         
-        const captureTab = nav.createEl('button', { 
-            text: 'Capture', 
-            attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'capture' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` } 
+        const reviewThoughtsTab = nav.createEl('button', { 
+            text: 'Thoughts', 
+            attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'review-thoughts' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` } 
         });
-        captureTab.addEventListener('click', () => { this.activeTab = 'capture'; this.renderView(); });
+        reviewThoughtsTab.addEventListener('click', () => { this.activeTab = 'review-thoughts'; this.renderView(); });
 
         const reviewTasksTab = nav.createEl('button', { 
             text: 'Tasks', 
@@ -473,15 +636,7 @@ class MinaView extends ItemView {
         });
         reviewTasksTab.addEventListener('click', () => { this.activeTab = 'review-tasks'; this.renderView(); });
 
-        const reviewThoughtsTab = nav.createEl('button', { 
-            text: 'Thoughts', 
-            attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'review-thoughts' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` } 
-        });
-        reviewThoughtsTab.addEventListener('click', () => { this.activeTab = 'review-thoughts'; this.renderView(); });
-
-        if (this.activeTab === 'capture') {
-            this.renderCaptureMode(container);
-        } else if (this.activeTab === 'review-tasks') {
+        if (this.activeTab === 'review-tasks') {
             this.renderReviewTasksMode(container);
         } else {
             this.renderReviewThoughtsMode(container);
@@ -627,38 +782,50 @@ class MinaView extends ItemView {
             if (this.content.trim().length > 0) {
                 await this.plugin.appendCapture(this.content.trim(), this.selectedContexts, this.isTask, this.isTask ? this.dueDate : undefined);
                 this.content = ''; textArea.value = '';
-                await this.updatePreview();
             } else { new Notice('Please enter some text'); }
         };
         submitBtn.addEventListener('click', submitAction);
         textArea.addEventListener('keydown', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await submitAction(); } });
-
-        const previewRoot = container.createEl('div', { attr: { style: `margin-top: 10px; flex-grow: 1; overflow-y: auto;` } });
-        const tasksSection = previewRoot.createEl('details', { attr: { open: 'true', style: 'margin-bottom: 15px;' } });
-        tasksSection.createEl('summary', { text: 'Recent Tasks', attr: { style: 'font-size: 1.1em; color: var(--text-normal); cursor: pointer;' } });
-        this.tasksPreviewContainer = tasksSection.createEl('div', { attr: { style: 'font-size: 0.9em; padding: 10px; background-color: var(--background-secondary); border-radius: 5px; border: 1px solid var(--background-modifier-border);' } });
-
-        const thoughtsSection = previewRoot.createEl('details', { attr: { open: 'true' } });
-        thoughtsSection.createEl('summary', { text: 'Recent Thoughts', attr: { style: 'font-size: 1.1em; color: var(--text-normal); cursor: pointer;' } });
-        this.thoughtsPreviewContainer = thoughtsSection.createEl('div', { attr: { style: 'font-size: 0.9em; padding: 10px; background-color: var(--background-secondary); border-radius: 5px; border: 1px solid var(--background-modifier-border);' } });
-
-        this.updatePreview();
     }
 
     renderReviewTasksMode(container: HTMLElement) {
-        const headerSection = container.createEl('div', { attr: { style: 'flex-shrink: 0;' } });
-        headerSection.createEl('h2', {text: 'Review Tasks'});
-
-        const filterBar = container.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; flex-shrink: 0; background-color: var(--background-secondary); padding: 10px; border-radius: 5px;' } });
+        const headerSection = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 15px; background-color: var(--background-secondary); padding: 10px; border-radius: 5px;' } });
         
-        const statusSel = filterBar.createEl('select');
+        const addBtn = headerSection.createEl('button', { 
+            text: '+ Add Task', 
+            attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); font-size: 0.85em; padding: 4px 10px;' } 
+        });
+
+        addBtn.addEventListener('click', () => {
+            const modal = new EditEntryModal(
+                this.plugin.app,
+                this.plugin,
+                '', // initialText
+                '', // initialContext
+                // @ts-ignore
+                window.moment().format('YYYY-MM-DD'), // initialDueDate (default to today)
+                true, // isTask
+                async (newText: string, newContexts: string, newDueDate: string | null) => {
+                    const contexts = newContexts.split('#').map(c => c.trim()).filter(c => c.length > 0);
+                    await this.plugin.appendCapture(newText.replace(/<br>/g, '\n'), contexts, true, newDueDate || undefined);
+                    await this.updateReviewTasksList();
+                },
+                'Add Task',
+                true // stayOpen
+            );
+            modal.open();
+        });
+
+        const filterBar = headerSection.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 10px; align-items: center;' } });
+        
+        const statusSel = filterBar.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px;' }});
         [['all', 'All Status'], ['pending', 'Pending'], ['completed', 'Completed']].forEach(([val, label]) => {
             const opt = statusSel.createEl('option', { value: val, text: label });
             if (this.tasksFilterStatus === val) opt.selected = true;
         });
         statusSel.addEventListener('change', (e) => { this.tasksFilterStatus = (e.target as HTMLSelectElement).value as any; this.updateReviewTasksList(); });
 
-        const contextSel = filterBar.createEl('select');
+        const contextSel = filterBar.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px;' }});
         contextSel.createEl('option', { value: 'all', text: 'All Contexts' });
         this.plugin.settings.contexts.forEach(ctx => {
             const opt = contextSel.createEl('option', { value: ctx, text: `#${ctx}` });
@@ -667,7 +834,7 @@ class MinaView extends ItemView {
         contextSel.addEventListener('change', (e) => { this.tasksFilterContext = (e.target as HTMLSelectElement).value; this.updateReviewTasksList(); });
 
         const dateContainer = filterBar.createEl('div', { attr: { style: 'display: flex; gap: 5px; align-items: center; flex-wrap: wrap;' } });
-        const dateSel = dateContainer.createEl('select');
+        const dateSel = dateContainer.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px;' }});
         [['all', 'All Dates'], ['today', 'Today'], ['this-week', 'This Week'], ['next-week', 'Next Week'], ['overdue', 'Overdue'], ['custom', 'Custom Date']].forEach(([val, label]) => {
             const opt = dateSel.createEl('option', { value: val, text: label });
             if (this.tasksFilterDate === val) opt.selected = true;
@@ -679,15 +846,15 @@ class MinaView extends ItemView {
 
         const customDateStartInput = customDateContainer.createEl('input', { 
             type: 'date', 
-            attr: { style: `font-size: 0.9em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;` } 
+            attr: { style: `font-size: 0.85em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;` } 
         });
         if (this.tasksFilterDateStart) customDateStartInput.value = this.tasksFilterDateStart;
 
-        customDateContainer.createSpan({ text: 'to', attr: { style: 'font-size: 0.9em; color: var(--text-muted); padding: 0 2px;' } });
+        customDateContainer.createSpan({ text: 'to', attr: { style: 'font-size: 0.85em; color: var(--text-muted); padding: 0 2px;' } });
 
         const customDateEndInput = customDateContainer.createEl('input', { 
             type: 'date', 
-            attr: { style: `font-size: 0.9em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;` } 
+            attr: { style: `font-size: 0.85em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;` } 
         });
         if (this.tasksFilterDateEnd) customDateEndInput.value = this.tasksFilterDateEnd;
 
@@ -723,12 +890,35 @@ class MinaView extends ItemView {
     }
 
     renderReviewThoughtsMode(container: HTMLElement) {
-        const headerSection = container.createEl('div', { attr: { style: 'flex-shrink: 0;' } });
-        headerSection.createEl('h2', {text: 'Review Thoughts'});
-
-        const filterBar = container.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; flex-shrink: 0; background-color: var(--background-secondary); padding: 10px; border-radius: 5px;' } });
+        const headerSection = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 15px; background-color: var(--background-secondary); padding: 10px; border-radius: 5px;' } });
         
-        const contextSel = filterBar.createEl('select');
+        const addBtn = headerSection.createEl('button', { 
+            text: '+ Add Thought', 
+            attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); font-size: 0.85em; padding: 4px 10px;' } 
+        });
+
+        addBtn.addEventListener('click', () => {
+            const modal = new EditEntryModal(
+                this.plugin.app,
+                this.plugin,
+                '', // initialText
+                '', // initialContext
+                null, // initialDueDate
+                false, // isTask
+                async (newText: string, newContexts: string, _: string | null) => {
+                    const contexts = newContexts.split('#').map(c => c.trim()).filter(c => c.length > 0);
+                    await this.plugin.appendCapture(newText.replace(/<br>/g, '\n'), contexts, false);
+                    await this.updateReviewThoughtsList();
+                },
+                'Add Thought',
+                true // stayOpen
+            );
+            modal.open();
+        });
+
+        const filterBar = headerSection.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 10px; align-items: center;' } });
+        
+        const contextSel = filterBar.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px;' }});
         contextSel.createEl('option', { value: 'all', text: 'All Contexts' });
         this.plugin.settings.contexts.forEach(ctx => {
             const opt = contextSel.createEl('option', { value: ctx, text: `#${ctx}` });
@@ -737,7 +927,7 @@ class MinaView extends ItemView {
         contextSel.addEventListener('change', (e) => { this.thoughtsFilterContext = (e.target as HTMLSelectElement).value; this.updateReviewThoughtsList(); });
 
         const dateContainer = filterBar.createEl('div', { attr: { style: 'display: flex; gap: 5px; align-items: center; flex-wrap: wrap;' } });
-        const dateSel = dateContainer.createEl('select');
+        const dateSel = dateContainer.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px;' }});
         [['all', 'All Dates'], ['today', 'Today'], ['this-week', 'This Week'], ['custom', 'Custom Date']].forEach(([val, label]) => {
             const opt = dateSel.createEl('option', { value: val, text: label });
             if (this.thoughtsFilterDate === val) opt.selected = true;
@@ -749,15 +939,15 @@ class MinaView extends ItemView {
 
         const customDateStartInput = customDateContainer.createEl('input', { 
             type: 'date', 
-            attr: { style: `font-size: 0.9em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;` } 
+            attr: { style: `font-size: 0.85em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;` } 
         });
         if (this.thoughtsFilterDateStart) customDateStartInput.value = this.thoughtsFilterDateStart;
 
-        customDateContainer.createSpan({ text: 'to', attr: { style: 'font-size: 0.9em; color: var(--text-muted); padding: 0 2px;' } });
+        customDateContainer.createSpan({ text: 'to', attr: { style: 'font-size: 0.85em; color: var(--text-muted); padding: 0 2px;' } });
 
         const customDateEndInput = customDateContainer.createEl('input', { 
             type: 'date', 
-            attr: { style: `font-size: 0.9em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;` } 
+            attr: { style: `font-size: 0.85em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;` } 
         });
         if (this.thoughtsFilterDateEnd) customDateEndInput.value = this.thoughtsFilterDateEnd;
 
@@ -785,6 +975,29 @@ class MinaView extends ItemView {
 
         customDateEndInput.addEventListener('change', (e) => {
             this.thoughtsFilterDateEnd = (e.target as HTMLInputElement).value;
+            this.updateReviewThoughtsList();
+        });
+
+        // Toggle Previous Entries
+        const toggleContainer = headerSection.createEl('div', { attr: { style: 'margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;' } });
+        toggleContainer.createSpan({ text: 'History' });
+        
+        const toggleLabel = toggleContainer.createEl('label', { 
+            attr: { style: 'position: relative; display: inline-block; width: 30px; height: 16px; cursor: pointer;' } 
+        });
+        const cb = toggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
+        cb.checked = this.showPreviousThoughts;
+        const slider = toggleLabel.createEl('span', { 
+            attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${this.showPreviousThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 16px;` } 
+        });
+        const knob = toggleLabel.createEl('span', { 
+            attr: { style: `position: absolute; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${this.showPreviousThoughts ? 'translateX(14px)' : 'translateX(0)'};` } 
+        });
+
+        cb.addEventListener('change', (e) => {
+            this.showPreviousThoughts = (e.target as HTMLInputElement).checked;
+            slider.style.backgroundColor = this.showPreviousThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
+            knob.style.transform = this.showPreviousThoughts ? 'translateX(14px)' : 'translateX(0)';
             this.updateReviewThoughtsList();
         });
 
@@ -830,6 +1043,13 @@ class MinaView extends ItemView {
                     
                     if (this.tasksFilterStatus === 'pending' && isDone) continue;
                     if (this.tasksFilterStatus === 'completed' && !isDone) continue;
+
+                    const captureDateRaw = parts[2]?.trim().replace(/[\[\]]/g, '');
+                    if (!this.showPreviousTasks && captureDateRaw) {
+                        // @ts-ignore
+                        const capDate = window.moment(captureDateRaw, ['YYYY-MM-DD', this.plugin.settings.dateFormat], true);
+                        if (capDate.isValid() && !capDate.isSame(todayMoment, 'day')) continue;
+                    }
 
                     // Determine Date Column: Index 4 (Due Date) if 6-column table, else Index 2 (Capture Date)
                     let dateRaw = '';
@@ -909,15 +1129,7 @@ class MinaView extends ItemView {
             // @ts-ignore
             const endOfWeek = window.moment().endOf('week');
 
-            // Mobile-optimized table container
-            const tableWrapper = this.reviewThoughtsContainer.createEl('div', { attr: { style: 'width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;' } });
-            const tableEl = tableWrapper.createEl('table', { attr: { style: 'width: 100%; border-collapse: collapse; font-size: 0.85em; min-width: 400px;' } });
-            const thead = tableEl.createEl('thead');
-            const headerRow = thead.createEl('tr');
-            ['Date', 'Time', 'Thought', 'Context'].forEach(h => {
-                headerRow.createEl('th', { text: h, attr: { style: 'border-bottom: 2px solid var(--background-modifier-border); text-align: left; padding: 6px 4px; color: var(--text-muted); font-weight: 600;' } });
-            });
-            const tbodyEl = tableEl.createEl('tbody');
+            const timelineContainer = this.reviewThoughtsContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
 
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
@@ -926,6 +1138,15 @@ class MinaView extends ItemView {
                     if (parts.length < 5) continue;
                     
                     const dateRaw = parts[1].trim().replace(/\[\[|\]\]/g, ''); 
+                    
+                    if (!this.showPreviousThoughts && dateRaw) {
+                        // @ts-ignore
+                        const thoughtDate = window.moment(dateRaw, this.plugin.settings.dateFormat);
+                        // @ts-ignore
+                        const todayMoment = window.moment().startOf('day');
+                        if (thoughtDate.isValid() && !thoughtDate.isSame(todayMoment, 'day')) continue;
+                    }
+
                     const contextPart = parts[4]?.trim() || '';
 
                     if (this.thoughtsFilterContext !== 'all' && !contextPart.includes(`#${this.thoughtsFilterContext}`)) continue;
@@ -944,7 +1165,7 @@ class MinaView extends ItemView {
                         }
                     }
 
-                    await this.renderThoughtRow(line, i, tbodyEl, file.path);
+                    await this.renderThoughtRow(line, i, timelineContainer, file.path);
                     count++;
                 }
             }
@@ -1012,112 +1233,112 @@ class MinaView extends ItemView {
     }
 
     async updatePreview() {
-        if (this.activeTab === 'capture') {
-            await this.renderFilePreview(false, this.thoughtsPreviewContainer);
-            await this.renderFilePreview(true, this.tasksPreviewContainer);
-        } else if (this.activeTab === 'review-tasks') {
+        if (this.activeTab === 'review-tasks') {
             await this.updateReviewTasksList();
-        } else {
+        } else if (this.activeTab === 'review-thoughts') {
             await this.updateReviewThoughtsList();
         }
     }
 
-    async renderFilePreview(isTask: boolean, container: HTMLElement) {
-        if (!container) return;
-        container.empty();
-        const { vault } = this.plugin.app;
-        const folderPath = this.plugin.settings.captureFolder.trim();
-        const fileName = isTask ? this.plugin.settings.tasksFilePath.trim() : this.plugin.settings.captureFilePath.trim();
-        const fullPath = folderPath && folderPath !== '/' ? `${folderPath}/${fileName}` : fileName;
-        const file = vault.getAbstractFileByPath(fullPath) as TFile;
-        
-        if (!file) {
-            container.createEl('p', { text: 'No captures yet.', attr: { style: 'color: var(--text-muted); margin: 0;' } });
-            return;
-        }
-
-        try {
-            const content = await vault.read(file);
-            const lines = content.split('\n');
-            let count = 0;
-            let tbodyEl: HTMLElement | null = null;
-
-            if (!isTask) {
-                const tableEl = container.createEl('table', { attr: { style: 'width: 100%; border-collapse: collapse; font-size: 0.9em;' } });
-                const thead = tableEl.createEl('thead');
-                const headerRow = thead.createEl('tr');
-                ['Date', 'Time', 'Thought', 'Context'].forEach(h => {
-                    headerRow.createEl('th', { text: h, attr: { style: 'border-bottom: 2px solid var(--background-modifier-border); text-align: left; padding: 4px;' } });
-                });
-                tbodyEl = tableEl.createEl('tbody');
-            }
-
-            for (let i = 0; i < lines.length; i++) {
-                if (count >= 15) break;
-                const line = lines[i];
-                if (line.trim().startsWith('|') && !line.includes('---') && !line.includes('| Date |') && !line.includes('| Status |')) {
-                    if (isTask) await this.renderTaskRow(line, i, container, file.path);
-                    else await this.renderThoughtRow(line, i, tbodyEl!, file.path);
-                    count++;
-                }
-            }
-            if (count === 0) {
-                container.empty();
-                container.createEl('p', { text: 'No captures yet.', attr: { style: 'color: var(--text-muted); margin: 0;' } });
-            }
-        } catch (error) { container.createEl('p', { text: 'Error loading preview.', attr: { style: 'color: var(--text-error); margin: 0;' } }); }
-    }
-
     async renderTaskRow(line: string, lineIndex: number, container: HTMLElement, filePath: string, isReview: boolean = false) {
         const el = container.createEl('div', {
-            attr: { style: 'margin-bottom: 8px; border-bottom: 1px solid var(--background-modifier-border-hover); padding-bottom: 5px; display: flex; align-items: flex-start;' }
+            attr: { style: 'margin-bottom: 8px; padding-bottom: 8px; display: flex; align-items: flex-start;' }
         });
 
         const parts = line.split('|');
-        // Structure: | Status | Date | Time | Due Date | Task | Context |
-        const isLegacy = parts.length === 6; // Old tasks only had 5 columns (plus empty strings at start/end)
+        const isLegacy = parts.length === 6; 
         
         const statusPart = parts[1].trim();
-        const cb = el.createEl('input', { type: 'checkbox', attr: { style: 'margin-right: 8px; margin-top: 5px; cursor: pointer;' } });
-        if (statusPart.includes('x') || statusPart.includes('X')) cb.checked = true;
+        const isDone = statusPart.includes('x') || statusPart.includes('X');
+
+        // Toggle Switch Container
+        const toggleContainer = el.createEl('label', { 
+            attr: { style: 'position: relative; display: inline-block; width: 36px; height: 20px; margin-right: 12px; margin-top: 2px; flex-shrink: 0; cursor: pointer;' } 
+        });
         
+        const cb = toggleContainer.createEl('input', { 
+            type: 'checkbox', 
+            attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } 
+        });
+        cb.checked = isDone;
+
+        const slider = toggleContainer.createEl('span', { 
+            attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${isDone ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 20px;` } 
+        });
+        
+        const knob = toggleContainer.createEl('span', { 
+            attr: { style: `position: absolute; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${isDone ? 'translateX(16px)' : 'translateX(0)'};` } 
+        });
+
         cb.addEventListener('change', async (e) => {
             const isChecked = (e.target as HTMLInputElement).checked;
+            slider.style.backgroundColor = isChecked ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
+            knob.style.transform = isChecked ? 'translateX(16px)' : 'translateX(0)';
             parts[1] = isChecked ? ' [x] ' : ' [ ] ';
             await this.updateLineInFile(true, lineIndex, parts.join('|'));
             if (isReview) await this.updateReviewTasksList();
         });
 
         let textToRender = '';
-        let metaText = '';
         let contentIndex = -1;
+        let dueDateRaw = '';
+        let contextStr = '';
 
         if (parts.length >= 7) {
-            // New structure: | Status | Date | Time | Due Date | Task | Context |
-            const dueDate = parts[4].trim();
+            dueDateRaw = parts.length >= 8 ? parts[4].trim().replace(/[\[\]]/g, '') : '';
             textToRender = parts[5]?.trim() || '';
             contentIndex = 5;
-            metaText = `${parts[2].trim()} ${parts[3].trim()} ${dueDate ? `| Due: ${dueDate}` : ''} | ${parts[6]?.trim() || ''}`;
+            contextStr = (parts[6] || '').trim();
         } else {
-            // Legacy structure: | Status | Date | Time | Task | Context |
             textToRender = parts[4]?.trim() || '';
             contentIndex = 4;
-            metaText = `${parts[2].trim()} ${parts[3].trim()} | ${parts[5]?.trim() || ''}`;
+            contextStr = (parts[5] || '').trim();
         }
 
-        const contentDiv = el.createEl('div', { attr: { style: 'flex-grow: 1;' } });
-        const metaDiv = contentDiv.createEl('div', { attr: { style: 'font-size: 0.8em; color: var(--text-muted); margin-bottom: 3px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap;' } });
-        
-        // Capture Date & Time
-        metaDiv.createSpan({ text: `${parts[2].trim()} ${parts[3].trim()}` });
+        const contentDiv = el.createEl('div', { attr: { style: 'flex-grow: 1; display: flex; flex-direction: column; min-width: 0;' } });
 
+        // Main Content Row (Text + Actions)
+        const mainContentRow = contentDiv.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 4px;' } });
+
+        const renderTarget = mainContentRow.createEl('div', { cls: 'mina-card', attr: { style: 'cursor: text; font-size: 0.95em; line-height: 1.4; color: var(--text-normal); word-break: break-word; flex-grow: 1;' } });
+        await MarkdownRenderer.render(this.plugin.app, textToRender, renderTarget, filePath, this);
+        
+        // Remove default margins from the paragraph generated by MarkdownRenderer
+        const firstP = renderTarget.querySelector('p');
+        if (firstP) {
+            firstP.style.marginTop = '0';
+            firstP.style.marginBottom = '0';
+        }
+
+        const actionsDiv = mainContentRow.createEl('div', { attr: { style: 'display: flex; gap: 8px; align-items: center; flex-shrink: 0; margin-top: 2px;' } });
+        const editBtn = actionsDiv.createSpan({ text: '✏️', attr: { style: 'cursor: pointer; font-size: 0.85em; opacity: 0.7; transition: opacity 0.2s;' } });
+                const deleteBtn = actionsDiv.createSpan({ text: '🗑️', attr: { style: 'cursor: pointer; font-size: 0.85em; opacity: 0.7; transition: opacity 0.2s;' } });
+        
+        editBtn.addEventListener('mouseenter', () => editBtn.style.opacity = '1');
+        editBtn.addEventListener('mouseleave', () => editBtn.style.opacity = '0.7');
+        deleteBtn.addEventListener('mouseenter', () => deleteBtn.style.opacity = '1');
+        deleteBtn.addEventListener('mouseleave', () => deleteBtn.style.opacity = '0.7');
+
+        deleteBtn.addEventListener('click', async () => {
+            const modal = new ConfirmModal(this.plugin.app, 'Delete this task?', async () => {
+                await this.updateLineInFile(true, lineIndex, null);
+                if (isReview) await this.updateReviewTasksList();
+                else await this.updatePreview();
+            });
+            modal.open();
+        });
+
+        // Footer: Due Date & Context (Lower Left) + Capture Date (Lower Right)
+        const footerDiv = contentDiv.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: center; margin-top: 2px; flex-wrap: wrap; gap: 4px;' } });
+
+        const lowerLeftContainer = footerDiv.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 10px; font-size: 0.75em; color: var(--text-muted); flex-wrap: wrap;' } });
+        
         if (parts.length >= 8) {
-            // New structure: | Status | Date | Time | Due Date | Task | Context |
-            metaDiv.createSpan({ text: '| Due:' });
-            const dueDateRaw = parts[4].trim().replace(/[\[\]]/g, '');
-            const dateInput = metaDiv.createEl('input', { 
+            const dueDateContainer = lowerLeftContainer.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 4px;' } });
+            dueDateContainer.createSpan({ text: '🗓️ Due:' });
+            const dateInput = dueDateContainer.createEl('input', { 
                 type: 'date', 
-                attr: { style: 'font-size: 1em; padding: 0 2px; background: transparent; border: 1px solid transparent; color: var(--text-accent); cursor: pointer;' } 
+                attr: { style: 'font-size: 1em; padding: 0; background: transparent; border: none; color: var(--text-normal); cursor: pointer; outline: none;' } 
             });
             dateInput.value = dueDateRaw;
             dateInput.addEventListener('change', async () => {
@@ -1126,27 +1347,17 @@ class MinaView extends ItemView {
                 await this.updateLineInFile(true, lineIndex, parts.join('|'));
                 if (isReview) await this.updateReviewTasksList();
             });
-            
-            metaDiv.createSpan({ text: `| ${parts[6]?.trim() || ''}` });
-        } else {
-            // Legacy structure
-            metaDiv.createSpan({ text: `| ${parts[5]?.trim() || ''}` });
         }
 
-        const actionsDiv = metaDiv.createEl('div', { attr: { style: 'margin-left: auto; display: flex; gap: 10px; align-items: center;' } });
-        const editBtn = actionsDiv.createSpan({ text: '✏️', attr: { style: 'cursor: pointer; font-size: 0.9em; filter: grayscale(1); opacity: 0.7;' } });
-        const deleteBtn = actionsDiv.createSpan({ text: '🗑️', attr: { style: 'cursor: pointer; font-size: 0.9em; filter: grayscale(1); opacity: 0.7;' } });
-        
-        deleteBtn.addEventListener('click', async () => {
-            if (window.confirm('Delete this task?')) {
-                await this.updateLineInFile(true, lineIndex, null);
-                if (isReview) await this.updateReviewTasksList();
-                else await this.updatePreview();
-            }
-        });
+        if (contextStr) {
+            lowerLeftContainer.createSpan({ 
+                text: contextStr, 
+                attr: { style: 'color: var(--text-accent); font-weight: 500; background-color: var(--background-secondary-alt); padding: 2px 6px; border-radius: 4px;' } 
+            });
+        }
 
-        const renderTarget = contentDiv.createEl('div', { attr: { style: 'cursor: text;' } });
-        await MarkdownRenderer.render(this.plugin.app, textToRender, renderTarget, filePath, this);
+        const captureDateContainer = footerDiv.createEl('div', { attr: { style: 'font-size: 0.65em; color: var(--text-muted); opacity: 0.7;' } });
+        captureDateContainer.createSpan({ text: `${parts[2].trim()} ${parts[3].trim()}` });
 
         const startEdit = () => {
             const initialContext = (parts.length >= 7 ? parts[6] : parts[5])?.trim() || '';
@@ -1190,55 +1401,81 @@ class MinaView extends ItemView {
         editBtn.addEventListener('click', startEdit);
     }
 
-    async renderThoughtRow(line: string, lineIndex: number, tbody: HTMLElement, filePath: string) {
-        const tr = tbody.createEl('tr', { attr: { style: 'border-bottom: 1px solid var(--background-modifier-border-hover);' } });
+    async renderThoughtRow(line: string, lineIndex: number, container: HTMLElement, filePath: string) {
+        const itemEl = container.createEl('div', {
+            attr: { style: 'margin-bottom: 8px; padding-bottom: 8px; display: flex; align-items: flex-start;' }
+        });
         const parts = line.split('|');
-        tr.createEl('td', { text: parts[1].trim(), attr: { style: 'padding: 4px; white-space: nowrap;' } });
-        tr.createEl('td', { text: parts[2].trim(), attr: { style: 'padding: 4px; white-space: nowrap;' } });
-        const thoughtCell = tr.createEl('td', { attr: { style: 'padding: 4px; cursor: text;' } });
+        const dateStr = parts[1].trim();
+        const timeStr = parts[2].trim();
+        const thoughtText = parts[3]?.trim() || '';
+        const contextStr = parts[4]?.trim() || '';
+
+        // Thinking Icon Container (replaces toggle)
+        const iconContainer = itemEl.createEl('div', { 
+            attr: { style: 'width: 36px; margin-right: 12px; margin-top: 2px; flex-shrink: 0; display: flex; justify-content: center; align-items: flex-start; font-size: 1.2em; opacity: 0.8;' } 
+        });
+        iconContainer.createSpan({ text: '💭' });
+
+        const contentDiv = itemEl.createEl('div', { attr: { style: 'flex-grow: 1; display: flex; flex-direction: column; min-width: 0;' } });
+
+        // Main Content Row (Text + Actions)
+        const mainContentRow = contentDiv.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 4px;' } });
+
+        const renderTarget = mainContentRow.createEl('div', { cls: 'mina-card', attr: { style: 'cursor: text; font-size: 0.95em; line-height: 1.4; color: var(--text-normal); word-break: break-word; flex-grow: 1;' } });
+        await MarkdownRenderer.render(this.plugin.app, thoughtText, renderTarget, filePath, this);
+
+        // Remove default margins from the paragraph generated by MarkdownRenderer
+        const firstP = renderTarget.querySelector('p');
+        if (firstP) {
+            firstP.style.marginTop = '0';
+            firstP.style.marginBottom = '0';
+        }
+
+        const actionsDiv = mainContentRow.createEl('div', { attr: { style: 'display: flex; gap: 8px; align-items: center; flex-shrink: 0; margin-top: 2px;' } });
+        const editBtn = actionsDiv.createSpan({ text: '✏️', attr: { style: 'cursor: pointer; font-size: 0.85em; opacity: 0.7; transition: opacity 0.2s;' } });
+                const deleteBtn = actionsDiv.createSpan({ text: '🗑️', attr: { style: 'cursor: pointer; font-size: 0.85em; opacity: 0.7; transition: opacity 0.2s;' } });
         
-        const contextCell = tr.createEl('td', { attr: { style: 'padding: 4px; white-space: nowrap; vertical-align: middle;' } });
-        const contextDiv = contextCell.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 10px;' } });
-        contextDiv.createSpan({ text: parts[4]?.trim() || '' });
-        
-        const actionsDiv = contextDiv.createEl('div', { attr: { style: 'display: flex; gap: 8px;' } });
-        const editBtn = actionsDiv.createSpan({ text: '✏️', attr: { style: 'cursor: pointer; font-size: 0.9em; filter: grayscale(1); opacity: 0.7;' } });
-        const deleteBtn = actionsDiv.createSpan({ text: '🗑️', attr: { style: 'cursor: pointer; font-size: 0.9em; filter: grayscale(1); opacity: 0.7;' } });
-        
+        editBtn.addEventListener('mouseenter', () => editBtn.style.opacity = '1');
+        editBtn.addEventListener('mouseleave', () => editBtn.style.opacity = '0.7');
+        deleteBtn.addEventListener('mouseenter', () => deleteBtn.style.opacity = '1');
+        deleteBtn.addEventListener('mouseleave', () => deleteBtn.style.opacity = '0.7');
+
         deleteBtn.addEventListener('click', async () => {
-            if (window.confirm('Delete this thought?')) {
+            const modal = new ConfirmModal(this.plugin.app, 'Delete this thought?', async () => {
                 await this.updateLineInFile(false, lineIndex, null);
                 await this.updatePreview();
-            }
+            });
+            modal.open();
         });
 
-        const textToRender = parts[3]?.trim() || '';
+        // Footer: Context (Lower Left) + Capture Date (Lower Right)
+        const footerDiv = contentDiv.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: center; margin-top: 2px;' } });
 
-        await MarkdownRenderer.render(this.plugin.app, textToRender, thoughtCell, filePath, this);
+        const lowerLeftContainer = footerDiv.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 10px; font-size: 0.75em; color: var(--text-muted);' } });
+
+        if (contextStr) {
+            lowerLeftContainer.createSpan({ 
+                text: contextStr, 
+                attr: { style: 'color: var(--text-accent); font-weight: 500; background-color: var(--background-secondary-alt); padding: 2px 6px; border-radius: 4px;' } 
+            });
+        }
+
+        const captureDateContainer = footerDiv.createEl('div', { attr: { style: 'font-size: 0.65em; color: var(--text-muted); opacity: 0.7;' } });
+        captureDateContainer.createSpan({ text: `${dateStr.replace(/[\[\]]/g, '')} ${timeStr}` });
 
         const startEdit = () => {
-            const initialContext = parts[4]?.trim() || '';
-            
             const modal = new EditEntryModal(
                 this.plugin.app,
                 this.plugin,
-                textToRender,
-                initialContext,
+                thoughtText,
+                contextStr,
                 null,
                 false,
                 async (newText: string, newContext: string, _: string | null) => {
                     let changed = false;
-
-                    if (newText !== textToRender) {
-                        parts[3] = ` ${newText} `;
-                        changed = true;
-                    }
-
-                    if (newContext !== initialContext) {
-                        parts[4] = ` ${newContext} `;
-                        changed = true;
-                    }
-
+                    if (newText !== thoughtText.replace(/\n/g, '<br>')) { parts[3] = ` ${newText} `; changed = true; }
+                    if (newContext !== contextStr) { parts[4] = ` ${newContext} `; changed = true; }
                     if (changed) {
                         await this.updateLineInFile(false, lineIndex, parts.join('|'));
                         await this.updatePreview();
@@ -1247,7 +1484,7 @@ class MinaView extends ItemView {
             );
             modal.open();
         };
-        thoughtCell.addEventListener('dblclick', startEdit);
+        renderTarget.addEventListener('dblclick', startEdit);
         editBtn.addEventListener('click', startEdit);
     }
 }
