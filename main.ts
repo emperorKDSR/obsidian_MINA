@@ -125,24 +125,27 @@ export default class MinaPlugin extends Plugin {
 
     async activateView() {
         const { workspace } = this.app;
+
+        if (Platform.isMobile) {
+            // Detach any existing MINA leaves (may be stuck in sidebar)
+            workspace.getLeavesOfType(VIEW_TYPE_MINA).forEach(l => l.detach());
+            // Open as a main content tab, like a note
+            const leaf = workspace.getLeaf('tab');
+            await leaf.setViewState({ type: VIEW_TYPE_MINA, active: true });
+            workspace.revealLeaf(leaf);
+            return;
+        }
+
+        // Desktop: reuse existing window or open new one
         let leaf: WorkspaceLeaf | null = null;
         const leaves = workspace.getLeavesOfType(VIEW_TYPE_MINA);
-        
         if (leaves.length > 0) {
             leaf = leaves[0];
         } else {
-            if (Platform.isMobile) {
-                leaf = workspace.getLeaf('tab');
-            } else {
-                leaf = workspace.getLeaf('window');
-            }
-            if (leaf) {
-                await leaf.setViewState({ type: VIEW_TYPE_MINA, active: true });
-            }
+            leaf = workspace.getLeaf('window');
+            if (leaf) await leaf.setViewState({ type: VIEW_TYPE_MINA, active: true });
         }
-        if (leaf) {
-            workspace.revealLeaf(leaf);
-        }
+        if (leaf) workspace.revealLeaf(leaf);
     }
 
 	async loadSettings() {
