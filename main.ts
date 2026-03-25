@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, TFile, Notice, ItemView, WorkspaceLeaf, MarkdownRenderer, Platform, FuzzySuggestModal, Modal } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, TFile, Notice, ItemView, WorkspaceLeaf, MarkdownRenderer, Platform, FuzzySuggestModal, Modal, moment } from 'obsidian';
 
 export const VIEW_TYPE_MINA = "mina-view";
 
@@ -132,7 +132,7 @@ export default class MinaPlugin extends Plugin {
             leaf = leaves[0];
         } else {
             if (Platform.isMobile) {
-                leaf = workspace.getRightLeaf(false);
+                leaf = workspace.getLeaf('tab');
             } else {
                 leaf = workspace.getLeaf('window');
             }
@@ -216,11 +216,8 @@ export default class MinaPlugin extends Plugin {
                 return;
             }
         }
-
-        // @ts-ignore
-        const dateStr = window.moment().format(this.settings.dateFormat);
-        // @ts-ignore
-        const timeStr = window.moment().format(this.settings.timeFormat);
+        const dateStr = moment().format(this.settings.dateFormat);
+        const timeStr = moment().format(this.settings.timeFormat);
         
         const dateCol = `[[${dateStr}]]`;
         const timeCol = timeStr;
@@ -446,7 +443,7 @@ export class EditEntryModal extends Modal {
                         const arrayBuffer = await file.arrayBuffer();
                         const extension = file.name && file.name.includes('.') ? file.name.split('.').pop() : (file.type.split('/')[1] || 'png');
                         // @ts-ignore
-                        const baseName = (file.name && file.name.includes('.')) ? file.name.substring(0, file.name.lastIndexOf('.')) : `Pasted image ${window.moment().format('YYYYMMDDHHmmss')}`;
+                        const baseName = (file.name && file.name.includes('.')) ? file.name.substring(0, file.name.lastIndexOf('.')) : `Pasted image ${moment().format('YYYYMMDDHHmmss')}`;
                         const fileName = `${baseName}.${extension}`;
                         const attachmentPath = await this.plugin.app.fileManager.getAvailablePathForAttachment(fileName);
                         const newFile = await this.plugin.app.vault.createBinary(attachmentPath, arrayBuffer);
@@ -700,7 +697,7 @@ class MinaView extends ItemView {
         this.content = '';
         this.isTask = false;
         // @ts-ignore
-        this.dueDate = window.moment().format('YYYY-MM-DD');
+        this.dueDate = moment().format('YYYY-MM-DD');
         this.showPreviousThoughts = true;
         this.showCaptureInThoughts = true;
         this.selectedContexts = Array.isArray(this.plugin.settings.selectedContexts) ? [...this.plugin.settings.selectedContexts] : [];
@@ -767,13 +764,7 @@ class MinaView extends ItemView {
             text: 'MINA',
             attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'mina-ai' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` }
         });
-        minaTab.addEventListener('click', () => {
-            if (Platform.isMobile) {
-                new MinaChatModal(this.plugin.app, this.plugin, this).open();
-            } else {
-                this.activeTab = 'mina-ai'; this.renderView();
-            }
-        });
+        minaTab.addEventListener('click', () => { this.activeTab = 'mina-ai'; this.renderView(); });
 
         const settingsTab = nav.createEl('button', {
             text: 'Settings',
@@ -1295,10 +1286,10 @@ ${tasksContent || '(empty)'}`;
             if (val === 'custom') {
                 customDateContainer.style.display = 'flex';
                 // @ts-ignore
-                this.tasksFilterDateStart = customDateStartInput.value || window.moment().format('YYYY-MM-DD');
+                this.tasksFilterDateStart = customDateStartInput.value || moment().format('YYYY-MM-DD');
                 if (!customDateStartInput.value) customDateStartInput.value = this.tasksFilterDateStart;
                 // @ts-ignore
-                this.tasksFilterDateEnd = customDateEndInput.value || window.moment().format('YYYY-MM-DD');
+                this.tasksFilterDateEnd = customDateEndInput.value || moment().format('YYYY-MM-DD');
                 if (!customDateEndInput.value) customDateEndInput.value = this.tasksFilterDateEnd;
             } else {
                 customDateContainer.style.display = 'none';
@@ -1455,10 +1446,10 @@ ${tasksContent || '(empty)'}`;
             if (val === 'custom') {
                 customDateContainer.style.display = 'flex';
                 // @ts-ignore
-                this.thoughtsFilterDateStart = customDateStartInput.value || window.moment().format('YYYY-MM-DD');
+                this.thoughtsFilterDateStart = customDateStartInput.value || moment().format('YYYY-MM-DD');
                 if (!customDateStartInput.value) customDateStartInput.value = this.thoughtsFilterDateStart;
                 // @ts-ignore
-                this.thoughtsFilterDateEnd = customDateEndInput.value || window.moment().format('YYYY-MM-DD');
+                this.thoughtsFilterDateEnd = customDateEndInput.value || moment().format('YYYY-MM-DD');
                 if (!customDateEndInput.value) customDateEndInput.value = this.thoughtsFilterDateEnd;
             } else {
                 customDateContainer.style.display = 'none';
@@ -1503,13 +1494,9 @@ ${tasksContent || '(empty)'}`;
         try {
             const content = await vault.read(file);
             const lines = content.split('\n');
-            
-            // @ts-ignore
-            const todayMoment = window.moment().startOf('day');
-            // @ts-ignore
-            const startOfWeek = window.moment().startOf('week');
-            // @ts-ignore
-            const endOfWeek = window.moment().endOf('week');
+            const todayMoment = moment().startOf('day');
+            const startOfWeek = moment().startOf('week');
+            const endOfWeek = moment().endOf('week');
 
             interface TaskLine {
                 line: string;
@@ -1536,8 +1523,7 @@ ${tasksContent || '(empty)'}`;
 
                     const captureDateRaw = parts[2]?.trim().replace(/[\[\]]/g, '');
                     if (!this.showPreviousTasks && captureDateRaw) {
-                        // @ts-ignore
-                        const capDate = window.moment(captureDateRaw, ['YYYY-MM-DD', this.plugin.settings.dateFormat], true);
+                        const capDate = moment(captureDateRaw, ['YYYY-MM-DD', this.plugin.settings.dateFormat], true);
                         if (capDate.isValid() && !capDate.isSame(todayMoment, 'day')) continue;
                     }
 
@@ -1565,7 +1551,7 @@ ${tasksContent || '(empty)'}`;
                     if (this.tasksFilterDate !== 'all') {
                         if (!dateRaw) continue;
                         // @ts-ignore
-                        let taskDate = window.moment(dateRaw, ['YYYY-MM-DD', this.plugin.settings.dateFormat], true);
+                        let taskDate = moment(dateRaw, ['YYYY-MM-DD', this.plugin.settings.dateFormat], true);
                         
                         if (!taskDate.isValid()) continue;
                         
@@ -1574,18 +1560,14 @@ ${tasksContent || '(empty)'}`;
                         } else if (this.tasksFilterDate === 'this-week') {
                             if (!taskDate.isBetween(startOfWeek, endOfWeek, 'day', '[]')) continue;
                         } else if (this.tasksFilterDate === 'next-week') {
-                            // @ts-ignore
-                            const startOfNextWeek = window.moment().add(1, 'week').startOf('week');
-                            // @ts-ignore
-                            const endOfNextWeek = window.moment().add(1, 'week').endOf('week');
+                            const startOfNextWeek = moment().add(1, 'week').startOf('week');
+                            const endOfNextWeek = moment().add(1, 'week').endOf('week');
                             if (!taskDate.isBetween(startOfNextWeek, endOfNextWeek, 'day', '[]')) continue;
                         } else if (this.tasksFilterDate === 'overdue') {
                             if (isDone || !taskDate.isBefore(todayMoment, 'day')) continue;
                         } else if (this.tasksFilterDate === 'custom') {
-                            // @ts-ignore
-                            const startMoment = window.moment(this.tasksFilterDateStart, 'YYYY-MM-DD').startOf('day');
-                            // @ts-ignore
-                            const endMoment = window.moment(this.tasksFilterDateEnd, 'YYYY-MM-DD').endOf('day');
+                            const startMoment = moment(this.tasksFilterDateStart, 'YYYY-MM-DD').startOf('day');
+                            const endMoment = moment(this.tasksFilterDateEnd, 'YYYY-MM-DD').endOf('day');
                             if (!taskDate.isBetween(startMoment, endMoment, 'day', '[]')) continue;
                         }
                     }
@@ -1594,8 +1576,7 @@ ${tasksContent || '(empty)'}`;
                     if (this.tasksFilterContext.length > 0 && !this.tasksFilterContext.some(ctx => contextPart.includes(`#${ctx}`))) continue;
 
                     // Calculate modTimestamp for sorting
-                    // @ts-ignore
-                    const m = window.moment(`${modDateStr} ${modTimeStr}`, ['YYYY-MM-DD HH:mm', `${this.plugin.settings.dateFormat} ${this.plugin.settings.timeFormat}`]);
+                    const m = moment(`${modDateStr} ${modTimeStr}`, ['YYYY-MM-DD HH:mm', `${this.plugin.settings.dateFormat} ${this.plugin.settings.timeFormat}`]);
                     const modTimestamp = m.isValid() ? m.valueOf() : 0;
 
                     taskLines.push({ line, index: i, modTimestamp, isDone, dateRaw, context: contextPart });
@@ -1635,13 +1616,9 @@ ${tasksContent || '(empty)'}`;
         try {
             const content = await vault.read(file);
             const lines = content.split('\n');
-            
-            // @ts-ignore
-            const today = window.moment().format('YYYY-MM-DD');
-            // @ts-ignore
-            const startOfWeek = window.moment().startOf('week');
-            // @ts-ignore
-            const endOfWeek = window.moment().endOf('week');
+            const today = moment().format('YYYY-MM-DD');
+            const startOfWeek = moment().startOf('week');
+            const endOfWeek = moment().endOf('week');
 
             const allEntries: ThoughtEntry[] = [];
             const idMap: Map<string, ThoughtEntry> = new Map();
@@ -1683,9 +1660,7 @@ ${tasksContent || '(empty)'}`;
                         // Generate a stable ID for legacy rows
                         id = `legacy-${dateStr}-${timeStr}-${text.substring(0, 10)}`;
                     }
-
-                    // @ts-ignore
-                    const m = window.moment(`${modDateStr.replace(/[\[\]]/g, '')} ${modTimeStr}`, ['YYYY-MM-DD HH:mm', `${this.plugin.settings.dateFormat} ${this.plugin.settings.timeFormat}`]);
+                    const m = moment(`${modDateStr.replace(/[\[\]]/g, '')} ${modTimeStr}`, ['YYYY-MM-DD HH:mm', `${this.plugin.settings.dateFormat} ${this.plugin.settings.timeFormat}`]);
                     const modTimestamp = m.isValid() ? m.valueOf() : 0;
 
                     const entry: ThoughtEntry = { 
@@ -1748,25 +1723,20 @@ ${tasksContent || '(empty)'}`;
                 // Filtering only applies to root entries in this implementation for simplicity
                 if (level === 0) {
                     if (!this.showPreviousThoughts && dateRaw) {
-                        // @ts-ignore
-                        const thoughtDate = window.moment(dateRaw, this.plugin.settings.dateFormat);
-                        // @ts-ignore
-                        const todayMoment = window.moment().startOf('day');
+                        const thoughtDate = moment(dateRaw, this.plugin.settings.dateFormat);
+                        const todayMoment = moment().startOf('day');
                         if (thoughtDate.isValid() && !thoughtDate.isSame(todayMoment, 'day')) return;
                     }
 
                     if (this.thoughtsFilterContext.length > 0 && !this.thoughtsFilterContext.some(ctx => entry.context.includes(`#${ctx}`))) return;
 
                     if (this.thoughtsFilterDate !== 'all') {
-                        // @ts-ignore
-                        const thoughtDate = window.moment(dateRaw, this.plugin.settings.dateFormat);
+                        const thoughtDate = moment(dateRaw, this.plugin.settings.dateFormat);
                         if (this.thoughtsFilterDate === 'today' && dateRaw !== today) return;
                         if (this.thoughtsFilterDate === 'this-week' && !thoughtDate.isBetween(startOfWeek, endOfWeek, 'day', '[]')) return;
                         if (this.thoughtsFilterDate === 'custom') {
-                            // @ts-ignore
-                            const startMoment = window.moment(this.thoughtsFilterDateStart, 'YYYY-MM-DD').startOf('day');
-                            // @ts-ignore
-                            const endMoment = window.moment(this.thoughtsFilterDateEnd, 'YYYY-MM-DD').endOf('day');
+                            const startMoment = moment(this.thoughtsFilterDateStart, 'YYYY-MM-DD').startOf('day');
+                            const endMoment = moment(this.thoughtsFilterDateEnd, 'YYYY-MM-DD').endOf('day');
                             if (!thoughtDate.isBetween(startMoment, endMoment, 'day', '[]')) return;
                         }
                     }
@@ -1808,7 +1778,7 @@ ${tasksContent || '(empty)'}`;
                 try {
                     const arrayBuffer = await file.arrayBuffer();
                     const extension = file.name && file.name.includes('.') ? file.name.split('.').pop() : (file.type.split('/')[1] || 'png');
-                    const baseName = (file.name && file.name.includes('.')) ? file.name.substring(0, file.name.lastIndexOf('.')) : `Pasted image ${window.moment().format('YYYYMMDDHHmmss')}`;
+                    const baseName = (file.name && file.name.includes('.')) ? file.name.substring(0, file.name.lastIndexOf('.')) : `Pasted image ${moment().format('YYYYMMDDHHmmss')}`;
                     const fileName = `${baseName}.${extension}`;
                     const attachmentPath = await this.plugin.app.fileManager.getAvailablePathForAttachment(fileName);
                     const newFile = await this.plugin.app.vault.createBinary(attachmentPath, arrayBuffer);
@@ -1847,9 +1817,9 @@ ${tasksContent || '(empty)'}`;
                     // Update Modification Time in the row itself
                     const parts = newText.split('|');
                     // @ts-ignore
-                    const dateCol = ` [[${window.moment().format(this.plugin.settings.dateFormat)}]] `;
+                    const dateCol = ` [[${moment().format(this.plugin.settings.dateFormat)}]] `;
                     // @ts-ignore
-                    const timeCol = ` ${window.moment().format(this.plugin.settings.timeFormat)} `;
+                    const timeCol = ` ${moment().format(this.plugin.settings.timeFormat)} `;
                     
                     let parentId = '';
                     if (isTask) {
