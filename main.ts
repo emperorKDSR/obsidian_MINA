@@ -2,6 +2,25 @@ import { App, Plugin, PluginSettingTab, Setting, TFile, Notice, ItemView, Worksp
 
 export const VIEW_TYPE_MINA = "mina-view";
 
+const WOLF_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2e3f5c"/>
+  <polygon points="22,44 12,10 40,34" fill="#7a97bc"/>
+  <polygon points="78,44 88,10 60,34" fill="#7a97bc"/>
+  <polygon points="24,42 17,16 38,33" fill="#b87a8a"/>
+  <polygon points="76,42 83,16 62,33" fill="#b87a8a"/>
+  <ellipse cx="50" cy="60" rx="31" ry="28" fill="#7a97bc"/>
+  <ellipse cx="50" cy="47" rx="23" ry="16" fill="#5a7599"/>
+  <ellipse cx="50" cy="70" rx="17" ry="13" fill="#c2d4e8"/>
+  <ellipse cx="50" cy="65" rx="7" ry="4.5" fill="#1e2b3a"/>
+  <path d="M43,71 Q50,76 57,71" stroke="#1e2b3a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <ellipse cx="37" cy="55" rx="6" ry="6" fill="#e8c84a"/>
+  <ellipse cx="63" cy="55" rx="6" ry="6" fill="#e8c84a"/>
+  <ellipse cx="37" cy="55" rx="3" ry="3.5" fill="#111827"/>
+  <ellipse cx="63" cy="55" rx="3" ry="3.5" fill="#111827"/>
+  <circle cx="38.5" cy="53.5" r="1.2" fill="white" opacity="0.85"/>
+  <circle cx="64.5" cy="53.5" r="1.2" fill="white" opacity="0.85"/>
+</svg>`;
+
 interface MinaSettings {
     captureFolder: string;
 	captureFilePath: string;
@@ -10,6 +29,8 @@ interface MinaSettings {
     timeFormat: string;
     contexts: string[];
     selectedContexts: string[];
+    geminiApiKey: string;
+    geminiModel: string;
 }
 
 const DEFAULT_SETTINGS: MinaSettings = {
@@ -19,7 +40,9 @@ const DEFAULT_SETTINGS: MinaSettings = {
 	dateFormat: 'YYYY-MM-DD',
     timeFormat: 'HH:mm',
     contexts: [], 
-    selectedContexts: []
+    selectedContexts: [],
+    geminiApiKey: '',
+    geminiModel: 'gemini-2.0-flash'
 }
 
 export default class MinaPlugin extends Plugin {
@@ -151,6 +174,8 @@ export default class MinaPlugin extends Plugin {
                     this.settings.selectedContexts = loadedData.selectedContexts.split(',').map((c: string) => c.trim()).filter((c: string) => c.length > 0);
                 }
             }
+            if (loadedData.geminiApiKey !== undefined) this.settings.geminiApiKey = loadedData.geminiApiKey;
+            if (loadedData.geminiModel !== undefined) this.settings.geminiModel = loadedData.geminiModel;
             this.settingsInitialized = true;
         }
 
@@ -588,7 +613,12 @@ class MinaView extends ItemView {
     content: string;
     isTask: boolean;
     dueDate: string; // YYYY-MM-DD
-    activeTab: 'capture' | 'review-tasks' | 'review-thoughts' = 'review-thoughts';
+    activeTab: 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' = 'review-thoughts';
+
+    // AI Chat State
+    chatHistory: { role: 'user' | 'assistant'; text: string }[] = [];
+    chatContainer: HTMLElement;
+    minaUseFullVault: boolean = false;
     
     // Tasks Review Filters
     tasksFilterStatus: 'all' | 'pending' | 'completed' = 'pending';
@@ -688,11 +718,219 @@ class MinaView extends ItemView {
         });
         reviewTasksTab.addEventListener('click', () => { this.activeTab = 'review-tasks'; this.renderView(); });
 
+        const minaTab = nav.createEl('button', {
+            text: 'MINA',
+            attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'mina-ai' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` }
+        });
+        minaTab.addEventListener('click', () => { this.activeTab = 'mina-ai'; this.renderView(); });
+
+        const settingsTab = nav.createEl('button', {
+            text: 'Settings',
+            attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'settings' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` }
+        });
+        settingsTab.addEventListener('click', () => { this.activeTab = 'settings'; this.renderView(); });
+
         if (this.activeTab === 'review-tasks') {
             this.renderReviewTasksMode(container);
+        } else if (this.activeTab === 'mina-ai') {
+            this.renderMinaMode(container);
+        } else if (this.activeTab === 'settings') {
+            this.renderSettingsMode(container);
         } else {
             this.renderReviewThoughtsMode(container);
         }
+    }
+
+    renderSettingsMode(container: HTMLElement) {
+        const wrap = container.createEl('div', { attr: { style: 'padding: 16px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; flex-grow: 1;' } });
+
+        const field = (label: string, desc: string, inputFn: (row: HTMLElement) => void) => {
+            const row = wrap.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 12px;' } });
+            row.createEl('div', { text: label, attr: { style: 'font-size: 0.9em; font-weight: 600; color: var(--text-normal);' } });
+            if (desc) row.createEl('div', { text: desc, attr: { style: 'font-size: 0.78em; color: var(--text-muted);' } });
+            inputFn(row);
+        };
+
+        const input = (parent: HTMLElement, value: string, placeholder: string, type = 'text', onChange: (v: string) => void) => {
+            const el = parent.createEl('input', { type, attr: { value, placeholder, style: 'font-size: 0.85em; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); width: 100%; box-sizing: border-box;' } });
+            el.addEventListener('change', () => onChange(el.value));
+        };
+
+        field('Capture Folder', 'Folder where MINA files are stored.', row => input(row, this.plugin.settings.captureFolder, '000 Bin', 'text', async v => { this.plugin.settings.captureFolder = v; await this.plugin.saveSettings(); }));
+        field('Thoughts File', 'File name for thoughts.', row => input(row, this.plugin.settings.captureFilePath, 'mina_1.md', 'text', async v => { this.plugin.settings.captureFilePath = v; await this.plugin.saveSettings(); }));
+        field('Tasks File', 'File name for tasks.', row => input(row, this.plugin.settings.tasksFilePath, 'mina_2.md', 'text', async v => { this.plugin.settings.tasksFilePath = v; await this.plugin.saveSettings(); }));
+        field('Date Format', 'moment.js format, e.g. YYYY-MM-DD', row => input(row, this.plugin.settings.dateFormat, 'YYYY-MM-DD', 'text', async v => { this.plugin.settings.dateFormat = v; await this.plugin.saveSettings(); }));
+        field('Time Format', 'moment.js format, e.g. HH:mm', row => input(row, this.plugin.settings.timeFormat, 'HH:mm', 'text', async v => { this.plugin.settings.timeFormat = v; await this.plugin.saveSettings(); }));
+        field('Gemini API Key', 'Your Google Gemini API key.', row => input(row, this.plugin.settings.geminiApiKey, 'AIza...', 'password', async v => { this.plugin.settings.geminiApiKey = v.trim(); await this.plugin.saveSettings(); }));
+
+        field('Gemini Model', 'Model to use for MINA AI chat.', row => {
+            const models: [string, string][] = [
+                ['gemini-2.5-pro',           '2.5 Pro — highest reasoning & multimodal'],
+                ['gemini-2.5-flash',         '2.5 Flash — fast, general-purpose'],
+                ['gemini-2.5-flash-lite',    '2.5 Flash Lite — ultra-fast, cost-efficient'],
+                ['gemini-2.5-flash-preview', '2.5 Flash Preview — latest preview'],
+                ['gemini-2.0-flash',         '2.0 Flash — stable, multimodal (default)'],
+                ['gemini-2.0-flash-lite',    '2.0 Flash Lite — budget-friendly'],
+                ['gemini-1.5-pro',           '1.5 Pro — complex reasoning, prior flagship'],
+                ['gemini-1.5-flash',         '1.5 Flash — fast, previous gen'],
+                ['gemini-1.5-flash-8b',      '1.5 Flash 8B — high-volume, lightweight'],
+            ];
+            const sel = row.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); width: 100%;' } });
+            models.forEach(([val, label]) => {
+                const opt = sel.createEl('option', { value: val, text: label });
+                if (this.plugin.settings.geminiModel === val) opt.selected = true;
+            });
+            sel.addEventListener('change', async () => { this.plugin.settings.geminiModel = sel.value; await this.plugin.saveSettings(); });
+        });
+    }
+
+    async renderMinaMode(container: HTMLElement) {
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.height = '100%';
+        container.style.overflow = 'hidden';
+
+        if (!this.plugin.settings.geminiApiKey) {
+            const warn = container.createEl('div', { attr: { style: 'padding: 20px; color: var(--text-muted); font-size: 0.9em;' } });
+            warn.createEl('p', { text: '⚠️ No Gemini API key set.' });
+            warn.createEl('p', { text: 'Add your key in Settings → MINA → Gemini API Key.' });
+            return;
+        }
+
+        // Toolbar
+        const toolbar = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 6px 10px; background: var(--background-secondary); border-bottom: 1px solid var(--background-modifier-border); font-size: 0.8em; color: var(--text-muted);' } });
+        toolbar.createSpan({ text: 'Full Vault', attr: { style: 'font-size: 0.85em;' } });
+        const vaultToggleLabel = toolbar.createEl('label', { attr: { style: 'position: relative; display: inline-block; width: 30px; height: 16px; cursor: pointer;' } });
+        const vaultCb = vaultToggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
+        vaultCb.checked = this.minaUseFullVault;
+        const vaultSlider = vaultToggleLabel.createEl('span', { attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${this.minaUseFullVault ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 16px;` } });
+        vaultToggleLabel.createEl('span', { attr: { style: `position: absolute; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${this.minaUseFullVault ? 'translateX(14px)' : 'translateX(0)'};` } });
+        const vaultLabel = toolbar.createSpan({ text: this.minaUseFullVault ? '(entire vault as context)' : '(thoughts & tasks only)', attr: { style: 'color: var(--text-muted); font-style: italic;' } });
+        vaultCb.addEventListener('change', () => {
+            this.minaUseFullVault = vaultCb.checked;
+            vaultSlider.style.backgroundColor = this.minaUseFullVault ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
+            const knob = vaultToggleLabel.querySelector('span:last-child') as HTMLElement;
+            if (knob) knob.style.transform = this.minaUseFullVault ? 'translateX(14px)' : 'translateX(0)';
+            vaultLabel.setText(this.minaUseFullVault ? '(entire vault as context)' : '(thoughts & tasks only)');
+        });
+
+        // Chat history display
+        this.chatContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 8px;' } });
+        this.renderChatHistory();
+
+        // Input row
+        const inputRow = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: flex; gap: 6px; padding: 8px; border-top: 1px solid var(--background-modifier-border); align-items: stretch;' } });
+        const textarea = inputRow.createEl('textarea', { attr: { placeholder: 'Ask MINA about your thoughts and tasks…', rows: '2', style: 'flex-grow: 1; resize: none; font-size: 0.9em; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-family: inherit;' } });
+        const sendBtn = inputRow.createEl('button', { text: '↑', attr: { style: 'padding: 0 16px; font-size: 1.3em; border-radius: 6px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; cursor: pointer; flex-shrink: 0;' } });
+
+        const send = async () => {
+            const text = textarea.value.trim();
+            if (!text) return;
+            textarea.value = '';
+            textarea.disabled = true;
+            sendBtn.disabled = true;
+
+            this.chatHistory.push({ role: 'user', text });
+            this.renderChatHistory();
+
+            // Thinking indicator
+            const thinking = this.chatContainer.createEl('div', { attr: { style: 'align-self: flex-start; font-size: 0.85em; color: var(--text-muted); font-style: italic;' } });
+            thinking.setText('MINA is thinking…');
+            this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+
+            try {
+                const reply = await this.callGemini(text);
+                thinking.remove();
+                this.chatHistory.push({ role: 'assistant', text: reply });
+            } catch (e) {
+                thinking.remove();
+                this.chatHistory.push({ role: 'assistant', text: `⚠️ Error: ${e.message}` });
+            }
+
+            this.renderChatHistory();
+            textarea.disabled = false;
+            sendBtn.disabled = false;
+            textarea.focus();
+        };
+
+        sendBtn.addEventListener('click', send);
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+        });
+
+        setTimeout(() => textarea.focus(), 50);
+    }
+
+    renderChatHistory() {
+        if (!this.chatContainer) return;
+        this.chatContainer.empty();
+        if (this.chatHistory.length === 0) {
+            this.chatContainer.createEl('div', { text: 'Ask me anything about your thoughts and tasks.', attr: { style: 'color: var(--text-muted); font-size: 0.85em; text-align: center; margin-top: 20px;' } });
+            return;
+        }
+        for (const msg of this.chatHistory) {
+            const isUser = msg.role === 'user';
+            const bubble = this.chatContainer.createEl('div', { attr: { style: `max-width: 85%; padding: 8px 12px; border-radius: 12px; font-size: 0.9em; line-height: 1.5; white-space: pre-wrap; word-break: break-word; align-self: ${isUser ? 'flex-end' : 'flex-start'}; background: ${isUser ? 'var(--interactive-accent)' : 'var(--background-secondary)'}; color: ${isUser ? 'var(--text-on-accent)' : 'var(--text-normal)'};` } });
+            bubble.setText(msg.text);
+        }
+        this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+    }
+
+    async callGemini(userMessage: string): Promise<string> {
+        const { vault } = this.plugin.app;
+        const s = this.plugin.settings;
+
+        const readFile = async (folder: string, file: string) => {
+            try {
+                const f = vault.getFileByPath(`${folder.trim()}/${file.trim()}`);
+                if (f) return await vault.read(f);
+            } catch {}
+            return '';
+        };
+
+        let systemPrompt: string;
+
+        if (this.minaUseFullVault) {
+            // Read all markdown files in the vault
+            const mdFiles = vault.getMarkdownFiles();
+            const sections: string[] = [];
+            for (const file of mdFiles) {
+                try {
+                    const content = await vault.read(file);
+                    if (content.trim()) sections.push(`--- ${file.path} ---\n${content}`);
+                } catch {}
+            }
+            systemPrompt = `You are MINA, a personal AI assistant embedded in Obsidian. You have access to the user's entire vault below. Answer questions, summarize, find patterns, suggest actions, or help reflect — based on this data. Be concise and helpful.\n\n${sections.join('\n\n')}`;
+        } else {
+            const thoughtsContent = await readFile(s.captureFolder, s.captureFilePath);
+            const tasksContent = await readFile(s.captureFolder, s.tasksFilePath);
+            systemPrompt = `You are MINA, a personal AI assistant embedded in Obsidian. You have access to the user's thoughts and tasks data below. Answer questions, summarize, find patterns, suggest actions, or help reflect — based on this data. Be concise and helpful.
+
+--- THOUGHTS ---
+${thoughtsContent || '(empty)'}
+
+--- TASKS ---
+${tasksContent || '(empty)'}`;
+        }
+
+        const body = {
+            system_instruction: { parts: [{ text: systemPrompt }] },
+            contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
+        };
+
+        const resp = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${s.geminiModel}:generateContent?key=${s.geminiApiKey}`,
+            { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+        );
+
+        if (!resp.ok) {
+            const err = await resp.json();
+            throw new Error(err?.error?.message || `HTTP ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '(no response)';
     }
 
     renderCaptureMode(container: HTMLElement, isThoughtsOnly: boolean = false, isTasksOnly: boolean = false) {
@@ -1803,8 +2041,9 @@ class MinaView extends ItemView {
         }
 
         if (level === 0) {
-            const iconContainer = iconSection.createEl('div', { attr: { style: 'font-size: 1.2em; opacity: 0.8;' } });
-            iconContainer.createSpan({ text: '💭' });
+            const iconContainer = iconSection.createEl('div', { attr: { style: 'width: 28px; height: 28px; border-radius: 50%; overflow: hidden; flex-shrink: 0;' } });
+            const img = iconContainer.createEl('img', { attr: { style: 'width: 100%; height: 100%; display: block;' } });
+            img.src = `data:image/svg+xml;base64,${btoa(WOLF_SVG)}`;
         }
 
         if (entry.children.length > 0) {
@@ -1920,5 +2159,27 @@ class MinaSettingTab extends PluginSettingTab {
         new Setting(containerEl).setName('Tasks File Name').setDesc('File for tasks.').addText(text => text.setPlaceholder('Tasks.md').setValue(this.plugin.settings.tasksFilePath).onChange(async (value) => { this.plugin.settings.tasksFilePath = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('Date format').addText(text => text.setPlaceholder('YYYY-MM-DD').setValue(this.plugin.settings.dateFormat).onChange(async (value) => { this.plugin.settings.dateFormat = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('Time format').addText(text => text.setPlaceholder('HH:mm').setValue(this.plugin.settings.timeFormat).onChange(async (value) => { this.plugin.settings.timeFormat = value; await this.plugin.saveSettings(); }));
+        new Setting(containerEl).setName('Gemini API Key').setDesc('API key for the MINA AI chat tab (Google Gemini).').addText(text => { text.setPlaceholder('AIza...').setValue(this.plugin.settings.geminiApiKey).onChange(async (value) => { this.plugin.settings.geminiApiKey = value.trim(); await this.plugin.saveSettings(); }); text.inputEl.type = 'password'; });
+        new Setting(containerEl).setName('Gemini Model').setDesc('Model to use for the MINA AI chat.').addDropdown(drop => {
+            const models: Record<string, string> = {
+                // Gemini 2.5
+                'gemini-2.5-pro':                    '2.5 Pro — highest reasoning & multimodal',
+                'gemini-2.5-flash':                  '2.5 Flash — fast, general-purpose',
+                'gemini-2.5-flash-lite':             '2.5 Flash Lite — ultra-fast, cost-efficient',
+                'gemini-2.5-flash-preview':          '2.5 Flash Preview — latest preview',
+                // Gemini 2.0
+                'gemini-2.0-flash':                  '2.0 Flash — stable, multimodal (default)',
+                'gemini-2.0-flash-lite':             '2.0 Flash Lite — budget-friendly',
+                // Gemini 1.5
+                'gemini-1.5-pro':                    '1.5 Pro — complex reasoning, prior flagship',
+                'gemini-1.5-flash':                  '1.5 Flash — fast, previous gen',
+                'gemini-1.5-flash-8b':               '1.5 Flash 8B — high-volume, lightweight',
+            };
+            for (const [value, label] of Object.entries(models)) {
+                drop.addOption(value, label);
+            }
+            drop.setValue(this.plugin.settings.geminiModel || 'gemini-2.0-flash');
+            drop.onChange(async (value) => { this.plugin.settings.geminiModel = value; await this.plugin.saveSettings(); });
+        });
 	}
 }
