@@ -594,6 +594,51 @@ class ConfirmModal extends Modal {
     }
 }
 
+class MinaChatModal extends Modal {
+    plugin: MinaPlugin;
+    view: MinaView;
+
+    constructor(app: App, plugin: MinaPlugin, view: MinaView) {
+        super(app);
+        this.plugin = plugin;
+        this.view = view;
+    }
+
+    onOpen() {
+        const { modalEl, contentEl } = this;
+
+        // Full-screen style
+        modalEl.style.width = '100vw';
+        modalEl.style.height = '100vh';
+        modalEl.style.maxWidth = '100vw';
+        modalEl.style.maxHeight = '100vh';
+        modalEl.style.margin = '0';
+        modalEl.style.borderRadius = '0';
+        modalEl.style.top = '0';
+        modalEl.style.left = '0';
+        modalEl.style.position = 'fixed';
+
+        contentEl.style.padding = '0';
+        contentEl.style.display = 'flex';
+        contentEl.style.flexDirection = 'column';
+        contentEl.style.height = '100%';
+        contentEl.empty();
+
+        // Header bar with title and close button
+        const header = contentEl.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--background-modifier-border); flex-shrink: 0; background: var(--background-secondary);' } });
+        header.createEl('span', { text: 'MINA', attr: { style: 'font-size: 1em; font-weight: 600; color: var(--text-normal);' } });
+        const closeBtn = header.createEl('button', { text: '✕', attr: { style: 'background: none; border: none; font-size: 1.1em; cursor: pointer; color: var(--text-muted); padding: 2px 6px;' } });
+        closeBtn.addEventListener('click', () => this.close());
+
+        // Render MINA chat into contentEl
+        this.view.renderMinaMode(contentEl);
+    }
+
+    onClose() {
+        this.contentEl.empty();
+    }
+}
+
 interface ThoughtEntry {
     id: string;
     parentId: string;
@@ -722,7 +767,13 @@ class MinaView extends ItemView {
             text: 'MINA',
             attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'mina-ai' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` }
         });
-        minaTab.addEventListener('click', () => { this.activeTab = 'mina-ai'; this.renderView(); });
+        minaTab.addEventListener('click', () => {
+            if (Platform.isMobile) {
+                new MinaChatModal(this.plugin.app, this.plugin, this).open();
+            } else {
+                this.activeTab = 'mina-ai'; this.renderView();
+            }
+        });
 
         const settingsTab = nav.createEl('button', {
             text: 'Settings',
