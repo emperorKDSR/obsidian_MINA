@@ -36,7 +36,7 @@ The "MINA V1" plugin has been developed with the following features and implemen
      - **Thinking Icon:** Root thoughts are marked with a 💭 icon; replies are streamlined without the icon.
    - **Desktop Optimization:** Standalone windows hide native tab headers and include a dedicated **drag handle** at the top.
    - **Mobile Optimization:**
-     - **Vertical Reordering:** Toggles (History/Capture) move above filters on mobile for easier thumb access.
+     - **Vertical Reordering:** Toggles (History/Capture) move above filters on mobile for easier thumb access. These toggles are now explicitly left-aligned and rendered at the top of the header section on mobile devices.
      - **Adaptive Indentation:** Thread nesting is reduced on mobile to preserve horizontal space.
      - **Responsive Modals:** Popups use `95vw` and anchor to the top to avoid virtual keyboard overlap.
 

@@ -873,9 +873,35 @@ class MinaView extends ItemView {
             attr: { style: `flex-shrink: 0; display: flex; ${Platform.isMobile ? 'flex-direction: column; align-items: flex-start;' : 'flex-wrap: wrap; align-items: center;'} gap: 10px; margin-bottom: 15px; background-color: var(--background-secondary); padding: 10px; border-radius: 5px;` } 
         });
         
-        // On mobile, show Capture toggle first
-        const renderCaptureToggle = (parent: HTMLElement) => {
-            const captureToggleContainer = parent.createEl('div', { attr: { style: `${Platform.isMobile ? '' : 'margin-left: auto;'} display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;` } });
+        // Toggle Group (History + Capture)
+        const renderToggles = (parent: HTMLElement) => {
+            const toggleGroup = parent.createEl('div', { attr: { style: `${Platform.isMobile ? '' : 'margin-left: auto;'} display: flex; align-items: center; gap: 15px; flex-wrap: wrap;` } });
+
+            // Toggle History
+            const historyToggleContainer = toggleGroup.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;' } });
+            historyToggleContainer.createSpan({ text: 'History' });
+            
+            const historyToggleLabel = historyToggleContainer.createEl('label', { 
+                attr: { style: 'position: relative; display: inline-block; width: 30px; height: 16px; cursor: pointer;' } 
+            });
+            const historyCb = historyToggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
+            historyCb.checked = this.showPreviousTasks;
+            const historySlider = historyToggleLabel.createEl('span', { 
+                attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${this.showPreviousTasks ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 16px;` } 
+            });
+            const historyKnob = historyToggleLabel.createEl('span', { 
+                attr: { style: `position: absolute; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${this.showPreviousTasks ? 'translateX(14px)' : 'translateX(0)'};` } 
+            });
+
+            historyCb.addEventListener('change', (e) => {
+                this.showPreviousTasks = (e.target as HTMLInputElement).checked;
+                historySlider.style.backgroundColor = this.showPreviousTasks ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
+                historyKnob.style.transform = this.showPreviousTasks ? 'translateX(14px)' : 'translateX(0)';
+                this.updateReviewTasksList();
+            });
+
+            // Toggle Capture
+            const captureToggleContainer = toggleGroup.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;' } });
             captureToggleContainer.createSpan({ text: 'Capture' });
             
             const captureToggleLabel = captureToggleContainer.createEl('label', { 
@@ -894,13 +920,11 @@ class MinaView extends ItemView {
                 this.showCaptureInTasks = (e.target as HTMLInputElement).checked;
                 captureSlider.style.backgroundColor = this.showCaptureInTasks ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
                 captureKnob.style.transform = this.showCaptureInTasks ? 'translateX(14px)' : 'translateX(0)';
-                if (this.reviewTasksContainer.previousElementSibling) {
-                    (this.reviewTasksContainer.previousElementSibling as HTMLElement).style.display = this.showCaptureInTasks ? 'block' : 'none';
-                }
+                if (captureContainer) captureContainer.style.display = this.showCaptureInTasks ? 'block' : 'none';
             });
         };
 
-        if (Platform.isMobile) renderCaptureToggle(headerSection);
+        if (Platform.isMobile) renderToggles(headerSection);
 
         const filterBar = headerSection.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 10px; align-items: center;' } });
         
@@ -971,7 +995,7 @@ class MinaView extends ItemView {
             this.updateReviewTasksList();
         });
 
-        if (!Platform.isMobile) renderCaptureToggle(headerSection);
+        if (!Platform.isMobile) renderToggles(headerSection);
 
         const captureContainer = container.createEl('div', { attr: { style: `flex-shrink: 0; display: ${this.showCaptureInTasks ? 'block' : 'none'};` } });
         this.renderCaptureMode(captureContainer, false, true);
@@ -981,8 +1005,65 @@ class MinaView extends ItemView {
     }
 
     renderReviewThoughtsMode(container: HTMLElement) {
-        const headerSection = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 15px; background-color: var(--background-secondary); padding: 10px; border-radius: 5px;' } });
+        const headerSection = container.createEl('div', { 
+            attr: { style: `flex-shrink: 0; display: flex; ${Platform.isMobile ? 'flex-direction: column; align-items: flex-start;' : 'flex-wrap: wrap; align-items: center;'} gap: 10px; margin-bottom: 15px; background-color: var(--background-secondary); padding: 10px; border-radius: 5px;` } 
+        });
         
+        let captureContainer: HTMLElement;
+
+        // Toggle Group (History + Capture)
+        const renderToggles = (parent: HTMLElement) => {
+            const toggleGroup = parent.createEl('div', { attr: { style: `${Platform.isMobile ? '' : 'margin-left: auto;'} display: flex; align-items: center; gap: 15px; flex-wrap: wrap;` } });
+
+            // Toggle History
+            const historyToggleContainer = toggleGroup.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;' } });
+            historyToggleContainer.createSpan({ text: 'History' });
+            
+            const historyToggleLabel = historyToggleContainer.createEl('label', { 
+                attr: { style: 'position: relative; display: inline-block; width: 30px; height: 16px; cursor: pointer;' } 
+            });
+            const historyCb = historyToggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
+            historyCb.checked = this.showPreviousThoughts;
+            const historySlider = historyToggleLabel.createEl('span', { 
+                attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${this.showPreviousThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 16px;` } 
+            });
+            const historyKnob = historyToggleLabel.createEl('span', { 
+                attr: { style: `position: absolute; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${this.showPreviousThoughts ? 'translateX(14px)' : 'translateX(0)'};` } 
+            });
+
+            historyCb.addEventListener('change', (e) => {
+                this.showPreviousThoughts = (e.target as HTMLInputElement).checked;
+                historySlider.style.backgroundColor = this.showPreviousThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
+                historyKnob.style.transform = this.showPreviousThoughts ? 'translateX(14px)' : 'translateX(0)';
+                this.updateReviewThoughtsList();
+            });
+
+            // Toggle Capture
+            const captureToggleContainer = toggleGroup.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;' } });
+            captureToggleContainer.createSpan({ text: 'Capture' });
+            
+            const captureToggleLabel = captureToggleContainer.createEl('label', { 
+                attr: { style: 'position: relative; display: inline-block; width: 30px; height: 16px; cursor: pointer;' } 
+            });
+            const captureCb = captureToggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
+            captureCb.checked = this.showCaptureInThoughts;
+            const captureSlider = captureToggleLabel.createEl('span', { 
+                attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${this.showCaptureInThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 16px;` } 
+            });
+            const captureKnob = captureToggleLabel.createEl('span', { 
+                attr: { style: `position: absolute; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${this.showCaptureInThoughts ? 'translateX(14px)' : 'translateX(0)'};` } 
+            });
+
+            captureCb.addEventListener('change', (e) => {
+                this.showCaptureInThoughts = (e.target as HTMLInputElement).checked;
+                captureSlider.style.backgroundColor = this.showCaptureInThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
+                captureKnob.style.transform = this.showCaptureInThoughts ? 'translateX(14px)' : 'translateX(0)';
+                if (captureContainer) captureContainer.style.display = this.showCaptureInThoughts ? 'block' : 'none';
+            });
+        };
+
+        if (Platform.isMobile) renderToggles(headerSection);
+
         const filterBar = headerSection.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 10px; align-items: center;' } });
         
         const contextSel = filterBar.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px; text-align: center; text-align-last: center;' }});
@@ -1045,57 +1126,10 @@ class MinaView extends ItemView {
             this.updateReviewThoughtsList();
         });
 
-        // Toggle Group (History + Capture)
-        const toggleGroup = headerSection.createEl('div', { attr: { style: 'margin-left: auto; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;' } });
+        if (!Platform.isMobile) renderToggles(headerSection);
 
-        // Toggle History
-        const historyToggleContainer = toggleGroup.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;' } });
-        historyToggleContainer.createSpan({ text: 'History' });
-        
-        const historyToggleLabel = historyToggleContainer.createEl('label', { 
-            attr: { style: 'position: relative; display: inline-block; width: 30px; height: 16px; cursor: pointer;' } 
-        });
-        const historyCb = historyToggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
-        historyCb.checked = this.showPreviousThoughts;
-        const historySlider = historyToggleLabel.createEl('span', { 
-            attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${this.showPreviousThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 16px;` } 
-        });
-        const historyKnob = historyToggleLabel.createEl('span', { 
-            attr: { style: `position: absolute; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${this.showPreviousThoughts ? 'translateX(14px)' : 'translateX(0)'};` } 
-        });
-
-        historyCb.addEventListener('change', (e) => {
-            this.showPreviousThoughts = (e.target as HTMLInputElement).checked;
-            historySlider.style.backgroundColor = this.showPreviousThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
-            historyKnob.style.transform = this.showPreviousThoughts ? 'translateX(14px)' : 'translateX(0)';
-            this.updateReviewThoughtsList();
-        });
-
-        // Toggle Capture
-        const captureToggleContainer = toggleGroup.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;' } });
-        captureToggleContainer.createSpan({ text: 'Capture' });
-        
-        const captureToggleLabel = captureToggleContainer.createEl('label', { 
-            attr: { style: 'position: relative; display: inline-block; width: 30px; height: 16px; cursor: pointer;' } 
-        });
-        const captureCb = captureToggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
-        captureCb.checked = this.showCaptureInThoughts;
-        const captureSlider = captureToggleLabel.createEl('span', { 
-            attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${this.showCaptureInThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 16px;` } 
-        });
-        const captureKnob = captureToggleLabel.createEl('span', { 
-            attr: { style: `position: absolute; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${this.showCaptureInThoughts ? 'translateX(14px)' : 'translateX(0)'};` } 
-        });
-
-        const captureContainer = container.createEl('div', { attr: { style: `flex-shrink: 0; display: ${this.showCaptureInThoughts ? 'block' : 'none'};` } });
+        captureContainer = container.createEl('div', { attr: { style: `flex-shrink: 0; display: ${this.showCaptureInThoughts ? 'block' : 'none'};` } });
         this.renderCaptureMode(captureContainer, true);
-
-        captureCb.addEventListener('change', (e) => {
-            this.showCaptureInThoughts = (e.target as HTMLInputElement).checked;
-            captureSlider.style.backgroundColor = this.showCaptureInThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
-            captureKnob.style.transform = this.showCaptureInThoughts ? 'translateX(14px)' : 'translateX(0)';
-            captureContainer.style.display = this.showCaptureInThoughts ? 'block' : 'none';
-        });
 
         this.reviewThoughtsContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; overflow-y: auto; padding: 5px;' } });
         this.updateReviewThoughtsList();
