@@ -639,6 +639,288 @@ class MinaChatModal extends Modal {
     }
 }
 
+class PaymentModal extends Modal {
+    private file: TFile;
+    private currentDueDate: string;
+    private onPaid: () => void;
+
+    constructor(app: App, file: TFile, currentDueDate: string, onPaid: () => void) {
+        super(app);
+        this.file = file;
+        this.currentDueDate = currentDueDate;
+        this.onPaid = onPaid;
+    }
+
+    onOpen() {
+        const { contentEl, modalEl } = this;
+        modalEl.style.width = 'min(500px, 95vw)';
+        contentEl.empty();
+        contentEl.style.padding = '20px';
+        contentEl.style.display = 'flex';
+        contentEl.style.flexDirection = 'column';
+        contentEl.style.gap = '14px';
+
+        contentEl.createEl('h3', { text: `Pay — ${this.file.basename}`, attr: { style: 'margin: 0; font-size: 1em; color: var(--text-normal);' } });
+
+        const field = (label: string) => {
+            const wrap = contentEl.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 4px;' } });
+            wrap.createEl('label', { text: label, attr: { style: 'font-size: 0.82em; color: var(--text-muted); font-weight: 600;' } });
+            return wrap;
+        };
+
+        // Payment date
+        const dateWrap = field('Payment Date');
+        const dateInput = dateWrap.createEl('input', { type: 'date', attr: { style: 'padding: 5px 8px; border-radius: 5px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-size: 0.9em;' } });
+        dateInput.value = moment().format('YYYY-MM-DD');
+
+        // Combined notes + image paste area
+        const notesWrap = field('Notes, reference, snippets — paste images with Ctrl+V');
+        const notesArea = notesWrap.createEl('textarea', { attr: { rows: '5', placeholder: 'e.g. REF-20260325-001, paid online, notes…', style: 'padding: 6px 8px; border-radius: 5px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-size: 0.9em; resize: vertical; font-family: inherit; width: 100%; box-sizing: border-box;' } });
+
+        // Preview strip for pasted/attached images
+        const pastedFiles: { name: string; buffer: ArrayBuffer }[] = [];
+        const previewStrip = notesWrap.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;' } });
+
+        const addImagePreview = (name: string, buffer: ArrayBuffer, dataUrl: string) => {
+            pastedFiles.push({ name, buffer });
+            const thumb = previewStrip.createEl('div', { attr: { style: 'position: relative; display: inline-block;' } });
+            thumb.createEl('img', { attr: { src: dataUrl, style: 'height: 60px; border-radius: 4px; border: 1px solid var(--background-modifier-border); display: block;' } });
+            const label = thumb.createEl('span', { text: name, attr: { style: 'font-size: 0.7em; color: var(--text-muted); display: block; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;' } });
+            const rm = thumb.createEl('span', { text: '✕', attr: { style: 'position: absolute; top: -4px; right: -4px; background: var(--background-modifier-border); border-radius: 50%; width: 14px; height: 14px; font-size: 0.65em; display: flex; align-items: center; justify-content: center; cursor: pointer; line-height: 14px; text-align: center;' } });
+            rm.addEventListener('click', () => {
+                const idx = pastedFiles.findIndex(f => f.name === name);
+                if (idx !== -1) pastedFiles.splice(idx, 1);
+                thumb.remove();
+            });
+        };
+
+        // Clipboard paste handler — intercept images
+        notesArea.addEventListener('paste', async (e: ClipboardEvent) => {
+            const items = e.clipboardData?.items ?? [];
+            for (const item of Array.from(items)) {
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    const blob = item.getAsFile();
+                    if (!blob) continue;
+                    const ext = item.type.split('/')[1] ?? 'png';
+                    const name = `payment-${moment().format('YYYYMMDDHHmmss')}.${ext}`;
+                    const buffer = await blob.arrayBuffer();
+                    const dataUrl = await new Promise<string>(res => {
+                        const reader = new FileReader();
+                        reader.onload = () => res(reader.result as string);
+                        reader.readAsDataURL(blob);
+                    });
+                    addImagePreview(name, buffer, dataUrl);
+                }
+            }
+        });
+
+        // File attachment (non-image or extra files)
+        const attachWrap = field('Attach file (optional)');
+        const attachInput = attachWrap.createEl('input', { type: 'file', attr: { accept: '*/*', style: 'font-size: 0.85em; color: var(--text-muted);' } });
+        attachInput.setAttribute('multiple', 'true');
+
+        // Buttons
+        const btnRow = contentEl.createEl('div', { attr: { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px;' } });
+        const cancelBtn = btnRow.createEl('button', { text: 'Cancel', attr: { style: 'padding: 6px 16px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); cursor: pointer; font-size: 0.9em;' } });
+        const saveBtn = btnRow.createEl('button', { text: 'Record Payment', attr: { style: 'padding: 6px 16px; border-radius: 6px; border: none; background: var(--interactive-accent); color: var(--text-on-accent); cursor: pointer; font-size: 0.9em; font-weight: 600;' } });
+
+        cancelBtn.addEventListener('click', () => this.close());
+
+        saveBtn.addEventListener('click', async () => {
+            const payDate = dateInput.value.trim();
+            if (!payDate) { new Notice('Please enter a payment date.'); return; }
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving…';
+
+            try {
+                // Compute new next_duedate = current next_duedate + 1 month
+                const dueMoment = moment(this.currentDueDate, ['YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY'], true);
+                const newDue = dueMoment.isValid()
+                    ? dueMoment.add(1, 'month').format('YYYY-MM-DD')
+                    : moment(payDate).add(1, 'month').format('YYYY-MM-DD');
+
+                // Update frontmatter
+                await this.app.fileManager.processFrontMatter(this.file, (fm: any) => {
+                    fm['last_payment'] = payDate;
+                    fm['next_duedate'] = newDue;
+                });
+
+                const folder = this.file.parent?.path ?? '';
+                const saveAttachment = async (name: string, buffer: ArrayBuffer) => {
+                    const destPath = folder ? `${folder}/${name}` : name;
+                    try {
+                        await this.app.vault.createBinary(destPath, buffer);
+                    } catch {
+                        await this.app.vault.adapter.writeBinary(destPath, buffer);
+                    }
+                    return name;
+                };
+
+                // Build note body entry
+                const lines: string[] = [`## Payment — ${payDate}`];
+                if (notesArea.value.trim()) lines.push('', notesArea.value.trim());
+
+                // Pasted images
+                for (const pf of pastedFiles) {
+                    await saveAttachment(pf.name, pf.buffer);
+                    lines.push('', `![[${pf.name}]]`);
+                }
+
+                // File input attachments
+                const inputFiles = Array.from(attachInput.files ?? []);
+                for (const f of inputFiles) {
+                    const buf = await f.arrayBuffer();
+                    await saveAttachment(f.name, buf);
+                    lines.push('', `![[${f.name}]]`);
+                }
+
+                lines.push('');
+
+                // Insert into note body right after frontmatter
+                const current = await this.app.vault.read(this.file);
+                const fmEnd = current.indexOf('---', 3);
+                let insertPos = 0;
+                if (current.startsWith('---') && fmEnd !== -1) {
+                    insertPos = fmEnd + 3;
+                    if (current[insertPos] === '\n') insertPos++;
+                }
+                const entry = '\n' + lines.join('\n') + '\n';
+                await this.app.vault.modify(this.file, current.slice(0, insertPos) + entry + current.slice(insertPos));
+
+                new Notice(`✅ Payment recorded. Next due: ${newDue}`);
+                this.close();
+                this.onPaid();
+            } catch (e) {
+                new Notice(`Error: ${e.message}`);
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Record Payment';
+            }
+        });
+    }
+
+    onClose() { this.contentEl.empty(); }
+}
+
+class NewDueModal extends Modal {
+    private captureFolder: string;
+    private onCreated: () => void;
+
+    constructor(app: App, captureFolder: string, onCreated: () => void) {
+        super(app);
+        this.captureFolder = captureFolder;
+        this.onCreated = onCreated;
+    }
+
+    onOpen() {
+        const { contentEl, modalEl } = this;
+        modalEl.style.width = 'min(460px, 95vw)';
+        contentEl.empty();
+        contentEl.style.padding = '20px';
+        contentEl.style.display = 'flex';
+        contentEl.style.flexDirection = 'column';
+        contentEl.style.gap = '14px';
+
+        contentEl.createEl('h3', { text: 'Add Recurring Due', attr: { style: 'margin: 0; font-size: 1em; color: var(--text-normal);' } });
+
+        const field = (label: string, hint = '') => {
+            const wrap = contentEl.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 3px;' } });
+            wrap.createEl('label', { text: label, attr: { style: 'font-size: 0.82em; color: var(--text-muted); font-weight: 600;' } });
+            if (hint) wrap.createEl('span', { text: hint, attr: { style: 'font-size: 0.75em; color: var(--text-faint);' } });
+            return wrap;
+        };
+
+        const inputStyle = 'padding: 5px 8px; border-radius: 5px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-size: 0.9em; width: 100%; box-sizing: border-box;';
+
+        // Payable name → note filename
+        const nameWrap = field('Payable Name', 'This will be the note\'s filename');
+        const nameInput = nameWrap.createEl('input', { type: 'text', attr: { placeholder: 'e.g. Netflix, Rent, Electricity', style: inputStyle } });
+
+        // Folder for the note
+        const folderWrap = field('Save in folder', 'Leave blank to use plugin capture folder');
+        const folderInput = folderWrap.createEl('input', { type: 'text', attr: { placeholder: this.captureFolder || '/', style: inputStyle } });
+        folderInput.value = this.captureFolder || '';
+
+        // Next due date
+        const dueWrap = field('Next Due Date');
+        const dueInput = dueWrap.createEl('input', { type: 'date', attr: { style: inputStyle } });
+        dueInput.value = moment().add(1, 'month').format('YYYY-MM-DD');
+
+        // Last payment date (optional)
+        const lastWrap = field('Last Payment Date (optional)');
+        const lastInput = lastWrap.createEl('input', { type: 'date', attr: { style: inputStyle } });
+
+        // Amount (optional, informational)
+        const amtWrap = field('Amount (optional)', 'Stored as "amount" property');
+        const amtInput = amtWrap.createEl('input', { type: 'text', attr: { placeholder: 'e.g. 15.99', style: inputStyle } });
+
+        // Notes (optional body content)
+        const notesWrap = field('Notes (optional)');
+        const notesArea = notesWrap.createEl('textarea', { attr: { rows: '3', placeholder: 'Additional details about this recurring payment…', style: inputStyle + ' resize: vertical; font-family: inherit;' } });
+
+        // Buttons
+        const btnRow = contentEl.createEl('div', { attr: { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px;' } });
+        btnRow.createEl('button', { text: 'Cancel', attr: { style: 'padding: 6px 16px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); cursor: pointer; font-size: 0.9em;' } })
+            .addEventListener('click', () => this.close());
+        const saveBtn = btnRow.createEl('button', { text: 'Create', attr: { style: 'padding: 6px 16px; border-radius: 6px; border: none; background: var(--interactive-accent); color: var(--text-on-accent); cursor: pointer; font-size: 0.9em; font-weight: 600;' } });
+
+        saveBtn.addEventListener('click', async () => {
+            const name = nameInput.value.trim();
+            if (!name) { new Notice('Payable Name is required.'); return; }
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Creating…';
+
+            try {
+                const folder = folderInput.value.trim().replace(/\/$/, '');
+                const filePath = folder ? `${folder}/${name}.md` : `${name}.md`;
+
+                // Check for duplicate
+                if (this.app.vault.getFileByPath(filePath)) {
+                    new Notice(`Note "${filePath}" already exists.`);
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Create';
+                    return;
+                }
+
+                // Ensure folder exists
+                if (folder) {
+                    const folderExists = this.app.vault.getFolderByPath(folder);
+                    if (!folderExists) await this.app.vault.createFolder(folder);
+                }
+
+                // Build frontmatter
+                const fm: string[] = [
+                    '---',
+                    'category: recurring payment',
+                    'active_status: true',
+                    `next_duedate: ${dueInput.value || moment().add(1, 'month').format('YYYY-MM-DD')}`,
+                ];
+                if (lastInput.value) fm.push(`last_payment: ${lastInput.value}`);
+                if (amtInput.value.trim()) fm.push(`amount: ${amtInput.value.trim()}`);
+                fm.push('---');
+
+                const body = notesArea.value.trim() ? `\n${notesArea.value.trim()}\n` : '';
+                const content = fm.join('\n') + '\n' + body;
+
+                await this.app.vault.create(filePath, content);
+                new Notice(`✅ "${name}" added to recurring dues.`);
+                this.close();
+                this.onCreated();
+            } catch (e) {
+                new Notice(`Error: ${e.message}`);
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Create';
+            }
+        });
+
+        setTimeout(() => nameInput.focus(), 50);
+    }
+
+    onClose() { this.contentEl.empty(); }
+}
+
 interface ThoughtEntry {
     id: string;
     parentId: string;
@@ -658,7 +940,7 @@ class MinaView extends ItemView {
     content: string;
     isTask: boolean;
     dueDate: string; // YYYY-MM-DD
-    activeTab: 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' = 'review-thoughts';
+    activeTab: 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' | 'dues' = 'review-thoughts';
 
     // AI Chat State
     chatHistory: { role: 'user' | 'assistant'; text: string }[] = [];
@@ -769,6 +1051,12 @@ class MinaView extends ItemView {
         });
         minaTab.addEventListener('click', () => { this.activeTab = 'mina-ai'; this.renderView(); });
 
+        const duesTab = nav.createEl('button', {
+            text: 'Dues',
+            attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'dues' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` }
+        });
+        duesTab.addEventListener('click', () => { this.activeTab = 'dues'; this.renderView(); });
+
         const settingsTab = nav.createEl('button', {
             text: 'Settings',
             attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'settings' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` }
@@ -779,11 +1067,120 @@ class MinaView extends ItemView {
             this.renderReviewTasksMode(container);
         } else if (this.activeTab === 'mina-ai') {
             this.renderMinaMode(container);
+        } else if (this.activeTab === 'dues') {
+            this.renderDuesMode(container);
         } else if (this.activeTab === 'settings') {
             this.renderSettingsMode(container);
         } else {
             this.renderReviewThoughtsMode(container);
         }
+    }
+
+    renderDuesMode(container: HTMLElement) {
+        const wrap = container.createEl('div', { attr: { style: 'padding: 12px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex-grow: 1;' } });
+
+        // Header row with title and add button
+        const duesHeaderRow = wrap.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;' } });
+        duesHeaderRow.createEl('span', { text: 'Recurring Dues', attr: { style: 'font-size: 0.9em; font-weight: 600; color: var(--text-muted);' } });
+        const addBtn = duesHeaderRow.createEl('button', { text: '+ Add', attr: { style: 'padding: 3px 12px; border-radius: 5px; border: none; background: var(--interactive-accent); color: var(--text-on-accent); font-size: 0.8em; font-weight: 600; cursor: pointer;' } });
+        addBtn.addEventListener('click', () => {
+            new NewDueModal(this.plugin.app, this.plugin.settings.captureFolder, () => this.renderView()).open();
+        });
+
+        const { metadataCache, vault } = this.plugin.app;
+
+        // Collect all notes with category containing "recurring payment" and active_status = true
+        const hasRecurringPayment = (raw: any): boolean => {
+            if (!raw) return false;
+            if (Array.isArray(raw)) return raw.some((v: any) => v.toString().toLowerCase().includes('recurring payment'));
+            return raw.toString().toLowerCase().includes('recurring payment');
+        };
+        interface DueEntry { title: string; path: string; dueDate: string; lastPayment: string; dueMoment: any; }
+        const entries: DueEntry[] = [];
+
+        for (const file of vault.getMarkdownFiles()) {
+            const fm = metadataCache.getFileCache(file)?.frontmatter;
+            if (!fm) continue;
+
+            const category = fm['category'];
+            const activeStatus = fm['active_status'];
+            const isActive = activeStatus === true || activeStatus === 'true' || activeStatus === 'True';
+
+            if (!hasRecurringPayment(category) || !isActive) continue;
+
+            const dueDate = (fm['next_duedate'] ?? '').toString().trim();
+            const lastPayment = (fm['last_payment'] ?? '').toString().trim();
+            const dueMoment = dueDate ? moment(dueDate, ['YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY'], true) : null;
+
+            entries.push({ title: file.basename, path: file.path, dueDate, lastPayment, dueMoment });
+        }
+
+        // Sort by due date ascending (undated go to bottom)
+        entries.sort((a, b) => {
+            if (!a.dueMoment?.isValid() && !b.dueMoment?.isValid()) return 0;
+            if (!a.dueMoment?.isValid()) return 1;
+            if (!b.dueMoment?.isValid()) return -1;
+            return a.dueMoment.valueOf() - b.dueMoment.valueOf();
+        });
+
+        if (entries.length === 0) {
+            wrap.createEl('p', { text: 'No recurring payments found. Add frontmatter: category: recurring payment, active_status: true, next_duedate, last_payment.', attr: { style: 'color: var(--text-muted); font-size: 0.85em;' } });
+            return;
+        }
+
+        // Table
+        const table = wrap.createEl('table', { attr: { style: 'width: 100%; border-collapse: collapse; font-size: 0.88em;' } });
+
+        // Header
+        const thead = table.createEl('thead');
+        const headerRow = thead.createEl('tr');
+        ['Payable', 'Due Date', 'Last Payment', ''].forEach(h => {
+            headerRow.createEl('th', { text: h, attr: { style: 'text-align: left; padding: 6px 10px; border-bottom: 2px solid var(--background-modifier-border); color: var(--text-muted); font-weight: 600; white-space: nowrap;' } });
+        });
+
+        // Body
+        const tbody = table.createEl('tbody');
+        const today = moment().startOf('day');
+
+        entries.forEach(entry => {
+            const tr = tbody.createEl('tr', { attr: { style: 'border-bottom: 1px solid var(--background-modifier-border); transition: background 0.15s;' } });
+            tr.addEventListener('mouseenter', () => tr.style.background = 'var(--background-secondary)');
+            tr.addEventListener('mouseleave', () => tr.style.background = '');
+
+            // Payable (clickable note link)
+            const tdPayable = tr.createEl('td', { attr: { style: 'padding: 7px 10px;' } });
+            const link = tdPayable.createEl('a', { text: entry.title, attr: { style: 'color: var(--text-accent); cursor: pointer; text-decoration: none; font-weight: 500;' } });
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.plugin.app.workspace.openLinkText(entry.title, entry.path, Platform.isMobile ? 'tab' : 'window');
+            });
+
+            // Due Date (highlight overdue in red, due today in accent)
+            const tdDue = tr.createEl('td', { attr: { style: 'padding: 7px 10px; white-space: nowrap;' } });
+            if (entry.dueMoment?.isValid()) {
+                const isOverdue = entry.dueMoment.isBefore(today);
+                const isToday = entry.dueMoment.isSame(today, 'day');
+                const color = isOverdue ? 'var(--text-error)' : isToday ? 'var(--interactive-accent)' : 'var(--text-normal)';
+                tdDue.createEl('span', { text: entry.dueDate, attr: { style: `color: ${color}; font-weight: ${isOverdue || isToday ? '600' : '400'};` } });
+                if (isOverdue) tdDue.createEl('span', { text: ' ⚠', attr: { style: 'color: var(--text-error); font-size: 0.85em;' } });
+            } else {
+                tdDue.createEl('span', { text: entry.dueDate || '—', attr: { style: 'color: var(--text-muted);' } });
+            }
+
+            // Last Payment
+            tr.createEl('td', { text: entry.lastPayment || '—', attr: { style: 'padding: 7px 10px; color: var(--text-muted); white-space: nowrap;' } });
+
+            // Pay button
+            const tdPay = tr.createEl('td', { attr: { style: 'padding: 4px 8px; text-align: right;' } });
+            const payBtn = tdPay.createEl('button', { text: 'Pay', attr: { style: 'padding: 3px 12px; border-radius: 5px; border: none; background: var(--interactive-accent); color: var(--text-on-accent); font-size: 0.8em; font-weight: 600; cursor: pointer;' } });
+            payBtn.addEventListener('click', () => {
+                const fileObj = vault.getFileByPath(entry.path) as TFile;
+                if (!fileObj) { new Notice('Note file not found.'); return; }
+                new PaymentModal(this.plugin.app, fileObj, entry.dueDate, () => {
+                    this.renderView();
+                }).open();
+            });
+        });
     }
 
     renderSettingsMode(container: HTMLElement) {
@@ -949,13 +1346,35 @@ class MinaView extends ItemView {
         } else {
             const thoughtsContent = await readFile(s.captureFolder, s.captureFilePath);
             const tasksContent = await readFile(s.captureFolder, s.tasksFilePath);
-            systemPrompt = `You are MINA, a personal AI assistant embedded in Obsidian. You have access to the user's thoughts and tasks data below. Answer questions, summarize, find patterns, suggest actions, or help reflect — based on this data. Be concise and helpful.
+
+            // Build dues context from vault frontmatter
+            const { metadataCache, vault: v } = this.plugin.app;
+            const duesLines: string[] = [];
+            for (const file of v.getMarkdownFiles()) {
+                const fm = metadataCache.getFileCache(file)?.frontmatter;
+                if (!fm) continue;
+                const catRaw = fm['category'];
+                const catMatches = catRaw && (Array.isArray(catRaw)
+                    ? catRaw.some((v: any) => v.toString().toLowerCase().includes('recurring payment'))
+                    : catRaw.toString().toLowerCase().includes('recurring payment'));
+                const active = fm['active_status'];
+                const isActive = active === true || active === 'true' || active === 'True';
+                if (!catMatches || !isActive) continue;
+                duesLines.push(`- ${file.basename}: due ${fm['next_duedate'] ?? '?'}, last paid ${fm['last_payment'] ?? '?'}`);
+            }
+            duesLines.sort();
+            const duesContent = duesLines.length ? duesLines.join('\n') : '(none)';
+
+            systemPrompt = `You are MINA, a personal AI assistant embedded in Obsidian. You have access to the user's thoughts, tasks, and recurring dues data below. Answer questions, summarize, find patterns, suggest actions, or help reflect — based on this data. Be concise and helpful.
 
 --- THOUGHTS ---
 ${thoughtsContent || '(empty)'}
 
 --- TASKS ---
-${tasksContent || '(empty)'}`;
+${tasksContent || '(empty)'}
+
+--- DUES (recurring payments) ---
+${duesContent}`;
         }
 
         const body = {
