@@ -654,13 +654,43 @@ class PaymentModal extends Modal {
     onOpen() {
         const { contentEl, modalEl } = this;
         modalEl.style.width = 'min(500px, 95vw)';
+
+        if (Platform.isMobile) {
+            modalEl.style.position = 'fixed';
+            modalEl.style.top = '0';
+            modalEl.style.left = '50%';
+            modalEl.style.transform = 'translateX(-50%)';
+            modalEl.style.margin = '0';
+            modalEl.style.borderRadius = '0 0 12px 12px';
+            modalEl.style.maxHeight = '100vh';
+        }
+
         contentEl.empty();
-        contentEl.style.padding = '20px';
+        contentEl.style.padding = '16px';
         contentEl.style.display = 'flex';
         contentEl.style.flexDirection = 'column';
-        contentEl.style.gap = '14px';
+        contentEl.style.gap = '12px';
+        contentEl.style.overflowY = 'auto';
 
-        contentEl.createEl('h3', { text: `Pay — ${this.file.basename}`, attr: { style: 'margin: 0; font-size: 1em; color: var(--text-normal);' } });
+        // Shrink content area when virtual keyboard appears
+        const setMaxHeight = () => {
+            const vv = (window as any).visualViewport;
+            const available = vv ? vv.height : window.innerHeight;
+            contentEl.style.maxHeight = `${available - 16}px`;
+        };
+        setMaxHeight();
+        const vv = (window as any).visualViewport;
+        if (vv) vv.addEventListener('resize', setMaxHeight);
+        // cleanup on close via onClose override stores ref
+        (this as any)._vvCleanup = () => { if (vv) vv.removeEventListener('resize', setMaxHeight); };
+
+        // Auto-scroll focused input into view
+        const scrollFocused = (e: FocusEvent) => {
+            setTimeout(() => (e.target as HTMLElement)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+        };
+        contentEl.addEventListener('focusin', scrollFocused);
+
+        contentEl.createEl('h3', { text: `Pay — ${this.file.basename}`, attr: { style: 'margin: 0; font-size: 1em; color: var(--text-normal); flex-shrink: 0;' } });
 
         const field = (label: string) => {
             const wrap = contentEl.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 4px;' } });
@@ -800,7 +830,7 @@ class PaymentModal extends Modal {
         });
     }
 
-    onClose() { this.contentEl.empty(); }
+    onClose() { (this as any)._vvCleanup?.(); this.contentEl.empty(); }
 }
 
 class NewDueModal extends Modal {
@@ -816,13 +846,41 @@ class NewDueModal extends Modal {
     onOpen() {
         const { contentEl, modalEl } = this;
         modalEl.style.width = 'min(460px, 95vw)';
+
+        if (Platform.isMobile) {
+            modalEl.style.position = 'fixed';
+            modalEl.style.top = '0';
+            modalEl.style.left = '50%';
+            modalEl.style.transform = 'translateX(-50%)';
+            modalEl.style.margin = '0';
+            modalEl.style.borderRadius = '0 0 12px 12px';
+            modalEl.style.maxHeight = '100vh';
+        }
+
         contentEl.empty();
-        contentEl.style.padding = '20px';
+        contentEl.style.padding = '16px';
         contentEl.style.display = 'flex';
         contentEl.style.flexDirection = 'column';
-        contentEl.style.gap = '14px';
+        contentEl.style.gap = '12px';
+        contentEl.style.overflowY = 'auto';
 
-        contentEl.createEl('h3', { text: 'Add Recurring Due', attr: { style: 'margin: 0; font-size: 1em; color: var(--text-normal);' } });
+        // Shrink when virtual keyboard appears
+        const setMaxHeight = () => {
+            const vv = (window as any).visualViewport;
+            const available = vv ? vv.height : window.innerHeight;
+            contentEl.style.maxHeight = `${available - 16}px`;
+        };
+        setMaxHeight();
+        const vv = (window as any).visualViewport;
+        if (vv) vv.addEventListener('resize', setMaxHeight);
+        (this as any)._vvCleanup = () => { if (vv) vv.removeEventListener('resize', setMaxHeight); };
+
+        // Auto-scroll focused input into view
+        contentEl.addEventListener('focusin', (e: FocusEvent) => {
+            setTimeout(() => (e.target as HTMLElement)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+        });
+
+        contentEl.createEl('h3', { text: 'Add Recurring Due', attr: { style: 'margin: 0; font-size: 1em; color: var(--text-normal); flex-shrink: 0;' } });
 
         const field = (label: string, hint = '') => {
             const wrap = contentEl.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 3px;' } });
@@ -918,7 +976,7 @@ class NewDueModal extends Modal {
         setTimeout(() => nameInput.focus(), 50);
     }
 
-    onClose() { this.contentEl.empty(); }
+    onClose() { (this as any)._vvCleanup?.(); this.contentEl.empty(); }
 }
 
 interface ThoughtEntry {
