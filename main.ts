@@ -984,7 +984,7 @@ ${tasksContent || '(empty)'}`;
                 e.preventDefault();
                 e.stopPropagation();
                 const href = a.getAttribute('data-href') || a.getAttribute('href') || '';
-                if (href) this.plugin.app.workspace.openLinkText(href, sourcePath, false);
+                if (href) this.plugin.app.workspace.openLinkText(href, sourcePath, Platform.isMobile ? 'tab' : 'window');
             });
         });
     }
