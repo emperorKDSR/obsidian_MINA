@@ -42,7 +42,7 @@ const DEFAULT_SETTINGS: MinaSettings = {
     contexts: [], 
     selectedContexts: [],
     geminiApiKey: '',
-    geminiModel: 'gemini-2.0-flash'
+    geminiModel: 'gemini-2.5-flash'
 }
 
 export default class MinaPlugin extends Plugin {
@@ -1347,7 +1347,7 @@ class MinaView extends ItemView {
         field('Gemini Model', 'Model to use for MINA AI chat.', row => {
             const models: [string, string][] = [
                 ['gemini-2.5-pro',           '2.5 Pro — highest reasoning & multimodal'],
-                ['gemini-2.5-flash',         '2.5 Flash — fast, general-purpose'],
+                ['gemini-2.5-flash',         '2.5 Flash — fast, general-purpose (default)'],
                 ['gemini-2.5-flash-lite',    '2.5 Flash Lite — ultra-fast, cost-efficient'],
                 ['gemini-2.5-flash-preview', '2.5 Flash Preview — latest preview'],
                 ['gemini-2.0-flash',         '2.0 Flash — stable, multimodal (default)'],
@@ -2739,7 +2739,7 @@ class MinaSettingTab extends PluginSettingTab {
                 'gemini-2.5-flash-lite':             '2.5 Flash Lite — ultra-fast, cost-efficient',
                 'gemini-2.5-flash-preview':          '2.5 Flash Preview — latest preview',
                 // Gemini 2.0
-                'gemini-2.0-flash':                  '2.0 Flash — stable, multimodal (default)',
+                'gemini-2.0-flash':                  '2.0 Flash — stable, multimodal',
                 'gemini-2.0-flash-lite':             '2.0 Flash Lite — budget-friendly',
                 // Gemini 1.5
                 'gemini-1.5-pro':                    '1.5 Pro — complex reasoning, prior flagship',
@@ -2749,7 +2749,7 @@ class MinaSettingTab extends PluginSettingTab {
             for (const [value, label] of Object.entries(models)) {
                 drop.addOption(value, label);
             }
-            drop.setValue(this.plugin.settings.geminiModel || 'gemini-2.0-flash');
+            drop.setValue(this.plugin.settings.geminiModel || 'gemini-2.5-flash');
             drop.onChange(async (value) => { this.plugin.settings.geminiModel = value; await this.plugin.saveSettings(); });
         });
 	}
