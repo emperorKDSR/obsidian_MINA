@@ -1784,6 +1784,62 @@ ${duesContent}`;
         });
     }
 
+    hookCheckboxes(el: HTMLElement, entry: ThoughtEntry) {
+        const checkboxEls = el.querySelectorAll('input[type="checkbox"]');
+        checkboxEls.forEach((cb, idx) => {
+            const checkbox = cb as HTMLInputElement;
+            // Style as a circle toggle
+            checkbox.style.cssText += [
+                'width:17px', 'height:17px', 'border-radius:50%',
+                'appearance:none', '-webkit-appearance:none',
+                'border:2px solid var(--interactive-accent)',
+                'cursor:pointer', 'vertical-align:middle', 'flex-shrink:0',
+                `background:${checkbox.checked ? 'var(--interactive-accent)' : 'transparent'}`,
+                'transition:background 0.15s'
+            ].join(';');
+
+            checkbox.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const newChecked = !checkbox.checked;
+
+                // Toggle the Nth `- [ ] ` / `- [x] ` in the stored text (which uses <br> as newlines)
+                let count = 0;
+                const newRaw = entry.text.replace(/- \[([ x])\] /g, (match: string, state: string) => {
+                    if (count++ === idx) return state === ' ' ? '- [x] ' : '- [ ] ';
+                    return match;
+                });
+                if (newRaw === entry.text) return;
+                entry.text = newRaw;
+
+                const { vault } = this.plugin.app;
+                const folderPath = this.plugin.settings.captureFolder.trim();
+                const fileName = this.plugin.settings.captureFilePath.trim();
+                const fullPath = folderPath && folderPath !== '/' ? `${folderPath}/${fileName}` : fileName;
+                const file = vault.getAbstractFileByPath(fullPath) as TFile;
+                if (!file) return;
+                try {
+                    const content = await vault.read(file);
+                    const lines = content.split('\n');
+                    if (entry.lineIndex >= 0 && entry.lineIndex < lines.length) {
+                        const parts = lines[entry.lineIndex].split('|');
+                        let textIndex: number;
+                        if (parts.length >= 9) textIndex = 7;
+                        else if (parts.length >= 7) textIndex = 5;
+                        else textIndex = 3;
+                        parts[textIndex] = ` ${newRaw} `;
+                        lines[entry.lineIndex] = parts.join('|');
+                        await vault.modify(file, lines.join('\n'));
+                        this.invalidateCache(fullPath);
+                        // Update visual immediately without full re-render
+                        checkbox.checked = newChecked;
+                        checkbox.style.background = newChecked ? 'var(--interactive-accent)' : 'transparent';
+                    }
+                } catch (_) { /* silent */ }
+            });
+        });
+    }
+
     renderCaptureMode(container: HTMLElement, isThoughtsOnly: boolean = false, isTasksOnly: boolean = false) {
         if (this.replyToId) {
             const replyBanner = container.createEl('div', { attr: { style: 'background-color: var(--background-secondary-alt); padding: 8px 12px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid var(--interactive-accent); display: flex; justify-content: space-between; align-items: center; font-size: 0.85em;' } });
@@ -1971,8 +2027,17 @@ ${duesContent}`;
                 }
             }
 
-            lastValue = val;
-            this.content = val;
+            // Auto-convert "** " at line start to a markdown checklist item "- [ ] "
+            const converted = val.replace(/^\*\* /gm, '- [ ] ');
+            if (converted !== val) {
+                const cursor = target.selectionStart;
+                const diff = converted.length - val.length;
+                target.value = converted;
+                target.setSelectionRange(cursor + diff, cursor + diff);
+            }
+
+            lastValue = target.value;
+            this.content = target.value;
         });
 
         textArea.addEventListener('blur', () => setTimeout(hideCtxPicker, 150));
@@ -3055,10 +3120,13 @@ ${duesContent}`;
             text: `${entry.date.replace(/[\[\]]/g, '')} ${entry.time}`,
             attr: { style: 'float: right; font-size: 0.65em; color: var(--text-muted); opacity: 0.7; margin-left: 8px;' }
         });
-        const textWithContext = entry.text + (entry.context ? ' ' + entry.context : '');
+        // Decode <br> storage artifact → real newlines so markdown lists/checklists render correctly
+        const decodedText = entry.text.replace(/<br>/gi, '\n');
+        const textWithContext = decodedText + (entry.context ? ' ' + entry.context : '');
         await MarkdownRenderer.render(this.plugin.app, textWithContext, renderTarget, filePath, this);
         this.hookInternalLinks(renderTarget, filePath);
         this.hookImageZoom(renderTarget);
+        this.hookCheckboxes(renderTarget, entry);
         const firstP = renderTarget.querySelector('p');
         if (firstP) {
             firstP.style.marginTop = '0';
