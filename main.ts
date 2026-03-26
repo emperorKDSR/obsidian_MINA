@@ -1156,6 +1156,21 @@ class MinaView extends ItemView {
     async onOpen() {
         this.renderView();
 
+        // Mobile: keep the view height locked to the visual viewport so the
+        // area above the keyboard never shows as a black bar.
+        if (Platform.isMobile && window.visualViewport) {
+            const vv = window.visualViewport;
+            const syncHeight = () => {
+                const container = this.containerEl.children[1] as HTMLElement;
+                if (container) {
+                    container.style.height = `${vv.height}px`;
+                    container.style.maxHeight = `${vv.height}px`;
+                }
+            };
+            vv.addEventListener('resize', syncHeight);
+            (this as any)._vvMainCleanup = () => vv.removeEventListener('resize', syncHeight);
+        }
+
         // Hide headers for a cleaner standalone window on desktop
         if (!Platform.isMobile) {
             const headerEl = this.containerEl.querySelector('.view-header');
@@ -1176,6 +1191,10 @@ class MinaView extends ItemView {
         }
     }
 
+    async onClose() {
+        (this as any)._vvMainCleanup?.();
+    }
+
     renderView() {
         const container = this.containerEl.children[1] as HTMLElement;
         container.empty();
@@ -1183,7 +1202,10 @@ class MinaView extends ItemView {
         if (Platform.isMobile) {
             container.style.display = 'flex';
             container.style.flexDirection = 'column';
-            container.style.height = '100%';
+            // Use visual viewport height so the view never extends under the keyboard.
+            const vvh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            container.style.height = `${vvh}px`;
+            container.style.maxHeight = `${vvh}px`;
             container.style.overflow = 'hidden';
         } else {
             // Drag handle for desktop
