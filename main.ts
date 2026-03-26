@@ -1099,7 +1099,7 @@ class MinaView extends ItemView {
     // Tasks Review Filters
     tasksFilterStatus: 'all' | 'pending' | 'completed' = 'pending';
     tasksFilterContext: string[] = [];
-    tasksFilterDate: string = 'today'; // 'all' | 'today' | 'this-week' | 'next-week' | 'overdue' | 'custom'
+    tasksFilterDate: string = 'today+overdue'; // 'all'|'today'|'today+overdue'|'this-week'|'next-week'|'overdue'|'custom'
     tasksFilterDateStart: string = '';
     tasksFilterDateEnd: string = '';
     showPreviousTasks: boolean = true;
@@ -2235,7 +2235,7 @@ ${duesContent}`;
 
         const dateContainer = filterBar.createEl('div', { attr: { style: 'display: flex; gap: 5px; align-items: center; flex-wrap: wrap;' } });
         const dateSel = dateContainer.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px; text-align: center; text-align-last: center;' }});
-        [['all', 'All Dates'], ['today', 'Today'], ['this-week', 'This Week'], ['next-week', 'Next Week'], ['overdue', 'Overdue'], ['custom', 'Custom Date']].forEach(([val, label]) => {
+        [['all', 'All Dates'], ['today', 'Today'], ['today+overdue', 'Today + Overdue'], ['this-week', 'This Week'], ['next-week', 'Next Week'], ['overdue', 'Overdue Only'], ['custom', 'Custom Date']].forEach(([val, label]) => {
             const opt = dateSel.createEl('option', { value: val, text: label });
             if (this.tasksFilterDate === val) opt.selected = true;
         });
@@ -2520,7 +2520,11 @@ ${duesContent}`;
                         const taskDate = moment(dateRaw, ['YYYY-MM-DD', this.plugin.settings.dateFormat], true);
                         if (!taskDate.isValid()) continue;
                         if (this.tasksFilterDate === 'today' && !taskDate.isSame(todayMoment, 'day')) continue;
-                        else if (this.tasksFilterDate === 'this-week' && !taskDate.isBetween(startOfWeek, endOfWeek, 'day', '[]')) continue;
+                        else if (this.tasksFilterDate === 'today+overdue') {
+                            const isOverdue = !isDone && taskDate.isBefore(todayMoment, 'day');
+                            const isToday = taskDate.isSame(todayMoment, 'day');
+                            if (!isToday && !isOverdue) continue;
+                        } else if (this.tasksFilterDate === 'this-week' && !taskDate.isBetween(startOfWeek, endOfWeek, 'day', '[]')) continue;
                         else if (this.tasksFilterDate === 'next-week') {
                             const s = moment().add(1, 'week').startOf('week'), e = moment().add(1, 'week').endOf('week');
                             if (!taskDate.isBetween(s, e, 'day', '[]')) continue;
@@ -2921,6 +2925,21 @@ ${duesContent}`;
         
         if (parts.length >= 8) {
             const dueDateContainer = lowerLeftContainer.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 4px;' } });
+            
+            // Overdue indicator — shown on the row itself so it's visible at a glance
+            if (dueDateRaw && !isDone) {
+                const dueM = moment(dueDateRaw, ['YYYY-MM-DD', this.plugin.settings.dateFormat], true);
+                const todayM = moment().startOf('day');
+                if (dueM.isValid() && dueM.isBefore(todayM, 'day')) {
+                    el.style.borderLeft = '3px solid var(--text-error)';
+                    el.style.paddingLeft = '8px';
+                    dueDateContainer.createSpan({
+                        text: '⚠ OVERDUE',
+                        attr: { style: 'color: var(--text-error); font-weight: 700; font-size: 0.85em; letter-spacing: 0.03em;' }
+                    });
+                }
+            }
+
             dueDateContainer.createSpan({ text: '🗓️ Due:' });
             const dateInput = dueDateContainer.createEl('input', { 
                 type: 'date', 
