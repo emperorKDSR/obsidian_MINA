@@ -199,6 +199,15 @@ export default class MinaPlugin extends Plugin {
             this.settings.dateFormat = 'YYYY-MM-DD';
             this.settings.timeFormat = 'HH:mm';
         }
+        // Guard against corrupted format strings (e.g. "Obsidian" ending up as timeFormat).
+        // A valid time format must contain at least one hour token (H, h, or k).
+        // A valid date format must contain at least one of Y, M, or D.
+        if (this.settings.timeFormat && !/[Hhk]/.test(this.settings.timeFormat)) {
+            this.settings.timeFormat = DEFAULT_SETTINGS.timeFormat;
+        }
+        if (this.settings.dateFormat && !/[YMD]/.test(this.settings.dateFormat)) {
+            this.settings.dateFormat = DEFAULT_SETTINGS.dateFormat;
+        }
 	}
 
 	async saveSettings() {
