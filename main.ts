@@ -1746,7 +1746,9 @@ ${duesContent}`;
         const textAreaWrapper = inputSection.createEl('div', { attr: { style: 'flex-grow: 1;' } });
         const textArea = textAreaWrapper.createEl('textarea', {
             attr: {
-                placeholder: 'Enter your thought, task, or paste/drop an image...',
+                placeholder: Platform.isMobile
+                    ? 'Type your thought… use @ for context, \\ for links'
+                    : 'Enter your thought, task, or paste/drop an image...',
                 rows: '3',
                 style: 'width: 100%; font-family: var(--font-text); resize: vertical; display: block;'
             }
@@ -1760,6 +1762,87 @@ ${duesContent}`;
         }
 
         let lastValue = this.content;
+
+        // ── @ context picker (mobile only) ───────────────────────────────────
+        let atStartIndex = -1;
+        let ctxPickerEl: HTMLElement | null = null;
+
+        const hideCtxPicker = () => {
+            ctxPickerEl?.remove(); ctxPickerEl = null; atStartIndex = -1;
+        };
+
+        const showCtxPicker = (query: string) => {
+            ctxPickerEl?.remove();
+            const all = this.plugin.settings.contexts;
+            const filtered = query
+                ? all.filter(c => c.toLowerCase().includes(query.toLowerCase()))
+                : all;
+            const isNew = query && !all.some(c => c.toLowerCase() === query.toLowerCase());
+
+            if (!filtered.length && !isNew) { hideCtxPicker(); return; }
+
+            ctxPickerEl = textAreaWrapper.createEl('div', {
+                attr: {
+                    style: [
+                        'position:absolute', 'bottom:calc(100% + 4px)', 'left:0', 'right:0',
+                        'background:var(--background-primary)',
+                        'border:1px solid var(--background-modifier-border)',
+                        'border-radius:10px', 'overflow:hidden',
+                        'max-height:220px', 'overflow-y:auto',
+                        'z-index:200',
+                        'box-shadow:0 6px 24px rgba(0,0,0,0.25)'
+                    ].join(';')
+                }
+            });
+
+            const rows = [...filtered, ...(isNew ? [`+ Create "#${query}"`] : [])];
+
+            rows.forEach((label, i) => {
+                const isCreateRow = label.startsWith('+ Create');
+                const ctx = isCreateRow ? query : label;
+                const isSelected = this.selectedContexts.includes(ctx);
+
+                const item = ctxPickerEl!.createEl('div', {
+                    attr: {
+                        style: [
+                            'padding:12px 16px', 'cursor:pointer',
+                            'display:flex', 'align-items:center', 'gap:10px',
+                            'font-size:0.92em',
+                            i > 0 ? 'border-top:1px solid var(--background-modifier-border-hover)' : '',
+                            isSelected ? 'background:var(--background-modifier-hover)' : ''
+                        ].join(';')
+                    }
+                });
+                item.createSpan({
+                    text: isCreateRow ? '➕' : (isSelected ? '✓' : '#'),
+                    attr: { style: `min-width:18px; color:${isSelected ? 'var(--interactive-accent)' : 'var(--text-muted)'}; font-weight:bold;` }
+                });
+                item.createSpan({ text: isCreateRow ? label : ctx });
+
+                item.addEventListener('mousedown', async (ev) => {
+                    ev.preventDefault();
+                    // splice out the @query token from textarea
+                    const cursorNow = textArea.selectionStart;
+                    textArea.value = textArea.value.substring(0, atStartIndex) + textArea.value.substring(cursorNow);
+                    this.content = textArea.value;
+                    textArea.setSelectionRange(atStartIndex, atStartIndex);
+
+                    if (isCreateRow) {
+                        if (!this.plugin.settings.contexts.includes(ctx)) this.plugin.settings.contexts.push(ctx);
+                    }
+                    if (isSelected) {
+                        this.selectedContexts = this.selectedContexts.filter(c => c !== ctx);
+                    } else if (!this.selectedContexts.includes(ctx)) {
+                        this.selectedContexts.push(ctx);
+                    }
+                    this.plugin.settings.selectedContexts = [...this.selectedContexts];
+                    await this.plugin.saveSettings();
+                    hideCtxPicker();
+                    textArea.focus();
+                });
+            });
+        };
+
         textArea.addEventListener('input', (e) => { 
             const target = e.target as HTMLTextAreaElement;
             const val = target.value;
@@ -1783,9 +1866,27 @@ ${duesContent}`;
                     modal.open();
                 }
             }
+
+            // @ context picker: active on mobile; desktop keeps the pills
+            if (Platform.isMobile) {
+                const cursor = target.selectionStart;
+                const before = val.substring(0, cursor);
+                const atIdx = before.lastIndexOf('@');
+                // valid trigger: @ found and no space between @ and cursor
+                if (atIdx !== -1 && !before.substring(atIdx + 1).includes(' ')) {
+                    atStartIndex = atIdx;
+                    showCtxPicker(before.substring(atIdx + 1));
+                } else {
+                    hideCtxPicker();
+                }
+            }
+
             lastValue = val;
             this.content = val;
         });
+
+        textArea.addEventListener('blur', () => setTimeout(hideCtxPicker, 150));
+        textArea.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') hideCtxPicker(); });
 
         // Event listeners for drag/paste
         textArea.addEventListener('paste', async (e: ClipboardEvent) => {
@@ -1842,10 +1943,10 @@ ${duesContent}`;
 
         const submitBtn = inputSection.createEl('button', { text: 'Sync', attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); padding: 8px 16px; height: 100%; min-height: 40px;' } });
         
-        // Contexts
+        // Contexts — desktop: pill row; mobile: hidden (use @ in textarea instead)
         const controlsDiv = container.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; margin-bottom: 15px;' } });
         
-        const contextsDiv = controlsDiv.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 5px; align-items: center;' } });
+        const contextsDiv = controlsDiv.createEl('div', { attr: { style: `display: ${Platform.isMobile ? 'none' : 'flex'}; flex-wrap: wrap; gap: 5px; align-items: center;` } });
         const renderContextTags = () => {
             contextsDiv.empty();
             this.plugin.settings.contexts.forEach(ctx => {
