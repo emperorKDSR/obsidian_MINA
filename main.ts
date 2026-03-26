@@ -1807,12 +1807,22 @@ ${duesContent}`;
         // ── @ context picker (mobile only) ───────────────────────────────────
         let atStartIndex = -1;
         let ctxPickerEl: HTMLElement | null = null;
+        let currentCtxQuery = '';
 
         const hideCtxPicker = () => {
-            ctxPickerEl?.remove(); ctxPickerEl = null; atStartIndex = -1;
+            // splice out the @query token when picker closes
+            if (atStartIndex !== -1 && ctxPickerEl) {
+                const cursorNow = textArea.selectionStart;
+                const endOfQuery = Math.max(cursorNow, atStartIndex + 1 + currentCtxQuery.length);
+                textArea.value = textArea.value.substring(0, atStartIndex) + textArea.value.substring(endOfQuery);
+                this.content = textArea.value;
+                textArea.setSelectionRange(atStartIndex, atStartIndex);
+            }
+            ctxPickerEl?.remove(); ctxPickerEl = null; atStartIndex = -1; currentCtxQuery = '';
         };
 
         const showCtxPicker = (query: string) => {
+            currentCtxQuery = query;
             ctxPickerEl?.remove();
             const all = this.plugin.settings.contexts;
             const filtered = query
@@ -1820,68 +1830,91 @@ ${duesContent}`;
                 : all;
             const isNew = query && !all.some(c => c.toLowerCase() === query.toLowerCase());
 
-            if (!filtered.length && !isNew) { hideCtxPicker(); return; }
+            if (!filtered.length && !isNew) { ctxPickerEl = null; return; }
 
+            // ── Horizontal scrollable pill strip below the textarea ───────────
             ctxPickerEl = textAreaWrapper.createEl('div', {
                 attr: {
                     style: [
-                        'position:absolute', 'bottom:calc(100% + 4px)', 'left:0', 'right:0',
+                        'position:absolute', 'top:calc(100% + 4px)', 'left:0', 'right:0',
+                        'display:flex', 'flex-direction:row', 'align-items:center',
+                        'gap:6px', 'padding:8px 10px',
+                        'overflow-x:auto', 'white-space:nowrap',
+                        '-webkit-overflow-scrolling:touch',
                         'background:var(--background-primary)',
                         'border:1px solid var(--background-modifier-border)',
-                        'border-radius:10px', 'overflow:hidden',
-                        'max-height:220px', 'overflow-y:auto',
-                        'z-index:200',
-                        'box-shadow:0 6px 24px rgba(0,0,0,0.25)'
+                        'border-radius:10px',
+                        'box-shadow:0 4px 16px rgba(0,0,0,0.22)',
+                        'z-index:200'
                     ].join(';')
                 }
             });
 
-            const rows = [...filtered, ...(isNew ? [`+ Create "#${query}"`] : [])];
+            const rows = [...filtered, ...(isNew ? [query] : [])];
 
-            rows.forEach((label, i) => {
-                const isCreateRow = label.startsWith('+ Create');
-                const ctx = isCreateRow ? query : label;
+            rows.forEach((ctx, i) => {
+                const isCreateRow = i === rows.length - 1 && isNew;
                 const isSelected = this.selectedContexts.includes(ctx);
 
-                const item = ctxPickerEl!.createEl('div', {
+                const pill = ctxPickerEl!.createEl('div', {
                     attr: {
                         style: [
-                            'padding:12px 16px', 'cursor:pointer',
-                            'display:flex', 'align-items:center', 'gap:10px',
-                            'font-size:0.92em',
-                            i > 0 ? 'border-top:1px solid var(--background-modifier-border-hover)' : '',
-                            isSelected ? 'background:var(--background-modifier-hover)' : ''
+                            'display:inline-flex', 'align-items:center', 'gap:5px',
+                            'padding:6px 14px', 'border-radius:20px',
+                            'font-size:0.85em', 'cursor:pointer', 'flex-shrink:0',
+                            'user-select:none', 'transition:background 0.1s',
+                            isCreateRow
+                                ? 'border:1px dashed var(--interactive-accent); color:var(--interactive-accent);'
+                                : isSelected
+                                    ? 'background:var(--interactive-accent); color:var(--text-on-accent); border:1px solid var(--interactive-accent);'
+                                    : 'background:var(--background-secondary); color:var(--text-normal); border:1px solid var(--background-modifier-border);'
                         ].join(';')
                     }
                 });
-                item.createSpan({
-                    text: isCreateRow ? '➕' : (isSelected ? '✓' : '#'),
-                    attr: { style: `min-width:18px; color:${isSelected ? 'var(--interactive-accent)' : 'var(--text-muted)'}; font-weight:bold;` }
-                });
-                item.createSpan({ text: isCreateRow ? label : ctx });
 
-                item.addEventListener('mousedown', async (ev) => {
+                if (isCreateRow) {
+                    pill.createSpan({ text: '➕' });
+                    pill.createSpan({ text: `"${ctx}"` });
+                } else {
+                    if (isSelected) pill.createSpan({ text: '✓', attr: { style: 'font-size:0.8em; font-weight:bold;' } });
+                    pill.createSpan({ text: `#${ctx}` });
+                }
+
+                pill.addEventListener('mousedown', async (ev) => {
                     ev.preventDefault();
-                    // splice out the @query token from textarea
-                    const cursorNow = textArea.selectionStart;
-                    textArea.value = textArea.value.substring(0, atStartIndex) + textArea.value.substring(cursorNow);
-                    this.content = textArea.value;
-                    textArea.setSelectionRange(atStartIndex, atStartIndex);
 
-                    if (isCreateRow) {
-                        if (!this.plugin.settings.contexts.includes(ctx)) this.plugin.settings.contexts.push(ctx);
+                    if (isCreateRow && !this.plugin.settings.contexts.includes(ctx)) {
+                        this.plugin.settings.contexts.push(ctx);
                     }
-                    if (isSelected) {
+                    if (isSelected && !isCreateRow) {
                         this.selectedContexts = this.selectedContexts.filter(c => c !== ctx);
                     } else if (!this.selectedContexts.includes(ctx)) {
                         this.selectedContexts.push(ctx);
                     }
                     this.plugin.settings.selectedContexts = [...this.selectedContexts];
                     await this.plugin.saveSettings();
-                    hideCtxPicker();
+
+                    // Re-render picker in place so multiple items can be selected
+                    showCtxPicker(currentCtxQuery);
                     textArea.focus();
                 });
             });
+
+            // ── "Done" pill at the end ────────────────────────────────────────
+            const donePill = ctxPickerEl.createEl('div', {
+                attr: {
+                    style: [
+                        'display:inline-flex', 'align-items:center',
+                        'padding:6px 14px', 'border-radius:20px',
+                        'font-size:0.85em', 'cursor:pointer', 'flex-shrink:0',
+                        'margin-left:auto',
+                        'background:var(--background-modifier-border)',
+                        'color:var(--text-muted)', 'border:1px solid transparent'
+                    ].join(';')
+                },
+                text: 'Done'
+            });
+            donePill.addEventListener('mousedown', (ev) => { ev.preventDefault(); hideCtxPicker(); textArea.focus(); });
         };
 
         textArea.addEventListener('input', (e) => { 
