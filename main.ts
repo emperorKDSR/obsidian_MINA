@@ -33,6 +33,19 @@ interface MinaSettings {
     geminiModel: string;
 }
 
+/** Convert any locale-specific digit characters to ASCII 0-9.
+ *  Covers Arabic-Indic (٠-٩), Persian (۰-۹), Devanagari (०-९),
+ *  Bengali (০-৯), and Thai (๐-๙) so stored timestamps are always plain numbers
+ *  regardless of the device's locale setting. */
+function toAsciiDigits(s: string): string {
+    return s
+        .replace(/[\u0660-\u0669]/g, c => String(c.charCodeAt(0) - 0x0660))
+        .replace(/[\u06F0-\u06F9]/g, c => String(c.charCodeAt(0) - 0x06F0))
+        .replace(/[\u0966-\u096F]/g, c => String(c.charCodeAt(0) - 0x0966))
+        .replace(/[\u09E6-\u09EF]/g, c => String(c.charCodeAt(0) - 0x09E6))
+        .replace(/[\u0E50-\u0E59]/g, c => String(c.charCodeAt(0) - 0x0E50));
+}
+
 const DEFAULT_SETTINGS: MinaSettings = {
     captureFolder: '000 Bin',
 	captureFilePath: 'mina_1.md',
@@ -196,10 +209,10 @@ export default class MinaPlugin extends Plugin {
     async appendCapture(content: string, contexts: string[], isTask: boolean, dueDate?: string, parentId: string = '') {
         const { vault } = this.app;
 
-        // Always format stored timestamps with English locale so device locale
-        // (Arabic, Persian, etc.) never produces non-ASCII numerals in the table.
-        const fmtDate = () => moment().locale('en').format(this.settings.dateFormat);
-        const fmtTime = () => moment().locale('en').format(this.settings.timeFormat);
+        // Always format stored timestamps with English locale AND strip any
+        // locale-specific digit glyphs so the table always contains plain ASCII.
+        const fmtDate = () => toAsciiDigits(moment().locale('en').format(this.settings.dateFormat));
+        const fmtTime = () => toAsciiDigits(moment().locale('en').format(this.settings.timeFormat));
 
         const folderPath = this.settings.captureFolder.trim();
         const fileName = isTask ? this.settings.tasksFilePath.trim() : this.settings.captureFilePath.trim();
@@ -2364,8 +2377,8 @@ ${duesContent}`;
                     new Notice('Deleted successfully');
                 } else {
                     const parts = newText.split('|');
-                    const dateCol = ` [[${moment().locale('en').format(this.plugin.settings.dateFormat)}]] `;
-                    const timeCol = ` ${moment().locale('en').format(this.plugin.settings.timeFormat)} `;
+                    const dateCol = ` [[${toAsciiDigits(moment().locale('en').format(this.plugin.settings.dateFormat))}]] `;
+                    const timeCol = ` ${toAsciiDigits(moment().locale('en').format(this.plugin.settings.timeFormat))} `;
                     
                     let parentId = '';
                     if (isTask) {
