@@ -1087,6 +1087,34 @@ class MinaView extends ItemView {
     reviewThoughtsContainer: HTMLElement;
     selectedContexts: string[];
 
+    // ── Performance: file content cache ──────────────────────────────────────
+    private contentCache = new Map<string, { content: string; mtime: number }>();
+
+    private async readCached(file: TFile): Promise<string> {
+        const cached = this.contentCache.get(file.path);
+        if (cached && cached.mtime === file.stat.mtime) return cached.content;
+        const content = await this.plugin.app.vault.read(file);
+        this.contentCache.set(file.path, { content, mtime: file.stat.mtime });
+        return content;
+    }
+
+    private invalidateCache(path: string) {
+        this.contentCache.delete(path);
+    }
+
+    // ── Performance: pagination state ─────────────────────────────────────────
+    private readonly PAGE_SIZE = 50;
+
+    // Parsed+filtered arrays survive across "load more" clicks
+    private _parsedTaskLines: { line: string; index: number; modTimestamp: number; isDone: boolean; dateRaw: string; context: string }[] = [];
+    private _parsedRoots: ThoughtEntry[] = [];
+    private tasksOffset   = 0;
+    private thoughtsOffset = 0;
+
+    // Scroll containers used by "load more" appenders
+    private tasksRowContainer: HTMLElement | null = null;
+    private thoughtsRowContainer: HTMLElement | null = null;
+
     constructor(leaf: WorkspaceLeaf, plugin: MinaPlugin) {
         super(leaf);
         this.plugin = plugin;
@@ -2020,48 +2048,41 @@ ${duesContent}`;
         this.updateReviewThoughtsList();
     }
 
-    async updateReviewTasksList() {
+    async updateReviewTasksList(appendMore = false) {
         if (!this.reviewTasksContainer) return;
-        this.reviewTasksContainer.empty();
-        
+
         const { vault } = this.plugin.app;
         const folderPath = this.plugin.settings.captureFolder.trim();
         const fileName = this.plugin.settings.tasksFilePath.trim();
         const fullPath = folderPath && folderPath !== '/' ? `${folderPath}/${fileName}` : fileName;
         const file = vault.getAbstractFileByPath(fullPath) as TFile;
-        
-        if (!file) {
-            this.reviewTasksContainer.createEl('p', { text: 'No tasks found.', attr: { style: 'color: var(--text-muted);' } });
-            return;
-        }
 
-        try {
-            const content = await vault.read(file);
-            const lines = content.split('\n');
-            const todayMoment = moment().startOf('day');
-            const startOfWeek = moment().startOf('week');
-            const endOfWeek = moment().endOf('week');
+        if (!appendMore) {
+            // Full re-render: clear everything and rebuild the parsed list
+            this.reviewTasksContainer.empty();
+            this._parsedTaskLines = [];
+            this.tasksOffset = 0;
 
-            interface TaskLine {
-                line: string;
-                index: number;
-                modTimestamp: number;
-                isDone: boolean;
-                dateRaw: string;
-                context: string;
+            if (!file) {
+                this.reviewTasksContainer.createEl('p', { text: 'No tasks found.', attr: { style: 'color: var(--text-muted);' } });
+                return;
             }
 
-            const taskLines: TaskLine[] = [];
+            try {
+                const content = await this.readCached(file);
+                const lines = content.split('\n');
+                const todayMoment = moment().startOf('day');
+                const startOfWeek = moment().startOf('week');
+                const endOfWeek = moment().endOf('week');
 
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (line.startsWith('|') && !line.includes('---') && !line.includes('| Date |') && !line.includes('| Status |')) {
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line.startsWith('|') || line.includes('---') || line.includes('| Date |') || line.includes('| Status |')) continue;
                     const parts = line.split('|');
                     if (parts.length < 5) continue;
 
                     const statusPart = parts[1].trim();
                     const isDone = statusPart.includes('x') || statusPart.includes('X');
-                    
                     if (this.tasksFilterStatus === 'pending' && isDone) continue;
                     if (this.tasksFilterStatus === 'completed' && !isDone) continue;
 
@@ -2071,22 +2092,18 @@ ${duesContent}`;
                         if (capDate.isValid() && !capDate.isSame(todayMoment, 'day')) continue;
                     }
 
-                    // Determine Date Column: Index 6 (Due Date) if 8-column table, else Index 4 (Due Date) or Index 2 (Capture Date)
-                    let dateRaw = '';
-                    let modDateStr = '';
-                    let modTimeStr = '';
-
-                    if (parts.length >= 9) { // 8-column schema
+                    let dateRaw = '', modDateStr = '', modTimeStr = '';
+                    if (parts.length >= 9) {
                         modDateStr = parts[4].trim().replace(/[\[\]]/g, '');
                         modTimeStr = parts[5].trim();
                         dateRaw = parts[6]?.trim().replace(/[\[\]]/g, '');
                         if (!dateRaw) dateRaw = parts[2]?.trim().replace(/[\[\]]/g, '');
-                    } else if (parts.length >= 7) { // 6-column legacy
+                    } else if (parts.length >= 7) {
                         dateRaw = parts[4]?.trim().replace(/[\[\]]/g, '');
                         if (!dateRaw) dateRaw = parts[2]?.trim().replace(/[\[\]]/g, '');
                         modDateStr = parts[2].trim().replace(/[\[\]]/g, '');
                         modTimeStr = parts[3].trim();
-                    } else { // 4-column extreme legacy
+                    } else {
                         dateRaw = parts[2]?.trim().replace(/[\[\]]/g, '');
                         modDateStr = parts[2].trim().replace(/[\[\]]/g, '');
                         modTimeStr = parts[3].trim();
@@ -2094,221 +2111,208 @@ ${duesContent}`;
 
                     if (this.tasksFilterDate !== 'all') {
                         if (!dateRaw) continue;
-                        // @ts-ignore
-                        let taskDate = moment(dateRaw, ['YYYY-MM-DD', this.plugin.settings.dateFormat], true);
-                        
+                        const taskDate = moment(dateRaw, ['YYYY-MM-DD', this.plugin.settings.dateFormat], true);
                         if (!taskDate.isValid()) continue;
-                        
-                        if (this.tasksFilterDate === 'today') {
-                            if (!taskDate.isSame(todayMoment, 'day')) continue;
-                        } else if (this.tasksFilterDate === 'this-week') {
-                            if (!taskDate.isBetween(startOfWeek, endOfWeek, 'day', '[]')) continue;
-                        } else if (this.tasksFilterDate === 'next-week') {
-                            const startOfNextWeek = moment().add(1, 'week').startOf('week');
-                            const endOfNextWeek = moment().add(1, 'week').endOf('week');
-                            if (!taskDate.isBetween(startOfNextWeek, endOfNextWeek, 'day', '[]')) continue;
+                        if (this.tasksFilterDate === 'today' && !taskDate.isSame(todayMoment, 'day')) continue;
+                        else if (this.tasksFilterDate === 'this-week' && !taskDate.isBetween(startOfWeek, endOfWeek, 'day', '[]')) continue;
+                        else if (this.tasksFilterDate === 'next-week') {
+                            const s = moment().add(1, 'week').startOf('week'), e = moment().add(1, 'week').endOf('week');
+                            if (!taskDate.isBetween(s, e, 'day', '[]')) continue;
                         } else if (this.tasksFilterDate === 'overdue') {
                             if (isDone || !taskDate.isBefore(todayMoment, 'day')) continue;
                         } else if (this.tasksFilterDate === 'custom') {
-                            const startMoment = moment(this.tasksFilterDateStart, 'YYYY-MM-DD').startOf('day');
-                            const endMoment = moment(this.tasksFilterDateEnd, 'YYYY-MM-DD').endOf('day');
-                            if (!taskDate.isBetween(startMoment, endMoment, 'day', '[]')) continue;
+                            const s = moment(this.tasksFilterDateStart, 'YYYY-MM-DD').startOf('day');
+                            const e = moment(this.tasksFilterDateEnd, 'YYYY-MM-DD').endOf('day');
+                            if (!taskDate.isBetween(s, e, 'day', '[]')) continue;
                         }
                     }
 
                     const contextPart = parts[parts.length - 2]?.trim() || '';
                     if (this.tasksFilterContext.length > 0 && !this.tasksFilterContext.some(ctx => contextPart.includes(`#${ctx}`))) continue;
 
-                    // Calculate modTimestamp for sorting
                     const m = moment(`${modDateStr} ${modTimeStr}`, ['YYYY-MM-DD HH:mm', `${this.plugin.settings.dateFormat} ${this.plugin.settings.timeFormat}`]);
-                    const modTimestamp = m.isValid() ? m.valueOf() : 0;
-
-                    taskLines.push({ line, index: i, modTimestamp, isDone, dateRaw, context: contextPart });
+                    this._parsedTaskLines.push({ line, index: i, modTimestamp: m.isValid() ? m.valueOf() : 0, isDone, dateRaw, context: contextPart });
                 }
+
+                this._parsedTaskLines.sort((a, b) => b.modTimestamp - a.modTimestamp);
+            } catch {
+                this.reviewTasksContainer.createEl('p', { text: 'Error loading tasks.', attr: { style: 'color: var(--text-error);' } });
+                return;
             }
 
-            // Sort by modTimestamp descending
-            taskLines.sort((a, b) => b.modTimestamp - a.modTimestamp);
+            // Create a stable row container inside the scroll area
+            this.tasksRowContainer = this.reviewTasksContainer.createEl('div');
+        }
 
-            let count = 0;
-            for (const tl of taskLines) {
-                await this.renderTaskRow(tl.line, tl.index, this.reviewTasksContainer, file.path, true);
-                count++;
-            }
+        if (!this.tasksRowContainer || !file) return;
 
-            if (count === 0) this.reviewTasksContainer.createEl('p', { text: 'No tasks matching filters.', attr: { style: 'color: var(--text-muted);' } });
-        } catch (error) {
-            this.reviewTasksContainer.createEl('p', { text: 'Error loading tasks.', attr: { style: 'color: var(--text-error);' } });
+        // Remove previous "load more" footer before appending
+        this.reviewTasksContainer.querySelector('.mina-load-more')?.remove();
+
+        if (this._parsedTaskLines.length === 0 && !appendMore) {
+            this.reviewTasksContainer.createEl('p', { text: 'No tasks matching filters.', attr: { style: 'color: var(--text-muted);' } });
+            return;
+        }
+
+        const slice = this._parsedTaskLines.slice(this.tasksOffset, this.tasksOffset + this.PAGE_SIZE);
+        for (const tl of slice) {
+            await this.renderTaskRow(tl.line, tl.index, this.tasksRowContainer, file.path, true);
+        }
+        this.tasksOffset += slice.length;
+
+        const remaining = this._parsedTaskLines.length - this.tasksOffset;
+        if (remaining > 0) {
+            const btn = this.reviewTasksContainer.createEl('button', {
+                text: `Load ${Math.min(remaining, this.PAGE_SIZE)} more tasks…`,
+                cls: 'mina-load-more',
+                attr: { style: 'width: 100%; padding: 8px; margin-top: 6px; border-radius: 6px; border: 1px dashed var(--background-modifier-border); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 0.85em;' }
+            });
+            btn.addEventListener('click', () => this.updateReviewTasksList(true));
         }
     }
 
-    async updateReviewThoughtsList() {
+    async updateReviewThoughtsList(appendMore = false) {
         if (!this.reviewThoughtsContainer) return;
-        this.reviewThoughtsContainer.empty();
-        
+
         const { vault } = this.plugin.app;
         const folderPath = this.plugin.settings.captureFolder.trim();
         const fileName = this.plugin.settings.captureFilePath.trim();
         const fullPath = folderPath && folderPath !== '/' ? `${folderPath}/${fileName}` : fileName;
         const file = vault.getAbstractFileByPath(fullPath) as TFile;
-        
-        if (!file) {
-            this.reviewThoughtsContainer.createEl('p', { text: 'No thoughts found.', attr: { style: 'color: var(--text-muted);' } });
-            return;
-        }
 
-        try {
-            const content = await vault.read(file);
-            const lines = content.split('\n');
-            const today = moment().format('YYYY-MM-DD');
-            const startOfWeek = moment().startOf('week');
-            const endOfWeek = moment().endOf('week');
+        if (!appendMore) {
+            this.reviewThoughtsContainer.empty();
+            this._parsedRoots = [];
+            this.thoughtsOffset = 0;
 
-            const allEntries: ThoughtEntry[] = [];
-            const idMap: Map<string, ThoughtEntry> = new Map();
+            if (!file) {
+                this.reviewThoughtsContainer.createEl('p', { text: 'No thoughts found.', attr: { style: 'color: var(--text-muted);' } });
+                return;
+            }
 
-            // First pass: Parse all entries
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (line.startsWith('|') && !line.includes('---') && !line.includes('| Date |') && !line.includes('| ID |')) {
+            try {
+                const content = await this.readCached(file);
+                const lines = content.split('\n');
+                const today = moment().locale('en').format('YYYY-MM-DD');
+                const startOfWeek = moment().startOf('week');
+                const endOfWeek = moment().endOf('week');
+
+                const allEntries: ThoughtEntry[] = [];
+                const idMap = new Map<string, ThoughtEntry>();
+
+                // First pass: parse
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line.startsWith('|') || line.includes('---') || line.includes('| Date |') || line.includes('| ID |')) continue;
                     const parts = line.split('|');
                     if (parts.length < 5) continue;
 
                     let id = '', parentId = '', dateStr = '', timeStr = '', modDateStr = '', modTimeStr = '', text = '', context = '';
-                    
-                    if (parts.length >= 9) { // New 8-column schema: | ID | Parent ID | Date | Time | Modified Date | Modified Time | Thought | Context |
-                        id = parts[1].trim();
-                        parentId = parts[2].trim();
-                        dateStr = parts[3].trim();
-                        timeStr = parts[4].trim();
-                        modDateStr = parts[5].trim();
-                        modTimeStr = parts[6].trim();
-                        text = parts[7].trim();
-                        context = parts[8].trim();
-                    } else if (parts.length >= 7) { // Old 6-column schema
-                        id = parts[1].trim();
-                        parentId = parts[2].trim();
-                        dateStr = parts[3].trim();
-                        timeStr = parts[4].trim();
-                        modDateStr = parts[3].trim(); // default to capture date
-                        modTimeStr = parts[4].trim();
-                        text = parts[5].trim();
-                        context = parts[6].trim();
-                    } else { // Legacy 4-column schema: | Date | Time | Thought | Context |
-                        dateStr = parts[1].trim();
-                        timeStr = parts[2].trim();
-                        modDateStr = parts[1].trim();
-                        modTimeStr = parts[2].trim();
-                        text = parts[3].trim();
-                        context = parts[4].trim();
-                        // Generate a stable ID for legacy rows
+                    if (parts.length >= 9) {
+                        id = parts[1].trim(); parentId = parts[2].trim(); dateStr = parts[3].trim();
+                        timeStr = parts[4].trim(); modDateStr = parts[5].trim(); modTimeStr = parts[6].trim();
+                        text = parts[7].trim(); context = parts[8].trim();
+                    } else if (parts.length >= 7) {
+                        id = parts[1].trim(); parentId = parts[2].trim(); dateStr = parts[3].trim();
+                        timeStr = parts[4].trim(); modDateStr = parts[3].trim(); modTimeStr = parts[4].trim();
+                        text = parts[5].trim(); context = parts[6].trim();
+                    } else {
+                        dateStr = parts[1].trim(); timeStr = parts[2].trim();
+                        modDateStr = parts[1].trim(); modTimeStr = parts[2].trim();
+                        text = parts[3].trim(); context = parts[4].trim();
                         id = `legacy-${dateStr}-${timeStr}-${text.substring(0, 10)}`;
                     }
-                    const m = moment(`${modDateStr.replace(/[\[\]]/g, '')} ${modTimeStr}`, ['YYYY-MM-DD HH:mm', `${this.plugin.settings.dateFormat} ${this.plugin.settings.timeFormat}`]);
-                    const modTimestamp = m.isValid() ? m.valueOf() : 0;
 
-                    const entry: ThoughtEntry = { 
-                        id, parentId, date: dateStr, time: timeStr, 
-                        modifiedDate: modDateStr, modifiedTime: modTimeStr,
-                        text, context, lineIndex: i, children: [],
-                        lastThreadUpdate: modTimestamp
-                    };
+                    const m = moment(`${modDateStr.replace(/[\[\]]/g, '')} ${modTimeStr}`, ['YYYY-MM-DD HH:mm', `${this.plugin.settings.dateFormat} ${this.plugin.settings.timeFormat}`]);
+                    const entry: ThoughtEntry = { id, parentId, date: dateStr, time: timeStr, modifiedDate: modDateStr, modifiedTime: modTimeStr, text, context, lineIndex: i, children: [], lastThreadUpdate: m.isValid() ? m.valueOf() : 0 };
                     allEntries.push(entry);
                     if (id) idMap.set(id, entry);
                 }
-            }
 
-            // Second pass: Build the tree
-            const roots: ThoughtEntry[] = [];
-            for (const entry of allEntries) {
-                if (entry.parentId && idMap.has(entry.parentId)) {
-                    idMap.get(entry.parentId)?.children.push(entry);
-                } else {
-                    roots.push(entry);
+                // Second pass: tree
+                const roots: ThoughtEntry[] = [];
+                for (const entry of allEntries) {
+                    if (entry.parentId && idMap.has(entry.parentId)) idMap.get(entry.parentId)!.children.push(entry);
+                    else roots.push(entry);
                 }
-            }
 
-            // Third pass: Calculate thread-wide latest update
-            const calculateThreadUpdate = (entry: ThoughtEntry): number => {
-                let latest = entry.lastThreadUpdate || 0;
-                for (const child of entry.children) {
-                    const childLatest = calculateThreadUpdate(child);
-                    if (childLatest > latest) latest = childLatest;
-                }
-                entry.lastThreadUpdate = latest;
-                return latest;
-            };
-
-            for (const root of roots) {
-                calculateThreadUpdate(root);
-            }
-
-            // Sort root entries by their thread-wide latest update descending
-            roots.sort((a, b) => (b.lastThreadUpdate || 0) - (a.lastThreadUpdate || 0));
-
-            // On first load, collapse all threads that have replies
-            if (!this.collapsedThreadsSeeded) {
-                const seedCollapsed = (entry: ThoughtEntry) => {
-                    if (entry.children.length > 0) {
-                        this.collapsedThreads.add(entry.id);
-                        for (const child of entry.children) seedCollapsed(child);
-                    }
+                // Third pass: thread-wide latest update
+                const calcUpdate = (e: ThoughtEntry): number => {
+                    let latest = e.lastThreadUpdate || 0;
+                    for (const c of e.children) { const cl = calcUpdate(c); if (cl > latest) latest = cl; }
+                    e.lastThreadUpdate = latest;
+                    return latest;
                 };
-                for (const root of roots) seedCollapsed(root);
-                this.collapsedThreadsSeeded = true;
-            }
+                for (const root of roots) calcUpdate(root);
 
-            const timelineContainer = this.reviewThoughtsContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
-            let count = 0;
-
-            const renderRecursive = async (entry: ThoughtEntry, level: number) => {
-                const dateRaw = entry.date.replace(/\[\[|\]\]/g, ''); 
-                
-                // Filtering only applies to root entries in this implementation for simplicity
-                if (level === 0) {
+                // Filter roots
+                const todayMoment = moment().startOf('day');
+                for (const root of roots) {
+                    const dateRaw = root.date.replace(/\[\[|\]\]/g, '');
                     if (!this.showPreviousThoughts && dateRaw) {
-                        const thoughtDate = moment(dateRaw, this.plugin.settings.dateFormat);
-                        const todayMoment = moment().startOf('day');
-                        if (thoughtDate.isValid() && !thoughtDate.isSame(todayMoment, 'day')) return;
+                        const d = moment(dateRaw, this.plugin.settings.dateFormat);
+                        if (d.isValid() && !d.isSame(todayMoment, 'day')) continue;
                     }
-
-                    if (this.thoughtsFilterContext.length > 0 && !this.thoughtsFilterContext.some(ctx => entry.context.includes(`#${ctx}`))) return;
-
+                    if (this.thoughtsFilterContext.length > 0 && !this.thoughtsFilterContext.some(ctx => root.context.includes(`#${ctx}`))) continue;
                     if (this.thoughtsFilterDate !== 'all') {
-                        const thoughtDate = moment(dateRaw, this.plugin.settings.dateFormat);
-                        if (this.thoughtsFilterDate === 'today' && dateRaw !== today) return;
-                        if (this.thoughtsFilterDate === 'this-week' && !thoughtDate.isBetween(startOfWeek, endOfWeek, 'day', '[]')) return;
+                        const d = moment(dateRaw, this.plugin.settings.dateFormat);
+                        if (this.thoughtsFilterDate === 'today' && dateRaw !== today) continue;
+                        if (this.thoughtsFilterDate === 'this-week' && !d.isBetween(startOfWeek, endOfWeek, 'day', '[]')) continue;
                         if (this.thoughtsFilterDate === 'custom') {
-                            const startMoment = moment(this.thoughtsFilterDateStart, 'YYYY-MM-DD').startOf('day');
-                            const endMoment = moment(this.thoughtsFilterDateEnd, 'YYYY-MM-DD').endOf('day');
-                            if (!thoughtDate.isBetween(startMoment, endMoment, 'day', '[]')) return;
+                            const s = moment(this.thoughtsFilterDateStart, 'YYYY-MM-DD').startOf('day');
+                            const e = moment(this.thoughtsFilterDateEnd, 'YYYY-MM-DD').endOf('day');
+                            if (!d.isBetween(s, e, 'day', '[]')) continue;
                         }
                     }
+                    this._parsedRoots.push(root);
                 }
 
-                await this.renderThoughtRow(entry, timelineContainer, file.path, level);
-                count++;
+                this._parsedRoots.sort((a, b) => (b.lastThreadUpdate || 0) - (a.lastThreadUpdate || 0));
 
-                if (entry.children.length > 0 && !this.collapsedThreads.has(entry.id)) {
-                    // Sort children by modification time ascending (oldest first in thread) or descending?
-                    // Usually threads are chronological. Let's keep capture order for children.
-                    for (const child of entry.children) {
-                        await renderRecursive(child, level + 1);
-                    }
+                // Seed collapsed state once
+                if (!this.collapsedThreadsSeeded) {
+                    const seed = (e: ThoughtEntry) => { if (e.children.length > 0) { this.collapsedThreads.add(e.id); for (const c of e.children) seed(c); } };
+                    for (const root of this._parsedRoots) seed(root);
+                    this.collapsedThreadsSeeded = true;
                 }
-            };
-
-            for (const root of roots) {
-                await renderRecursive(root, 0);
+            } catch (err) {
+                console.error(err);
+                this.reviewThoughtsContainer.createEl('p', { text: 'Error loading thoughts.', attr: { style: 'color: var(--text-error);' } });
+                return;
             }
 
-            if (count === 0) {
-                this.reviewThoughtsContainer.empty();
-                this.reviewThoughtsContainer.createEl('p', { text: 'No thoughts matching filters.', attr: { style: 'color: var(--text-muted);' } });
+            this.thoughtsRowContainer = this.reviewThoughtsContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
+        }
+
+        if (!this.thoughtsRowContainer || !file) return;
+
+        this.reviewThoughtsContainer.querySelector('.mina-load-more')?.remove();
+
+        if (this._parsedRoots.length === 0 && !appendMore) {
+            this.reviewThoughtsContainer.createEl('p', { text: 'No thoughts matching filters.', attr: { style: 'color: var(--text-muted);' } });
+            return;
+        }
+
+        const slice = this._parsedRoots.slice(this.thoughtsOffset, this.thoughtsOffset + this.PAGE_SIZE);
+
+        const renderRecursive = async (entry: ThoughtEntry, level: number) => {
+            await this.renderThoughtRow(entry, this.thoughtsRowContainer!, file.path, level);
+            if (entry.children.length > 0 && !this.collapsedThreads.has(entry.id)) {
+                for (const child of entry.children) await renderRecursive(child, level + 1);
             }
-        } catch (error) {
-            console.error(error);
-            this.reviewThoughtsContainer.createEl('p', { text: 'Error loading thoughts.', attr: { style: 'color: var(--text-error);' } });
+        };
+
+        for (const root of slice) await renderRecursive(root, 0);
+        this.thoughtsOffset += slice.length;
+
+        const remaining = this._parsedRoots.length - this.thoughtsOffset;
+        if (remaining > 0) {
+            const btn = this.reviewThoughtsContainer.createEl('button', {
+                text: `Load ${Math.min(remaining, this.PAGE_SIZE)} more thoughts…`,
+                cls: 'mina-load-more',
+                attr: { style: 'width: 100%; padding: 8px; margin-top: 6px; border-radius: 6px; border: 1px dashed var(--background-modifier-border); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 0.85em;' }
+            });
+            btn.addEventListener('click', () => this.updateReviewThoughtsList(true));
         }
     }
 
@@ -2356,29 +2360,21 @@ ${duesContent}`;
                 if (newText === null) {
                     lines.splice(lineIndex, 1);
                     await vault.modify(file, lines.join('\n'));
+                    this.invalidateCache(fullPath);
                     new Notice('Deleted successfully');
                 } else {
-                    // Update Modification Time in the row itself — force 'en' locale for ASCII numerals
                     const parts = newText.split('|');
                     const dateCol = ` [[${moment().locale('en').format(this.plugin.settings.dateFormat)}]] `;
                     const timeCol = ` ${moment().locale('en').format(this.plugin.settings.timeFormat)} `;
                     
                     let parentId = '';
                     if (isTask) {
-                        if (parts.length >= 9) { // 8-column schema
-                            parts[4] = dateCol;
-                            parts[5] = timeCol;
-                        }
+                        if (parts.length >= 9) { parts[4] = dateCol; parts[5] = timeCol; }
                     } else {
-                        if (parts.length >= 9) { // 8-column schema
-                            parts[5] = dateCol;
-                            parts[6] = timeCol;
-                            parentId = parts[2].trim();
-                        }
+                        if (parts.length >= 9) { parts[5] = dateCol; parts[6] = timeCol; parentId = parts[2].trim(); }
                     }
                     lines[lineIndex] = parts.join('|');
 
-                    // Bubble up modification time to parents if it's a thought
                     if (!isTask && parentId) {
                         let currentParentToFind = parentId;
                         while (currentParentToFind) {
@@ -2386,12 +2382,10 @@ ${duesContent}`;
                             for (let i = 2; i < lines.length; i++) {
                                 const rowParts = lines[i].split('|');
                                 if (rowParts.length >= 2 && rowParts[1].trim() === currentParentToFind) {
-                                    rowParts[5] = dateCol;
-                                    rowParts[6] = timeCol;
+                                    rowParts[5] = dateCol; rowParts[6] = timeCol;
                                     lines[i] = rowParts.join('|');
-                                    currentParentToFind = rowParts[2].trim(); // Move to grandparent
-                                    found = true;
-                                    break;
+                                    currentParentToFind = rowParts[2].trim();
+                                    found = true; break;
                                 }
                             }
                             if (!found) break;
@@ -2399,6 +2393,7 @@ ${duesContent}`;
                     }
 
                     await vault.modify(file, lines.join('\n'));
+                    this.invalidateCache(fullPath);
                     new Notice('Updated successfully');
                 }
             }
@@ -2406,6 +2401,13 @@ ${duesContent}`;
     }
 
     async updatePreview() {
+        // Invalidate cache so the next read picks up the freshly written content
+        const folderPath = this.plugin.settings.captureFolder.trim();
+        const thoughtsPath = folderPath && folderPath !== '/' ? `${folderPath}/${this.plugin.settings.captureFilePath.trim()}` : this.plugin.settings.captureFilePath.trim();
+        const tasksPath = folderPath && folderPath !== '/' ? `${folderPath}/${this.plugin.settings.tasksFilePath.trim()}` : this.plugin.settings.tasksFilePath.trim();
+        this.invalidateCache(thoughtsPath);
+        this.invalidateCache(tasksPath);
+
         if (this.activeTab === 'review-tasks') {
             await this.updateReviewTasksList();
         } else if (this.activeTab === 'review-thoughts') {
