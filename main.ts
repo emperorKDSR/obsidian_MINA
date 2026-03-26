@@ -535,12 +535,15 @@ export class EditEntryModal extends Modal {
                 const val = newCtxInput.value.trim().replace(/^#/, '');
                 if (!val) return;
                 newCtxInput.value = '';
+                // Push to initialContexts synchronously BEFORE any await so that
+                // if the Save button fires on the next tick (e.g. via blur→click),
+                // saveChanges() already sees the new context.
+                if (!this.initialContexts.includes(val)) {
+                    this.initialContexts.push(val);
+                }
                 if (!this.plugin.settings.contexts.includes(val)) {
                     this.plugin.settings.contexts.push(val);
                     await this.plugin.saveSettings();
-                }
-                if (!this.initialContexts.includes(val)) {
-                    this.initialContexts.push(val);
                 }
                 renderContextTags();
             };
@@ -2536,7 +2539,7 @@ ${duesContent}`;
         captureDateContainer.createSpan({ text: `${parts[2].trim()} ${parts[3].trim()}` });
 
         const startEdit = () => {
-            const initialContext = (parts.length >= 7 ? parts[6] : parts[5])?.trim() || '';
+            const initialContext = contextStr; // already parsed correctly from the right column above
             const initialDueDate = parts.length >= 8 ? parts[4].trim().replace(/[\[\]]/g, '') : null;
             
             const modal = new EditEntryModal(
@@ -2559,7 +2562,8 @@ ${duesContent}`;
                         changed = true;
                     }
 
-                    const ctxIndex = parts.length >= 7 ? 6 : 5;
+                    // Match the same schema thresholds used when reading contextStr above
+                    const ctxIndex = parts.length >= 10 ? 8 : parts.length >= 8 ? 6 : 5;
                     if (newContext !== initialContext) {
                         parts[ctxIndex] = ` ${newContext} `;
                         changed = true;
@@ -2692,8 +2696,11 @@ ${duesContent}`;
                     const parts = lines[entry.lineIndex].split('|');
                     
                     let changed = false;
-                    const textIndex = parts.length >= 8 ? 5 : 3;
-                    const ctxIndex = parts.length >= 8 ? 6 : 4;
+                    // Match the same schema thresholds used when parsing ThoughtEntry
+                    let textIndex: number, ctxIndex: number;
+                    if (parts.length >= 9) { textIndex = 7; ctxIndex = 8; }       // 8-column new format
+                    else if (parts.length >= 7) { textIndex = 5; ctxIndex = 6; }  // 6-column old format
+                    else { textIndex = 3; ctxIndex = 4; }                          // legacy 4-column
 
                     if (newText !== entry.text.replace(/\n/g, '<br>')) { parts[textIndex] = ` ${newText} `; changed = true; }
                     if (newContext !== entry.context) { parts[ctxIndex] = ` ${newContext} `; changed = true; }
