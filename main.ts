@@ -488,39 +488,70 @@ export class EditEntryModal extends Modal {
         });
 
         // Contexts Selector
-        const contextsDiv = contentEl.createEl('div', { attr: { style: 'margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center;' } });
-        
+        const contextsDiv = contentEl.createEl('div', { attr: { style: 'margin-bottom: 15px;' } });
+        contextsDiv.createEl('div', { text: 'Contexts', attr: { style: 'font-size: 0.78em; color: var(--text-muted); font-weight: 600; margin-bottom: 6px;' } });
+        const pillsRow = contextsDiv.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 5px; align-items: center;' } });
+
         const renderContextTags = () => {
-            contextsDiv.empty();
-            this.plugin.settings.contexts.forEach(ctx => {
+            pillsRow.empty();
+
+            // All contexts to show = union of plugin settings contexts + any on this entry not in settings
+            const allContexts = [...new Set([
+                ...this.plugin.settings.contexts,
+                ...this.initialContexts
+            ])];
+
+            allContexts.forEach(ctx => {
                 const isSelected = this.initialContexts.includes(ctx);
-                const tagEl = contextsDiv.createEl('span', {
-                    text: `#${ctx}`,
-                    attr: { 
-                        style: `cursor: pointer; padding: 2px 8px; border-radius: 12px; font-size: 0.85em; user-select: none; border: 1px solid var(--background-modifier-border); ${isSelected ? 'background-color: var(--interactive-accent); color: var(--text-on-accent); border-color: var(--interactive-accent);' : 'background-color: var(--background-secondary); color: var(--text-muted);'}` 
+                const tagEl = pillsRow.createEl('span', {
+                    attr: {
+                        style: `cursor: pointer; padding: 3px 10px; border-radius: 12px; font-size: 0.85em; user-select: none; border: 1px solid var(--background-modifier-border); display: inline-flex; align-items: center; gap: 4px; ${isSelected ? 'background-color: var(--interactive-accent); color: var(--text-on-accent); border-color: var(--interactive-accent);' : 'background-color: var(--background-secondary); color: var(--text-muted);'}`
                     }
                 });
+                tagEl.createSpan({ text: `#${ctx}` });
+                if (isSelected) {
+                    const x = tagEl.createSpan({ text: '×', attr: { style: 'font-size: 1em; line-height: 1; opacity: 0.7;' } });
+                }
                 tagEl.addEventListener('click', () => {
                     if (isSelected) this.initialContexts = this.initialContexts.filter(c => c !== ctx);
                     else this.initialContexts.push(ctx);
                     renderContextTags();
                 });
             });
-            const newCtxInput = contextsDiv.createEl('input', { type: 'text', placeholder: '+ add', attr: { style: 'padding: 2px 8px; border-radius: 12px; font-size: 0.85em; border: 1px dashed var(--background-modifier-border); background: transparent; width: 60px; outline: none;' } });
-            newCtxInput.addEventListener('keydown', async (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const val = newCtxInput.value.trim().replace(/^#/, '');
-                    if (val && !this.plugin.settings.contexts.includes(val)) {
-                        this.plugin.settings.contexts.push(val);
-                        this.initialContexts.push(val);
-                        await this.plugin.saveSettings();
-                        renderContextTags();
-                    } else if (val && !this.initialContexts.includes(val)) {
-                        this.initialContexts.push(val);
-                        renderContextTags();
-                    }
+
+            // New context input row
+            const addRow = pillsRow.createEl('div', { attr: { style: 'display: flex; gap: 4px; align-items: center;' } });
+            const newCtxInput = addRow.createEl('input', {
+                type: 'text',
+                placeholder: 'New context…',
+                attr: { style: 'padding: 3px 8px; border-radius: 12px; font-size: 0.85em; border: 1px dashed var(--background-modifier-border); background: transparent; width: 110px; outline: none; color: var(--text-normal);' }
+            });
+            const addCtxBtn = addRow.createEl('button', {
+                text: '+',
+                attr: { style: 'padding: 2px 8px; border-radius: 10px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-muted); cursor: pointer; font-size: 0.9em; line-height: 1.4;' }
+            });
+
+            const commitNewCtx = async () => {
+                const val = newCtxInput.value.trim().replace(/^#/, '');
+                if (!val) return;
+                newCtxInput.value = '';
+                if (!this.plugin.settings.contexts.includes(val)) {
+                    this.plugin.settings.contexts.push(val);
+                    await this.plugin.saveSettings();
                 }
+                if (!this.initialContexts.includes(val)) {
+                    this.initialContexts.push(val);
+                }
+                renderContextTags();
+            };
+
+            addCtxBtn.addEventListener('click', commitNewCtx);
+            newCtxInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); commitNewCtx(); }
+            });
+            // Mobile: "Go"/"Done" fires blur — commit on blur if there's a value
+            newCtxInput.addEventListener('blur', () => {
+                if (newCtxInput.value.trim()) commitNewCtx();
             });
         };
         renderContextTags();
