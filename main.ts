@@ -3,22 +3,38 @@ import { App, Plugin, PluginSettingTab, Setting, TFile, Notice, ItemView, Worksp
 export const VIEW_TYPE_MINA = "mina-view";
 
 const WOLF_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <circle cx="50" cy="50" r="50" fill="#2e3f5c"/>
-  <polygon points="22,44 12,10 40,34" fill="#7a97bc"/>
-  <polygon points="78,44 88,10 60,34" fill="#7a97bc"/>
-  <polygon points="24,42 17,16 38,33" fill="#b87a8a"/>
-  <polygon points="76,42 83,16 62,33" fill="#b87a8a"/>
-  <ellipse cx="50" cy="60" rx="31" ry="28" fill="#7a97bc"/>
-  <ellipse cx="50" cy="47" rx="23" ry="16" fill="#5a7599"/>
-  <ellipse cx="50" cy="70" rx="17" ry="13" fill="#c2d4e8"/>
-  <ellipse cx="50" cy="65" rx="7" ry="4.5" fill="#1e2b3a"/>
-  <path d="M43,71 Q50,76 57,71" stroke="#1e2b3a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-  <ellipse cx="37" cy="55" rx="6" ry="6" fill="#e8c84a"/>
-  <ellipse cx="63" cy="55" rx="6" ry="6" fill="#e8c84a"/>
-  <ellipse cx="37" cy="55" rx="3" ry="3.5" fill="#111827"/>
-  <ellipse cx="63" cy="55" rx="3" ry="3.5" fill="#111827"/>
-  <circle cx="38.5" cy="53.5" r="1.2" fill="white" opacity="0.85"/>
-  <circle cx="64.5" cy="53.5" r="1.2" fill="white" opacity="0.85"/>
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="50" fill="#1a1a1a"/>
+  <!-- Helmet main shape -->
+  <ellipse cx="50" cy="52" rx="34" ry="38" fill="#c0392b"/>
+  <!-- Gold forehead band -->
+  <rect x="22" y="22" width="56" height="14" rx="4" fill="#e8b84b"/>
+  <!-- Cheek panels -->
+  <polygon points="16,50 22,36 22,72 16,72" fill="#a93226"/>
+  <polygon points="84,50 78,36 78,72 84,72" fill="#a93226"/>
+  <!-- Central face plate (gold) -->
+  <rect x="32" y="36" width="36" height="40" rx="6" fill="#e8b84b"/>
+  <!-- Red face mask overlays -->
+  <polygon points="32,36 44,36 38,52 32,52" fill="#c0392b"/>
+  <polygon points="68,36 56,36 62,52 68,52" fill="#c0392b"/>
+  <!-- Nose bridge -->
+  <rect x="46" y="48" width="8" height="16" rx="2" fill="#c0392b"/>
+  <!-- Eye slots (glowing) -->
+  <polygon points="33,43 45,43 45,50 33,50" rx="2" fill="#1a1a1a"/>
+  <polygon points="67,43 55,43 55,50 67,50" rx="2" fill="#1a1a1a"/>
+  <!-- Eye glow white -->
+  <polygon points="34,44 44,44 44,49 34,49" fill="#7ecfff" opacity="0.92"/>
+  <polygon points="66,44 56,44 56,49 66,49" fill="#7ecfff" opacity="0.92"/>
+  <!-- Eye inner glow -->
+  <polygon points="36,45 42,45 42,48 36,48" fill="white" opacity="0.7"/>
+  <polygon points="64,45 58,45 58,48 64,48" fill="white" opacity="0.7"/>
+  <!-- Chin / jaw panel -->
+  <rect x="36" y="66" width="28" height="10" rx="4" fill="#c0392b"/>
+  <!-- Chin arc detail -->
+  <path d="M36,70 Q50,80 64,70" stroke="#a93226" stroke-width="1.5" fill="none"/>
+  <!-- Chest arc light (arc reactor hint at bottom) -->
+  <circle cx="50" cy="90" r="5" fill="#7ecfff" opacity="0.5"/>
+  <circle cx="50" cy="90" r="3" fill="#7ecfff" opacity="0.8"/>
 </svg>`;
 
 interface MinaSettings {
