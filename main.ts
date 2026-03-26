@@ -1156,19 +1156,29 @@ class MinaView extends ItemView {
     async onOpen() {
         this.renderView();
 
-        // Mobile: keep the view height locked to the visual viewport so the
-        // area above the keyboard never shows as a black bar.
+        // Mobile: iOS WebKit scrolls the whole page when a text input is focused,
+        // causing the area above the visual viewport to appear as a black bar.
+        // Fix: pin the container to the screen using position:fixed + visualViewport
+        // coordinates, and update on both resize (keyboard height) and scroll (page shift).
         if (Platform.isMobile && window.visualViewport) {
             const vv = window.visualViewport;
-            const syncHeight = () => {
+            const syncViewport = () => {
                 const container = this.containerEl.children[1] as HTMLElement;
-                if (container) {
-                    container.style.height = `${vv.height}px`;
-                    container.style.maxHeight = `${vv.height}px`;
-                }
+                if (!container) return;
+                container.style.position = 'fixed';
+                container.style.top    = `${vv.offsetTop}px`;
+                container.style.left   = `${vv.offsetLeft}px`;
+                container.style.width  = `${vv.width}px`;
+                container.style.height = `${vv.height}px`;
+                container.style.maxHeight = `${vv.height}px`;
             };
-            vv.addEventListener('resize', syncHeight);
-            (this as any)._vvMainCleanup = () => vv.removeEventListener('resize', syncHeight);
+            syncViewport();
+            vv.addEventListener('resize', syncViewport);
+            vv.addEventListener('scroll', syncViewport);
+            (this as any)._vvMainCleanup = () => {
+                vv.removeEventListener('resize', syncViewport);
+                vv.removeEventListener('scroll', syncViewport);
+            };
         }
 
         // Hide headers for a cleaner standalone window on desktop
@@ -1200,13 +1210,22 @@ class MinaView extends ItemView {
         container.empty();
         
         if (Platform.isMobile) {
-            container.style.display = 'flex';
+            const vv = window.visualViewport;
+            const vvh = vv ? vv.height : window.innerHeight;
+            const vvTop = vv ? vv.offsetTop : 0;
+            const vvLeft = vv ? vv.offsetLeft : 0;
+            const vvw = vv ? vv.width : window.innerWidth;
+            // position:fixed pins the container to screen coords so iOS page-scroll
+            // (triggered by keyboard focus) never shifts our view off-screen.
+            container.style.position   = 'fixed';
+            container.style.top        = `${vvTop}px`;
+            container.style.left       = `${vvLeft}px`;
+            container.style.width      = `${vvw}px`;
+            container.style.display    = 'flex';
             container.style.flexDirection = 'column';
-            // Use visual viewport height so the view never extends under the keyboard.
-            const vvh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-            container.style.height = `${vvh}px`;
-            container.style.maxHeight = `${vvh}px`;
-            container.style.overflow = 'hidden';
+            container.style.height     = `${vvh}px`;
+            container.style.maxHeight  = `${vvh}px`;
+            container.style.overflow   = 'hidden';
         } else {
             // Drag handle for desktop
             const dragHandle = container.createEl('div', { attr: { style: 'height: 14px; width: 100%; -webkit-app-region: drag; flex-shrink: 0; display: flex; justify-content: center; align-items: center; margin-bottom: 8px; cursor: grab;' } });
