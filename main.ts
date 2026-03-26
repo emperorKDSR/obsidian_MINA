@@ -2080,7 +2080,7 @@ ${duesContent}`;
         renderContextTags();
 
         if (!isThoughtsOnly && !isTasksOnly) {
-            const taskToggleDiv = controlsDiv.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px; margin-left: auto;' } });
+            const taskToggleDiv = controlsDiv.createEl('div', { attr: { style: `display: flex; align-items: center; gap: 8px; ${Platform.isMobile ? '' : 'margin-left: auto;'}` } });
             const taskCheckbox = taskToggleDiv.createEl('input', { type: 'checkbox', attr: { id: 'is-task-checkbox' } });
             taskCheckbox.checked = this.isTask;
             taskToggleDiv.createEl('label', { attr: { for: 'is-task-checkbox', style: 'cursor: pointer;' }, text: 'As Task' });
@@ -2103,7 +2103,7 @@ ${duesContent}`;
             });
         } else if (isTasksOnly) {
             this.isTask = true;
-            const taskControlsDiv = controlsDiv.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px; margin-left: auto;' } });
+            const taskControlsDiv = controlsDiv.createEl('div', { attr: { style: `display: flex; align-items: center; gap: 8px; ${Platform.isMobile ? '' : 'margin-left: auto;'}` } });
             taskControlsDiv.createSpan({ text: 'Due:', attr: { style: 'font-size: 0.85em; color: var(--text-muted);' } });
             const datePicker = taskControlsDiv.createEl('input', { 
                 type: 'date', 
