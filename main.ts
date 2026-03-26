@@ -195,6 +195,12 @@ export default class MinaPlugin extends Plugin {
 
     async appendCapture(content: string, contexts: string[], isTask: boolean, dueDate?: string, parentId: string = '') {
         const { vault } = this.app;
+
+        // Always format stored timestamps with English locale so device locale
+        // (Arabic, Persian, etc.) never produces non-ASCII numerals in the table.
+        const fmtDate = () => moment().locale('en').format(this.settings.dateFormat);
+        const fmtTime = () => moment().locale('en').format(this.settings.timeFormat);
+
         const folderPath = this.settings.captureFolder.trim();
         const fileName = isTask ? this.settings.tasksFilePath.trim() : this.settings.captureFilePath.trim();
         const fullPath = folderPath && folderPath !== '/' ? `${folderPath}/${fileName}` : fileName;
@@ -219,8 +225,8 @@ export default class MinaPlugin extends Plugin {
                 return;
             }
         }
-        const dateStr = moment().format(this.settings.dateFormat);
-        const timeStr = moment().format(this.settings.timeFormat);
+        const dateStr = fmtDate();
+        const timeStr = fmtTime();
         
         const dateCol = `[[${dateStr}]]`;
         const timeCol = timeStr;
@@ -2318,12 +2324,10 @@ ${duesContent}`;
                     await vault.modify(file, lines.join('\n'));
                     new Notice('Deleted successfully');
                 } else {
-                    // Update Modification Time in the row itself
+                    // Update Modification Time in the row itself — force 'en' locale for ASCII numerals
                     const parts = newText.split('|');
-                    // @ts-ignore
-                    const dateCol = ` [[${moment().format(this.plugin.settings.dateFormat)}]] `;
-                    // @ts-ignore
-                    const timeCol = ` ${moment().format(this.plugin.settings.timeFormat)} `;
+                    const dateCol = ` [[${moment().locale('en').format(this.plugin.settings.dateFormat)}]] `;
+                    const timeCol = ` ${moment().locale('en').format(this.plugin.settings.timeFormat)} `;
                     
                     let parentId = '';
                     if (isTask) {
