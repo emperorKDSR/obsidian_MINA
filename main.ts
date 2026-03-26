@@ -656,10 +656,17 @@ class PaymentModal extends Modal {
         modalEl.style.width = 'min(500px, 95vw)';
 
         if (Platform.isMobile) {
-            modalEl.style.position = 'fixed';
+            // Centre the modal by turning its parent overlay into a top-aligned flex container
+            const bg = modalEl.parentElement;
+            if (bg) {
+                bg.style.display = 'flex';
+                bg.style.alignItems = 'flex-start';
+                bg.style.justifyContent = 'center';
+            }
+            modalEl.style.position = 'relative';
             modalEl.style.top = '0';
-            modalEl.style.left = '50%';
-            modalEl.style.transform = 'translateX(-50%)';
+            modalEl.style.left = '';
+            modalEl.style.transform = '';
             modalEl.style.margin = '0';
             modalEl.style.borderRadius = '0 0 12px 12px';
             modalEl.style.maxHeight = '100vh';
@@ -848,10 +855,16 @@ class NewDueModal extends Modal {
         modalEl.style.width = 'min(460px, 95vw)';
 
         if (Platform.isMobile) {
-            modalEl.style.position = 'fixed';
+            const bg = modalEl.parentElement;
+            if (bg) {
+                bg.style.display = 'flex';
+                bg.style.alignItems = 'flex-start';
+                bg.style.justifyContent = 'center';
+            }
+            modalEl.style.position = 'relative';
             modalEl.style.top = '0';
-            modalEl.style.left = '50%';
-            modalEl.style.transform = 'translateX(-50%)';
+            modalEl.style.left = '';
+            modalEl.style.transform = '';
             modalEl.style.margin = '0';
             modalEl.style.borderRadius = '0 0 12px 12px';
             modalEl.style.maxHeight = '100vh';
