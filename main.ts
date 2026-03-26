@@ -476,7 +476,17 @@ export class EditEntryModal extends Modal {
                     modal.open();
                 }
             }
-            currentTextValue = val;
+
+            // Auto-convert "** " at line start to a checklist item "- [ ] "
+            const converted = target.value.replace(/^\*\* /gm, '- [ ] ');
+            if (converted !== target.value) {
+                const cursor = target.selectionStart;
+                const diff = converted.length - target.value.length;
+                target.value = converted;
+                target.setSelectionRange(cursor + diff, cursor + diff);
+            }
+
+            currentTextValue = target.value;
         });
 
         const handleModalFiles = async (files: FileList) => {
@@ -1785,79 +1795,82 @@ ${duesContent}`;
     }
 
     hookCheckboxes(el: HTMLElement, entry: ThoughtEntry) {
-        const checkboxEls = el.querySelectorAll('input[type="checkbox"]');
-        checkboxEls.forEach((cb, idx) => {
-            const checkbox = cb as HTMLInputElement;
-            const isChecked = checkbox.checked;
-
-            // Replace <input> with a fully custom circle span so Obsidian's own
-            // checkbox handler never fires and we have full visual control.
-            const circle = document.createElement('span');
-            circle.title = isChecked ? 'Mark incomplete' : 'Mark complete';
-            const applyCircleStyle = (checked: boolean) => {
-                circle.style.cssText = [
-                    'display:inline-block', 'width:16px', 'height:16px',
-                    'border-radius:50%', 'border:2px solid var(--interactive-accent)',
-                    'cursor:pointer', 'vertical-align:middle', 'flex-shrink:0',
-                    'transition:background 0.15s, box-shadow 0.15s',
-                    `background:${checked ? 'var(--interactive-accent)' : 'transparent'}`,
-                    checked ? 'box-shadow:inset 0 0 0 3px var(--background-primary)' : ''
-                ].filter(Boolean).join(';');
-                circle.title = checked ? 'Mark incomplete' : 'Mark complete';
-                // Inner checkmark via unicode overlay
-                circle.textContent = checked ? '✓' : '';
-                if (checked) {
-                    circle.style.color = 'var(--background-primary)';
-                    circle.style.fontSize = '11px';
-                    circle.style.lineHeight = '16px';
-                    circle.style.textAlign = 'center';
-                }
-            };
-            applyCircleStyle(isChecked);
-            checkbox.replaceWith(circle);
-
-            circle.addEventListener('click', async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                const currentlyChecked = circle.title === 'Mark incomplete';
-                const newChecked = !currentlyChecked;
-
-                // Update visual immediately
-                applyCircleStyle(newChecked);
-
-                // Toggle the Nth `- [ ] ` / `- [x] ` in the stored text (<br> = newlines)
-                let count = 0;
-                const newRaw = entry.text.replace(/- \[([ x])\] /g, (match: string, state: string) => {
-                    if (count++ === idx) return state === ' ' ? '- [x] ' : '- [ ] ';
-                    return match;
-                });
-                if (newRaw === entry.text) return;
-                entry.text = newRaw;
-
-                const { vault } = this.plugin.app;
-                const folderPath = this.plugin.settings.captureFolder.trim();
-                const fileName = this.plugin.settings.captureFilePath.trim();
-                const fullPath = folderPath && folderPath !== '/' ? `${folderPath}/${fileName}` : fileName;
-                const file = vault.getAbstractFileByPath(fullPath) as TFile;
-                if (!file) return;
+        try {
+            const checkboxEls = Array.from(el.querySelectorAll('input[type="checkbox"]'));
+            checkboxEls.forEach((cb, idx) => {
                 try {
-                    const content = await vault.read(file);
-                    const lines = content.split('\n');
-                    if (entry.lineIndex >= 0 && entry.lineIndex < lines.length) {
-                        const parts = lines[entry.lineIndex].split('|');
-                        let textIndex: number;
-                        if (parts.length >= 9) textIndex = 7;
-                        else if (parts.length >= 7) textIndex = 5;
-                        else textIndex = 3;
-                        parts[textIndex] = ` ${newRaw} `;
-                        lines[entry.lineIndex] = parts.join('|');
-                        await vault.modify(file, lines.join('\n'));
-                        this.invalidateCache(fullPath);
+                    const checkbox = cb as HTMLInputElement;
+                    const isChecked = checkbox.checked;
+
+                    const circle = document.createElement('span');
+                    const applyCircleStyle = (checked: boolean) => {
+                        circle.style.cssText = [
+                            'display:inline-flex', 'align-items:center', 'justify-content:center',
+                            'width:15px', 'height:15px', 'border-radius:50%',
+                            'border:2px solid var(--interactive-accent)',
+                            'cursor:pointer', 'flex-shrink:0',
+                            'transition:background 0.15s',
+                            `background:${checked ? 'var(--interactive-accent)' : 'transparent'}`,
+                            'font-size:10px', 'color:var(--background-primary)',
+                            'user-select:none', 'vertical-align:middle', 'margin-right:4px'
+                        ].join(';');
+                        circle.textContent = checked ? '✓' : '';
+                        circle.setAttribute('data-checked', checked ? '1' : '0');
+                        circle.title = checked ? 'Mark incomplete' : 'Mark complete';
+                    };
+                    applyCircleStyle(isChecked);
+
+                    // Use insertBefore + removeChild (more compatible than replaceWith)
+                    const parent = checkbox.parentElement;
+                    if (parent) {
+                        parent.insertBefore(circle, checkbox);
+                        parent.removeChild(checkbox);
                     }
-                } catch (_) { /* silent */ }
+
+                    circle.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const currentlyChecked = circle.getAttribute('data-checked') === '1';
+                        const newChecked = !currentlyChecked;
+                        applyCircleStyle(newChecked);
+
+                        let count = 0;
+                        const newRaw = entry.text.replace(/- \[([ x])\] /g, (match: string, state: string) => {
+                            if (count++ === idx) return state === ' ' ? '- [x] ' : '- [ ] ';
+                            return match;
+                        });
+                        if (newRaw === entry.text) return;
+                        entry.text = newRaw;
+
+                        const { vault } = this.plugin.app;
+                        const folderPath = this.plugin.settings.captureFolder.trim();
+                        const fileName = this.plugin.settings.captureFilePath.trim();
+                        const fullPath = folderPath && folderPath !== '/' ? `${folderPath}/${fileName}` : fileName;
+                        const file = vault.getAbstractFileByPath(fullPath) as TFile;
+                        if (!file) return;
+                        try {
+                            const content = await vault.read(file);
+                            const lines = content.split('\n');
+                            if (entry.lineIndex >= 0 && entry.lineIndex < lines.length) {
+                                const parts = lines[entry.lineIndex].split('|');
+                                let textIndex: number;
+                                if (parts.length >= 9) textIndex = 7;
+                                else if (parts.length >= 7) textIndex = 5;
+                                else textIndex = 3;
+                                parts[textIndex] = ` ${newRaw} `;
+                                lines[entry.lineIndex] = parts.join('|');
+                                await vault.modify(file, lines.join('\n'));
+                                this.invalidateCache(fullPath);
+                            }
+                        } catch (_) { /* silent */ }
+                    });
+                } catch (itemErr) {
+                    console.warn('MINA: hookCheckboxes item error', itemErr);
+                }
             });
-        });
+        } catch (err) {
+            console.warn('MINA: hookCheckboxes error', err);
+        }
     }
 
     renderCaptureMode(container: HTMLElement, isThoughtsOnly: boolean = false, isTasksOnly: boolean = false) {
@@ -2791,7 +2804,12 @@ ${duesContent}`;
         const slice = this._parsedRoots.slice(this.thoughtsOffset, this.thoughtsOffset + this.PAGE_SIZE);
 
         const renderRecursive = async (entry: ThoughtEntry, level: number) => {
-            await this.renderThoughtRow(entry, this.thoughtsRowContainer!, file.path, level);
+            try {
+                await this.renderThoughtRow(entry, this.thoughtsRowContainer!, file.path, level);
+            } catch (err) {
+                console.error('MINA: renderThoughtRow failed', err);
+                this.thoughtsRowContainer!.createEl('div', { text: '[Error rendering entry]', attr: { style: 'color:var(--text-error);font-size:0.8em;padding:4px 8px;' } });
+            }
             if (entry.children.length > 0 && !this.collapsedThreads.has(entry.id)) {
                 for (const child of entry.children) await renderRecursive(child, level + 1);
             }
