@@ -1788,22 +1788,45 @@ ${duesContent}`;
         const checkboxEls = el.querySelectorAll('input[type="checkbox"]');
         checkboxEls.forEach((cb, idx) => {
             const checkbox = cb as HTMLInputElement;
-            // Style as a circle toggle
-            checkbox.style.cssText += [
-                'width:17px', 'height:17px', 'border-radius:50%',
-                'appearance:none', '-webkit-appearance:none',
-                'border:2px solid var(--interactive-accent)',
-                'cursor:pointer', 'vertical-align:middle', 'flex-shrink:0',
-                `background:${checkbox.checked ? 'var(--interactive-accent)' : 'transparent'}`,
-                'transition:background 0.15s'
-            ].join(';');
+            const isChecked = checkbox.checked;
 
-            checkbox.addEventListener('click', async (e) => {
+            // Replace <input> with a fully custom circle span so Obsidian's own
+            // checkbox handler never fires and we have full visual control.
+            const circle = document.createElement('span');
+            circle.title = isChecked ? 'Mark incomplete' : 'Mark complete';
+            const applyCircleStyle = (checked: boolean) => {
+                circle.style.cssText = [
+                    'display:inline-block', 'width:16px', 'height:16px',
+                    'border-radius:50%', 'border:2px solid var(--interactive-accent)',
+                    'cursor:pointer', 'vertical-align:middle', 'flex-shrink:0',
+                    'transition:background 0.15s, box-shadow 0.15s',
+                    `background:${checked ? 'var(--interactive-accent)' : 'transparent'}`,
+                    checked ? 'box-shadow:inset 0 0 0 3px var(--background-primary)' : ''
+                ].filter(Boolean).join(';');
+                circle.title = checked ? 'Mark incomplete' : 'Mark complete';
+                // Inner checkmark via unicode overlay
+                circle.textContent = checked ? '✓' : '';
+                if (checked) {
+                    circle.style.color = 'var(--background-primary)';
+                    circle.style.fontSize = '11px';
+                    circle.style.lineHeight = '16px';
+                    circle.style.textAlign = 'center';
+                }
+            };
+            applyCircleStyle(isChecked);
+            checkbox.replaceWith(circle);
+
+            circle.addEventListener('click', async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                const newChecked = !checkbox.checked;
 
-                // Toggle the Nth `- [ ] ` / `- [x] ` in the stored text (which uses <br> as newlines)
+                const currentlyChecked = circle.title === 'Mark incomplete';
+                const newChecked = !currentlyChecked;
+
+                // Update visual immediately
+                applyCircleStyle(newChecked);
+
+                // Toggle the Nth `- [ ] ` / `- [x] ` in the stored text (<br> = newlines)
                 let count = 0;
                 const newRaw = entry.text.replace(/- \[([ x])\] /g, (match: string, state: string) => {
                     if (count++ === idx) return state === ' ' ? '- [x] ' : '- [ ] ';
@@ -1831,9 +1854,6 @@ ${duesContent}`;
                         lines[entry.lineIndex] = parts.join('|');
                         await vault.modify(file, lines.join('\n'));
                         this.invalidateCache(fullPath);
-                        // Update visual immediately without full re-render
-                        checkbox.checked = newChecked;
-                        checkbox.style.background = newChecked ? 'var(--interactive-accent)' : 'transparent';
                     }
                 } catch (_) { /* silent */ }
             });
