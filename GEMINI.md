@@ -33,12 +33,13 @@ The "MINA V1" plugin has been developed with the following features and implemen
      - **Centered Filters:** Text in filter dropdowns is centered for improved readability.
    - **Contemporary Controls:**
      - **Toggle Switches:** Pill-shaped toggle switches for task status, History, and Capture visibility.
-     - **Thinking Icon:** Root thoughts are marked with a 💭 icon; replies are streamlined without the icon.
+     - **Wolf Avatar:** Root thoughts are marked with a circular wolf profile picture (inline SVG); replies are streamlined without the icon.
    - **Desktop Optimization:** Standalone windows hide native tab headers and include a dedicated **drag handle** at the top.
    - **Mobile Optimization:**
-     - **Vertical Reordering:** Toggles (History/Capture) move above filters on mobile for easier thumb access. These toggles are now explicitly left-aligned and rendered at the top of the header section on mobile devices.
+     - **Opens as Main Tab:** On mobile, MINA opens as a full workspace tab (not a sidebar).
+     - **Vertical Reordering:** Toggles (History/Capture) move above filters on mobile for easier thumb access.
      - **Adaptive Indentation:** Thread nesting is reduced on mobile to preserve horizontal space.
-     - **Responsive Modals:** Popups use `95vw` and anchor to the top to avoid virtual keyboard overlap.
+     - **Responsive Modals:** Popups anchor to the top and shrink with the `visualViewport` to stay above the virtual keyboard. Auto-scroll focuses inputs into view.
 
 2. **Review & Management**
    - **Modification Tracking:** Every entry tracks its **Modified Date** and **Modified Time**.
@@ -49,9 +50,11 @@ The "MINA V1" plugin has been developed with the following features and implemen
    - **History Toggle:** Instantly switch between full history and strictly **"Today's"** entries.
    - **Advanced Editing:** 
      - Double-click or use `✏️` to open a movable Modal for full text and context editing.
+     - **Full Context Management:** Edit modal shows all contexts (plugin settings + entry's own). Click to toggle on/off. Type a new context in the input and press Enter or tap Done/Go on mobile keyboard. A `+` button is also available. New contexts are saved to plugin settings immediately.
      - **Thread Protection:** Deletion (`🗑️`) is restricted for entries that have active replies to prevent orphaned threads.
    - **File & Image Support:** Paste images or drag files directly into capture areas or edit modals.
    - **Smart Autocomplete:** Typing `\` opens a fuzzy search for vault note referencing.
+   - **Internal Link Navigation:** Clicking `[[note]]` links inside thought/task cards opens the linked note — new window on desktop, new tab on mobile.
 
 3. **Functionality & Data Integrity**
    - **Git Tracking:** Fully tracked with Git.
@@ -61,8 +64,86 @@ The "MINA V1" plugin has been developed with the following features and implemen
    - **Stable IDs:** Uses robust unique IDs for new thoughts and **content-based stable hashing** for legacy 4-column entries.
    - **Automatic Context Discovery:** Scans files on load to extract unique tags, preserving casing and multi-word contexts.
    - **Settings Protection:** Iron-clad lock mechanism prevents configuration loss during sync or updates.
+   - **English-locale Timestamps:** All stored timestamps use `moment().locale('en').format(...)` to prevent non-ASCII numerals on devices with non-English locale settings.
 
-4. **Settings Tab**
+4. **Settings Tab (Inline)**
    - **Capture Folder:** Target directory for all MINA files.
    - **Thoughts/Tasks File Names:** Fully customizable storage paths.
    - **Date/Time Formats:** User-configurable moment.js formats.
+   - **Gemini API Key:** Stored securely (password field).
+   - **Gemini Model:** Dropdown to select from 9 available Gemini models.
+
+5. **MINA AI Chat Tab**
+   - Embedded AI assistant powered by Google Gemini.
+   - Sends thoughts and tasks file contents as context on every message.
+   - **Full Vault Toggle:** Optionally send the entire vault as context instead.
+   - **Dues Context:** Recurring dues data is always included as additional context (when Full Vault is off).
+   - Chat bubble UI with "MINA is thinking…" indicator.
+   - Send with Enter key or ↑ button; Shift+Enter for newline.
+
+6. **Dues Tab**
+   - Scans all vault notes for frontmatter `category: recurring payment` (supports plain string, comma-separated, or YAML list) and `active_status: true`.
+   - **Table columns:** Payable (clickable note link), Due Date (overdue = red ⚠, today = accent), Last Payment, Pay button.
+   - Sorted by Due Date ascending; undated entries go to bottom.
+   - **Pay Modal:** Records a payment against a recurring due.
+     - Payment date picker (defaults to today).
+     - Combined notes/snippet/reference textarea — paste images from clipboard (Ctrl+V) with thumbnail preview and ✕ removal.
+     - Multi-file attachment picker.
+     - Updates `last_payment` and `next_duedate` (+1 month) in the note's frontmatter via `processFrontMatter`.
+     - Appends a `## Payment — YYYY-MM-DD` log entry with notes and embedded attachments to the note body.
+     - Refreshes the Dues table automatically after saving.
+     - **Mobile:** Anchored to top, centered via parent overlay flex, shrinks with visualViewport.
+   - **Add Recurring Due Modal:** Creates a new vault note pre-filled with all required frontmatter.
+     - Fields: Payable Name (→ filename), Save folder, Next Due Date, Last Payment Date, Amount, Notes.
+     - Frontmatter written: `category`, `active_status`, `next_duedate`, `last_payment`, `amount`.
+     - **Mobile:** Same top-anchored, keyboard-aware layout as Pay modal.
+
+## Data Schema
+
+### Thoughts file (`mina_1.md` by default)
+```
+| ID | Parent ID | Date | Time | Modified Date | Modified Time | Thought | Context |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| <id> | <parent_id_or_empty> | [[YYYY-MM-DD]] | HH:mm | [[YYYY-MM-DD]] | HH:mm | thought text | #tag1 #tag2 |
+```
+Legacy formats (4-column, 6-column) are read-only compatible and handled via column-count detection.
+
+### Tasks file (`mina_2.md` by default)
+```
+| Status | Date | Time | Modified Date | Modified Time | Due Date | Task | Context |
+| :---: | --- | --- | --- | --- | --- | --- | --- |
+| [ ] | [[YYYY-MM-DD]] | HH:mm | [[YYYY-MM-DD]] | HH:mm | [[YYYY-MM-DD]] | task text | #tag1 |
+```
+
+### Recurring Due Note frontmatter
+```yaml
+---
+category: recurring payment
+active_status: true
+next_duedate: YYYY-MM-DD
+last_payment: YYYY-MM-DD
+amount: 0.00
+---
+```
+
+## Build & Deploy
+
+```bash
+npm run build
+# compiles: tsc -noEmit -skipLibCheck && node esbuild.config.mjs production
+# then copy main.js to vault:
+cp main.js "C:/Users/57092/iCloudDrive/iCloud~md~obsidian/K0000/.obsidian/plugins/mina_1/main.js"
+```
+
+## Known Column Index Rules (critical for edit save logic)
+
+When splitting a markdown table row by `|`, the part indices are:
+
+| Schema | parts.length | ID | text col | context col |
+|---|---|---|---|---|
+| Thoughts 8-col (new) | ≥ 9 | parts[1] | parts[7] | parts[8] |
+| Thoughts 6-col (old) | ≥ 7 | parts[1] | parts[5] | parts[6] |
+| Thoughts 4-col (legacy) | < 7 | — | parts[3] | parts[4] |
+| Tasks 8-col (new) | ≥ 10 | — | parts[7] | parts[8] |
+| Tasks 6-col (mid) | ≥ 8 | — | parts[5] | parts[6] |
+| Tasks 4-col (legacy) | < 8 | — | parts[4] | parts[5] |
