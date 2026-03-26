@@ -1805,37 +1805,39 @@ ${duesContent}`;
             if (e.dataTransfer && e.dataTransfer.files.length > 0) { e.preventDefault(); await this.handleFiles(e.dataTransfer.files); }
         });
 
-        // ── Attach button (📎) — primary entry point on mobile ───────────────
-        // Hidden file input lives inside the wrapper so it's cleaned up with the view.
+        // ── Attach button (📎) — overlaid on lower-right of the textarea ─────
+        // Make textAreaWrapper a positioning context so the icon floats over the textarea.
+        textAreaWrapper.style.position = 'relative';
+
         const fileInput = textAreaWrapper.createEl('input', {
             attr: {
                 type: 'file', multiple: '', style: 'display:none;',
-                // broad accept: photo library + camera + any file type
                 accept: 'image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,*'
             }
         }) as HTMLInputElement;
         fileInput.addEventListener('change', async () => {
             if (fileInput.files && fileInput.files.length > 0) {
                 await this.handleFiles(fileInput.files);
-                fileInput.value = ''; // reset so the same file can be re-selected
+                fileInput.value = '';
             }
         });
 
-        const attachBtn = inputSection.createEl('button', {
+        const attachBtn = textAreaWrapper.createEl('button', {
             attr: {
                 title: 'Attach image or file',
                 style: [
-                    'background:transparent',
-                    'border:1px solid var(--background-modifier-border)',
-                    'color:var(--text-muted)',
-                    'padding:8px 10px',
-                    'height:100%', 'min-height:40px',
-                    'cursor:pointer', 'border-radius:4px',
-                    'font-size:1.1em', 'flex-shrink:0'
+                    'position:absolute', 'bottom:6px', 'right:6px',
+                    'background:transparent', 'border:none',
+                    'color:var(--text-muted)', 'opacity:0.5',
+                    'padding:2px 4px', 'cursor:pointer',
+                    'font-size:1em', 'line-height:1',
+                    'transition:opacity 0.15s', 'z-index:1'
                 ].join(';')
             }
         });
         attachBtn.textContent = '📎';
+        attachBtn.addEventListener('mouseenter', () => attachBtn.style.opacity = '1');
+        attachBtn.addEventListener('mouseleave', () => attachBtn.style.opacity = '0.5');
         attachBtn.addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
 
         const submitBtn = inputSection.createEl('button', { text: 'Sync', attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); padding: 8px 16px; height: 100%; min-height: 40px;' } });
