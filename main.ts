@@ -1576,38 +1576,153 @@ ${duesContent}`;
                 e.preventDefault();
                 e.stopPropagation();
 
+                // ── Overlay ──────────────────────────────────────────────────
                 const overlay = document.body.createEl('div', {
                     attr: {
                         style: [
                             'position:fixed', 'inset:0', 'z-index:99999',
-                            'background:rgba(0,0,0,0.85)',
+                            'background:rgba(0,0,0,0.88)',
                             'display:flex', 'align-items:center', 'justify-content:center',
-                            'cursor:zoom-out', 'padding:20px', 'box-sizing:border-box'
+                            'overflow:hidden', 'touch-action:none'
                         ].join(';')
                     }
                 });
 
+                // ── Image ─────────────────────────────────────────────────────
                 const zoomed = overlay.createEl('img', {
                     attr: {
                         src: img.src,
                         style: [
-                            'max-width:100%', 'max-height:100%',
+                            'max-width:90vw', 'max-height:90vh',
                             'object-fit:contain',
                             'border-radius:6px',
                             'box-shadow:0 8px 40px rgba(0,0,0,0.6)',
-                            'user-select:none'
+                            'user-select:none', 'will-change:transform',
+                            'transform-origin:center center',
+                            'cursor:grab', 'transition:none'
                         ].join(';')
                     }
                 });
 
-                const close = () => overlay.remove();
+                // ── Hint bar ─────────────────────────────────────────────────
+                const hint = overlay.createEl('div', {
+                    attr: {
+                        style: [
+                            'position:absolute', 'bottom:16px', 'left:50%',
+                            'transform:translateX(-50%)',
+                            'background:rgba(0,0,0,0.55)',
+                            'color:#fff', 'font-size:0.78em',
+                            'padding:4px 14px', 'border-radius:20px',
+                            'pointer-events:none', 'white-space:nowrap',
+                            'opacity:0.8'
+                        ].join(';')
+                    },
+                    text: Platform.isMobile
+                        ? 'Pinch to zoom · drag to pan · tap outside to close'
+                        : 'Scroll to zoom · drag to pan · click outside to close · Esc'
+                });
+
+                // ── State ─────────────────────────────────────────────────────
+                let scale = 1, tx = 0, ty = 0;
+
+                const applyTransform = () => {
+                    zoomed.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+                    zoomed.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
+                };
+
+                const clampTranslate = () => {
+                    const r = zoomed.getBoundingClientRect();
+                    const ow = overlay.clientWidth, oh = overlay.clientHeight;
+                    const excess = Math.max(0, (r.width - ow) / 2 + 20);
+                    const excessY = Math.max(0, (r.height - oh) / 2 + 20);
+                    tx = Math.max(-excess, Math.min(excess, tx));
+                    ty = Math.max(-excessY, Math.min(excessY, ty));
+                };
+
+                // ── Close ─────────────────────────────────────────────────────
+                const close = () => { overlay.remove(); document.removeEventListener('keydown', onKey); };
                 overlay.addEventListener('click', close);
                 zoomed.addEventListener('click', (ev) => ev.stopPropagation());
 
-                const onKey = (ev: KeyboardEvent) => {
-                    if (ev.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
-                };
+                const onKey = (ev: KeyboardEvent) => { if (ev.key === 'Escape') close(); };
                 document.addEventListener('keydown', onKey);
+
+                // ── Mouse wheel zoom ──────────────────────────────────────────
+                overlay.addEventListener('wheel', (ev: WheelEvent) => {
+                    ev.preventDefault();
+                    const delta = ev.deltaY < 0 ? 0.15 : -0.15;
+                    scale = Math.max(0.2, Math.min(8, scale + delta));
+                    clampTranslate();
+                    applyTransform();
+                }, { passive: false });
+
+                // ── Mouse drag to pan ─────────────────────────────────────────
+                let dragStart: { x: number; y: number } | null = null;
+                let dragTx = 0, dragTy = 0;
+
+                zoomed.addEventListener('mousedown', (ev) => {
+                    if (scale <= 1) return;
+                    ev.preventDefault();
+                    dragStart = { x: ev.clientX, y: ev.clientY };
+                    dragTx = tx; dragTy = ty;
+                    zoomed.style.cursor = 'grabbing';
+                });
+                document.addEventListener('mousemove', (ev) => {
+                    if (!dragStart) return;
+                    tx = dragTx + (ev.clientX - dragStart.x);
+                    ty = dragTy + (ev.clientY - dragStart.y);
+                    clampTranslate();
+                    applyTransform();
+                });
+                document.addEventListener('mouseup', () => {
+                    dragStart = null;
+                    applyTransform(); // restores grab cursor
+                });
+
+                // ── Touch: pinch-to-zoom + drag ───────────────────────────────
+                let lastPinchDist = 0, lastPinchScale = 1;
+                let touchStart: { x: number; y: number; tx: number; ty: number } | null = null;
+
+                overlay.addEventListener('touchstart', (ev: TouchEvent) => {
+                    if (ev.touches.length === 2) {
+                        const dx = ev.touches[0].clientX - ev.touches[1].clientX;
+                        const dy = ev.touches[0].clientY - ev.touches[1].clientY;
+                        lastPinchDist = Math.hypot(dx, dy);
+                        lastPinchScale = scale;
+                        touchStart = null;
+                    } else if (ev.touches.length === 1 && scale > 1) {
+                        touchStart = { x: ev.touches[0].clientX, y: ev.touches[0].clientY, tx, ty };
+                    }
+                }, { passive: true });
+
+                overlay.addEventListener('touchmove', (ev: TouchEvent) => {
+                    ev.preventDefault();
+                    if (ev.touches.length === 2) {
+                        const dx = ev.touches[0].clientX - ev.touches[1].clientX;
+                        const dy = ev.touches[0].clientY - ev.touches[1].clientY;
+                        const dist = Math.hypot(dx, dy);
+                        scale = Math.max(0.2, Math.min(8, lastPinchScale * (dist / lastPinchDist)));
+                        clampTranslate();
+                        applyTransform();
+                    } else if (ev.touches.length === 1 && touchStart) {
+                        tx = touchStart.tx + (ev.touches[0].clientX - touchStart.x);
+                        ty = touchStart.ty + (ev.touches[0].clientY - touchStart.y);
+                        clampTranslate();
+                        applyTransform();
+                    }
+                }, { passive: false });
+
+                // Single tap on overlay (not image) → close only when not zoomed in
+                overlay.addEventListener('touchend', (ev: TouchEvent) => {
+                    if (ev.changedTouches.length === 1 && scale <= 1.05) {
+                        const t = ev.changedTouches[0];
+                        if (!(ev.target as HTMLElement).closest('img')) close();
+                    }
+                });
+
+                hint.remove(); // briefly show then remove
+                setTimeout(() => { if (overlay.isConnected) overlay.appendChild(hint); }, 50);
+                setTimeout(() => hint.style.opacity = '0', 2500);
             });
         });
     }
