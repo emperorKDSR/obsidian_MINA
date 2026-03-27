@@ -1894,7 +1894,7 @@ ${duesContent}`;
             attr: {
                 placeholder: Platform.isMobile && !isTablet()
                     ? 'Type your thought… use @ for context, \\ for links'
-                    : 'Enter your thought, task, or paste/drop an image...',
+                    : 'Enter your thought or task… Shift+Enter to save',
                 rows: isTablet() ? '4' : '3',
                 style: 'width: 100%; font-family: var(--font-text); resize: vertical; display: block;'
             }
@@ -2224,7 +2224,8 @@ ${duesContent}`;
             } else { new Notice('Please enter some text'); }
         };
         submitBtn.addEventListener('click', submitAction);
-        textArea.addEventListener('keydown', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await submitAction(); } });
+        // Enter = new line (default); Shift+Enter = save
+        textArea.addEventListener('keydown', async (e) => { if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); await submitAction(); } });
     }
 
     renderReviewTasksMode(container: HTMLElement) {
