@@ -5,27 +5,30 @@ export const VIEW_TYPE_MINA = "mina-view";
 const WOLF_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <!-- Background circle -->
   <circle cx="50" cy="50" r="50" fill="#1a1a1a"/>
-  <!-- Blade (long, tapered, slightly angled) -->
-  <polygon points="50,8 53,16 52,80 48,80 47,16" fill="#d0d8e8"/>
-  <!-- Blade edge highlight -->
-  <polygon points="50,8 53,16 52,80 50,80" fill="#f0f4ff" opacity="0.7"/>
-  <!-- Blade fuller (groove) -->
-  <rect x="49.5" y="18" width="1.5" height="58" rx="0.5" fill="#a0aabb" opacity="0.6"/>
-  <!-- Tsuba (guard) — circular -->
-  <ellipse cx="50" cy="82" rx="14" ry="5" fill="#c8a84b"/>
-  <ellipse cx="50" cy="82" rx="11" ry="3.5" fill="#e8c86a"/>
-  <!-- Tsuba detail lines -->
-  <line x1="36" y1="82" x2="64" y2="82" stroke="#a07830" stroke-width="0.8"/>
-  <line x1="50" y1="77" x2="50" y2="87" stroke="#a07830" stroke-width="0.8"/>
-  <!-- Tsuka (handle / grip) -->
-  <rect x="46" y="87" width="8" height="22" rx="3" fill="#5a2d0c"/>
-  <!-- Handle wrap (ito) -->
-  <line x1="46" y1="91" x2="54" y2="91" stroke="#c8a84b" stroke-width="1.2" opacity="0.8"/>
-  <line x1="46" y1="95" x2="54" y2="95" stroke="#c8a84b" stroke-width="1.2" opacity="0.8"/>
-  <line x1="46" y1="99" x2="54" y2="99" stroke="#c8a84b" stroke-width="1.2" opacity="0.8"/>
-  <line x1="46" y1="103" x2="54" y2="103" stroke="#c8a84b" stroke-width="1.2" opacity="0.8"/>
-  <!-- Kashira (pommel) -->
-  <ellipse cx="50" cy="109" rx="5" ry="2.5" fill="#c8a84b"/>
+  <!-- Head -->
+  <ellipse cx="50" cy="38" rx="18" ry="20" fill="#2a2a2a"/>
+  <!-- Mask wrap (lower face) -->
+  <rect x="32" y="44" width="36" height="16" rx="4" fill="#1a1a1a"/>
+  <!-- Mask tie knot at side -->
+  <circle cx="68" cy="50" r="3" fill="#111"/>
+  <!-- Eyes — sharp, glowing -->
+  <rect x="35" y="40" width="11" height="5" rx="2" fill="#1a1a1a"/>
+  <rect x="54" y="40" width="11" height="5" rx="2" fill="#1a1a1a"/>
+  <rect x="36" y="41" width="9" height="3" rx="1.5" fill="#e8c84b"/>
+  <rect x="55" y="41" width="9" height="3" rx="1.5" fill="#e8c84b"/>
+  <!-- Headband (hachimaki) -->
+  <rect x="32" y="34" width="36" height="6" rx="2" fill="#c0392b"/>
+  <!-- Headband knot ribbon left -->
+  <polygon points="32,34 24,28 28,38" fill="#c0392b"/>
+  <!-- Body / gi -->
+  <path d="M32,58 Q25,65 22,85 L78,85 Q75,65 68,58 Z" fill="#2a2a2a"/>
+  <!-- Gi lapels -->
+  <polygon points="50,58 38,58 44,75" fill="#1a1a1a"/>
+  <polygon points="50,58 62,58 56,75" fill="#1a1a1a"/>
+  <!-- Belt (obi) -->
+  <rect x="30" y="74" width="40" height="6" rx="2" fill="#c0392b"/>
+  <!-- Belt knot -->
+  <rect x="44" y="73" width="12" height="8" rx="2" fill="#a93226"/>
 </svg>`;
 
 interface MinaSettings {
