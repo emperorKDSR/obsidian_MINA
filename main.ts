@@ -11,7 +11,7 @@ const WOLF_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <rect x="32" y="44" width="36" height="16" rx="4" fill="#1a1a1a"/>
   <!-- Mask tie knot at side -->
   <circle cx="68" cy="50" r="3" fill="#111"/>
-  <!-- Eyes — sharp, glowing -->
+  <!-- Eyes - sharp, glowing -->
   <rect x="35" y="40" width="11" height="5" rx="2" fill="#1a1a1a"/>
   <rect x="54" y="40" width="11" height="5" rx="2" fill="#1a1a1a"/>
   <rect x="36" y="41" width="9" height="3" rx="1.5" fill="#e8c84b"/>
@@ -3133,7 +3133,7 @@ ${duesContent}`;
         if (level === 0) {
             const iconContainer = iconSection.createEl('div', { attr: { style: 'width: 28px; height: 28px; border-radius: 50%; overflow: hidden; flex-shrink: 0;' } });
             const img = iconContainer.createEl('img', { attr: { style: 'width: 100%; height: 100%; display: block;' } });
-            img.src = `data:image/svg+xml;base64,${btoa(WOLF_SVG)}`;
+            img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(WOLF_SVG)}`;
         }
 
         if (entry.children.length > 0) {
