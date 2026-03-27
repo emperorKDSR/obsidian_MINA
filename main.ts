@@ -663,7 +663,8 @@ export class EditEntryModal extends Modal {
 
         saveBtn.addEventListener('click', saveChanges);
         cancelBtn.addEventListener('click', () => this.close());
-        textArea.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveChanges(); } });
+        // Enter = new line (default); Shift+Enter = save
+        textArea.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); saveChanges(); } });
     }
 
     onClose() {
