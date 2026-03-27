@@ -5,36 +5,27 @@ export const VIEW_TYPE_MINA = "mina-view";
 const WOLF_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <!-- Background circle -->
   <circle cx="50" cy="50" r="50" fill="#1a1a1a"/>
-  <!-- Helmet main shape -->
-  <ellipse cx="50" cy="52" rx="34" ry="38" fill="#c0392b"/>
-  <!-- Gold forehead band -->
-  <rect x="22" y="22" width="56" height="14" rx="4" fill="#e8b84b"/>
-  <!-- Cheek panels -->
-  <polygon points="16,50 22,36 22,72 16,72" fill="#a93226"/>
-  <polygon points="84,50 78,36 78,72 84,72" fill="#a93226"/>
-  <!-- Central face plate (gold) -->
-  <rect x="32" y="36" width="36" height="40" rx="6" fill="#e8b84b"/>
-  <!-- Red face mask overlays -->
-  <polygon points="32,36 44,36 38,52 32,52" fill="#c0392b"/>
-  <polygon points="68,36 56,36 62,52 68,52" fill="#c0392b"/>
-  <!-- Nose bridge -->
-  <rect x="46" y="48" width="8" height="16" rx="2" fill="#c0392b"/>
-  <!-- Eye slots (glowing) -->
-  <polygon points="33,43 45,43 45,50 33,50" rx="2" fill="#1a1a1a"/>
-  <polygon points="67,43 55,43 55,50 67,50" rx="2" fill="#1a1a1a"/>
-  <!-- Eye glow white -->
-  <polygon points="34,44 44,44 44,49 34,49" fill="#7ecfff" opacity="0.92"/>
-  <polygon points="66,44 56,44 56,49 66,49" fill="#7ecfff" opacity="0.92"/>
-  <!-- Eye inner glow -->
-  <polygon points="36,45 42,45 42,48 36,48" fill="white" opacity="0.7"/>
-  <polygon points="64,45 58,45 58,48 64,48" fill="white" opacity="0.7"/>
-  <!-- Chin / jaw panel -->
-  <rect x="36" y="66" width="28" height="10" rx="4" fill="#c0392b"/>
-  <!-- Chin arc detail -->
-  <path d="M36,70 Q50,80 64,70" stroke="#a93226" stroke-width="1.5" fill="none"/>
-  <!-- Chest arc light (arc reactor hint at bottom) -->
-  <circle cx="50" cy="90" r="5" fill="#7ecfff" opacity="0.5"/>
-  <circle cx="50" cy="90" r="3" fill="#7ecfff" opacity="0.8"/>
+  <!-- Blade (long, tapered, slightly angled) -->
+  <polygon points="50,8 53,16 52,80 48,80 47,16" fill="#d0d8e8"/>
+  <!-- Blade edge highlight -->
+  <polygon points="50,8 53,16 52,80 50,80" fill="#f0f4ff" opacity="0.7"/>
+  <!-- Blade fuller (groove) -->
+  <rect x="49.5" y="18" width="1.5" height="58" rx="0.5" fill="#a0aabb" opacity="0.6"/>
+  <!-- Tsuba (guard) — circular -->
+  <ellipse cx="50" cy="82" rx="14" ry="5" fill="#c8a84b"/>
+  <ellipse cx="50" cy="82" rx="11" ry="3.5" fill="#e8c86a"/>
+  <!-- Tsuba detail lines -->
+  <line x1="36" y1="82" x2="64" y2="82" stroke="#a07830" stroke-width="0.8"/>
+  <line x1="50" y1="77" x2="50" y2="87" stroke="#a07830" stroke-width="0.8"/>
+  <!-- Tsuka (handle / grip) -->
+  <rect x="46" y="87" width="8" height="22" rx="3" fill="#5a2d0c"/>
+  <!-- Handle wrap (ito) -->
+  <line x1="46" y1="91" x2="54" y2="91" stroke="#c8a84b" stroke-width="1.2" opacity="0.8"/>
+  <line x1="46" y1="95" x2="54" y2="95" stroke="#c8a84b" stroke-width="1.2" opacity="0.8"/>
+  <line x1="46" y1="99" x2="54" y2="99" stroke="#c8a84b" stroke-width="1.2" opacity="0.8"/>
+  <line x1="46" y1="103" x2="54" y2="103" stroke="#c8a84b" stroke-width="1.2" opacity="0.8"/>
+  <!-- Kashira (pommel) -->
+  <ellipse cx="50" cy="109" rx="5" ry="2.5" fill="#c8a84b"/>
 </svg>`;
 
 interface MinaSettings {
