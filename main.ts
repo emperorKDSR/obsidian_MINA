@@ -62,6 +62,13 @@ function toAsciiDigits(s: string): string {
         .replace(/[\u0E50-\u0E59]/g, c => String(c.charCodeAt(0) - 0x0E50));
 }
 
+/** True when running on an iPad (or large Android tablet).
+ *  Obsidian's Platform.isMobile is true for both phones AND tablets.
+ *  We distinguish tablets by their short-edge being ≥ 768 px. */
+function isTablet(): boolean {
+    return Platform.isMobile && Math.min(screen.width, screen.height) >= 768;
+}
+
 const DEFAULT_SETTINGS: MinaSettings = {
     captureFolder: '000 Bin',
 	captureFilePath: 'mina_1.md',
@@ -156,12 +163,23 @@ export default class MinaPlugin extends Plugin {
         const { workspace } = this.app;
 
         if (Platform.isMobile) {
-            // Detach any existing MINA leaves (may be stuck in sidebar)
+            // Detach any existing MINA leaves
             workspace.getLeavesOfType(VIEW_TYPE_MINA).forEach(l => l.detach());
-            // Open as a main content tab, like a note
-            const leaf = workspace.getLeaf('tab');
-            await leaf.setViewState({ type: VIEW_TYPE_MINA, active: true });
-            workspace.revealLeaf(leaf);
+
+            if (isTablet()) {
+                // iPad: reuse the active leaf so MINA fills the full workspace pane
+                // (no new tab strip — the tab header is hidden in onOpen)
+                const leaf = workspace.getLeaf(false);
+                if (leaf) {
+                    await leaf.setViewState({ type: VIEW_TYPE_MINA, active: true });
+                    workspace.revealLeaf(leaf);
+                }
+            } else {
+                // iPhone: open as a main content tab
+                const leaf = workspace.getLeaf('tab');
+                await leaf.setViewState({ type: VIEW_TYPE_MINA, active: true });
+                workspace.revealLeaf(leaf);
+            }
             return;
         }
 
@@ -392,8 +410,10 @@ export class EditEntryModal extends Modal {
         if (Platform.isMobile) {
             modalEl.style.marginTop = '2vh';
             modalEl.style.marginBottom = '2vh';
-            modalEl.style.width = '95vw';
-            modalEl.style.maxWidth = '95vw';
+            // iPad has much more screen real estate — cap at 75vw instead of 95vw
+            const modalW = isTablet() ? '75vw' : '95vw';
+            modalEl.style.width = modalW;
+            modalEl.style.maxWidth = modalW;
             modalEl.style.maxHeight = '90vh';
             modalEl.style.alignSelf = 'flex-start';
             contentEl.style.padding = '10px';
@@ -743,8 +763,9 @@ class PaymentModal extends Modal {
         const { contentEl, modalEl } = this;
         modalEl.style.width = 'min(500px, 95vw)';
 
-        if (Platform.isMobile) {
-            // Centre the modal by turning its parent overlay into a top-aligned flex container
+        // Phone: anchor to top edge (keeps content above keyboard).
+        // iPad/desktop: let Obsidian center it naturally.
+        if (Platform.isMobile && !isTablet()) {
             const bg = modalEl.parentElement;
             if (bg) {
                 bg.style.display = 'flex';
@@ -942,7 +963,9 @@ class NewDueModal extends Modal {
         const { contentEl, modalEl } = this;
         modalEl.style.width = 'min(460px, 95vw)';
 
-        if (Platform.isMobile) {
+        // Phone: anchor to top edge (keeps content above keyboard).
+        // iPad/desktop: let Obsidian center it naturally.
+        if (Platform.isMobile && !isTablet()) {
             const bg = modalEl.parentElement;
             if (bg) {
                 bg.style.display = 'flex';
@@ -1104,7 +1127,6 @@ class MinaView extends ItemView {
     // AI Chat State
     chatHistory: { role: 'user' | 'assistant'; text: string }[] = [];
     chatContainer: HTMLElement;
-    minaUseFullVault: boolean = false;
     
     // Tasks Review Filters
     tasksFilterStatus: 'all' | 'pending' | 'completed' = 'pending';
@@ -1207,14 +1229,14 @@ class MinaView extends ItemView {
             };
         }
 
-        // Hide headers for a cleaner standalone window on desktop
-        if (!Platform.isMobile) {
+        // Hide headers for a cleaner full-screen experience on desktop and iPad
+        if (!Platform.isMobile || isTablet()) {
             const headerEl = this.containerEl.querySelector('.view-header');
             if (headerEl) {
                 (headerEl as HTMLElement).style.display = 'none';
             }
             
-            // Try to hide the tab container if we are the only tab
+            // Hide the tab header strip so the view fills the entire screen
             setTimeout(() => {
                 const tabContainer = this.containerEl.closest('.workspace-tabs');
                 if (tabContainer) {
@@ -1455,10 +1477,14 @@ class MinaView extends ItemView {
     }
 
     async renderMinaMode(container: HTMLElement) {
-        container.style.display = 'flex';
-        container.style.flexDirection = 'column';
-        container.style.height = '100%';
-        container.style.overflow = 'hidden';
+        // Desktop: prime the container as a flex column.
+        // Mobile: renderView already did that with a fixed pixel height.
+        if (!Platform.isMobile) {
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.height = '100%';
+            container.style.overflow = 'hidden';
+        }
 
         if (!this.plugin.settings.geminiApiKey) {
             const warn = container.createEl('div', { attr: { style: 'padding: 20px; color: var(--text-muted); font-size: 0.9em;' } });
@@ -1467,30 +1493,11 @@ class MinaView extends ItemView {
             return;
         }
 
-        // Toolbar
-        const toolbar = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 6px 10px; background: var(--background-secondary); border-bottom: 1px solid var(--background-modifier-border); font-size: 0.8em; color: var(--text-muted);' } });
-        toolbar.createSpan({ text: 'Full Vault', attr: { style: 'font-size: 0.85em;' } });
-        const vaultToggleLabel = toolbar.createEl('label', { attr: { style: 'position: relative; display: inline-block; width: 30px; height: 16px; cursor: pointer;' } });
-        const vaultCb = vaultToggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
-        vaultCb.checked = this.minaUseFullVault;
-        const vaultSlider = vaultToggleLabel.createEl('span', { attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${this.minaUseFullVault ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 16px;` } });
-        vaultToggleLabel.createEl('span', { attr: { style: `position: absolute; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${this.minaUseFullVault ? 'translateX(14px)' : 'translateX(0)'};` } });
-        const vaultLabel = toolbar.createSpan({ text: this.minaUseFullVault ? '(entire vault as context)' : '(thoughts & tasks only)', attr: { style: 'color: var(--text-muted); font-style: italic;' } });
-        vaultCb.addEventListener('change', () => {
-            this.minaUseFullVault = vaultCb.checked;
-            vaultSlider.style.backgroundColor = this.minaUseFullVault ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
-            const knob = vaultToggleLabel.querySelector('span:last-child') as HTMLElement;
-            if (knob) knob.style.transform = this.minaUseFullVault ? 'translateX(14px)' : 'translateX(0)';
-            vaultLabel.setText(this.minaUseFullVault ? '(entire vault as context)' : '(thoughts & tasks only)');
+        // Input row — at the TOP, flex-shrink: 0 (same pattern as capture area in Thoughts tab)
+        const inputRow = container.createEl('div', {
+            attr: { style: 'flex-shrink: 0; display: flex; gap: 6px; padding: 8px; border-bottom: 1px solid var(--background-modifier-border); align-items: stretch; background: var(--background-secondary);' }
         });
-
-        // Chat history display
-        this.chatContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 8px;' } });
-        this.renderChatHistory();
-
-        // Input row
-        const inputRow = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: flex; gap: 6px; padding: 8px; border-top: 1px solid var(--background-modifier-border); align-items: stretch;' } });
-        const textarea = inputRow.createEl('textarea', { attr: { placeholder: 'Ask MINA about your thoughts and tasks…', rows: '2', style: 'flex-grow: 1; resize: none; font-size: 0.9em; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-family: inherit;' } });
+        const textarea = inputRow.createEl('textarea', { attr: { placeholder: 'Ask MINA about your thoughts, tasks and dues…', rows: '2', style: 'flex-grow: 1; resize: none; font-size: 0.9em; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-family: inherit;' } });
         const sendBtn = inputRow.createEl('button', { text: '↑', attr: { style: 'padding: 0 16px; font-size: 1.3em; border-radius: 6px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; cursor: pointer; flex-shrink: 0;' } });
 
         const send = async () => {
@@ -1503,10 +1510,10 @@ class MinaView extends ItemView {
             this.chatHistory.push({ role: 'user', text });
             this.renderChatHistory();
 
-            // Thinking indicator
+            // "Thinking" indicator prepended at the top (newest-first order)
             const thinking = this.chatContainer.createEl('div', { attr: { style: 'align-self: flex-start; font-size: 0.85em; color: var(--text-muted); font-style: italic;' } });
+            this.chatContainer.prepend(thinking);
             thinking.setText('MINA is thinking…');
-            this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
 
             try {
                 const reply = await this.callGemini(text);
@@ -1528,22 +1535,30 @@ class MinaView extends ItemView {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
         });
 
-        setTimeout(() => textarea.focus(), 50);
+        if (!Platform.isMobile) {
+            setTimeout(() => textarea.focus(), 50);
+        }
+
+        // Chat history — scrollable area below the input
+        this.chatContainer = container.createEl('div', {
+            attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 8px; display: flex; flex-direction: column; gap: 8px;' }
+        });
+        this.renderChatHistory();
     }
 
     renderChatHistory() {
         if (!this.chatContainer) return;
         this.chatContainer.empty();
         if (this.chatHistory.length === 0) {
-            this.chatContainer.createEl('div', { text: 'Ask me anything about your thoughts and tasks.', attr: { style: 'color: var(--text-muted); font-size: 0.85em; text-align: center; margin-top: 20px;' } });
+            this.chatContainer.createEl('div', { text: 'Ask me anything about your thoughts, tasks and dues.', attr: { style: 'color: var(--text-muted); font-size: 0.85em; text-align: center; margin-top: 20px;' } });
             return;
         }
-        for (const msg of this.chatHistory) {
+        // Render newest first
+        for (const msg of [...this.chatHistory].reverse()) {
             const isUser = msg.role === 'user';
             const bubble = this.chatContainer.createEl('div', { attr: { style: `max-width: 85%; padding: 8px 12px; border-radius: 12px; font-size: 0.9em; line-height: 1.5; white-space: pre-wrap; word-break: break-word; align-self: ${isUser ? 'flex-end' : 'flex-start'}; background: ${isUser ? 'var(--interactive-accent)' : 'var(--background-secondary)'}; color: ${isUser ? 'var(--text-on-accent)' : 'var(--text-normal)'};` } });
             bubble.setText(msg.text);
         }
-        this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
     }
 
     async callGemini(userMessage: string): Promise<string> {
@@ -1558,42 +1573,28 @@ class MinaView extends ItemView {
             return '';
         };
 
-        let systemPrompt: string;
+        const thoughtsContent = await readFile(s.captureFolder, s.captureFilePath);
+        const tasksContent = await readFile(s.captureFolder, s.tasksFilePath);
 
-        if (this.minaUseFullVault) {
-            // Read all markdown files in the vault
-            const mdFiles = vault.getMarkdownFiles();
-            const sections: string[] = [];
-            for (const file of mdFiles) {
-                try {
-                    const content = await vault.read(file);
-                    if (content.trim()) sections.push(`--- ${file.path} ---\n${content}`);
-                } catch {}
-            }
-            systemPrompt = `You are MINA, a personal AI assistant embedded in Obsidian. You have access to the user's entire vault below. Answer questions, summarize, find patterns, suggest actions, or help reflect — based on this data. Be concise and helpful.\n\n${sections.join('\n\n')}`;
-        } else {
-            const thoughtsContent = await readFile(s.captureFolder, s.captureFilePath);
-            const tasksContent = await readFile(s.captureFolder, s.tasksFilePath);
+        // Build dues context from vault frontmatter
+        const { metadataCache, vault: v } = this.plugin.app;
+        const duesLines: string[] = [];
+        for (const file of v.getMarkdownFiles()) {
+            const fm = metadataCache.getFileCache(file)?.frontmatter;
+            if (!fm) continue;
+            const catRaw = fm['category'];
+            const catMatches = catRaw && (Array.isArray(catRaw)
+                ? catRaw.some((v: any) => v.toString().toLowerCase().includes('recurring payment'))
+                : catRaw.toString().toLowerCase().includes('recurring payment'));
+            const active = fm['active_status'];
+            const isActive = active === true || active === 'true' || active === 'True';
+            if (!catMatches || !isActive) continue;
+            duesLines.push(`- ${file.basename}: due ${fm['next_duedate'] ?? '?'}, last paid ${fm['last_payment'] ?? '?'}`);
+        }
+        duesLines.sort();
+        const duesContent = duesLines.length ? duesLines.join('\n') : '(none)';
 
-            // Build dues context from vault frontmatter
-            const { metadataCache, vault: v } = this.plugin.app;
-            const duesLines: string[] = [];
-            for (const file of v.getMarkdownFiles()) {
-                const fm = metadataCache.getFileCache(file)?.frontmatter;
-                if (!fm) continue;
-                const catRaw = fm['category'];
-                const catMatches = catRaw && (Array.isArray(catRaw)
-                    ? catRaw.some((v: any) => v.toString().toLowerCase().includes('recurring payment'))
-                    : catRaw.toString().toLowerCase().includes('recurring payment'));
-                const active = fm['active_status'];
-                const isActive = active === true || active === 'true' || active === 'True';
-                if (!catMatches || !isActive) continue;
-                duesLines.push(`- ${file.basename}: due ${fm['next_duedate'] ?? '?'}, last paid ${fm['last_payment'] ?? '?'}`);
-            }
-            duesLines.sort();
-            const duesContent = duesLines.length ? duesLines.join('\n') : '(none)';
-
-            systemPrompt = `You are MINA, a personal AI assistant embedded in Obsidian. You have access to the user's thoughts, tasks, and recurring dues data below. Answer questions, summarize, find patterns, suggest actions, or help reflect — based on this data. Be concise and helpful.
+        const systemPrompt = `You are MINA, a personal AI assistant embedded in Obsidian. You have access to the user's thoughts, tasks, and recurring dues below. Answer questions, summarize, find patterns, suggest actions, or help reflect — based on this data. Be concise and helpful.
 
 --- THOUGHTS ---
 ${thoughtsContent || '(empty)'}
@@ -1603,7 +1604,6 @@ ${tasksContent || '(empty)'}
 
 --- DUES (recurring payments) ---
 ${duesContent}`;
-        }
 
         const body = {
             system_instruction: { parts: [{ text: systemPrompt }] },
@@ -1892,10 +1892,10 @@ ${duesContent}`;
         const textAreaWrapper = inputSection.createEl('div', { attr: { style: 'flex-grow: 1;' } });
         const textArea = textAreaWrapper.createEl('textarea', {
             attr: {
-                placeholder: Platform.isMobile
+                placeholder: Platform.isMobile && !isTablet()
                     ? 'Type your thought… use @ for context, \\ for links'
                     : 'Enter your thought, task, or paste/drop an image...',
-                rows: '3',
+                rows: isTablet() ? '4' : '3',
                 style: 'width: 100%; font-family: var(--font-text); resize: vertical; display: block;'
             }
         });
@@ -2046,8 +2046,8 @@ ${duesContent}`;
                 }
             }
 
-            // @ context picker: active on mobile; desktop keeps the pills
-            if (Platform.isMobile) {
+            // @ context picker: phone-only; iPad/desktop use the persistent pill row
+            if (Platform.isMobile && !isTablet()) {
                 const cursor = target.selectionStart;
                 const before = val.substring(0, cursor);
                 const atIdx = before.lastIndexOf('@');
@@ -2131,10 +2131,10 @@ ${duesContent}`;
 
         const submitBtn = inputSection.createEl('button', { text: 'Sync', attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); padding: 8px 16px; height: 100%; min-height: 40px;' } });
         
-        // Contexts — desktop: pill row; mobile: hidden (use @ in textarea instead)
+        // Contexts — desktop+iPad: pill row; phone: hidden (use @ in textarea instead)
         const controlsDiv = container.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; margin-bottom: 15px;' } });
         
-        const contextsDiv = controlsDiv.createEl('div', { attr: { style: `display: ${Platform.isMobile ? 'none' : 'flex'}; flex-wrap: wrap; gap: 5px; align-items: center;` } });
+        const contextsDiv = controlsDiv.createEl('div', { attr: { style: `display: ${Platform.isMobile && !isTablet() ? 'none' : 'flex'}; flex-wrap: wrap; gap: 5px; align-items: center;` } });
         const renderContextTags = () => {
             contextsDiv.empty();
             this.plugin.settings.contexts.forEach(ctx => {
@@ -2178,7 +2178,7 @@ ${duesContent}`;
         renderContextTags();
 
         if (!isThoughtsOnly && !isTasksOnly) {
-            const taskToggleDiv = controlsDiv.createEl('div', { attr: { style: `display: flex; align-items: center; gap: 8px; ${Platform.isMobile ? '' : 'margin-left: auto;'}` } });
+            const taskToggleDiv = controlsDiv.createEl('div', { attr: { style: `display: flex; align-items: center; gap: 8px; ${Platform.isMobile && !isTablet() ? '' : 'margin-left: auto;'}` } });
             const taskCheckbox = taskToggleDiv.createEl('input', { type: 'checkbox', attr: { id: 'is-task-checkbox' } });
             taskCheckbox.checked = this.isTask;
             taskToggleDiv.createEl('label', { attr: { for: 'is-task-checkbox', style: 'cursor: pointer;' }, text: 'As Task' });
@@ -2201,7 +2201,7 @@ ${duesContent}`;
             });
         } else if (isTasksOnly) {
             this.isTask = true;
-            const taskControlsDiv = controlsDiv.createEl('div', { attr: { style: `display: flex; align-items: center; gap: 8px; ${Platform.isMobile ? '' : 'margin-left: auto;'}` } });
+            const taskControlsDiv = controlsDiv.createEl('div', { attr: { style: `display: flex; align-items: center; gap: 8px; ${Platform.isMobile && !isTablet() ? '' : 'margin-left: auto;'}` } });
             taskControlsDiv.createSpan({ text: 'Due:', attr: { style: 'font-size: 0.85em; color: var(--text-muted);' } });
             const datePicker = taskControlsDiv.createEl('input', { 
                 type: 'date', 
@@ -3111,7 +3111,7 @@ ${duesContent}`;
     }
 
     async renderThoughtRow(entry: ThoughtEntry, container: HTMLElement, filePath: string, level: number = 0) {
-        const indentStep = Platform.isMobile ? 12 : 24;
+        const indentStep = (Platform.isMobile && !isTablet()) ? 12 : 24;
         const itemEl = container.createEl('div', {
             attr: { style: `margin-bottom: 3px; padding-bottom: 3px; display: flex; align-items: flex-start; ${level > 0 ? `margin-left: ${level * indentStep}px; border-left: 2px solid var(--background-modifier-border); padding-left: 6px;` : ''}` }
         });
