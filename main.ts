@@ -2148,6 +2148,8 @@ class MinaView extends ItemView {
         const textarea = inputRow.createEl('textarea', { attr: { placeholder: 'Ask MINA… (type \\ to ground on a note)', rows: '2', style: 'flex-grow: 1; resize: none; font-size: 0.9em; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-family: inherit;' } });
         const sendBtn = inputRow.createEl('button', { text: '↑', attr: { style: 'padding: 0 16px; font-size: 1.3em; border-radius: 6px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; cursor: pointer; flex-shrink: 0;' } });
         const saveSessionBtn = inputRow.createEl('button', { text: '📥', attr: { style: 'padding: 0 10px; font-size: 1.1em; border-radius: 6px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer; flex-shrink: 0;', title: 'Save entire chat session to vault' } });
+        const newChatBtn = inputRow.createEl('button', { text: '🗒️', attr: { style: 'padding: 0 10px; font-size: 1.1em; border-radius: 6px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer; flex-shrink: 0;', title: 'New chat session' } });
+        const recallBtn = inputRow.createEl('button', { text: '📂', attr: { style: 'padding: 0 10px; font-size: 1.1em; border-radius: 6px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer; flex-shrink: 0;', title: 'Recall a saved chat session' } });
 
         // Grounded notes chip bar — always visible, shows default + user-selected note chips
         const groundedBar = container.createEl('div', {
@@ -2248,6 +2250,32 @@ class MinaView extends ItemView {
             } catch (e) {
                 new Notice('Error saving chat: ' + (e instanceof Error ? e.message : String(e)));
             }
+        });
+
+        newChatBtn.addEventListener('click', async () => {
+            if (this.chatHistory.length === 0) return;
+            new ConfirmModal(this.plugin.app, 'Start a new chat session? Current history will be cleared.', async () => {
+                this.chatHistory = [];
+                await this.renderChatHistory();
+            }).open();
+        });
+
+        recallBtn.addEventListener('click', () => {
+            const folder = (this.plugin.settings.thoughtsFolder || '000 Bin/MINA V2').trim();
+            const files = this.plugin.app.vault.getFiles()
+                .filter(f => f.path.startsWith(folder) && f.basename.startsWith('MINA Chat '))
+                .sort((a, b) => b.stat.mtime - a.stat.mtime);
+            if (files.length === 0) { new Notice('No saved chat sessions found.'); return; }
+            new ChatSessionPickerModal(this.plugin.app, files, async (file) => {
+                try {
+                    const content = await this.plugin.app.vault.read(file);
+                    this.chatHistory = this.parseChatSession(content);
+                    await this.renderChatHistory();
+                    new Notice(`📂 Loaded: ${file.basename}`);
+                } catch (e) {
+                    new Notice('Error loading chat: ' + (e instanceof Error ? e.message : String(e)));
+                }
+            }).open();
         });
         textarea.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); return; }
@@ -2447,6 +2475,27 @@ ${duesContent}${groundedSection}`;
         const parts: any[] = data?.candidates?.[0]?.content?.parts ?? [];
         const text = parts.map((p: any) => p.text ?? '').join('').trim();
         return text || '(no response)';
+    }
+
+    parseChatSession(content: string): { role: 'user' | 'assistant'; text: string }[] {
+        const history: { role: 'user' | 'assistant'; text: string }[] = [];
+        let currentRole: 'user' | 'assistant' | null = null;
+        let currentLines: string[] = [];
+        for (const line of content.split('\n')) {
+            if (line.startsWith('**You:** ')) {
+                if (currentRole && currentLines.length) history.push({ role: currentRole, text: currentLines.join('\n').trim() });
+                currentRole = 'user';
+                currentLines = [line.substring('**You:** '.length)];
+            } else if (line.startsWith('**MINA:** ')) {
+                if (currentRole && currentLines.length) history.push({ role: currentRole, text: currentLines.join('\n').trim() });
+                currentRole = 'assistant';
+                currentLines = [line.substring('**MINA:** '.length)];
+            } else if (currentRole && !line.startsWith('#')) {
+                currentLines.push(line);
+            }
+        }
+        if (currentRole && currentLines.length) history.push({ role: currentRole, text: currentLines.join('\n').trim() });
+        return history;
     }
 
     hookInternalLinks(el: HTMLElement, sourcePath: string) {
@@ -3959,6 +4008,26 @@ ${duesContent}${groundedSection}`;
         renderTarget.addEventListener('dblclick', startReplyEdit);
         editBtn.addEventListener('click', startReplyEdit);
     }
+}
+
+class ChatSessionPickerModal extends FuzzySuggestModal<TFile> {
+    files: TFile[];
+    onChoose: (file: TFile) => void;
+
+    constructor(app: App, files: TFile[], onChoose: (file: TFile) => void) {
+        super(app);
+        this.files = files;
+        this.onChoose = onChoose;
+        this.setPlaceholder('Select a saved chat session…');
+    }
+
+    getItems(): TFile[] { return this.files; }
+
+    getItemText(file: TFile): string {
+        return `${file.basename} (${moment(file.stat.mtime).locale('en').format('YYYY-MM-DD HH:mm')})`;
+    }
+
+    onChooseItem(file: TFile): void { this.onChoose(file); }
 }
 
 class MinaSettingTab extends PluginSettingTab {
