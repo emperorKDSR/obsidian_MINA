@@ -2070,7 +2070,7 @@ class MinaView extends ItemView {
     }
 
     renderSettingsMode(container: HTMLElement) {
-        const wrap = container.createEl('div', { attr: { style: 'padding: 16px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; flex-grow: 1;' } });
+        const wrap = container.createEl('div', { attr: { style: 'padding: 16px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; flex-grow: 1; padding-bottom: 200px;' } });
 
         const field = (label: string, desc: string, inputFn: (row: HTMLElement) => void) => {
             const row = wrap.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 12px;' } });
