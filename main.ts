@@ -3831,7 +3831,11 @@ ${duesContent}${groundedSection}`;
                 entry.context,
                 async (dueDate: string) => {
                     await this.plugin.createTaskFile(entry.body.replace(/<br>/g, '\n'), entry.context, dueDate || undefined);
+                    // Tag the original thought with converted_to_tasks context
+                    const updatedContexts = [...new Set([...entry.context, 'converted_to_tasks'])];
+                    await this.plugin.editThoughtBody(entry.filePath, entry.body.replace(/<br>/g, '\n'), updatedContexts);
                     new Notice('✅ Thought converted to task!');
+                    this.updateReviewThoughtsList();
                 }
             ).open();
         });
