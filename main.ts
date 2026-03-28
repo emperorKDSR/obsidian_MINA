@@ -2141,15 +2141,16 @@ class MinaView extends ItemView {
             return;
         }
 
-        // Input row — at the TOP, flex-shrink: 0
+        // Input area — full-width textarea with buttons below
         const inputRow = container.createEl('div', {
-            attr: { style: 'flex-shrink: 0; display: flex; gap: 6px; padding: 8px; border-bottom: 1px solid var(--background-modifier-border); align-items: stretch; background: var(--background-secondary);' }
+            attr: { style: 'flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; padding: 8px; border-bottom: 1px solid var(--background-modifier-border); background: var(--background-secondary);' }
         });
-        const textarea = inputRow.createEl('textarea', { attr: { placeholder: 'Ask MINA… (type \\ to ground on a note)', rows: '2', style: 'flex-grow: 1; resize: none; font-size: 0.9em; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-family: inherit;' } });
-        const sendBtn = inputRow.createEl('button', { text: '↑', attr: { style: 'padding: 0 16px; font-size: 1.3em; border-radius: 6px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; cursor: pointer; flex-shrink: 0;' } });
-        const saveSessionBtn = inputRow.createEl('button', { text: '📥', attr: { style: 'padding: 0 10px; font-size: 1.1em; border-radius: 6px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer; flex-shrink: 0;', title: 'Save entire chat session to vault' } });
-        const newChatBtn = inputRow.createEl('button', { text: '🗒️', attr: { style: 'padding: 0 10px; font-size: 1.1em; border-radius: 6px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer; flex-shrink: 0;', title: 'New chat session' } });
-        const recallBtn = inputRow.createEl('button', { text: '📂', attr: { style: 'padding: 0 10px; font-size: 1.1em; border-radius: 6px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer; flex-shrink: 0;', title: 'Recall a saved chat session' } });
+        const textarea = inputRow.createEl('textarea', { attr: { placeholder: 'Ask MINA… (type \\ to ground on a note)', rows: '3', style: 'width: 100%; resize: none; font-size: 0.9em; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-family: inherit; box-sizing: border-box;' } });
+        const btnRow = inputRow.createEl('div', { attr: { style: 'display: flex; gap: 6px; align-items: center;' } });
+        const sendBtn = btnRow.createEl('button', { text: '↑ Send', attr: { style: 'flex: 1; padding: 6px 0; font-size: 0.95em; font-weight: 600; border-radius: 6px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; cursor: pointer;' } });
+        const saveSessionBtn = btnRow.createEl('button', { text: '📥', attr: { style: 'padding: 6px 12px; font-size: 1.1em; border-radius: 6px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer;', title: 'Save entire chat session to vault' } });
+        const newChatBtn = btnRow.createEl('button', { text: '🗒️', attr: { style: 'padding: 6px 12px; font-size: 1.1em; border-radius: 6px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer;', title: 'New chat session' } });
+        const recallBtn = btnRow.createEl('button', { text: '📂', attr: { style: 'padding: 6px 12px; font-size: 1.1em; border-radius: 6px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer;', title: 'Recall a saved chat session' } });
 
         // Grounded notes chip bar — always visible, shows default + user-selected note chips
         const groundedBar = container.createEl('div', {
