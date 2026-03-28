@@ -2141,16 +2141,16 @@ class MinaView extends ItemView {
             return;
         }
 
-        // Input area — full-width textarea with buttons below
+        // Input area — full-width textarea with buttons overlaid bottom-right
         const inputRow = container.createEl('div', {
-            attr: { style: 'flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; padding: 8px; border-bottom: 1px solid var(--background-modifier-border); background: var(--background-secondary);' }
+            attr: { style: 'flex-shrink: 0; position: relative; padding: 8px; border-bottom: 1px solid var(--background-modifier-border); background: var(--background-secondary);' }
         });
-        const textarea = inputRow.createEl('textarea', { attr: { placeholder: 'Ask MINA… (type \\ to ground on a note)', rows: '3', style: 'width: 100%; resize: none; font-size: 0.9em; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-family: inherit; box-sizing: border-box;' } });
-        const btnRow = inputRow.createEl('div', { attr: { style: 'display: flex; gap: 6px; align-items: center;' } });
-        const sendBtn = btnRow.createEl('button', { text: '↑ Send', attr: { style: 'flex: 1; padding: 6px 0; font-size: 0.95em; font-weight: 600; border-radius: 6px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; cursor: pointer;' } });
-        const saveSessionBtn = btnRow.createEl('button', { text: '📥', attr: { style: 'padding: 6px 12px; font-size: 1.1em; border-radius: 6px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer;', title: 'Save entire chat session to vault' } });
-        const newChatBtn = btnRow.createEl('button', { text: '🗒️', attr: { style: 'padding: 6px 12px; font-size: 1.1em; border-radius: 6px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer;', title: 'New chat session' } });
-        const recallBtn = btnRow.createEl('button', { text: '📂', attr: { style: 'padding: 6px 12px; font-size: 1.1em; border-radius: 6px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer;', title: 'Recall a saved chat session' } });
+        const textarea = inputRow.createEl('textarea', { attr: { placeholder: 'Ask MINA… (type \\ to ground on a note)', rows: '4', style: 'width: 100%; resize: none; font-size: 0.9em; padding: 8px 100px 36px 10px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-family: inherit; box-sizing: border-box;' } });
+        const overlayBtns = inputRow.createEl('div', { attr: { style: 'position: absolute; bottom: 16px; right: 16px; display: flex; gap: 4px; align-items: center;' } });
+        const sendBtn = overlayBtns.createEl('button', { text: '↑', attr: { style: 'padding: 3px 10px; font-size: 1em; font-weight: 700; border-radius: 5px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; cursor: pointer;', title: 'Send' } });
+        const saveSessionBtn = overlayBtns.createEl('button', { text: '📥', attr: { style: 'padding: 3px 6px; font-size: 0.85em; border-radius: 5px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer;', title: 'Save chat session' } });
+        const newChatBtn = overlayBtns.createEl('button', { text: '🗒️', attr: { style: 'padding: 3px 6px; font-size: 0.85em; border-radius: 5px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer;', title: 'New chat session' } });
+        const recallBtn = overlayBtns.createEl('button', { text: '📂', attr: { style: 'padding: 3px 6px; font-size: 0.85em; border-radius: 5px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer;', title: 'Recall saved session' } });
 
         // Grounded notes chip bar — always visible, shows default + user-selected note chips
         const groundedBar = container.createEl('div', {
