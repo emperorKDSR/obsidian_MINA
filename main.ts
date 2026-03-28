@@ -46,6 +46,7 @@ interface MinaSettings {
     selectedContexts: string[];
     geminiApiKey: string;
     geminiModel: string;
+    maxOutputTokens: number;
     newNoteFolder: string;
 }
 
@@ -82,6 +83,7 @@ const DEFAULT_SETTINGS: MinaSettings = {
     selectedContexts: [],
     geminiApiKey: '',
     geminiModel: 'gemini-2.5-flash',
+    maxOutputTokens: 65536,
     newNoteFolder: '000 Bin'
 }
 
@@ -2109,6 +2111,17 @@ class MinaView extends ItemView {
             });
             sel.addEventListener('change', async () => { this.plugin.settings.geminiModel = sel.value; await this.plugin.saveSettings(); });
         });
+
+        field('Max Output Tokens', 'Maximum tokens in Gemini responses (256–65536). Higher = longer answers.', row => {
+            const inp = row.createEl('input', { attr: { type: 'number', min: '256', max: '65536', step: '256', style: 'width: 100px; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal);' } });
+            inp.value = String(this.plugin.settings.maxOutputTokens ?? 65536);
+            inp.addEventListener('change', async () => {
+                const val = Math.min(65536, Math.max(256, parseInt(inp.value) || 65536));
+                inp.value = String(val);
+                this.plugin.settings.maxOutputTokens = val;
+                await this.plugin.saveSettings();
+            });
+        });
     }
 
     async renderMinaMode(container: HTMLElement) {
@@ -2413,7 +2426,7 @@ ${duesContent}${groundedSection}`;
                 role: msg.role === 'user' ? 'user' : 'model',
                 parts: [{ text: msg.text }]
             })),
-            generationConfig: { temperature: 0.7, maxOutputTokens: 65536 }
+            generationConfig: { temperature: 0.7, maxOutputTokens: s.maxOutputTokens ?? 65536 }
         };
 
         if (webSearch) {
@@ -3981,6 +3994,17 @@ class MinaSettingTab extends PluginSettingTab {
             }
             drop.setValue(this.plugin.settings.geminiModel || 'gemini-2.5-flash');
             drop.onChange(async (value) => { this.plugin.settings.geminiModel = value; await this.plugin.saveSettings(); });
+        });
+        new Setting(containerEl).setName('Max Output Tokens').setDesc('Maximum tokens in Gemini AI responses (256–65536). Higher = longer answers. Default: 65536.').addText(text => {
+            text.setPlaceholder('65536').setValue(String(this.plugin.settings.maxOutputTokens ?? 65536));
+            text.inputEl.type = 'number';
+            text.inputEl.min = '256';
+            text.inputEl.max = '65536';
+            text.onChange(async (value) => {
+                const val = Math.min(65536, Math.max(256, parseInt(value) || 65536));
+                this.plugin.settings.maxOutputTokens = val;
+                await this.plugin.saveSettings();
+            });
         });
 	}
 }
