@@ -1896,31 +1896,31 @@ class MinaView extends ItemView {
         const nav = container.createEl('div', { attr: { style: 'display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 10px; flex-shrink: 0;' } });
         
         const reviewThoughtsTab = nav.createEl('button', { 
-            text: 'Thoughts', 
+            text: 'Th', 
             attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'review-thoughts' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` } 
         });
         reviewThoughtsTab.addEventListener('click', () => { this.activeTab = 'review-thoughts'; this.renderView(); });
 
         const reviewTasksTab = nav.createEl('button', { 
-            text: 'Tasks', 
+            text: 'Ta', 
             attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'review-tasks' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` } 
         });
         reviewTasksTab.addEventListener('click', () => { this.activeTab = 'review-tasks'; this.renderView(); });
 
         const minaTab = nav.createEl('button', {
-            text: 'MINA',
+            text: 'Ai',
             attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'mina-ai' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` }
         });
         minaTab.addEventListener('click', () => { this.activeTab = 'mina-ai'; this.renderView(); });
 
         const duesTab = nav.createEl('button', {
-            text: 'Dues',
+            text: 'Du',
             attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'dues' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` }
         });
         duesTab.addEventListener('click', () => { this.activeTab = 'dues'; this.renderView(); });
 
         const settingsTab = nav.createEl('button', {
-            text: 'Settings',
+            text: 'Se',
             attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'settings' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` }
         });
         settingsTab.addEventListener('click', () => { this.activeTab = 'settings'; this.renderView(); });
@@ -2141,9 +2141,9 @@ class MinaView extends ItemView {
         this.groundedNotesBar = groundedBar;
 
         const defaultChips = [
-            { icon: '💭', label: 'Thoughts' },
-            { icon: '✅', label: 'Tasks' },
-            { icon: '💳', label: 'Dues' },
+            { icon: '💭', label: 'Th' },
+            { icon: '✅', label: 'Ta' },
+            { icon: '💳', label: 'Du' },
         ];
         const defaultChipStyle = 'display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; background: var(--background-modifier-border); color: var(--text-muted); font-size: 0.78em; font-weight: 500;';
         const userChipStyle = 'display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; background: var(--interactive-accent-hover); color: var(--text-normal); font-size: 0.78em; font-weight: 500; cursor: default;';
