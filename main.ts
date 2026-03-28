@@ -1738,6 +1738,7 @@ class MinaView extends ItemView {
     chatContainer: HTMLElement;
     groundedNotes: TFile[] = [];
     groundedNotesBar: HTMLElement | null = null;
+    webSearchEnabled: boolean = false;
     
     // Tasks Review Filters
     tasksFilterStatus: 'all' | 'pending' | 'completed' = 'pending';
@@ -2170,6 +2171,15 @@ class MinaView extends ItemView {
                     refreshGroundedBar();
                 });
             }
+            // Web search toggle chip
+            const webChip = groundedBar.createEl('span', {
+                attr: { style: `margin-left: auto; display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 12px; font-size: 0.78em; font-weight: 600; cursor: pointer; border: 1px solid ${this.webSearchEnabled ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; background: ${this.webSearchEnabled ? 'var(--interactive-accent)' : 'transparent'}; color: ${this.webSearchEnabled ? 'var(--text-on-accent)' : 'var(--text-muted)'};`, title: 'Connect to Web (Google Search grounding)' }
+            });
+            webChip.createEl('span', { text: '🌐 Web' });
+            webChip.addEventListener('click', () => {
+                this.webSearchEnabled = !this.webSearchEnabled;
+                refreshGroundedBar();
+            });
         };
 
         refreshGroundedBar(); // Show default chips immediately
@@ -2189,7 +2199,7 @@ class MinaView extends ItemView {
             thinking.setText('MINA is thinking…');
 
             try {
-                const reply = await this.callGemini(text, [...this.groundedNotes]);
+                const reply = await this.callGemini(text, [...this.groundedNotes], this.webSearchEnabled);
                 thinking.remove();
                 this.chatHistory.push({ role: 'assistant', text: reply });
             } catch (e) {
@@ -2302,7 +2312,7 @@ class MinaView extends ItemView {
         }
     }
 
-    async callGemini(userMessage: string, groundedFiles: TFile[] = []): Promise<string> {
+    async callGemini(userMessage: string, groundedFiles: TFile[] = [], webSearch: boolean = false): Promise<string> {
         const { vault, metadataCache } = this.plugin.app;
         const s = this.plugin.settings;
 
@@ -2385,11 +2395,15 @@ ${tasksContent || '(empty)'}
 --- DUES (recurring payments) ---
 ${duesContent}${groundedSection}`;
 
-        const body = {
+        const body: any = {
             system_instruction: { parts: [{ text: systemPrompt }] },
             contents: [{ role: 'user', parts: [{ text: userMessage }] }],
             generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
         };
+
+        if (webSearch) {
+            body.tools = [{ googleSearch: {} }];
+        }
 
         const resp = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/${s.geminiModel}:generateContent?key=${s.geminiApiKey}`,
