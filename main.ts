@@ -2315,7 +2315,7 @@ class MinaView extends ItemView {
         for (const msg of [...this.chatHistory].reverse()) {
             const isUser = msg.role === 'user';
             const bubble = this.chatContainer.createEl('div', {
-                attr: { style: `max-width: ${Platform.isMobile ? '95%' : '85%'}; padding: 8px 12px; border-radius: 12px; font-size: 0.9em; line-height: 1.5; word-break: break-word; align-self: ${isUser ? 'flex-end' : 'flex-start'}; background: ${isUser ? 'var(--interactive-accent)' : 'var(--background-secondary)'}; color: ${isUser ? 'var(--text-on-accent)' : 'var(--text-normal)'}; overflow: hidden;` }
+                attr: { style: `max-width: ${Platform.isMobile ? '95%' : '85%'}; padding: 8px 12px; border-radius: 12px; font-size: 0.9em; line-height: 1.5; word-break: break-word; align-self: ${isUser ? 'flex-end' : 'flex-start'}; background: ${isUser ? 'var(--interactive-accent)' : 'var(--background-secondary)'}; color: ${isUser ? 'var(--text-on-accent)' : 'var(--text-normal)'};` }
             });
 
             if (isUser) {
