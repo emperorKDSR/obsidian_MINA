@@ -2134,6 +2134,7 @@ class MinaView extends ItemView {
         });
         const textarea = inputRow.createEl('textarea', { attr: { placeholder: 'Ask MINA… (type \\ to ground on a note)', rows: '2', style: 'flex-grow: 1; resize: none; font-size: 0.9em; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-family: inherit;' } });
         const sendBtn = inputRow.createEl('button', { text: '↑', attr: { style: 'padding: 0 16px; font-size: 1.3em; border-radius: 6px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; cursor: pointer; flex-shrink: 0;' } });
+        const saveSessionBtn = inputRow.createEl('button', { text: '📥', attr: { style: 'padding: 0 10px; font-size: 1.1em; border-radius: 6px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer; flex-shrink: 0;', title: 'Save entire chat session to vault' } });
 
         // Grounded notes chip bar — always visible, shows default + user-selected note chips
         const groundedBar = container.createEl('div', {
@@ -2192,7 +2193,7 @@ class MinaView extends ItemView {
             sendBtn.disabled = true;
 
             this.chatHistory.push({ role: 'user', text });
-            this.renderChatHistory();
+            await this.renderChatHistory();
 
             const thinking = this.chatContainer.createEl('div', { attr: { style: 'align-self: flex-start; font-size: 0.85em; color: var(--text-muted); font-style: italic;' } });
             this.chatContainer.prepend(thinking);
@@ -2207,13 +2208,34 @@ class MinaView extends ItemView {
                 this.chatHistory.push({ role: 'assistant', text: `⚠️ Error: ${e.message}` });
             }
 
-            this.renderChatHistory();
+            await this.renderChatHistory();
             textarea.disabled = false;
             sendBtn.disabled = false;
             textarea.focus();
         };
 
         sendBtn.addEventListener('click', send);
+
+        saveSessionBtn.addEventListener('click', async () => {
+            if (this.chatHistory.length === 0) { new Notice('No chat to save.'); return; }
+            const ts = moment().locale('en').format('YYYY-MM-DD HH:mm');
+            const folder = (this.plugin.settings.thoughtsFolder || '000 Bin/MINA V2').trim();
+            const filename = `MINA Chat ${moment().locale('en').format('YYYY-MM-DD HHmm')}.md`;
+            const lines: string[] = [`# MINA Chat Session — ${ts}`, ''];
+            for (const msg of this.chatHistory) {
+                lines.push(msg.role === 'user' ? `**You:** ${msg.text}` : `**MINA:** ${msg.text}`);
+                lines.push('');
+            }
+            const content = lines.join('\n');
+            try {
+                const { vault } = this.plugin.app;
+                if (!vault.getAbstractFileByPath(folder)) await vault.createFolder(folder);
+                await vault.create(`${folder}/${filename}`, content);
+                new Notice(`✅ Chat saved to ${folder}/${filename}`);
+            } catch (e) {
+                new Notice('Error saving chat: ' + (e instanceof Error ? e.message : String(e)));
+            }
+        });
         textarea.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); return; }
             if (e.key === '\\') {
@@ -2236,10 +2258,10 @@ class MinaView extends ItemView {
         this.chatContainer = container.createEl('div', {
             attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 8px 8px 200px 8px; display: flex; flex-direction: column; gap: 8px;' }
         });
-        this.renderChatHistory();
+        await this.renderChatHistory();
     }
 
-    renderChatHistory() {
+    async renderChatHistory() {
         if (!this.chatContainer) return;
         this.chatContainer.empty();
         if (this.chatHistory.length === 0) {
@@ -2247,44 +2269,23 @@ class MinaView extends ItemView {
             return;
         }
 
-        const openNote = (name: string) => {
-            const file = this.plugin.app.metadataCache.getFirstLinkpathDest(name, '');
-            if (file) {
-                this.plugin.app.workspace.openLinkText(file.basename, file.path, 'window');
-            } else {
-                new Notice(`Note not found: ${name}`);
-            }
-        };
-
-        // Render assistant bubbles with [[WikiLink]] → clickable links
-        const renderBubbleText = (el: HTMLElement, text: string, isUser: boolean) => {
-            if (isUser) { el.setText(text); return; }
-            // Split on [[...]] patterns
-            const parts = text.split(/(\[\[([^\]]+)\]\])/g);
-            for (let i = 0; i < parts.length; i++) {
-                const part = parts[i];
-                if (i % 3 === 0) {
-                    // Plain text segment
-                    if (part) el.appendText(part);
-                } else if (i % 3 === 1) {
-                    // Full [[Name]] match — skip, handled by i%3===2
-                } else {
-                    // Note name inside [[ ]]
-                    const noteName = part.split('|')[0].trim(); // handle [[Name|Alias]]
-                    const link = el.createEl('a', {
-                        text: noteName,
-                        attr: { style: 'color: var(--text-accent); cursor: pointer; text-decoration: underline; font-weight: 500;' }
-                    });
-                    link.addEventListener('click', (e) => { e.preventDefault(); openNote(noteName); });
-                }
-            }
-        };
-
         // Render newest first
         for (const msg of [...this.chatHistory].reverse()) {
             const isUser = msg.role === 'user';
-            const bubble = this.chatContainer.createEl('div', { attr: { style: `max-width: 85%; padding: 8px 12px; border-radius: 12px; font-size: 0.9em; line-height: 1.5; white-space: pre-wrap; word-break: break-word; align-self: ${isUser ? 'flex-end' : 'flex-start'}; background: ${isUser ? 'var(--interactive-accent)' : 'var(--background-secondary)'}; color: ${isUser ? 'var(--text-on-accent)' : 'var(--text-normal)'};` } });
-            renderBubbleText(bubble, msg.text, isUser);
+            const bubble = this.chatContainer.createEl('div', {
+                attr: { style: `max-width: 85%; padding: 8px 12px; border-radius: 12px; font-size: 0.9em; line-height: 1.5; word-break: break-word; align-self: ${isUser ? 'flex-end' : 'flex-start'}; background: ${isUser ? 'var(--interactive-accent)' : 'var(--background-secondary)'}; color: ${isUser ? 'var(--text-on-accent)' : 'var(--text-normal)'};` }
+            });
+
+            if (isUser) {
+                bubble.style.whiteSpace = 'pre-wrap';
+                bubble.setText(msg.text);
+            } else {
+                // Render markdown for assistant messages
+                await MarkdownRenderer.render(this.plugin.app, msg.text, bubble, '', this);
+                this.hookInternalLinks(bubble, '');
+                // Remove default paragraph margin for tighter bubbles
+                bubble.querySelectorAll('p').forEach((p: HTMLElement) => { p.style.marginTop = '0'; p.style.marginBottom = '4px'; });
+            }
 
             // Save as Thought button — only on assistant messages
             if (!isUser) {
@@ -2397,7 +2398,10 @@ ${duesContent}${groundedSection}`;
 
         const body: any = {
             system_instruction: { parts: [{ text: systemPrompt }] },
-            contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+            contents: this.chatHistory.map(msg => ({
+                role: msg.role === 'user' ? 'user' : 'model',
+                parts: [{ text: msg.text }]
+            })),
             generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
         };
 
