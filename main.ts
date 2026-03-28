@@ -2413,7 +2413,7 @@ ${duesContent}${groundedSection}`;
                 role: msg.role === 'user' ? 'user' : 'model',
                 parts: [{ text: msg.text }]
             })),
-            generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
+            generationConfig: { temperature: 0.7, maxOutputTokens: 65536 }
         };
 
         if (webSearch) {
@@ -2431,7 +2431,9 @@ ${duesContent}${groundedSection}`;
         }
 
         const data = await resp.json();
-        return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '(no response)';
+        const parts: any[] = data?.candidates?.[0]?.content?.parts ?? [];
+        const text = parts.map((p: any) => p.text ?? '').join('').trim();
+        return text || '(no response)';
     }
 
     hookInternalLinks(el: HTMLElement, sourcePath: string) {
