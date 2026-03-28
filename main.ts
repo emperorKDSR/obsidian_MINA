@@ -1758,7 +1758,7 @@ class MinaView extends ItemView {
 
     // Thoughts Review Filters
     thoughtsFilterContext: string[] = [];
-    thoughtsFilterDate: string = 'all';
+    thoughtsFilterDate: string = 'last-5-days';
     thoughtsFilterDateStart: string = '';
     thoughtsFilterDateEnd: string = '';
     thoughtsFilterTodo: boolean = false;
@@ -3332,7 +3332,7 @@ ${duesContent}${groundedSection}`;
 
         const dateContainer= filterBar.createEl('div', { attr: { style: 'display: flex; gap: 5px; align-items: center; flex-wrap: wrap;' } });
         const dateSel = dateContainer.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px; text-align: center; text-align-last: center;' }});
-        [['all', 'All Dates'], ['today', 'Today'], ['this-week', 'This Week'], ['custom', 'Custom Date']].forEach(([val, label]) => {
+        [['all', 'All Dates'], ['today', 'Today'], ['last-5-days', 'Last 5 Days'], ['this-week', 'This Week'], ['custom', 'Custom Date']].forEach(([val, label]) => {
             const opt = dateSel.createEl('option', { value: val, text: label });
             if (this.thoughtsFilterDate === val) opt.selected = true;
         });
@@ -3486,6 +3486,9 @@ ${duesContent}${groundedSection}`;
             if (this.thoughtsFilterDate === 'today') {
                 const today = this.plugin.formatDate(new Date());
                 roots = roots.filter(e => e.day === today);
+            } else if (this.thoughtsFilterDate === 'last-5-days') {
+                const cutoff = moment().subtract(4, 'days').startOf('day').format('YYYY-MM-DD');
+                roots = roots.filter(e => e.day >= cutoff);
             } else if (this.thoughtsFilterDate === 'this-week') {
                 const weekStart = moment().startOf('week').valueOf();
                 roots = roots.filter(e => new Date(e.created.replace(' ', 'T')).getTime() >= weekStart);
