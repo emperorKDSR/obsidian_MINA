@@ -33,7 +33,8 @@ The "MINA V1" plugin has been developed with the following features and implemen
      - **Centered Filters:** Text in filter dropdowns is centered for improved readability.
    - **Contemporary Controls:**
      - **Toggle Switches:** Pill-shaped toggle switches for task status, History, and Capture visibility.
-     - **Iron Man Avatar:** Root thoughts are marked with a circular Iron Man helmet SVG icon; replies are streamlined without the icon.
+     - **Brain Avatar:** Root thoughts are marked with a circular brain SVG icon (red outline, Lucide-style); replies are streamlined without the icon.
+     - **Brain Ribbon Icon:** The Obsidian sidebar ribbon uses the same brain SVG as the plugin icon.
    - **Desktop Optimization:** Standalone windows hide native tab headers and include a dedicated **drag handle** at the top.
    - **Mobile Optimization:**
      - **Opens as Main Tab:** On mobile, MINA opens as a full workspace tab (not a sidebar).
@@ -41,9 +42,13 @@ The "MINA V1" plugin has been developed with the following features and implemen
      - **Adaptive Indentation:** Thread nesting is reduced on mobile to preserve horizontal space.
      - **Responsive Modals:** Popups anchor to the top and shrink with the `visualViewport` to stay above the virtual keyboard. Auto-scroll focuses inputs into view.
      - **Keyboard / Black-Bar Fix:** Uses `position: fixed` + `visualViewport` `resize`/`scroll` listeners to prevent iOS WebKit from sliding the container off-screen when the keyboard appears.
-     - **Context Picker via `@`:** On mobile, context pills are hidden to save space. Typing `@` in the capture textarea opens a horizontal scrollable pill strip below the input for multi-select context tagging. "Done" dismisses it and strips the `@` token.
-     - **File Attachment Button (`📎`):** Absolutely positioned in the lower-right corner of the textarea (does not reduce input real estate). Triggers a hidden `<input type="file" multiple>` to attach images or files.
+     - **Context Picker via `#` Button (mobile phone only):** On mobile phones, context pills are hidden to save space. A `#` button is absolutely positioned in the lower-right corner of the textarea (next to `📎`). Tapping it toggles a context panel below the input containing:
+       - A **2-row horizontally scrollable grid** (`grid-template-rows: repeat(2, auto)`, `grid-auto-flow: column`, `overflow-x: auto`) — swipe left/right to browse all contexts; selected pills show accent background + ✓.
+       - A **bottom action row**: `[New context… input]` `[＋]` `[Done]` — type a name and tap ＋ (or press Enter) to save a new context to settings and auto-select it; Done closes the panel.
+       - Selection is **fully reset after each Sync** — both `this.selectedContexts = []` and `plugin.settings.selectedContexts = []` are cleared and saved before `renderView()` so re-initialization at line 1766 starts fresh.
+     - **File Attachment Button (`📎`):** Absolutely positioned at `bottom:6px; right:34px` in the textarea, shifted left to make room for the `#` button. Triggers a hidden `<input type="file" multiple>` to attach images or files.
      - **Left-Aligned Due Date Selector:** On mobile, the task due date selector is left-aligned (no `margin-left: auto`).
+   - **Scroll Padding:** All four main scrollable tab areas (Thoughts, Tasks, AI Chat, Dues) have `padding-bottom: 200px` so the last row is never flush against the bottom of the viewport.
 
 2. **Review & Management**
    - **Modification Tracking:** Every entry tracks its **Modified Date** and **Modified Time**.
@@ -59,6 +64,8 @@ The "MINA V1" plugin has been developed with the following features and implemen
      - **Thread Protection:** Deletion (`🗑️`) is restricted for entries that have active replies to prevent orphaned threads.
    - **File & Image Support:** Paste images or drag files directly into capture areas or edit modals.
    - **Smart Autocomplete:** Typing `\` opens a fuzzy search for vault note referencing.
+     - If the typed name does not match any existing note, a **`＋ Create "name"`** option appears at the top of the list.
+     - Selecting it creates `<New Note Folder>/<name>.md` (auto-creates the folder if missing) and inserts `[[name]]` into the thought.
    - **Internal Link Navigation:** Clicking `[[note]]` links inside thought/task cards opens the linked note — new window on desktop, new tab on mobile.
    - **Image Zoom Lightbox:** Clicking any image in a thought/task card opens a full-screen overlay.
      - Desktop: mouse-wheel zoom (0.2×–8×), drag to pan when zoomed, Escape to close.
@@ -68,6 +75,9 @@ The "MINA V1" plugin has been developed with the following features and implemen
      - Checklist items render as interactive **circle toggles** (accent-colored circle with ✓ glyph when checked).
      - Clicking a circle immediately toggles the checked state and persists to the markdown file without re-rendering the whole list.
      - Works in both the capture textarea and the EditEntryModal textarea.
+   - **Context Tag Placement:**
+     - **Thoughts:** Context pills render at the **bottom of the card body text** (inline, with `margin-top: 5px`).
+     - **Tasks:** Context pills render **right-aligned** in a meta row below the body. Due date appears **left-aligned** on the same meta row. The task card is structured as two rows: top (toggle + text + icons) and bottom (due date left / context right).
 
 3. **Functionality & Data Integrity**
    - **Git Tracking:** Fully tracked with Git.
@@ -86,6 +96,7 @@ The "MINA V1" plugin has been developed with the following features and implemen
    - **Capture Folder:** Target directory for all MINA files.
    - **Thoughts/Tasks File Names:** Fully customizable storage paths.
    - **Date/Time Formats:** User-configurable moment.js formats.
+   - **New Note Folder:** Folder where notes created via the `\` link picker are saved. Default: `000 Bin`. Also exposed in Obsidian's plugin settings page.
    - **Gemini API Key:** Stored securely (password field).
    - **Gemini Model:** Dropdown to select from 9 available Gemini models. Default: `gemini-2.5-flash`.
 
@@ -150,7 +161,7 @@ amount: 0.00
 npm run build
 # compiles: tsc -noEmit -skipLibCheck && node esbuild.config.mjs production
 # then copy main.js to vault:
-cp main.js "C:/Users/57092/iCloudDrive/iCloud~md~obsidian/K0000/.obsidian/plugins/mina_1/main.js"
+cp main.js "C:/Users/57092/iCloudDrive/iCloud~md~obsidian/K0000/.obsidian/plugins/mina_v2/main.js"
 ```
 
 ## Known Column Index Rules (critical for edit save logic)
@@ -169,11 +180,16 @@ When splitting a markdown table row by `|`, the part indices are:
 ## Key Technical Notes
 
 - **Mobile keyboard fix:** `position: fixed` + `top: vv.offsetTop` + `left: vv.offsetLeft` + `width/height: vv.width/height` on `visualViewport` `resize` and `scroll` events. Cleaned up in `async onClose()`.
-- **`@` context picker:** Positioned `top: calc(100% + 4px)` below textarea. `textAreaWrapper` must have `position: relative`. `mousedown` used instead of `click` to fire before textarea `blur`. Blur dismissal delayed 150ms. `hideCtxPicker()` splices the `@query` text from textarea using `atStartIndex`.
-- **`📎` attach button:** Absolutely positioned in lower-right of `textAreaWrapper`. Hidden `<input type="file">` lives inside `textAreaWrapper`.
+- **`#` context button (mobile phone):** Positioned `position:absolute; bottom:6px; right:6px` inside `textAreaWrapper`. The `📎` attach button shifts to `right:34px`. Tapping toggles `ctxPanelEl`. Panel layout: 2-row horizontal scroll grid (`grid-template-rows:repeat(2,auto); grid-auto-flow:column; overflow-x:auto`) of `inline-flex` pills + a bottom row with text input, `＋` add button, and Done button. `renderCtxPanel()` rebuilds the entire panel. `hideCtxPanel()` removes it. After Sync on mobile phone: `this.selectedContexts = []`, `this.plugin.settings.selectedContexts = []`, `await this.plugin.saveSettings()`, then `hideCtxPanel()` + `renderView()`.
+- **`\` note linker with create:** `FileSuggestModal` now extends `SuggestModal<TFile | string>`. `getSuggestions(query)` returns fuzzy-matched files + a leading `string` entry (the raw query) when no exact basename match exists. `renderSuggestion` styles the string entry with a `＋` prefix in accent color. `onChooseSuggestion` for a string: ensures folder exists via `vault.getAbstractFileByPath` + `vault.createFolder`, then calls `vault.create(folder/name.md, '')`. Folder path comes from `plugin.settings.newNoteFolder` (default `000 Bin`).
+- **`📎` attach button:** Absolutely positioned at `bottom:6px; right:34px` in `textAreaWrapper` (shifted left from `right:6px` to make room for `#` button on mobile). Hidden `<input type="file">` lives inside `textAreaWrapper`.
+- **Scroll padding:** `padding-bottom: 200px` applied to all four tab scroll containers: `reviewThoughtsContainer`, `reviewTasksContainer`, `chatContainer`, and the Dues `wrap` div.
+- **Task card layout:** Two-row flex column. Top row: `toggleContainer` + `content (flex:1)` + `actions`. Bottom `metaRow`: `dueLeft` (due date + overdue badge) left-aligned, `ctxRight` (context pills) right-aligned, separated by `justify-content: space-between`.
+- **Thought context placement:** Context pills appended as a `div` (flex row, `gap:4px`, `margin-top:5px`) directly inside `renderTarget` (the card body) after `MarkdownRenderer.render`.
 - **`hookImageZoom`:** `position:fixed; inset:0` overlay. Mouse drag via `mousedown` on image + `mousemove`/`mouseup` on document.
 - **`hookCheckboxes`:** Replaces each `<input type="checkbox">` rendered by `MarkdownRenderer` with a custom `<span>` circle using `insertBefore` + `removeChild` (more DOM-compatible than `replaceWith`). Checked state tracked via `data-checked` attribute. Fully wrapped in try/catch (outer + per-item) to prevent one bad checkbox from killing all entry rendering.
 - **Overdue indicator:** `renderTaskRow` checks `dueDateRaw` against `moment().startOf('day')`. Sets `el.style.borderLeft = '3px solid var(--text-error)'` and appends `⚠ OVERDUE` badge. Completed tasks are never flagged.
 - **`toAsciiDigits()`:** Module-level helper covering U+0660–U+0669 (Arabic-Indic), U+06F0–U+06F9 (Persian), U+0966–U+096F (Devanagari), U+09E6–U+09EF (Bengali), U+0E50–U+0E59 (Thai).
 - **`onClose()` in MinaView must be `async`** — TypeScript requires it to match ItemView's `() => Promise<void>` signature.
 - **Default Gemini model:** `gemini-2.5-flash` (set in `DEFAULT_SETTINGS` and as the dropdown fallback).
+- **Brain SVG:** `KATANA_ICON_SVG` (inner content for `addIcon`, 100×100 viewBox) uses `<g transform="translate(2,2) scale(4)">` to scale Lucide brain paths (24×24) up. `NINJA_AVATAR_SVG` is a full `<svg viewBox="0 0 24 24">` with the same paths, used as `img.src` via `data:image/svg+xml`. Both use `stroke="#c0392b"` (red), `fill="none"`, `stroke-width="2"`.

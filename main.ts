@@ -1,46 +1,52 @@
-import { App, Plugin, PluginSettingTab, Setting, TFile, Notice, ItemView, WorkspaceLeaf, MarkdownRenderer, Platform, FuzzySuggestModal, Modal, moment } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, TFile, Notice, ItemView, WorkspaceLeaf, MarkdownRenderer, Platform, FuzzySuggestModal, SuggestModal, Modal, moment, addIcon } from 'obsidian';
 
-export const VIEW_TYPE_MINA = "mina-view";
+export const VIEW_TYPE_MINA = "mina-v2-view";
 
-const WOLF_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Background circle -->
-  <circle cx="50" cy="50" r="50" fill="#1a1a1a"/>
-  <!-- Head -->
-  <ellipse cx="50" cy="38" rx="18" ry="20" fill="#2a2a2a"/>
-  <!-- Mask wrap (lower face) -->
-  <rect x="32" y="44" width="36" height="16" rx="4" fill="#1a1a1a"/>
-  <!-- Mask tie knot at side -->
-  <circle cx="68" cy="50" r="3" fill="#111"/>
-  <!-- Eyes - sharp, glowing -->
-  <rect x="35" y="40" width="11" height="5" rx="2" fill="#1a1a1a"/>
-  <rect x="54" y="40" width="11" height="5" rx="2" fill="#1a1a1a"/>
-  <rect x="36" y="41" width="9" height="3" rx="1.5" fill="#e8c84b"/>
-  <rect x="55" y="41" width="9" height="3" rx="1.5" fill="#e8c84b"/>
-  <!-- Headband (hachimaki) -->
-  <rect x="32" y="34" width="36" height="6" rx="2" fill="#c0392b"/>
-  <!-- Headband knot ribbon left -->
-  <polygon points="32,34 24,28 28,38" fill="#c0392b"/>
-  <!-- Body / gi -->
-  <path d="M32,58 Q25,65 22,85 L78,85 Q75,65 68,58 Z" fill="#2a2a2a"/>
-  <!-- Gi lapels -->
-  <polygon points="50,58 38,58 44,75" fill="#1a1a1a"/>
-  <polygon points="50,58 62,58 56,75" fill="#1a1a1a"/>
-  <!-- Belt (obi) -->
-  <rect x="30" y="74" width="40" height="6" rx="2" fill="#c0392b"/>
-  <!-- Belt knot -->
-  <rect x="44" y="73" width="12" height="8" rx="2" fill="#a93226"/>
+// Brain icon — standard Lucide brain, red outline
+const KATANA_ICON_ID = "mina-katana";
+// Obsidian addIcon uses viewBox="0 0 100 100"; scale the 24x24 Lucide paths up
+const KATANA_ICON_SVG = `
+  <g transform="translate(2,2) scale(4)" fill="none" stroke="#c0392b" stroke-width="0.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/>
+    <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/>
+    <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/>
+    <path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/>
+    <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"/>
+    <path d="M3.477 10.896a4 4 0 0 1 .585-.396"/>
+    <path d="M19.938 10.5a4 4 0 0 1 .585.396"/>
+    <path d="M6 18a4 4 0 0 1-1.967-.516"/>
+    <path d="M19.967 17.484A4 4 0 0 1 18 18"/>
+  </g>
+`;
+
+const NINJA_AVATAR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/>
+  <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/>
+  <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/>
+  <path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/>
+  <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"/>
+  <path d="M3.477 10.896a4 4 0 0 1 .585-.396"/>
+  <path d="M19.938 10.5a4 4 0 0 1 .585.396"/>
+  <path d="M6 18a4 4 0 0 1-1.967-.516"/>
+  <path d="M19.967 17.484A4 4 0 0 1 18 18"/>
 </svg>`;
+
+const WOLF_SVG = NINJA_AVATAR_SVG;
 
 interface MinaSettings {
     captureFolder: string;
 	captureFilePath: string;
     tasksFilePath: string;
+    thoughtsFolder: string;
+    tasksFolder: string;
+    pfFolder: string;
 	dateFormat: string;
     timeFormat: string;
     contexts: string[];
     selectedContexts: string[];
     geminiApiKey: string;
     geminiModel: string;
+    newNoteFolder: string;
 }
 
 /** Convert any locale-specific digit characters to ASCII 0-9.
@@ -65,25 +71,53 @@ function isTablet(): boolean {
 
 const DEFAULT_SETTINGS: MinaSettings = {
     captureFolder: '000 Bin',
-	captureFilePath: 'mina_1.md',
+	captureFilePath: 'mina_v2.md',
     tasksFilePath: 'mina_2.md',
+    thoughtsFolder: '000 Bin/MINA V2',
+    tasksFolder: '000 Bin/MINA V2 Tasks',
+    pfFolder: '000 Bin/MINA V2 PF',
 	dateFormat: 'YYYY-MM-DD',
     timeFormat: 'HH:mm',
     contexts: [], 
     selectedContexts: [],
     geminiApiKey: '',
-    geminiModel: 'gemini-2.5-flash'
+    geminiModel: 'gemini-2.5-flash',
+    newNoteFolder: '000 Bin'
 }
 
 export default class MinaPlugin extends Plugin {
 	settings: MinaSettings;
     settingsInitialized: boolean = false;
+    thoughtIndex: Map<string, ThoughtEntry> = new Map();
+    taskIndex: Map<string, TaskEntry> = new Map();
+    private thoughtIndexReady = false;
+    private _thoughtIndexDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+    private _taskIndexDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 	async onload() {
 		await this.loadSettings();
 
         this.app.workspace.onLayoutReady(() => {
             this.scanForContexts();
+            this.buildThoughtIndex();
+            this.registerEvent(this.app.vault.on('create', async (f) => { if (this.isThoughtFile(f.path)) { await this.indexThoughtFile(f as TFile); this.notifyViewRefresh(); } }));
+            this.registerEvent(this.app.vault.on('modify', async (f) => { if (this.isThoughtFile(f.path)) { await this.indexThoughtFile(f as TFile); this.notifyViewRefresh(); } }));
+            this.registerEvent(this.app.vault.on('delete', (f) => { if (this.isThoughtFile(f.path)) { this.thoughtIndex.delete(f.path); this.notifyViewRefresh(); } }));
+            this.registerEvent(this.app.vault.on('rename', (f, oldPath) => {
+                if (this.isThoughtFile(oldPath)) this.thoughtIndex.delete(oldPath);
+                if (this.isThoughtFile(f.path)) this.indexThoughtFile(f as TFile);
+                this.notifyViewRefresh();
+            }));
+
+            this.buildTaskIndex();
+            this.registerEvent(this.app.vault.on('create', async (f) => { if (this.isTaskFile(f.path)) { await this.indexTaskFile(f as TFile); this.notifyTaskViewRefresh(); } }));
+            this.registerEvent(this.app.vault.on('modify', async (f) => { if (this.isTaskFile(f.path)) { await this.indexTaskFile(f as TFile); this.notifyTaskViewRefresh(); } }));
+            this.registerEvent(this.app.vault.on('delete', (f) => { if (this.isTaskFile(f.path)) { this.taskIndex.delete(f.path); this.notifyTaskViewRefresh(); } }));
+            this.registerEvent(this.app.vault.on('rename', async (f, oldPath) => {
+                if (this.isTaskFile(oldPath)) this.taskIndex.delete(oldPath);
+                if (this.isTaskFile(f.path)) await this.indexTaskFile(f as TFile);
+                this.notifyTaskViewRefresh();
+            }));
         });
 
         this.registerView(
@@ -91,14 +125,16 @@ export default class MinaPlugin extends Plugin {
             (leaf) => new MinaView(leaf, this)
         );
 
-		this.addRibbonIcon('brain', 'Mina', (evt: MouseEvent) => {
+		addIcon(KATANA_ICON_ID, KATANA_ICON_SVG);
+
+		this.addRibbonIcon(KATANA_ICON_ID, 'MINA V2', (evt: MouseEvent) => {
 			this.activateView();
 		});
 
 		this.addCommand({
-			id: 'open-mina',
-			name: 'Open Mina',
-			icon: 'brain',
+			id: 'open-mina-v2',
+			name: 'Open MINA V2',
+			icon: KATANA_ICON_ID,
 			callback: () => {
 				this.activateView();
 			}
@@ -220,6 +256,10 @@ export default class MinaPlugin extends Plugin {
             }
             if (loadedData.geminiApiKey !== undefined) this.settings.geminiApiKey = loadedData.geminiApiKey;
             if (loadedData.geminiModel !== undefined) this.settings.geminiModel = loadedData.geminiModel;
+            if (loadedData.newNoteFolder !== undefined) this.settings.newNoteFolder = loadedData.newNoteFolder;
+            if (loadedData.thoughtsFolder !== undefined) this.settings.thoughtsFolder = loadedData.thoughtsFolder;
+            if (loadedData.tasksFolder !== undefined) this.settings.tasksFolder = loadedData.tasksFolder;
+            if (loadedData.pfFolder !== undefined) this.settings.pfFolder = loadedData.pfFolder;
             this.settingsInitialized = true;
         }
 
@@ -342,26 +382,521 @@ export default class MinaPlugin extends Plugin {
             new Notice('Error writing to file');
         }
     }
+
+    generateThoughtFilename(): string {
+        const now = new Date();
+        const pad = (n: number, len = 2) => n.toString().padStart(len, '0');
+        const date = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
+        const time = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}${pad(now.getMilliseconds(), 3)}`;
+        const rand = Math.random().toString(36).substring(2, 5);
+        return `${date}_${time}_${rand}.md`;
+    }
+
+    extractTitle(text: string): string {
+        const firstLine = text.split('\n').find(l => l.trim()) || text;
+        return firstLine.replace(/[#*_`\[\]]/g, '').trim().substring(0, 60);
+    }
+
+    buildFrontmatter(title: string, created: string, modified: string, dayStr: string, contexts: string[]): string {
+        const contextYaml = contexts.length > 0 ? contexts.map(c => `  - ${c}`).join('\n') : '  []';
+        const tagsYaml = contextYaml;
+        return `---\ntitle: "${title.replace(/"/g, "'")}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA\ncontext:\n${contextYaml}\ntags:\n${tagsYaml}\n---\n`;
+    }
+
+    async createThoughtFile(text: string, contexts: string[]): Promise<TFile> {
+        const { vault } = this.app;
+        const folder = this.settings.thoughtsFolder.trim() || '000 Bin/MINA V2';
+        const parts = folder.split('/');
+        let pathSoFar = '';
+        for (const part of parts) {
+            pathSoFar = pathSoFar ? pathSoFar + '/' + part : part;
+            if (!vault.getAbstractFileByPath(pathSoFar)) {
+                try { await vault.createFolder(pathSoFar); } catch {}
+            }
+        }
+        const now = new Date();
+        const created = this.formatDateTime(now);
+        const dayStr = this.formatDate(now);
+        const title = this.extractTitle(text);
+        const fm = this.buildFrontmatter(title, created, created, dayStr, contexts);
+        const filename = this.generateThoughtFilename();
+        const fullPath = `${folder}/${filename}`;
+        try {
+            const file = await vault.create(fullPath, fm + text);
+            new Notice('Thought saved!');
+            return file;
+        } catch (e) {
+            new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
+            throw e;
+        }
+    }
+
+    async appendReplyToFile(parentPath: string, text: string): Promise<boolean> {
+        const { vault } = this.app;
+        const file = vault.getAbstractFileByPath(parentPath) as TFile;
+        if (!file) {
+            new Notice('MINA Error: parent thought not found');
+            return false;
+        }
+        try {
+            const now = new Date();
+            const anchor = `reply-${Date.now()}`;
+            const dateStr = this.formatDate(now);
+            const timeStr = this.formatTime(now);
+            const header = `## [[${dateStr}]] ${timeStr} ^${anchor}`;
+            const existing = await vault.read(file);
+            const updated = existing.trimEnd() + `\n\n${header}\n${text}\n`;
+            await vault.modify(file, updated);
+            await this.updateModifiedFrontmatter(file, now);
+            return true;
+        } catch (e) {
+            new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
+            return false;
+        }
+    }
+
+    async updateModifiedFrontmatter(file: TFile, now: Date): Promise<void> {
+        const { vault } = this.app;
+        try {
+            const raw = await vault.read(file);
+            const content = raw.replace(/\r\n/g, '\n');
+            const modified = this.formatDateTime(now);
+            const updated = content.replace(/^modified: .+$/m, `modified: ${modified}`);
+            if (updated !== raw) await vault.modify(file, updated);
+        } catch (e) {
+            new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
+        }
+    }
+
+    async editThoughtBody(filePath: string, newText: string, contexts: string[]): Promise<void> {
+        const { vault } = this.app;
+        const file = vault.getAbstractFileByPath(filePath) as TFile;
+        if (!file) return;
+        try {
+            const content = (await vault.read(file)).replace(/\r\n/g, '\n');
+            const fmMatch = content.match(/^---\n[\s\S]*?\n---\n/);
+            if (!fmMatch) return;
+            const bodyStart = fmMatch[0].length;
+            const body = content.slice(bodyStart);
+            const replyIdx = body.search(/^## \[\[/m);
+            const replies = replyIdx >= 0 ? body.slice(replyIdx) : '';
+            const now = new Date();
+            const dayStr = this.formatDate(now);
+            const title = this.extractTitle(newText);
+            const modifiedStr = this.formatDateTime(now);
+            const oldFm = fmMatch[0];
+            const createdMatch = oldFm.match(/^created: (.+)$/m);
+            const created = createdMatch ? createdMatch[1] : modifiedStr;
+            const newFm = this.buildFrontmatter(title, created, modifiedStr, dayStr, contexts);
+            await vault.modify(file, newFm + newText + (replies ? '\n\n' + replies : '\n'));
+        } catch (e) {
+            new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
+        }
+    }
+
+    async editReply(filePath: string, anchor: string, newText: string): Promise<void> {
+        const { vault } = this.app;
+        const file = vault.getAbstractFileByPath(filePath) as TFile;
+        if (!file) return;
+        try {
+            const content = (await vault.read(file)).replace(/\r\n/g, '\n');
+            const lines = content.split('\n');
+            const headerIdx = lines.findIndex(l => l.includes(`^${anchor}`));
+            if (headerIdx < 0) return;
+            let endIdx = lines.findIndex((l, i) => i > headerIdx && l.startsWith('## '));
+            if (endIdx < 0) endIdx = lines.length;
+            const newLines = [...lines.slice(0, headerIdx + 1), newText, ...lines.slice(endIdx)];
+            await vault.modify(file, newLines.join('\n'));
+            await this.updateModifiedFrontmatter(file, new Date());
+        } catch (e) {
+            new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
+        }
+    }
+
+    async deleteThoughtFile(filePath: string): Promise<void> {
+        const { vault } = this.app;
+        const file = vault.getAbstractFileByPath(filePath) as TFile;
+        if (!file) return;
+        try {
+            const trashFolder = (this.settings.thoughtsFolder.trim() || '000 Bin/MINA V2') + '/trash';
+            if (!vault.getAbstractFileByPath(trashFolder)) {
+                await vault.createFolder(trashFolder);
+            }
+            const baseTrashPath = `${trashFolder}/${file.name}`;
+            const trashPath = vault.getAbstractFileByPath(baseTrashPath)
+                ? `${trashFolder}/${file.basename}_${Date.now()}.md`
+                : baseTrashPath;
+            await vault.rename(file, trashPath);
+            new Notice('Thought moved to trash.');
+        } catch (e) {
+            new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
+        }
+    }
+
+    async deleteReply(filePath: string, anchor: string): Promise<void> {
+        const { vault } = this.app;
+        const file = vault.getAbstractFileByPath(filePath) as TFile;
+        if (!file) return;
+        try {
+            const content = (await vault.read(file)).replace(/\r\n/g, '\n');
+            const lines = content.split('\n');
+            const headerIdx = lines.findIndex(l => l.includes(`^${anchor}`));
+            if (headerIdx < 0) return;
+            let endIdx = lines.findIndex((l, i) => i > headerIdx && l.startsWith('## '));
+            if (endIdx < 0) endIdx = lines.length;
+            const start = headerIdx > 0 && lines[headerIdx - 1] === '' ? headerIdx - 1 : headerIdx;
+            const newLines = [...lines.slice(0, start), ...lines.slice(endIdx)];
+            await vault.modify(file, newLines.join('\n'));
+            await this.updateModifiedFrontmatter(file, new Date());
+        } catch (e) {
+            new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
+        }
+    }
+
+    formatDateTime(d: Date): string {
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    formatDate(d: Date): string {
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    }
+
+    formatTime(d: Date): string {
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    isThoughtFile(path: string): boolean {
+        const folder = (this.settings.thoughtsFolder.trim() || '000 Bin/MINA V2').replace(/\\/g, '/');
+        const trashFolder = folder + '/trash';
+        return path.startsWith(folder + '/') && !path.startsWith(trashFolder + '/') && path.endsWith('.md');
+    }
+
+    async buildThoughtIndex(): Promise<void> {
+        const folder = this.settings.thoughtsFolder.trim() || '000 Bin/MINA V2';
+        const folderObj = this.app.vault.getAbstractFileByPath(folder);
+        if (!folderObj) { this.thoughtIndexReady = true; this.notifyViewRefresh(); return; }
+        const files = this.app.vault.getMarkdownFiles().filter(f => this.isThoughtFile(f.path));
+        this.thoughtIndex.clear();
+        for (const f of files) {
+            await this.indexThoughtFile(f);
+        }
+        this.thoughtIndexReady = true;
+        this.notifyViewRefresh();
+    }
+
+    async indexThoughtFile(file: TFile): Promise<void> {
+        try {
+            const content = await this.app.vault.read(file);
+            const entry = this.parseThoughtFile(file.path, content);
+            if (entry) this.thoughtIndex.set(file.path, entry);
+        } catch {}
+    }
+
+    parseThoughtFile(filePath: string, content: string): ThoughtEntry | null {
+        content = content.replace(/\r\n/g, '\n');
+        const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
+        if (!fmMatch) return null;
+        const fm = fmMatch[1];
+        const body = content.slice(fmMatch[0].length);
+
+        const get = (key: string) => { const m = fm.match(new RegExp(`^${key}: (.+)$`, 'm')); return m ? m[1].trim() : ''; };
+        const getList = (key: string): string[] => {
+            const m = fm.match(new RegExp(`^${key}:\\n((?:\\s*- .+\\n?)+)`, 'm'));
+            if (!m) return [];
+            return m[1].split('\n').filter(l => l.trim().startsWith('- ')).map(l => l.replace(/^\s*-\s*/, '').trim());
+        };
+
+        const title   = get('title').replace(/^"|"$/g, '');
+        const created = get('created');
+        const modified = get('modified');
+        const day     = get('day').replace(/^\"|\"$|^\[\[|\]\]$/g, '').replace(/['"]/g, '');
+        const area    = get('area');
+        if (area !== 'MINA') return null;
+        const context = getList('context');
+
+        const replyRegex = /^## \[\[[\d-]+\]\] [\d:]+ \^(reply-\d+)/gm;
+        const children: ReplyEntry[] = [];
+        let bodyText = body;
+        let match;
+        const sections: { headerIdx: number; anchor: string; dateStr: string; timeStr: string }[] = [];
+        while ((match = replyRegex.exec(body)) !== null) {
+            const headerLine = body.slice(match.index, body.indexOf('\n', match.index));
+            const dateM = headerLine.match(/\[\[([\d-]+)\]\]/);
+            const timeM = headerLine.match(/\]\] ([\d:]+)/);
+            sections.push({ headerIdx: match.index, anchor: match[1], dateStr: dateM?.[1] || '', timeStr: timeM?.[1] || '' });
+        }
+        if (sections.length > 0) {
+            bodyText = body.slice(0, sections[0].headerIdx).trim();
+            for (let i = 0; i < sections.length; i++) {
+                const s = sections[i];
+                const start = body.indexOf('\n', sections[i].headerIdx) + 1;
+                const end = i + 1 < sections.length ? sections[i + 1].headerIdx : body.length;
+                children.push({ anchor: s.anchor, date: s.dateStr, time: s.timeStr, text: body.slice(start, end).trim() });
+            }
+        }
+
+        const parsedModMs = Date.parse(modified ? modified.replace(' ', 'T') : '');
+        const modMs = isNaN(parsedModMs) ? 0 : parsedModMs;
+        const parsedLastChild = children.length > 0 ? Date.parse(children[children.length-1].date + 'T' + children[children.length-1].time) : NaN;
+        const lastChild = isNaN(parsedLastChild) ? 0 : parsedLastChild;
+
+        return { filePath, title, created, modified, day, context, body: bodyText, children, lastThreadUpdate: Math.max(modMs, lastChild) };
+    }
+
+    notifyViewRefresh(): void {
+        if (this._thoughtIndexDebounceTimer) clearTimeout(this._thoughtIndexDebounceTimer);
+        this._thoughtIndexDebounceTimer = setTimeout(() => {
+            const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MINA);
+            for (const leaf of leaves) {
+                const view = leaf.view as MinaView;
+                if (view && typeof view.updateReviewThoughtsList === 'function') {
+                    view.updateReviewThoughtsList();
+                }
+            }
+        }, 300);
+    }
+
+    isTaskFile(path: string): boolean {
+        const folder = (this.settings.tasksFolder.trim() || '000 Bin/MINA V2 Tasks').replace(/\\/g, '/');
+        const trashFolder = folder + '/trash';
+        return path.startsWith(folder + '/') && !path.startsWith(trashFolder + '/') && path.endsWith('.md');
+    }
+
+    async buildTaskIndex(): Promise<void> {
+        const files = this.app.vault.getMarkdownFiles().filter(f => this.isTaskFile(f.path));
+        this.taskIndex.clear();
+        for (const f of files) await this.indexTaskFile(f);
+        this.notifyTaskViewRefresh();
+    }
+
+    async indexTaskFile(file: TFile): Promise<void> {
+        try {
+            const content = await this.app.vault.read(file);
+            const entry = this.parseTaskFile(file.path, content);
+            if (entry) this.taskIndex.set(file.path, entry);
+            else this.taskIndex.delete(file.path);
+        } catch {}
+    }
+
+    parseTaskFile(filePath: string, content: string): TaskEntry | null {
+        content = content.replace(/\r\n/g, '\n');
+        const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
+        if (!fmMatch) return null;
+        const fm = fmMatch[1];
+        const body = content.slice(fmMatch[0].length).trim();
+
+        const get = (key: string) => { const m = fm.match(new RegExp(`^${key}: (.+)$`, 'm')); return m ? m[1].trim() : ''; };
+        const getList = (key: string): string[] => {
+            const m = fm.match(new RegExp(`^${key}:\\n((?:\\s*- .+\\n?)+)`, 'm'));
+            if (!m) return [];
+            return m[1].split('\n').filter(l => l.trim().startsWith('- ')).map(l => l.replace(/^\s*-\s*/, '').trim());
+        };
+
+        const area = get('area');
+        if (area !== 'MINA_TASKS') return null;
+
+        const title    = get('title').replace(/^"|"$/g, '');
+        const created  = get('created');
+        const modified = get('modified');
+        const day      = get('day').replace(/['"[\]]/g, '');
+        const status   = get('status') === 'done' ? 'done' : 'open';
+        const dueRaw   = get('due').replace(/['"[\]]/g, '');
+        const context  = getList('context');
+        const parsedLastUpdate = Date.parse(modified ? modified.replace(' ', 'T') : '');
+        const lastUpdate = isNaN(parsedLastUpdate) ? 0 : parsedLastUpdate;
+
+        return { filePath, title, created, modified, day, status, due: dueRaw, context, body, lastUpdate };
+    }
+
+    notifyTaskViewRefresh(): void {
+        if (this._taskIndexDebounceTimer) clearTimeout(this._taskIndexDebounceTimer);
+        this._taskIndexDebounceTimer = setTimeout(() => {
+            const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MINA);
+            for (const leaf of leaves) {
+                const view = leaf.view as MinaView;
+                if (view && typeof view.updateReviewTasksList === 'function') {
+                    view.updateReviewTasksList();
+                }
+            }
+        }, 300);
+    }
+
+    generateTaskFilename(): string {
+        const now = new Date();
+        const pad = (n: number, len = 2) => n.toString().padStart(len, '0');
+        const date = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
+        const time = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}${pad(now.getMilliseconds(), 3)}`;
+        const rand = Math.random().toString(36).substring(2, 5);
+        return `${date}_${time}_${rand}.md`;
+    }
+
+    buildTaskFrontmatter(title: string, created: string, modified: string, dayStr: string, status: string, due: string, contexts: string[]): string {
+        const contextYaml = contexts.length > 0 ? contexts.map(c => `  - ${c}`).join('\n') : '  []';
+        const dueYaml = due ? `"[[${due}]]"` : '""';
+        return `---\ntitle: "${title.replace(/"/g, "'")}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA_TASKS\nstatus: ${status}\ndue: ${dueYaml}\ncontext:\n${contextYaml}\ntags:\n${contextYaml}\n---\n`;
+    }
+
+    async createTaskFile(text: string, contexts: string[], dueDate?: string): Promise<TFile> {
+        const { vault } = this.app;
+        const folder = this.settings.tasksFolder.trim() || '000 Bin/MINA V2 Tasks';
+        const parts = folder.split('/');
+        let pathSoFar = '';
+        for (const part of parts) {
+            pathSoFar = pathSoFar ? pathSoFar + '/' + part : part;
+            if (!vault.getAbstractFileByPath(pathSoFar)) {
+                try { await vault.createFolder(pathSoFar); } catch {}
+            }
+        }
+        const now = new Date();
+        const created = this.formatDateTime(now);
+        const dayStr = this.formatDate(now);
+        const title = this.extractTitle(text);
+        const due = dueDate || '';
+        const fm = this.buildTaskFrontmatter(title, created, created, dayStr, 'open', due, contexts);
+        const filename = this.generateTaskFilename();
+        try {
+            const file = await vault.create(`${folder}/${filename}`, fm + text);
+            new Notice('Task saved!');
+            return file;
+        } catch (e) {
+            new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
+            throw e;
+        }
+    }
+
+    async toggleTaskStatus(filePath: string, done: boolean): Promise<void> {
+        const { vault } = this.app;
+        const file = vault.getAbstractFileByPath(filePath) as TFile;
+        if (!file) return;
+        try {
+            const content = (await vault.read(file)).replace(/\r\n/g, '\n');
+            const newStatus = done ? 'done' : 'open';
+            let updated: string;
+            if (/^status:\s*(open|done)/m.test(content)) {
+                updated = content.replace(/^status:\s*(open|done).*/m, `status: ${newStatus}`);
+            } else {
+                updated = content.replace(/^(---\n[\s\S]*?)\n---/m, `$1\nstatus: ${newStatus}\n---`);
+            }
+            if (updated !== content) {
+                const withMod = updated.replace(/^modified: .+$/m, `modified: ${this.formatDateTime(new Date())}`);
+                await vault.modify(file, withMod);
+            }
+        } catch (e) {
+            new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
+        }
+    }
+
+    async editTaskBody(filePath: string, newText: string, contexts: string[], dueDate?: string): Promise<void> {
+        const { vault } = this.app;
+        const file = vault.getAbstractFileByPath(filePath) as TFile;
+        if (!file) return;
+        try {
+            const content = (await vault.read(file)).replace(/\r\n/g, '\n');
+            const fmMatch = content.match(/^---\n[\s\S]*?\n---\n/);
+            if (!fmMatch) return;
+            const oldFm = fmMatch[0];
+            const createdMatch = oldFm.match(/^created: (.+)$/m);
+            const statusMatch = oldFm.match(/^status: (.+)$/m);
+            const created = createdMatch ? createdMatch[1].trim() : this.formatDateTime(new Date());
+            const status = statusMatch ? statusMatch[1].trim() : 'open';
+            const now = new Date();
+            const title = this.extractTitle(newText);
+            const due = dueDate ?? (oldFm.match(/^due: "?\[?\[?([\d-]*)\]?\]?"?$/m)?.[1] || '');
+            const newFm = this.buildTaskFrontmatter(title, created, this.formatDateTime(now), this.formatDate(now), status, due, contexts);
+            await vault.modify(file, newFm + newText + '\n');
+        } catch (e) {
+            new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
+        }
+    }
+
+    async deleteTaskFile(filePath: string): Promise<void> {
+        const { vault } = this.app;
+        const file = vault.getAbstractFileByPath(filePath) as TFile;
+        if (!file) return;
+        try {
+            const trashFolder = (this.settings.tasksFolder.trim() || '000 Bin/MINA V2 Tasks') + '/trash';
+            if (!vault.getAbstractFileByPath(trashFolder)) await vault.createFolder(trashFolder);
+            const baseTrashPath = `${trashFolder}/${file.name}`;
+            const trashPath = vault.getAbstractFileByPath(baseTrashPath)
+                ? `${trashFolder}/${file.basename}_${Date.now()}.md`
+                : baseTrashPath;
+            await vault.rename(file, trashPath);
+            new Notice('Task moved to trash.');
+        } catch (e) {
+            new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
+        }
+    }
 }
 
-export class FileSuggestModal extends FuzzySuggestModal<TFile> {
-    onChoose: (file: TFile) => void;
+type FileOrCreate = TFile | string;
 
-    constructor(app: App, onChoose: (file: TFile) => void) {
+export class FileSuggestModal extends SuggestModal<FileOrCreate> {
+    onChoose: (file: TFile) => void;
+    newNoteFolder: string;
+
+    constructor(app: App, onChoose: (file: TFile) => void, newNoteFolder: string = '000 Bin') {
         super(app);
         this.onChoose = onChoose;
+        this.newNoteFolder = newNoteFolder;
+        this.setPlaceholder('Search notes… or type a name to create one');
     }
 
-    getItems(): TFile[] {
-        return this.app.vault.getFiles().filter(f => f.extension === 'md');
+    getSuggestions(query: string): FileOrCreate[] {
+        const q = query.toLowerCase().trim();
+        const files = this.app.vault.getFiles()
+            .filter(f => f.extension === 'md')
+            .filter(f => !q || f.basename.toLowerCase().includes(q))
+            .sort((a, b) => a.basename.localeCompare(b.basename));
+
+        const results: FileOrCreate[] = [...files];
+
+        // Offer "create" when query is non-empty and no file has that exact basename
+        if (q && !files.some(f => f.basename.toLowerCase() === q)) {
+            results.unshift(query.trim());
+        }
+
+        return results;
     }
 
-    getItemText(file: TFile): string {
-        return file.basename;
+    renderSuggestion(item: FileOrCreate, el: HTMLElement) {
+        if (typeof item === 'string') {
+            el.style.cssText = 'display:flex; align-items:center; gap:6px;';
+            el.createSpan({ text: '＋', attr: { style: 'font-weight:700; color:var(--interactive-accent); font-size:1.1em;' } });
+            el.createEl('div', {
+                attr: { style: 'display:flex; flex-direction:column;' }
+            }).createEl('span', {
+                text: `Create "${item}"`,
+                attr: { style: 'color:var(--interactive-accent); font-style:italic;' }
+            });
+        } else {
+            const wrap = el.createEl('div', { attr: { style: 'display:flex; flex-direction:column;' } });
+            wrap.createEl('span', { text: item.basename });
+            if (item.parent && item.parent.path !== '/') {
+                wrap.createEl('span', { text: item.parent.path, attr: { style: 'font-size:0.8em; color:var(--text-muted);' } });
+            }
+        }
     }
 
-    onChooseItem(file: TFile, evt: MouseEvent | KeyboardEvent) {
-        this.onChoose(file);
+    async onChooseSuggestion(item: FileOrCreate, evt: MouseEvent | KeyboardEvent) {
+        if (typeof item === 'string') {
+            try {
+                const folder = this.newNoteFolder.trim().replace(/\/$/, '');
+                const path = folder ? `${folder}/${item}.md` : `${item}.md`;
+                // Ensure folder exists
+                if (folder && !this.app.vault.getAbstractFileByPath(folder)) {
+                    await this.app.vault.createFolder(folder);
+                }
+                const newFile = await this.app.vault.create(path, '');
+                this.onChoose(newFile);
+            } catch (e: any) {
+                new Notice(`Could not create note: ${e.message}`);
+            }
+        } else {
+            this.onChoose(item);
+        }
     }
 }
 
@@ -486,7 +1021,7 @@ export class EditEntryModal extends Modal {
                             target.focus();
                             target.setSelectionRange(before.length + insertText.length, before.length + insertText.length);
                         }, 50);
-                    });
+                    }, this.plugin.settings.newNoteFolder);
                     modal.open();
                 }
             }
@@ -1098,18 +1633,54 @@ class NewDueModal extends Modal {
     onClose() { (this as any)._vvCleanup?.(); this.contentEl.empty(); }
 }
 
+interface ReplyEntry {
+    anchor: string;   // e.g. "reply-1774590963512"
+    date: string;     // YYYY-MM-DD
+    time: string;     // HH:mm:ss
+    text: string;     // reply body text
+}
+
 interface ThoughtEntry {
-    id: string;
-    parentId: string;
-    date: string;
-    time: string;
-    modifiedDate: string;
-    modifiedTime: string;
-    text: string;
-    context: string;
-    lineIndex: number;
-    children: ThoughtEntry[];
-    lastThreadUpdate?: number;
+    filePath: string;          // vault path to the file
+    title: string;             // from frontmatter
+    created: string;           // YYYY-MM-DD HH:mm:ss
+    modified: string;          // YYYY-MM-DD HH:mm:ss
+    day: string;               // e.g. "2026-03-28"
+    context: string[];         // from frontmatter context list
+    body: string;              // text before first ## reply header
+    children: ReplyEntry[];    // parsed from ## sections in body
+    lastThreadUpdate: number;  // ms timestamp for sorting
+}
+
+interface TaskEntry {
+    filePath: string;
+    title: string;
+    created: string;       // "YYYY-MM-DD HH:mm:ss"
+    modified: string;
+    day: string;           // "YYYY-MM-DD"
+    status: 'open' | 'done';
+    due: string;           // "YYYY-MM-DD" or ""
+    context: string[];
+    body: string;
+    lastUpdate: number;    // ms timestamp of modified for sorting
+}
+
+class NotePickerModal extends FuzzySuggestModal<TFile> {
+    onChoose: (file: TFile) => void;
+    constructor(app: App, onChoose: (file: TFile) => void) {
+        super(app);
+        this.onChoose = onChoose;
+        this.setPlaceholder('Search notes to ground the chat on…');
+    }
+    getItems(): TFile[] {
+        return this.app.vault.getMarkdownFiles().sort((a, b) => a.basename.localeCompare(b.basename));
+    }
+    getItemText(file: TFile): string {
+        return file.basename + ' — ' + file.path;
+    }
+    onChooseItem(file: TFile): void {
+        this.onChoose(file);
+    }
 }
 
 class MinaView extends ItemView {
@@ -1122,6 +1693,8 @@ class MinaView extends ItemView {
     // AI Chat State
     chatHistory: { role: 'user' | 'assistant'; text: string }[] = [];
     chatContainer: HTMLElement;
+    groundedNotes: TFile[] = [];
+    groundedNotesBar: HTMLElement | null = null;
     
     // Tasks Review Filters
     tasksFilterStatus: 'all' | 'pending' | 'completed' = 'pending';
@@ -1141,9 +1714,10 @@ class MinaView extends ItemView {
 
     // Thoughts Review Filters
     thoughtsFilterContext: string[] = [];
-    thoughtsFilterDate: string = 'all'; // 'all' | 'today' | 'this-week' | 'custom'
+    thoughtsFilterDate: string = 'all';
     thoughtsFilterDateStart: string = '';
     thoughtsFilterDateEnd: string = '';
+    thoughtsFilterTodo: boolean = false;
     showPreviousThoughts: boolean = true;
     showCaptureInThoughts: boolean = true;
     showThoughtsFilter: boolean = false;
@@ -1193,7 +1767,7 @@ class MinaView extends ItemView {
     }
 
     getViewType() { return VIEW_TYPE_MINA; }
-    getDisplayText() { return "MINA V1"; }
+    getDisplayText() { return "MINA V2"; }
     getIcon() { return "brain"; }
 
     async onOpen() {
@@ -1322,110 +1896,131 @@ class MinaView extends ItemView {
     }
 
     renderDuesMode(container: HTMLElement) {
-        const wrap = container.createEl('div', { attr: { style: 'padding: 12px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex-grow: 1;' } });
+        const wrap = container.createEl('div', { attr: { style: 'padding: 12px 12px 200px 12px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex-grow: 1; min-height: 0; -webkit-overflow-scrolling: touch;' } });
 
-        // Header row with title and add button
+        // Header row: title + Add button
         const duesHeaderRow = wrap.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;' } });
-        duesHeaderRow.createEl('span', { text: 'Recurring Dues', attr: { style: 'font-size: 0.9em; font-weight: 600; color: var(--text-muted);' } });
+        duesHeaderRow.createEl('span', { text: 'Personal Finance', attr: { style: 'font-size: 0.9em; font-weight: 600; color: var(--text-muted);' } });
         const addBtn = duesHeaderRow.createEl('button', { text: '+ Add', attr: { style: 'padding: 3px 12px; border-radius: 5px; border: none; background: var(--interactive-accent); color: var(--text-on-accent); font-size: 0.8em; font-weight: 600; cursor: pointer;' } });
         addBtn.addEventListener('click', () => {
-            new NewDueModal(this.plugin.app, this.plugin.settings.captureFolder, () => this.renderView()).open();
+            new NewDueModal(this.plugin.app, this.plugin.settings.pfFolder, () => this.renderView()).open();
         });
+
+        // Filter row: pill toggle for Recurring Payments
+        const filterRow = wrap.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px; flex-shrink: 0;' } });
+        filterRow.createEl('span', { text: 'Filter:', attr: { style: 'font-size: 0.78em; color: var(--text-muted);' } });
+
+        let recurringOnly = false;
+        let activeOnly = true;
+        const pillStyle = (active: boolean) =>
+            `padding: 3px 12px; border-radius: 20px; border: 1.5px solid var(--interactive-accent); font-size: 0.78em; font-weight: 600; cursor: pointer; transition: all 0.15s; background: ${active ? 'var(--interactive-accent)' : 'transparent'}; color: ${active ? 'var(--text-on-accent)' : 'var(--interactive-accent)'};`;
+
+        const recurringPill = filterRow.createEl('button', { text: 'Recurring', attr: { style: pillStyle(false) } });
+        const activePill = filterRow.createEl('button', { text: 'Active', attr: { style: pillStyle(true) } });
 
         const { metadataCache, vault } = this.plugin.app;
+        const pfFolder = (this.plugin.settings.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/');
 
-        // Collect all notes with category containing "recurring payment" and active_status = true
-        const hasRecurringPayment = (raw: any): boolean => {
-            if (!raw) return false;
-            if (Array.isArray(raw)) return raw.some((v: any) => v.toString().toLowerCase().includes('recurring payment'));
-            return raw.toString().toLowerCase().includes('recurring payment');
-        };
-        interface DueEntry { title: string; path: string; dueDate: string; lastPayment: string; dueMoment: any; }
-        const entries: DueEntry[] = [];
+        interface DueEntry { title: string; path: string; dueDate: string; lastPayment: string; dueMoment: any; hasRecurring: boolean; isActive: boolean; }
 
-        for (const file of vault.getMarkdownFiles()) {
-            const fm = metadataCache.getFileCache(file)?.frontmatter;
-            if (!fm) continue;
-
-            const category = fm['category'];
-            const activeStatus = fm['active_status'];
-            const isActive = activeStatus === true || activeStatus === 'true' || activeStatus === 'True';
-
-            if (!hasRecurringPayment(category) || !isActive) continue;
-
-            const dueDate = (fm['next_duedate'] ?? '').toString().trim();
-            const lastPayment = (fm['last_payment'] ?? '').toString().trim();
-            const dueMoment = dueDate ? moment(dueDate, ['YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY'], true) : null;
-
-            entries.push({ title: file.basename, path: file.path, dueDate, lastPayment, dueMoment });
-        }
-
-        // Sort by due date ascending (undated go to bottom)
-        entries.sort((a, b) => {
-            if (!a.dueMoment?.isValid() && !b.dueMoment?.isValid()) return 0;
-            if (!a.dueMoment?.isValid()) return 1;
-            if (!b.dueMoment?.isValid()) return -1;
-            return a.dueMoment.valueOf() - b.dueMoment.valueOf();
-        });
-
-        if (entries.length === 0) {
-            wrap.createEl('p', { text: 'No recurring payments found. Add frontmatter: category: recurring payment, active_status: true, next_duedate, last_payment.', attr: { style: 'color: var(--text-muted); font-size: 0.85em;' } });
-            return;
-        }
-
-        // Table
-        const table = wrap.createEl('table', { attr: { style: 'width: 100%; border-collapse: collapse; font-size: 0.88em;' } });
-
-        // Header
-        const thead = table.createEl('thead');
-        const headerRow = thead.createEl('tr');
-        ['Payable', 'Due Date', 'Last Payment', ''].forEach(h => {
-            headerRow.createEl('th', { text: h, attr: { style: 'text-align: left; padding: 6px 10px; border-bottom: 2px solid var(--background-modifier-border); color: var(--text-muted); font-weight: 600; white-space: nowrap;' } });
-        });
-
-        // Body
-        const tbody = table.createEl('tbody');
-        const today = moment().startOf('day');
-
-        entries.forEach(entry => {
-            const tr = tbody.createEl('tr', { attr: { style: 'border-bottom: 1px solid var(--background-modifier-border); transition: background 0.15s;' } });
-            tr.addEventListener('mouseenter', () => tr.style.background = 'var(--background-secondary)');
-            tr.addEventListener('mouseleave', () => tr.style.background = '');
-
-            // Payable (clickable note link)
-            const tdPayable = tr.createEl('td', { attr: { style: 'padding: 7px 10px;' } });
-            const link = tdPayable.createEl('a', { text: entry.title, attr: { style: 'color: var(--text-accent); cursor: pointer; text-decoration: none; font-weight: 500;' } });
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.plugin.app.workspace.openLinkText(entry.title, entry.path, Platform.isMobile ? 'tab' : 'window');
+        const buildEntries = (): DueEntry[] => {
+            const all: DueEntry[] = [];
+            for (const file of vault.getMarkdownFiles()) {
+                if (!file.path.startsWith(pfFolder + '/') && file.path !== pfFolder) continue;
+                const fm = metadataCache.getFileCache(file)?.frontmatter;
+                const dueDate = (fm?.['next_duedate'] ?? '').toString().trim();
+                const lastPayment = (fm?.['last_payment'] ?? '').toString().trim();
+                const dueMoment = dueDate ? moment(dueDate, ['YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY'], true) : null;
+                const hasRecurring = !!(dueDate);
+                const activeStatus = fm?.['active_status'];
+                const isActive = activeStatus === true || activeStatus === 'true' || activeStatus === 'True';
+                all.push({ title: file.basename, path: file.path, dueDate, lastPayment, dueMoment, hasRecurring, isActive });
+            }
+            all.sort((a, b) => {
+                if (!a.dueMoment?.isValid() && !b.dueMoment?.isValid()) return a.title.localeCompare(b.title);
+                if (!a.dueMoment?.isValid()) return 1;
+                if (!b.dueMoment?.isValid()) return -1;
+                return a.dueMoment.valueOf() - b.dueMoment.valueOf();
             });
+            return all;
+        };
 
-            // Due Date (highlight overdue in red, due today in accent)
-            const tdDue = tr.createEl('td', { attr: { style: 'padding: 7px 10px; white-space: nowrap;' } });
-            if (entry.dueMoment?.isValid()) {
-                const isOverdue = entry.dueMoment.isBefore(today);
-                const isToday = entry.dueMoment.isSame(today, 'day');
-                const color = isOverdue ? 'var(--text-error)' : isToday ? 'var(--interactive-accent)' : 'var(--text-normal)';
-                tdDue.createEl('span', { text: entry.dueDate, attr: { style: `color: ${color}; font-weight: ${isOverdue || isToday ? '600' : '400'};` } });
-                if (isOverdue) tdDue.createEl('span', { text: ' ⚠', attr: { style: 'color: var(--text-error); font-size: 0.85em;' } });
-            } else {
-                tdDue.createEl('span', { text: entry.dueDate || '—', attr: { style: 'color: var(--text-muted);' } });
+        // Table container (re-rendered on filter change)
+        const tableWrap = wrap.createEl('div');
+
+        const renderTable = () => {
+            tableWrap.empty();
+            const entries = buildEntries().filter(e => (!recurringOnly || e.hasRecurring) && (!activeOnly || e.isActive));
+
+            if (entries.length === 0) {
+                tableWrap.createEl('p', { text: 'No entries found.', attr: { style: 'color: var(--text-muted); font-size: 0.85em;' } });
+                return;
             }
 
-            // Last Payment
-            tr.createEl('td', { text: entry.lastPayment || '—', attr: { style: 'padding: 7px 10px; color: var(--text-muted); white-space: nowrap;' } });
-
-            // Pay button
-            const tdPay = tr.createEl('td', { attr: { style: 'padding: 4px 8px; text-align: right;' } });
-            const payBtn = tdPay.createEl('button', { text: 'Pay', attr: { style: 'padding: 3px 12px; border-radius: 5px; border: none; background: var(--interactive-accent); color: var(--text-on-accent); font-size: 0.8em; font-weight: 600; cursor: pointer;' } });
-            payBtn.addEventListener('click', () => {
-                const fileObj = vault.getFileByPath(entry.path) as TFile;
-                if (!fileObj) { new Notice('Note file not found.'); return; }
-                new PaymentModal(this.plugin.app, fileObj, entry.dueDate, () => {
-                    this.renderView();
-                }).open();
+            const table = tableWrap.createEl('table', { attr: { style: 'width: 100%; border-collapse: collapse; font-size: 0.88em;' } });
+            const thead = table.createEl('thead');
+            const headerRow = thead.createEl('tr');
+            ['Payable', 'Due Date', 'Last Payment', ''].forEach(h => {
+                headerRow.createEl('th', { text: h, attr: { style: 'text-align: left; padding: 6px 10px; border-bottom: 2px solid var(--background-modifier-border); color: var(--text-muted); font-weight: 600; white-space: nowrap;' } });
             });
+
+            const tbody = table.createEl('tbody');
+            const today = moment().startOf('day');
+
+            entries.forEach(entry => {
+                const tr = tbody.createEl('tr', { attr: { style: 'border-bottom: 1px solid var(--background-modifier-border); transition: background 0.15s;' } });
+                tr.addEventListener('mouseenter', () => tr.style.background = 'var(--background-secondary)');
+                tr.addEventListener('mouseleave', () => tr.style.background = '');
+
+                // Payable
+                const tdPayable = tr.createEl('td', { attr: { style: 'padding: 7px 10px;' } });
+                const link = tdPayable.createEl('a', { text: entry.title, attr: { style: 'color: var(--text-accent); cursor: pointer; text-decoration: none; font-weight: 500;' } });
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.plugin.app.workspace.openLinkText(entry.title, entry.path, Platform.isMobile ? 'tab' : 'window');
+                });
+
+                // Due Date
+                const tdDue = tr.createEl('td', { attr: { style: 'padding: 7px 10px; white-space: nowrap;' } });
+                if (entry.dueMoment?.isValid()) {
+                    const isOverdue = entry.dueMoment.isBefore(today);
+                    const isToday = entry.dueMoment.isSame(today, 'day');
+                    const color = isOverdue ? 'var(--text-error)' : isToday ? 'var(--interactive-accent)' : 'var(--text-normal)';
+                    tdDue.createEl('span', { text: entry.dueDate, attr: { style: `color: ${color}; font-weight: ${isOverdue || isToday ? '600' : '400'};` } });
+                    if (isOverdue) tdDue.createEl('span', { text: ' ⚠', attr: { style: 'color: var(--text-error); font-size: 0.85em;' } });
+                } else {
+                    tdDue.createEl('span', { text: '—', attr: { style: 'color: var(--text-muted);' } });
+                }
+
+                // Last Payment
+                tr.createEl('td', { text: entry.lastPayment || '—', attr: { style: 'padding: 7px 10px; color: var(--text-muted); white-space: nowrap;' } });
+
+                // Pay button (only for recurring entries with due dates)
+                const tdPay = tr.createEl('td', { attr: { style: 'padding: 4px 8px; text-align: right;' } });
+                if (entry.hasRecurring) {
+                    const payBtn = tdPay.createEl('button', { text: 'Pay', attr: { style: 'padding: 3px 12px; border-radius: 5px; border: none; background: var(--interactive-accent); color: var(--text-on-accent); font-size: 0.8em; font-weight: 600; cursor: pointer;' } });
+                    payBtn.addEventListener('click', () => {
+                        const fileObj = vault.getFileByPath(entry.path) as TFile;
+                        if (!fileObj) { new Notice('Note file not found.'); return; }
+                        new PaymentModal(this.plugin.app, fileObj, entry.dueDate, () => { this.renderView(); }).open();
+                    });
+                }
+            });
+        };
+
+        recurringPill.addEventListener('click', () => {
+            recurringOnly = !recurringOnly;
+            recurringPill.setAttribute('style', pillStyle(recurringOnly));
+            renderTable();
         });
+
+        activePill.addEventListener('click', () => {
+            activeOnly = !activeOnly;
+            activePill.setAttribute('style', pillStyle(activeOnly));
+            renderTable();
+        });
+
+        renderTable();
     }
 
     renderSettingsMode(container: HTMLElement) {
@@ -1443,11 +2038,12 @@ class MinaView extends ItemView {
             el.addEventListener('change', () => onChange(el.value));
         };
 
-        field('Capture Folder', 'Folder where MINA files are stored.', row => input(row, this.plugin.settings.captureFolder, '000 Bin', 'text', async v => { this.plugin.settings.captureFolder = v; await this.plugin.saveSettings(); }));
-        field('Thoughts File', 'File name for thoughts.', row => input(row, this.plugin.settings.captureFilePath, 'mina_1.md', 'text', async v => { this.plugin.settings.captureFilePath = v; await this.plugin.saveSettings(); }));
-        field('Tasks File', 'File name for tasks.', row => input(row, this.plugin.settings.tasksFilePath, 'mina_2.md', 'text', async v => { this.plugin.settings.tasksFilePath = v; await this.plugin.saveSettings(); }));
+        field('Tasks Folder', 'Folder where MINA V2 task files are stored.', row => input(row, this.plugin.settings.tasksFolder, '000 Bin/MINA V2 Tasks', 'text', async v => { this.plugin.settings.tasksFolder = v; await this.plugin.saveSettings(); }));
+        field('Thoughts Folder', 'Folder where MINA V2 thought files are stored.', row => input(row, this.plugin.settings.thoughtsFolder, '000 Bin/MINA V2', 'text', async v => { this.plugin.settings.thoughtsFolder = v; await this.plugin.saveSettings(); }));
+        field('Personal Finance Folder', 'Folder scanned by the Dues tab for recurring payment notes.', row => input(row, this.plugin.settings.pfFolder, '000 Bin/MINA V2 PF', 'text', async v => { this.plugin.settings.pfFolder = v; await this.plugin.saveSettings(); }));
         field('Date Format', 'moment.js format, e.g. YYYY-MM-DD', row => input(row, this.plugin.settings.dateFormat, 'YYYY-MM-DD', 'text', async v => { this.plugin.settings.dateFormat = v; await this.plugin.saveSettings(); }));
         field('Time Format', 'moment.js format, e.g. HH:mm', row => input(row, this.plugin.settings.timeFormat, 'HH:mm', 'text', async v => { this.plugin.settings.timeFormat = v; await this.plugin.saveSettings(); }));
+        field('New Note Folder', 'Folder where notes created via \\ link are saved.', row => input(row, this.plugin.settings.newNoteFolder, '000 Bin', 'text', async v => { this.plugin.settings.newNoteFolder = v; await this.plugin.saveSettings(); }));
         field('Gemini API Key', 'Your Google Gemini API key.', row => input(row, this.plugin.settings.geminiApiKey, 'AIza...', 'password', async v => { this.plugin.settings.geminiApiKey = v.trim(); await this.plugin.saveSettings(); }));
 
         field('Gemini Model', 'Model to use for MINA AI chat.', row => {
@@ -1472,13 +2068,13 @@ class MinaView extends ItemView {
     }
 
     async renderMinaMode(container: HTMLElement) {
-        // Desktop: prime the container as a flex column.
-        // Mobile: renderView already did that with a fixed pixel height.
+        // Prime the container as a flex column on both desktop and mobile.
+        // Mobile: renderView already set the fixed pixel height; we still enforce display/overflow here.
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.overflow = 'hidden';
         if (!Platform.isMobile) {
-            container.style.display = 'flex';
-            container.style.flexDirection = 'column';
             container.style.height = '100%';
-            container.style.overflow = 'hidden';
         }
 
         if (!this.plugin.settings.geminiApiKey) {
@@ -1488,12 +2084,52 @@ class MinaView extends ItemView {
             return;
         }
 
-        // Input row — at the TOP, flex-shrink: 0 (same pattern as capture area in Thoughts tab)
+        // Input row — at the TOP, flex-shrink: 0
         const inputRow = container.createEl('div', {
             attr: { style: 'flex-shrink: 0; display: flex; gap: 6px; padding: 8px; border-bottom: 1px solid var(--background-modifier-border); align-items: stretch; background: var(--background-secondary);' }
         });
-        const textarea = inputRow.createEl('textarea', { attr: { placeholder: 'Ask MINA about your thoughts, tasks and dues…', rows: '2', style: 'flex-grow: 1; resize: none; font-size: 0.9em; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-family: inherit;' } });
+        const textarea = inputRow.createEl('textarea', { attr: { placeholder: 'Ask MINA… (type \\ to ground on a note)', rows: '2', style: 'flex-grow: 1; resize: none; font-size: 0.9em; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-family: inherit;' } });
         const sendBtn = inputRow.createEl('button', { text: '↑', attr: { style: 'padding: 0 16px; font-size: 1.3em; border-radius: 6px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; cursor: pointer; flex-shrink: 0;' } });
+
+        // Grounded notes chip bar — always visible, shows default + user-selected note chips
+        const groundedBar = container.createEl('div', {
+            attr: { style: 'flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--background-modifier-border); background: var(--background-secondary);' }
+        });
+        this.groundedNotesBar = groundedBar;
+
+        const defaultChips = [
+            { icon: '💭', label: 'Thoughts' },
+            { icon: '✅', label: 'Tasks' },
+            { icon: '💳', label: 'Dues' },
+        ];
+        const defaultChipStyle = 'display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; background: var(--background-modifier-border); color: var(--text-muted); font-size: 0.78em; font-weight: 500;';
+        const userChipStyle = 'display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; background: var(--interactive-accent-hover); color: var(--text-normal); font-size: 0.78em; font-weight: 500; cursor: default;';
+
+        const refreshGroundedBar = () => {
+            groundedBar.empty();
+            groundedBar.style.display = 'flex';
+            groundedBar.createEl('span', { text: '📎', attr: { style: 'font-size: 0.8em; color: var(--text-muted); align-self: center; margin-right: 2px;' } });
+            // Always-on default chips
+            for (const d of defaultChips) {
+                const chip = groundedBar.createEl('span', { attr: { style: defaultChipStyle } });
+                chip.createEl('span', { text: d.icon + ' ' + d.label });
+            }
+            // User-selected note chips (removable)
+            for (const f of [...this.groundedNotes]) {
+                const chip = groundedBar.createEl('span', { attr: { style: userChipStyle } });
+                const nameSpan = chip.createEl('span', { text: '📄 ' + f.basename, attr: { style: 'cursor: pointer; text-decoration: underline;' } });
+                nameSpan.addEventListener('click', () => {
+                    this.plugin.app.workspace.openLinkText(f.basename, f.path, 'window');
+                });
+                const x = chip.createEl('span', { text: '×', attr: { style: 'cursor: pointer; font-size: 1em; opacity: 0.7; margin-left: 2px;' } });
+                x.addEventListener('click', () => {
+                    this.groundedNotes = this.groundedNotes.filter(n => n.path !== f.path);
+                    refreshGroundedBar();
+                });
+            }
+        };
+
+        refreshGroundedBar(); // Show default chips immediately
 
         const send = async () => {
             const text = textarea.value.trim();
@@ -1505,13 +2141,12 @@ class MinaView extends ItemView {
             this.chatHistory.push({ role: 'user', text });
             this.renderChatHistory();
 
-            // "Thinking" indicator prepended at the top (newest-first order)
             const thinking = this.chatContainer.createEl('div', { attr: { style: 'align-self: flex-start; font-size: 0.85em; color: var(--text-muted); font-style: italic;' } });
             this.chatContainer.prepend(thinking);
             thinking.setText('MINA is thinking…');
 
             try {
-                const reply = await this.callGemini(text);
+                const reply = await this.callGemini(text, [...this.groundedNotes]);
                 thinking.remove();
                 this.chatHistory.push({ role: 'assistant', text: reply });
             } catch (e) {
@@ -1527,16 +2162,26 @@ class MinaView extends ItemView {
 
         sendBtn.addEventListener('click', send);
         textarea.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); return; }
+            if (e.key === '\\') {
+                e.preventDefault();
+                new NotePickerModal(this.plugin.app, async (file) => {
+                    if (!this.groundedNotes.find(n => n.path === file.path)) {
+                        this.groundedNotes.push(file);
+                        refreshGroundedBar();
+                        new Notice(`📎 Grounded on: ${file.basename}`);
+                    }
+                }).open();
+            }
         });
 
         if (!Platform.isMobile) {
             setTimeout(() => textarea.focus(), 50);
         }
 
-        // Chat history — scrollable area below the input
+        // Chat history — scrollable area below
         this.chatContainer = container.createEl('div', {
-            attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 8px; display: flex; flex-direction: column; gap: 8px;' }
+            attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 8px 8px 200px 8px; display: flex; flex-direction: column; gap: 8px;' }
         });
         this.renderChatHistory();
     }
@@ -1548,17 +2193,111 @@ class MinaView extends ItemView {
             this.chatContainer.createEl('div', { text: 'Ask me anything about your thoughts, tasks and dues.', attr: { style: 'color: var(--text-muted); font-size: 0.85em; text-align: center; margin-top: 20px;' } });
             return;
         }
+
+        const openNote = (name: string) => {
+            const file = this.plugin.app.metadataCache.getFirstLinkpathDest(name, '');
+            if (file) {
+                this.plugin.app.workspace.openLinkText(file.basename, file.path, 'window');
+            } else {
+                new Notice(`Note not found: ${name}`);
+            }
+        };
+
+        // Render assistant bubbles with [[WikiLink]] → clickable links
+        const renderBubbleText = (el: HTMLElement, text: string, isUser: boolean) => {
+            if (isUser) { el.setText(text); return; }
+            // Split on [[...]] patterns
+            const parts = text.split(/(\[\[([^\]]+)\]\])/g);
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i];
+                if (i % 3 === 0) {
+                    // Plain text segment
+                    if (part) el.appendText(part);
+                } else if (i % 3 === 1) {
+                    // Full [[Name]] match — skip, handled by i%3===2
+                } else {
+                    // Note name inside [[ ]]
+                    const noteName = part.split('|')[0].trim(); // handle [[Name|Alias]]
+                    const link = el.createEl('a', {
+                        text: noteName,
+                        attr: { style: 'color: var(--text-accent); cursor: pointer; text-decoration: underline; font-weight: 500;' }
+                    });
+                    link.addEventListener('click', (e) => { e.preventDefault(); openNote(noteName); });
+                }
+            }
+        };
+
         // Render newest first
         for (const msg of [...this.chatHistory].reverse()) {
             const isUser = msg.role === 'user';
             const bubble = this.chatContainer.createEl('div', { attr: { style: `max-width: 85%; padding: 8px 12px; border-radius: 12px; font-size: 0.9em; line-height: 1.5; white-space: pre-wrap; word-break: break-word; align-self: ${isUser ? 'flex-end' : 'flex-start'}; background: ${isUser ? 'var(--interactive-accent)' : 'var(--background-secondary)'}; color: ${isUser ? 'var(--text-on-accent)' : 'var(--text-normal)'};` } });
-            bubble.setText(msg.text);
+            renderBubbleText(bubble, msg.text, isUser);
+
+            // Save as Thought button — only on assistant messages
+            if (!isUser) {
+                const actions = this.chatContainer.createEl('div', { attr: { style: 'align-self: flex-start; display: flex; gap: 6px; margin-top: -4px; margin-bottom: 2px;' } });
+                const saveBtn = actions.createEl('button', {
+                    text: '💾 Save as Thought',
+                    attr: { style: 'padding: 2px 8px; font-size: 0.72em; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: transparent; color: var(--text-muted); cursor: pointer;' }
+                });
+                saveBtn.addEventListener('mouseenter', () => { saveBtn.style.background = 'var(--background-modifier-border)'; saveBtn.style.color = 'var(--text-normal)'; });
+                saveBtn.addEventListener('mouseleave', () => { saveBtn.style.background = 'transparent'; saveBtn.style.color = 'var(--text-muted)'; });
+                saveBtn.addEventListener('click', async () => {
+                    try {
+                        saveBtn.disabled = true;
+                        saveBtn.textContent = 'Saving…';
+                        await this.plugin.createThoughtFile(msg.text, this.plugin.settings.selectedContexts ?? []);
+                        saveBtn.textContent = '✓ Saved';
+                        setTimeout(() => { saveBtn.textContent = '💾 Save as Thought'; saveBtn.disabled = false; }, 2000);
+                    } catch (e) {
+                        saveBtn.textContent = '💾 Save as Thought';
+                        saveBtn.disabled = false;
+                        new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
+                    }
+                });
+            }
         }
     }
 
-    async callGemini(userMessage: string): Promise<string> {
-        const { vault } = this.plugin.app;
+    async callGemini(userMessage: string, groundedFiles: TFile[] = []): Promise<string> {
+        const { vault, metadataCache } = this.plugin.app;
         const s = this.plugin.settings;
+
+        // Collect grounded note content + their linked and backlinked notes
+        let groundedContent = '';
+        if (groundedFiles.length > 0) {
+            const seen = new Set<string>();
+            const collectNote = async (file: TFile, depth: number) => {
+                if (seen.has(file.path) || depth > 1) return '';
+                seen.add(file.path);
+                let text = '';
+                try { text = await vault.read(file); } catch {}
+
+                // Get outgoing wikilinks
+                const cache = metadataCache.getFileCache(file);
+                const outLinks: TFile[] = (cache?.links ?? [])
+                    .map(l => metadataCache.getFirstLinkpathDest(l.link, file.path))
+                    .filter((f): f is TFile => f instanceof TFile && !seen.has(f.path));
+
+                // Get backlinks (notes that link to this file)
+                const resolved = metadataCache.resolvedLinks;
+                const backlinks: TFile[] = Object.entries(resolved)
+                    .filter(([, targets]) => file.path in targets)
+                    .map(([src]) => vault.getFileByPath(src))
+                    .filter((f): f is TFile => f instanceof TFile && !seen.has(f.path));
+
+                const related = [...outLinks, ...backlinks].slice(0, 10);
+                const relatedTexts = await Promise.all(related.map(f => collectNote(f, depth + 1)));
+
+                let section = `### [[${file.basename}]]\n${text.trim()}`;
+                const linked = relatedTexts.filter(Boolean);
+                if (linked.length) section += '\n\n#### Linked/Related Notes\n' + linked.join('\n\n---\n');
+                return section;
+            };
+
+            const sections = await Promise.all(groundedFiles.map(f => collectNote(f, 0)));
+            groundedContent = sections.filter(Boolean).join('\n\n===\n\n');
+        }
 
         const readFile = async (folder: string, file: string) => {
             try {
@@ -1568,28 +2307,31 @@ class MinaView extends ItemView {
             return '';
         };
 
-        const thoughtsContent = await readFile(s.captureFolder, s.captureFilePath);
+        const thoughtsContent = Array.from(this.plugin.thoughtIndex.values())
+            .sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate)
+            .slice(0, 50)
+            .map(e => `[${e.day}] ${e.body}${e.children.length > 0 ? '\n' + e.children.map(r => `  → ${r.text}`).join('\n') : ''}`)
+            .join('\n\n');
         const tasksContent = await readFile(s.captureFolder, s.tasksFilePath);
 
-        // Build dues context from vault frontmatter
-        const { metadataCache, vault: v } = this.plugin.app;
+        // Build dues context from pfFolder
+        const pfFolder = (s.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/');
         const duesLines: string[] = [];
-        for (const file of v.getMarkdownFiles()) {
+        for (const file of vault.getMarkdownFiles()) {
+            if (!file.path.startsWith(pfFolder + '/') && file.path !== pfFolder) continue;
             const fm = metadataCache.getFileCache(file)?.frontmatter;
-            if (!fm) continue;
-            const catRaw = fm['category'];
-            const catMatches = catRaw && (Array.isArray(catRaw)
-                ? catRaw.some((v: any) => v.toString().toLowerCase().includes('recurring payment'))
-                : catRaw.toString().toLowerCase().includes('recurring payment'));
-            const active = fm['active_status'];
-            const isActive = active === true || active === 'true' || active === 'True';
-            if (!catMatches || !isActive) continue;
-            duesLines.push(`- ${file.basename}: due ${fm['next_duedate'] ?? '?'}, last paid ${fm['last_payment'] ?? '?'}`);
+            const active = fm?.['active_status'];
+            if (active === false || active === 'false' || active === 'False') continue;
+            duesLines.push(`- ${file.basename}: due ${fm?.['next_duedate'] ?? '?'}, last paid ${fm?.['last_payment'] ?? '?'}`);
         }
         duesLines.sort();
         const duesContent = duesLines.length ? duesLines.join('\n') : '(none)';
 
-        const systemPrompt = `You are MINA, a personal AI assistant embedded in Obsidian. You have access to the user's thoughts, tasks, and recurring dues below. Answer questions, summarize, find patterns, suggest actions, or help reflect — based on this data. Be concise and helpful.
+        const groundedSection = groundedContent
+            ? `\n\n--- GROUNDED NOTES (user-selected context) ---\n${groundedContent}`
+            : '';
+
+        const systemPrompt = `You are MINA, a personal AI assistant embedded in Obsidian. You have access to the user's thoughts, tasks, dues, and any grounded notes below. Answer questions, summarize, find patterns, suggest actions, or help reflect — based on this data. Be concise and helpful. When referencing a specific note by name, always write it as [[Note Name]] so it becomes a clickable link.
 
 --- THOUGHTS ---
 ${thoughtsContent || '(empty)'}
@@ -1598,12 +2340,12 @@ ${thoughtsContent || '(empty)'}
 ${tasksContent || '(empty)'}
 
 --- DUES (recurring payments) ---
-${duesContent}`;
+${duesContent}${groundedSection}`;
 
         const body = {
             system_instruction: { parts: [{ text: systemPrompt }] },
             contents: [{ role: 'user', parts: [{ text: userMessage }] }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
+            generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
         };
 
         const resp = await fetch(
@@ -1815,7 +2557,6 @@ ${duesContent}`;
                     };
                     applyCircleStyle(isChecked);
 
-                    // Use insertBefore + removeChild (more compatible than replaceWith)
                     const parent = checkbox.parentElement;
                     if (parent) {
                         parent.insertBefore(circle, checkbox);
@@ -1830,34 +2571,13 @@ ${duesContent}`;
                         applyCircleStyle(newChecked);
 
                         let count = 0;
-                        const newRaw = entry.text.replace(/- \[([ x])\] /g, (match: string, state: string) => {
+                        const newRaw = entry.body.replace(/- \[([ x])\] /g, (match: string, state: string) => {
                             if (count++ === idx) return state === ' ' ? '- [x] ' : '- [ ] ';
                             return match;
                         });
-                        if (newRaw === entry.text) return;
-                        entry.text = newRaw;
-
-                        const { vault } = this.plugin.app;
-                        const folderPath = this.plugin.settings.captureFolder.trim();
-                        const fileName = this.plugin.settings.captureFilePath.trim();
-                        const fullPath = folderPath && folderPath !== '/' ? `${folderPath}/${fileName}` : fileName;
-                        const file = vault.getAbstractFileByPath(fullPath) as TFile;
-                        if (!file) return;
-                        try {
-                            const content = await vault.read(file);
-                            const lines = content.split('\n');
-                            if (entry.lineIndex >= 0 && entry.lineIndex < lines.length) {
-                                const parts = lines[entry.lineIndex].split('|');
-                                let textIndex: number;
-                                if (parts.length >= 9) textIndex = 7;
-                                else if (parts.length >= 7) textIndex = 5;
-                                else textIndex = 3;
-                                parts[textIndex] = ` ${newRaw} `;
-                                lines[entry.lineIndex] = parts.join('|');
-                                await vault.modify(file, lines.join('\n'));
-                                this.invalidateCache(fullPath);
-                            }
-                        } catch (_) { /* silent */ }
+                        if (newRaw === entry.body) return;
+                        entry.body = newRaw;
+                        await this.plugin.editThoughtBody(entry.filePath, newRaw, entry.context);
                     });
                 } catch (itemErr) {
                     console.warn('MINA: hookCheckboxes item error', itemErr);
@@ -1904,117 +2624,141 @@ ${duesContent}`;
 
         let lastValue = this.content;
 
-        // ── @ context picker (mobile only) ───────────────────────────────────
-        let atStartIndex = -1;
-        let ctxPickerEl: HTMLElement | null = null;
-        let currentCtxQuery = '';
+        // ── Context picker panel (mobile phone only) ─────────────────────────
+        let ctxPanelEl: HTMLElement | null = null;
 
-        const hideCtxPicker = () => {
-            // splice out the @query token when picker closes
-            if (atStartIndex !== -1 && ctxPickerEl) {
-                const cursorNow = textArea.selectionStart;
-                const endOfQuery = Math.max(cursorNow, atStartIndex + 1 + currentCtxQuery.length);
-                textArea.value = textArea.value.substring(0, atStartIndex) + textArea.value.substring(endOfQuery);
-                this.content = textArea.value;
-                textArea.setSelectionRange(atStartIndex, atStartIndex);
-            }
-            ctxPickerEl?.remove(); ctxPickerEl = null; atStartIndex = -1; currentCtxQuery = '';
+        const hideCtxPanel = () => {
+            ctxPanelEl?.remove();
+            ctxPanelEl = null;
         };
 
-        const showCtxPicker = (query: string) => {
-            currentCtxQuery = query;
-            ctxPickerEl?.remove();
+        const renderCtxPanel = () => {
+            ctxPanelEl?.remove();
             const all = this.plugin.settings.contexts;
-            const filtered = query
-                ? all.filter(c => c.toLowerCase().includes(query.toLowerCase()))
-                : all;
-            const isNew = query && !all.some(c => c.toLowerCase() === query.toLowerCase());
 
-            if (!filtered.length && !isNew) { ctxPickerEl = null; return; }
-
-            // ── Horizontal scrollable pill strip below the textarea ───────────
-            ctxPickerEl = textAreaWrapper.createEl('div', {
+            ctxPanelEl = textAreaWrapper.createEl('div', {
                 attr: {
                     style: [
                         'position:absolute', 'top:calc(100% + 4px)', 'left:0', 'right:0',
-                        'display:flex', 'flex-direction:row', 'align-items:center',
-                        'gap:6px', 'padding:8px 10px',
-                        'overflow-x:auto', 'white-space:nowrap',
-                        '-webkit-overflow-scrolling:touch',
                         'background:var(--background-primary)',
                         'border:1px solid var(--background-modifier-border)',
                         'border-radius:10px',
                         'box-shadow:0 4px 16px rgba(0,0,0,0.22)',
-                        'z-index:200'
+                        'z-index:200',
+                        'overflow:hidden',
+                        'display:flex', 'flex-direction:column'
                     ].join(';')
                 }
             });
 
-            const rows = [...filtered, ...(isNew ? [query] : [])];
+            // ── 2-row horizontally scrollable pill strip ───────────────────────
+            const grid = ctxPanelEl.createEl('div', {
+                attr: {
+                    style: [
+                        'display:grid',
+                        'grid-template-rows:repeat(2,auto)',
+                        'grid-auto-flow:column',
+                        'gap:6px',
+                        'padding:8px 10px',
+                        'overflow-x:auto',
+                        'overflow-y:hidden',
+                        '-webkit-overflow-scrolling:touch',
+                        'flex-shrink:0'
+                    ].join(';')
+                }
+            });
 
-            rows.forEach((ctx, i) => {
-                const isCreateRow = i === rows.length - 1 && isNew;
+            all.forEach((ctx) => {
                 const isSelected = this.selectedContexts.includes(ctx);
-
-                const pill = ctxPickerEl!.createEl('div', {
+                const pill = grid.createEl('div', {
                     attr: {
                         style: [
-                            'display:inline-flex', 'align-items:center', 'gap:5px',
+                            'display:inline-flex', 'align-items:center', 'gap:4px',
                             'padding:6px 14px', 'border-radius:20px',
                             'font-size:0.85em', 'cursor:pointer', 'flex-shrink:0',
                             'user-select:none', 'transition:background 0.1s',
-                            isCreateRow
-                                ? 'border:1px dashed var(--interactive-accent); color:var(--interactive-accent);'
-                                : isSelected
-                                    ? 'background:var(--interactive-accent); color:var(--text-on-accent); border:1px solid var(--interactive-accent);'
-                                    : 'background:var(--background-secondary); color:var(--text-normal); border:1px solid var(--background-modifier-border);'
+                            isSelected
+                                ? 'background:var(--interactive-accent); color:var(--text-on-accent); border:1px solid var(--interactive-accent);'
+                                : 'background:var(--background-secondary); color:var(--text-normal); border:1px solid var(--background-modifier-border);'
                         ].join(';')
                     }
                 });
+                if (isSelected) pill.createSpan({ text: '✓', attr: { style: 'font-size:0.75em; font-weight:bold; flex-shrink:0;' } });
+                pill.createSpan({ text: `#${ctx}` });
 
-                if (isCreateRow) {
-                    pill.createSpan({ text: '➕' });
-                    pill.createSpan({ text: `"${ctx}"` });
-                } else {
-                    if (isSelected) pill.createSpan({ text: '✓', attr: { style: 'font-size:0.8em; font-weight:bold;' } });
-                    pill.createSpan({ text: `#${ctx}` });
-                }
-
-                pill.addEventListener('mousedown', async (ev) => {
+                pill.addEventListener('mousedown', (ev) => {
                     ev.preventDefault();
-
-                    if (isCreateRow && !this.plugin.settings.contexts.includes(ctx)) {
-                        this.plugin.settings.contexts.push(ctx);
-                    }
-                    if (isSelected && !isCreateRow) {
+                    if (isSelected) {
                         this.selectedContexts = this.selectedContexts.filter(c => c !== ctx);
-                    } else if (!this.selectedContexts.includes(ctx)) {
+                    } else {
                         this.selectedContexts.push(ctx);
                     }
-                    this.plugin.settings.selectedContexts = [...this.selectedContexts];
-                    await this.plugin.saveSettings();
-
-                    // Re-render picker in place so multiple items can be selected
-                    showCtxPicker(currentCtxQuery);
-                    textArea.focus();
+                    renderCtxPanel();
                 });
             });
 
-            // ── "Done" pill at the end ────────────────────────────────────────
-            const donePill = ctxPickerEl.createEl('div', {
+            // ── Add new + Done row ─────────────────────────────────────────────
+            const addRow = ctxPanelEl.createEl('div', {
                 attr: {
                     style: [
-                        'display:inline-flex', 'align-items:center',
-                        'padding:6px 14px', 'border-radius:20px',
-                        'font-size:0.85em', 'cursor:pointer', 'flex-shrink:0',
-                        'margin-left:auto',
+                        'display:flex', 'align-items:center', 'gap:6px',
+                        'padding:7px 10px',
+                        'border-top:1px solid var(--background-modifier-border)'
+                    ].join(';')
+                }
+            });
+
+            const newInput = addRow.createEl('input', {
+                attr: {
+                    type: 'text',
+                    placeholder: 'New context…',
+                    style: [
+                        'flex:1', 'min-width:0',
+                        'padding:5px 10px', 'border-radius:16px',
+                        'border:1px solid var(--background-modifier-border)',
+                        'background:var(--background-secondary)',
+                        'color:var(--text-normal)', 'font-size:0.85em',
+                        'outline:none'
+                    ].join(';')
+                }
+            }) as HTMLInputElement;
+
+            const addBtn = addRow.createEl('button', {
+                attr: {
+                    style: [
+                        'padding:5px 10px', 'border-radius:16px', 'border:none',
+                        'background:var(--interactive-accent)', 'color:var(--text-on-accent)',
+                        'font-size:0.85em', 'font-weight:600', 'cursor:pointer', 'flex-shrink:0'
+                    ].join(';')
+                },
+                text: '＋'
+            });
+
+            const doneBtn = addRow.createEl('button', {
+                attr: {
+                    style: [
+                        'padding:5px 12px', 'border-radius:16px', 'border:none',
                         'background:var(--background-modifier-border)',
-                        'color:var(--text-muted)', 'border:1px solid transparent'
+                        'color:var(--text-muted)', 'font-size:0.85em', 'cursor:pointer', 'flex-shrink:0'
                     ].join(';')
                 },
                 text: 'Done'
             });
-            donePill.addEventListener('mousedown', (ev) => { ev.preventDefault(); hideCtxPicker(); textArea.focus(); });
+
+            const doAdd = async () => {
+                const val = newInput.value.trim().replace(/^#+/, '');
+                if (!val) return;
+                if (!this.plugin.settings.contexts.includes(val)) {
+                    this.plugin.settings.contexts.push(val);
+                    await this.plugin.saveSettings();
+                }
+                if (!this.selectedContexts.includes(val)) this.selectedContexts.push(val);
+                newInput.value = '';
+                renderCtxPanel();
+            };
+            addBtn.addEventListener('mousedown', (ev) => { ev.preventDefault(); doAdd(); });
+            newInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); doAdd(); } });
+            doneBtn.addEventListener('mousedown', (ev) => { ev.preventDefault(); hideCtxPanel(); textArea.focus(); });
         };
 
         textArea.addEventListener('input', (e) => { 
@@ -2036,22 +2780,8 @@ ${duesContent}`;
                             target.focus();
                             target.setSelectionRange(before.length + insertText.length, before.length + insertText.length);
                         }, 50);
-                    });
+                    }, this.plugin.settings.newNoteFolder);
                     modal.open();
-                }
-            }
-
-            // @ context picker: phone-only; iPad/desktop use the persistent pill row
-            if (Platform.isMobile && !isTablet()) {
-                const cursor = target.selectionStart;
-                const before = val.substring(0, cursor);
-                const atIdx = before.lastIndexOf('@');
-                // valid trigger: @ found and no space between @ and cursor
-                if (atIdx !== -1 && !before.substring(atIdx + 1).includes(' ')) {
-                    atStartIndex = atIdx;
-                    showCtxPicker(before.substring(atIdx + 1));
-                } else {
-                    hideCtxPicker();
                 }
             }
 
@@ -2068,8 +2798,7 @@ ${duesContent}`;
             this.content = target.value;
         });
 
-        textArea.addEventListener('blur', () => setTimeout(hideCtxPicker, 150));
-        textArea.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') hideCtxPicker(); });
+        textArea.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') hideCtxPanel(); });
 
         // Event listeners for drag/paste
         textArea.addEventListener('paste', async (e: ClipboardEvent) => {
@@ -2110,7 +2839,7 @@ ${duesContent}`;
             attr: {
                 title: 'Attach image or file',
                 style: [
-                    'position:absolute', 'bottom:6px', 'right:6px',
+                    'position:absolute', 'bottom:6px', 'right:34px',
                     'background:transparent', 'border:none',
                     'color:var(--text-muted)', 'opacity:0.5',
                     'padding:2px 4px', 'cursor:pointer',
@@ -2123,6 +2852,29 @@ ${duesContent}`;
         attachBtn.addEventListener('mouseenter', () => attachBtn.style.opacity = '1');
         attachBtn.addEventListener('mouseleave', () => attachBtn.style.opacity = '0.5');
         attachBtn.addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
+
+        // ── Context button (mobile phone only) — opens tag picker panel ──────
+        if (Platform.isMobile && !isTablet()) {
+            const ctxBtn = textAreaWrapper.createEl('button', {
+                attr: {
+                    title: 'Add context',
+                    style: [
+                        'position:absolute', 'bottom:6px', 'right:6px',
+                        'background:transparent', 'border:none',
+                        'color:var(--text-muted)', 'opacity:0.5',
+                        'padding:2px 4px', 'cursor:pointer',
+                        'font-size:1em', 'line-height:1',
+                        'transition:opacity 0.15s', 'z-index:1'
+                    ].join(';')
+                }
+            });
+            ctxBtn.textContent = '#';
+            ctxBtn.style.fontWeight = '700';
+            ctxBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (ctxPanelEl) { hideCtxPanel(); } else { renderCtxPanel(); }
+            });
+        }
 
         const submitBtn = inputSection.createEl('button', { text: 'Sync', attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); padding: 8px 16px; height: 100%; min-height: 40px;' } });
         
@@ -2210,11 +2962,24 @@ ${duesContent}`;
 
         const submitAction = async () => {
             if (this.content.trim().length > 0) {
-                await this.plugin.appendCapture(this.content.trim(), this.selectedContexts, this.isTask, this.isTask ? this.dueDate : undefined, this.replyToId || '');
+                if (this.isTask) {
+                    await this.plugin.createTaskFile(this.content.trim(), this.selectedContexts, this.dueDate || undefined);
+                } else if (this.replyToId) {
+                    const replied = await this.plugin.appendReplyToFile(this.replyToId, this.content.trim());
+                    if (replied) new Notice('Reply added!');
+                } else {
+                    await this.plugin.createThoughtFile(this.content.trim(), this.selectedContexts);
+                }
                 this.content = ''; 
                 textArea.value = '';
                 this.replyToId = null;
                 this.replyToText = null;
+                if (Platform.isMobile && !isTablet()) {
+                    this.selectedContexts = [];
+                    this.plugin.settings.selectedContexts = [];
+                    await this.plugin.saveSettings();
+                }
+                hideCtxPanel();
                 this.renderView();
             } else { new Notice('Please enter some text'); }
         };
@@ -2384,7 +3149,7 @@ ${duesContent}`;
         const captureContainer = container.createEl('div', { attr: { style: `flex-shrink: 0; display: ${this.showCaptureInTasks ? 'block' : 'none'};` } });
         this.renderCaptureMode(captureContainer, false, true);
 
-        this.reviewTasksContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; overflow-y: auto; padding: 5px;' } });
+        this.reviewTasksContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 5px 5px 200px 5px;' } });
         this.updateReviewTasksList();
     }
 
@@ -2460,6 +3225,27 @@ ${duesContent}`;
                 captureSlider.style.backgroundColor = this.showCaptureInThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
                 captureKnob.style.transform = this.showCaptureInThoughts ? 'translateX(14px)' : 'translateX(0)';
                 if (captureContainer) captureContainer.style.display = this.showCaptureInThoughts ? 'block' : 'none';
+            });
+
+            // Toggle TO-DOs
+            const todoToggleContainer = toggleGroup.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;' } });
+            todoToggleContainer.createSpan({ text: 'TO-DOs' });
+            const todoToggleLabel = todoToggleContainer.createEl('label', {
+                attr: { style: 'position: relative; display: inline-block; width: 30px; height: 16px; cursor: pointer;' }
+            });
+            const todoCb = todoToggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
+            todoCb.checked = this.thoughtsFilterTodo;
+            const todoSlider = todoToggleLabel.createEl('span', {
+                attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${this.thoughtsFilterTodo ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 16px;` }
+            });
+            const todoKnob = todoToggleLabel.createEl('span', {
+                attr: { style: `position: absolute; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${this.thoughtsFilterTodo ? 'translateX(14px)' : 'translateX(0)'};` }
+            });
+            todoCb.addEventListener('change', (e) => {
+                this.thoughtsFilterTodo = (e.target as HTMLInputElement).checked;
+                todoSlider.style.backgroundColor = this.thoughtsFilterTodo ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
+                todoKnob.style.transform = this.thoughtsFilterTodo ? 'translateX(14px)' : 'translateX(0)';
+                this.updateReviewThoughtsList();
             });
         };
 
@@ -2544,130 +3330,74 @@ ${duesContent}`;
         captureContainer = container.createEl('div', { attr: { style: `flex-shrink: 0; display: ${this.showCaptureInThoughts ? 'block' : 'none'};` } });
         this.renderCaptureMode(captureContainer, true);
 
-        this.reviewThoughtsContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; overflow-y: auto; padding: 5px;' } });
+        this.reviewThoughtsContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 5px 5px 200px 5px;' } });
         this.updateReviewThoughtsList();
     }
 
     async updateReviewTasksList(appendMore = false) {
         if (!this.reviewTasksContainer) return;
+        if (!appendMore) {
+            this.tasksOffset = 0;
+            this.reviewTasksContainer.empty();
+            this.tasksRowContainer = null;
+        }
 
-        const { vault } = this.plugin.app;
-        const folderPath = this.plugin.settings.captureFolder.trim();
-        const fileName = this.plugin.settings.tasksFilePath.trim();
-        const fullPath = folderPath && folderPath !== '/' ? `${folderPath}/${fileName}` : fileName;
-        const file = vault.getAbstractFileByPath(fullPath) as TFile;
+        let tasks: TaskEntry[] = Array.from(this.plugin.taskIndex.values());
+
+        // Apply status filter
+        if (this.tasksFilterStatus === 'pending') {
+            tasks = tasks.filter(e => e.status === 'open');
+        } else if (this.tasksFilterStatus === 'completed') {
+            tasks = tasks.filter(e => e.status === 'done');
+        }
+
+        // Apply context filter
+        if (this.tasksFilterContext && this.tasksFilterContext.length > 0) {
+            tasks = tasks.filter(e => this.tasksFilterContext.every((ctx: string) => e.context.includes(ctx)));
+        }
+
+        // Apply history filter
+        if (!this.showPreviousTasks) {
+            const today = this.plugin.formatDate(new Date());
+            tasks = tasks.filter(e => e.day === today);
+        }
+
+        // Sort: open tasks first, then by due date (earliest first), then by lastUpdate
+        tasks.sort((a, b) => {
+            if (a.status !== b.status) return a.status === 'open' ? -1 : 1;
+            if (a.due && b.due) return a.due.localeCompare(b.due);
+            if (a.due) return -1;
+            if (b.due) return 1;
+            return b.lastUpdate - a.lastUpdate;
+        });
 
         if (!appendMore) {
-            // Full re-render: clear everything and rebuild the parsed list
-            this.reviewTasksContainer.empty();
-            this._parsedTaskLines = [];
-            this.tasksOffset = 0;
-
-            if (!file) {
+            if (tasks.length === 0) {
                 this.reviewTasksContainer.createEl('p', { text: 'No tasks found.', attr: { style: 'color: var(--text-muted);' } });
                 return;
             }
-
-            try {
-                const content = await this.readCached(file);
-                const lines = content.split('\n');
-                const todayMoment = moment().startOf('day');
-                const startOfWeek = moment().startOf('week');
-                const endOfWeek = moment().endOf('week');
-
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if (!line.startsWith('|') || line.includes('---') || line.includes('| Date |') || line.includes('| Status |')) continue;
-                    const parts = line.split('|');
-                    if (parts.length < 5) continue;
-
-                    const statusPart = parts[1].trim();
-                    const isDone = statusPart.includes('x') || statusPart.includes('X');
-                    if (this.tasksFilterStatus === 'pending' && isDone) continue;
-                    if (this.tasksFilterStatus === 'completed' && !isDone) continue;
-
-                    const captureDateRaw = parts[2]?.trim().replace(/[\[\]]/g, '');
-                    if (!this.showPreviousTasks && captureDateRaw) {
-                        const capDate = moment(captureDateRaw, ['YYYY-MM-DD', this.plugin.settings.dateFormat], true);
-                        if (capDate.isValid() && !capDate.isSame(todayMoment, 'day')) continue;
-                    }
-
-                    let dateRaw = '', modDateStr = '', modTimeStr = '';
-                    if (parts.length >= 9) {
-                        modDateStr = parts[4].trim().replace(/[\[\]]/g, '');
-                        modTimeStr = parts[5].trim();
-                        dateRaw = parts[6]?.trim().replace(/[\[\]]/g, '');
-                        if (!dateRaw) dateRaw = parts[2]?.trim().replace(/[\[\]]/g, '');
-                    } else if (parts.length >= 7) {
-                        dateRaw = parts[4]?.trim().replace(/[\[\]]/g, '');
-                        if (!dateRaw) dateRaw = parts[2]?.trim().replace(/[\[\]]/g, '');
-                        modDateStr = parts[2].trim().replace(/[\[\]]/g, '');
-                        modTimeStr = parts[3].trim();
-                    } else {
-                        dateRaw = parts[2]?.trim().replace(/[\[\]]/g, '');
-                        modDateStr = parts[2].trim().replace(/[\[\]]/g, '');
-                        modTimeStr = parts[3].trim();
-                    }
-
-                    if (this.tasksFilterDate !== 'all') {
-                        if (!dateRaw) continue;
-                        const taskDate = moment(dateRaw, ['YYYY-MM-DD', this.plugin.settings.dateFormat], true);
-                        if (!taskDate.isValid()) continue;
-                        if (this.tasksFilterDate === 'today' && !taskDate.isSame(todayMoment, 'day')) continue;
-                        else if (this.tasksFilterDate === 'today+overdue') {
-                            const isOverdue = !isDone && taskDate.isBefore(todayMoment, 'day');
-                            const isToday = taskDate.isSame(todayMoment, 'day');
-                            if (!isToday && !isOverdue) continue;
-                        } else if (this.tasksFilterDate === 'this-week' && !taskDate.isBetween(startOfWeek, endOfWeek, 'day', '[]')) continue;
-                        else if (this.tasksFilterDate === 'next-week') {
-                            const s = moment().add(1, 'week').startOf('week'), e = moment().add(1, 'week').endOf('week');
-                            if (!taskDate.isBetween(s, e, 'day', '[]')) continue;
-                        } else if (this.tasksFilterDate === 'overdue') {
-                            if (isDone || !taskDate.isBefore(todayMoment, 'day')) continue;
-                        } else if (this.tasksFilterDate === 'custom') {
-                            const s = moment(this.tasksFilterDateStart, 'YYYY-MM-DD').startOf('day');
-                            const e = moment(this.tasksFilterDateEnd, 'YYYY-MM-DD').endOf('day');
-                            if (!taskDate.isBetween(s, e, 'day', '[]')) continue;
-                        }
-                    }
-
-                    const contextPart = parts[parts.length - 2]?.trim() || '';
-                    if (this.tasksFilterContext.length > 0 && !this.tasksFilterContext.some(ctx => contextPart.includes(`#${ctx}`))) continue;
-
-                    const m = moment(`${modDateStr} ${modTimeStr}`, ['YYYY-MM-DD HH:mm', `${this.plugin.settings.dateFormat} ${this.plugin.settings.timeFormat}`]);
-                    this._parsedTaskLines.push({ line, index: i, modTimestamp: m.isValid() ? m.valueOf() : 0, isDone, dateRaw, context: contextPart });
-                }
-
-                this._parsedTaskLines.sort((a, b) => b.modTimestamp - a.modTimestamp);
-            } catch {
-                this.reviewTasksContainer.createEl('p', { text: 'Error loading tasks.', attr: { style: 'color: var(--text-error);' } });
-                return;
-            }
-
-            // Create a stable row container inside the scroll area
             this.tasksRowContainer = this.reviewTasksContainer.createEl('div');
         }
 
-        if (!this.tasksRowContainer || !file) return;
+        if (!this.tasksRowContainer) return;
 
-        // Remove previous "load more" footer before appending
         this.reviewTasksContainer.querySelector('.mina-load-more')?.remove();
 
-        if (this._parsedTaskLines.length === 0 && !appendMore) {
-            this.reviewTasksContainer.createEl('p', { text: 'No tasks matching filters.', attr: { style: 'color: var(--text-muted);' } });
-            return;
-        }
+        const PAGE_SIZE = 30;
+        const page = tasks.slice(this.tasksOffset, this.tasksOffset + PAGE_SIZE);
 
-        const slice = this._parsedTaskLines.slice(this.tasksOffset, this.tasksOffset + this.PAGE_SIZE);
-        for (const tl of slice) {
-            await this.renderTaskRow(tl.line, tl.index, this.tasksRowContainer, file.path, true);
+        for (const entry of page) {
+            try {
+                await this.renderTaskRow(entry, this.tasksRowContainer!);
+            } catch (err) {
+                console.error('MINA: renderTaskRow failed', err);
+            }
         }
-        this.tasksOffset += slice.length;
+        this.tasksOffset += page.length;
 
-        const remaining = this._parsedTaskLines.length - this.tasksOffset;
-        if (remaining > 0) {
+        if (this.tasksOffset < tasks.length) {
             const btn = this.reviewTasksContainer.createEl('button', {
-                text: `Load ${Math.min(remaining, this.PAGE_SIZE)} more tasks…`,
+                text: `Load more (${tasks.length - this.tasksOffset} remaining)`,
                 cls: 'mina-load-more',
                 attr: { style: 'width: 100%; padding: 8px; margin-top: 6px; border-radius: 6px; border: 1px dashed var(--background-modifier-border); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 0.85em;' }
             });
@@ -2677,151 +3407,79 @@ ${duesContent}`;
 
     async updateReviewThoughtsList(appendMore = false) {
         if (!this.reviewThoughtsContainer) return;
-
-        const { vault } = this.plugin.app;
-        const folderPath = this.plugin.settings.captureFolder.trim();
-        const fileName = this.plugin.settings.captureFilePath.trim();
-        const fullPath = folderPath && folderPath !== '/' ? `${folderPath}/${fileName}` : fileName;
-        const file = vault.getAbstractFileByPath(fullPath) as TFile;
-
         if (!appendMore) {
+            this.thoughtsOffset = 0;
             this.reviewThoughtsContainer.empty();
             this._parsedRoots = [];
-            this.thoughtsOffset = 0;
 
-            if (!file) {
-                this.reviewThoughtsContainer.createEl('p', { text: 'No thoughts found.', attr: { style: 'color: var(--text-muted);' } });
-                return;
+            let roots: ThoughtEntry[] = Array.from(this.plugin.thoughtIndex.values());
+
+            // Apply context filter
+            if (this.thoughtsFilterContext.length > 0) {
+                roots = roots.filter(e => this.thoughtsFilterContext.every(ctx => e.context.includes(ctx)));
             }
 
-            try {
-                const content = await this.readCached(file);
-                const lines = content.split('\n');
-                const today = moment().locale('en').format('YYYY-MM-DD');
-                const startOfWeek = moment().startOf('week');
-                const endOfWeek = moment().endOf('week');
+            // Apply history filter
+            if (!this.showPreviousThoughts) {
+                const today = this.plugin.formatDate(new Date());
+                roots = roots.filter(e => e.day === today);
+            }
 
-                const allEntries: ThoughtEntry[] = [];
-                const idMap = new Map<string, ThoughtEntry>();
+            // Apply date filter
+            if (this.thoughtsFilterDate === 'today') {
+                const today = this.plugin.formatDate(new Date());
+                roots = roots.filter(e => e.day === today);
+            } else if (this.thoughtsFilterDate === 'this-week') {
+                const weekStart = moment().startOf('week').valueOf();
+                roots = roots.filter(e => new Date(e.created.replace(' ', 'T')).getTime() >= weekStart);
+            } else if (this.thoughtsFilterDate === 'custom' && this.thoughtsFilterDateStart && this.thoughtsFilterDateEnd) {
+                roots = roots.filter(e => e.day >= this.thoughtsFilterDateStart && e.day <= this.thoughtsFilterDateEnd);
+            }
 
-                // First pass: parse
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if (!line.startsWith('|') || line.includes('---') || line.includes('| Date |') || line.includes('| ID |')) continue;
-                    const parts = line.split('|');
-                    if (parts.length < 5) continue;
+            // Sort by lastThreadUpdate descending
+            roots.sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate);
 
-                    let id = '', parentId = '', dateStr = '', timeStr = '', modDateStr = '', modTimeStr = '', text = '', context = '';
-                    if (parts.length >= 9) {
-                        id = parts[1].trim(); parentId = parts[2].trim(); dateStr = parts[3].trim();
-                        timeStr = parts[4].trim(); modDateStr = parts[5].trim(); modTimeStr = parts[6].trim();
-                        text = parts[7].trim(); context = parts[8].trim();
-                    } else if (parts.length >= 7) {
-                        id = parts[1].trim(); parentId = parts[2].trim(); dateStr = parts[3].trim();
-                        timeStr = parts[4].trim(); modDateStr = parts[3].trim(); modTimeStr = parts[4].trim();
-                        text = parts[5].trim(); context = parts[6].trim();
-                    } else {
-                        dateStr = parts[1].trim(); timeStr = parts[2].trim();
-                        modDateStr = parts[1].trim(); modTimeStr = parts[2].trim();
-                        text = parts[3].trim(); context = parts[4].trim();
-                        id = `legacy-${dateStr}-${timeStr}-${text.substring(0, 10)}`;
-                    }
+            // Filter: only thoughts with at least one open checkbox
+            if (this.thoughtsFilterTodo) {
+                roots = roots.filter(e => {
+                    const fullText = e.body + e.children.map(r => r.text).join('\n');
+                    return /- \[ \]/.test(fullText);
+                });
+            }
 
-                    const m = moment(`${modDateStr.replace(/[\[\]]/g, '')} ${modTimeStr}`, ['YYYY-MM-DD HH:mm', `${this.plugin.settings.dateFormat} ${this.plugin.settings.timeFormat}`]);
-                    const entry: ThoughtEntry = { id, parentId, date: dateStr, time: timeStr, modifiedDate: modDateStr, modifiedTime: modTimeStr, text, context, lineIndex: i, children: [], lastThreadUpdate: m.isValid() ? m.valueOf() : 0 };
-                    allEntries.push(entry);
-                    if (id) idMap.set(id, entry);
-                }
+            this._parsedRoots = roots;
 
-                // Second pass: tree
-                const roots: ThoughtEntry[] = [];
-                for (const entry of allEntries) {
-                    if (entry.parentId && idMap.has(entry.parentId)) idMap.get(entry.parentId)!.children.push(entry);
-                    else roots.push(entry);
-                }
-
-                // Third pass: thread-wide latest update
-                const calcUpdate = (e: ThoughtEntry): number => {
-                    let latest = e.lastThreadUpdate || 0;
-                    for (const c of e.children) { const cl = calcUpdate(c); if (cl > latest) latest = cl; }
-                    e.lastThreadUpdate = latest;
-                    return latest;
-                };
-                for (const root of roots) calcUpdate(root);
-
-                // Filter roots
-                const todayMoment = moment().startOf('day');
-                for (const root of roots) {
-                    const dateRaw = root.date.replace(/\[\[|\]\]/g, '');
-                    if (!this.showPreviousThoughts && dateRaw) {
-                        const d = moment(dateRaw, this.plugin.settings.dateFormat);
-                        if (d.isValid() && !d.isSame(todayMoment, 'day')) continue;
-                    }
-                    if (this.thoughtsFilterContext.length > 0 && !this.thoughtsFilterContext.some(ctx => root.context.includes(`#${ctx}`))) continue;
-                    if (this.thoughtsFilterDate !== 'all') {
-                        const d = moment(dateRaw, this.plugin.settings.dateFormat);
-                        if (this.thoughtsFilterDate === 'today' && dateRaw !== today) continue;
-                        if (this.thoughtsFilterDate === 'this-week' && !d.isBetween(startOfWeek, endOfWeek, 'day', '[]')) continue;
-                        if (this.thoughtsFilterDate === 'custom') {
-                            const s = moment(this.thoughtsFilterDateStart, 'YYYY-MM-DD').startOf('day');
-                            const e = moment(this.thoughtsFilterDateEnd, 'YYYY-MM-DD').endOf('day');
-                            if (!d.isBetween(s, e, 'day', '[]')) continue;
-                        }
-                    }
-                    this._parsedRoots.push(root);
-                }
-
-                this._parsedRoots.sort((a, b) => (b.lastThreadUpdate || 0) - (a.lastThreadUpdate || 0));
-
-                // Seed collapsed state once
-                if (!this.collapsedThreadsSeeded) {
-                    const seed = (e: ThoughtEntry) => { if (e.children.length > 0) { this.collapsedThreads.add(e.id); for (const c of e.children) seed(c); } };
-                    for (const root of this._parsedRoots) seed(root);
-                    this.collapsedThreadsSeeded = true;
-                }
-            } catch (err) {
-                console.error(err);
-                this.reviewThoughtsContainer.createEl('p', { text: 'Error loading thoughts.', attr: { style: 'color: var(--text-error);' } });
+            if (roots.length === 0) {
+                this.reviewThoughtsContainer.createEl('p', { text: 'No thoughts found.', attr: { style: 'color: var(--text-muted);' } });
                 return;
             }
 
             this.thoughtsRowContainer = this.reviewThoughtsContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
         }
 
-        if (!this.thoughtsRowContainer || !file) return;
+        if (!this.thoughtsRowContainer) return;
 
         this.reviewThoughtsContainer.querySelector('.mina-load-more')?.remove();
 
-        if (this._parsedRoots.length === 0 && !appendMore) {
-            this.reviewThoughtsContainer.createEl('p', { text: 'No thoughts matching filters.', attr: { style: 'color: var(--text-muted);' } });
-            return;
-        }
+        const PAGE_SIZE = 20;
+        const page = this._parsedRoots.slice(this.thoughtsOffset, this.thoughtsOffset + PAGE_SIZE);
 
-        const slice = this._parsedRoots.slice(this.thoughtsOffset, this.thoughtsOffset + this.PAGE_SIZE);
-
-        const renderRecursive = async (entry: ThoughtEntry, level: number) => {
+        for (const entry of page) {
             try {
-                await this.renderThoughtRow(entry, this.thoughtsRowContainer!, file.path, level);
+                await this.renderThoughtRow(entry, this.thoughtsRowContainer!, entry.filePath, 0);
             } catch (err) {
                 console.error('MINA: renderThoughtRow failed', err);
-                this.thoughtsRowContainer!.createEl('div', { text: '[Error rendering entry]', attr: { style: 'color:var(--text-error);font-size:0.8em;padding:4px 8px;' } });
             }
-            if (entry.children.length > 0 && !this.collapsedThreads.has(entry.id)) {
-                for (const child of entry.children) await renderRecursive(child, level + 1);
-            }
-        };
+        }
+        this.thoughtsOffset += page.length;
 
-        for (const root of slice) await renderRecursive(root, 0);
-        this.thoughtsOffset += slice.length;
-
-        const remaining = this._parsedRoots.length - this.thoughtsOffset;
-        if (remaining > 0) {
-            const btn = this.reviewThoughtsContainer.createEl('button', {
-                text: `Load ${Math.min(remaining, this.PAGE_SIZE)} more thoughts…`,
+        if (this.thoughtsOffset < this._parsedRoots.length) {
+            const loadMoreBtn = this.reviewThoughtsContainer.createEl('button', {
+                text: `Load more (${this._parsedRoots.length - this.thoughtsOffset} remaining)`,
                 cls: 'mina-load-more',
                 attr: { style: 'width: 100%; padding: 8px; margin-top: 6px; border-radius: 6px; border: 1px dashed var(--background-modifier-border); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 0.85em;' }
             });
-            btn.addEventListener('click', () => this.updateReviewThoughtsList(true));
+            loadMoreBtn.addEventListener('click', () => this.updateReviewThoughtsList(true));
         }
     }
 
@@ -2910,11 +3568,8 @@ ${duesContent}`;
     }
 
     async updatePreview() {
-        // Invalidate cache so the next read picks up the freshly written content
         const folderPath = this.plugin.settings.captureFolder.trim();
-        const thoughtsPath = folderPath && folderPath !== '/' ? `${folderPath}/${this.plugin.settings.captureFilePath.trim()}` : this.plugin.settings.captureFilePath.trim();
         const tasksPath = folderPath && folderPath !== '/' ? `${folderPath}/${this.plugin.settings.tasksFilePath.trim()}` : this.plugin.settings.tasksFilePath.trim();
-        this.invalidateCache(thoughtsPath);
         this.invalidateCache(tasksPath);
 
         if (this.activeTab === 'review-tasks') {
@@ -2924,208 +3579,119 @@ ${duesContent}`;
         }
     }
 
-    async renderTaskRow(line: string, lineIndex: number, container: HTMLElement, filePath: string, isReview: boolean = false) {
-        const el = container.createEl('div', {
-            attr: { style: 'margin-bottom: 8px; padding-bottom: 8px; display: flex; align-items: flex-start;' }
-        });
+    async renderTaskRow(entry: TaskEntry, container: HTMLElement) {
+        const isDone = entry.status === 'done';
+        const row = container.createEl('div', { attr: { style: `display:flex; flex-direction:column; padding:8px; margin-bottom:4px; border-radius:6px; background:var(--background-secondary); opacity:${isDone ? '0.5' : '1'};` } });
 
-        const parts = line.split('|');
-        const isLegacy = parts.length === 6; 
-        
-        const statusPart = parts[1].trim();
-        const isDone = statusPart.includes('x') || statusPart.includes('X');
+        // Top row: toggle + body text + action icons
+        const topRow = row.createEl('div', { attr: { style: 'display:flex; gap:8px; align-items:flex-start;' } });
 
-        // Toggle Switch Container
-        const toggleContainer = el.createEl('label', { 
-            attr: { style: 'position: relative; display: inline-block; width: 36px; height: 20px; margin-right: 12px; margin-top: 2px; flex-shrink: 0; cursor: pointer;' } 
+        // Pill toggle
+        const toggleContainer = topRow.createEl('label', {
+            attr: { style: 'position:relative; display:inline-block; width:36px; height:20px; margin-right:4px; margin-top:2px; flex-shrink:0; cursor:pointer;' }
         });
-        
-        const cb = toggleContainer.createEl('input', { 
-            type: 'checkbox', 
-            attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } 
-        });
+        const cb = toggleContainer.createEl('input', { type: 'checkbox', attr: { style: 'opacity:0; width:0; height:0; position:absolute;' } }) as HTMLInputElement;
         cb.checked = isDone;
-
-        const slider = toggleContainer.createEl('span', { 
-            attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${isDone ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 20px;` } 
+        const slider = toggleContainer.createEl('span', {
+            attr: { style: `position:absolute; top:0; left:0; right:0; bottom:0; background-color:${isDone ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition:.3s; border-radius:20px;` }
         });
-        
-        const knob = toggleContainer.createEl('span', { 
-            attr: { style: `position: absolute; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${isDone ? 'translateX(16px)' : 'translateX(0)'};` } 
+        const knob = toggleContainer.createEl('span', {
+            attr: { style: `position:absolute; height:14px; width:14px; left:3px; bottom:3px; background-color:var(--text-on-accent,white); transition:.3s; border-radius:50%; transform:${isDone ? 'translateX(16px)' : 'translateX(0)'};` }
         });
-
-        cb.addEventListener('change', async (e) => {
-            const isChecked = (e.target as HTMLInputElement).checked;
-            slider.style.backgroundColor = isChecked ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
-            knob.style.transform = isChecked ? 'translateX(16px)' : 'translateX(0)';
-            parts[1] = isChecked ? ' [x] ' : ' [ ] ';
-            await this.updateLineInFile(true, lineIndex, parts.join('|'));
-            if (isReview) await this.updateReviewTasksList();
+        cb.addEventListener('change', async () => {
+            const checked = cb.checked;
+            slider.style.backgroundColor = checked ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
+            knob.style.transform = checked ? 'translateX(16px)' : 'translateX(0)';
+            row.style.opacity = checked ? '0.5' : '1';
+            await this.plugin.toggleTaskStatus(entry.filePath, checked);
+            this.updateReviewTasksList();
         });
 
-        let textToRender = '';
-        let contentIndex = -1;
-        let dueDateRaw = '';
-        let contextStr = '';
+        // Body text
+        const content = topRow.createEl('div', { attr: { style: 'flex:1; min-width:0;' } });
+        const textEl = content.createEl('div', { attr: { style: `word-break:break-word; font-size:0.95em; line-height:1.4; ${isDone ? 'text-decoration:line-through; opacity:0.7;' : ''}` } });
+        const bodyText = entry.body || entry.title;
+        await MarkdownRenderer.render(this.plugin.app, bodyText, textEl, entry.filePath, this);
+        this.hookInternalLinks(textEl, entry.filePath);
+        this.hookImageZoom(textEl);
+        const firstP = textEl.querySelector('p');
+        if (firstP) { firstP.style.marginTop = '0'; firstP.style.marginBottom = '0'; }
 
-        if (parts.length >= 9) { // 8-column schema
-            dueDateRaw = parts[6].trim().replace(/[\[\]]/g, '');
-            textToRender = parts[7]?.trim() || '';
-            contentIndex = 7;
-            contextStr = (parts[8] || '').trim();
-        } else if (parts.length >= 7) { // 6-column schema
-            dueDateRaw = parts.length >= 8 ? parts[4].trim().replace(/[\[\]]/g, '') : '';
-            textToRender = parts[5]?.trim() || '';
-            contentIndex = 5;
-            contextStr = (parts[6] || '').trim();
-        } else {
-            textToRender = parts[4]?.trim() || '';
-            contentIndex = 4;
-            contextStr = (parts[5] || '').trim();
-        }
-
-        const contentDiv = el.createEl('div', { attr: { style: 'flex-grow: 1; display: flex; flex-direction: column; min-width: 0;' } });
-
-        // Main Content Row (Text + Actions)
-        const mainContentRow = contentDiv.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 4px;' } });
-
-        const renderTarget = mainContentRow.createEl('div', { cls: 'mina-card', attr: { style: 'cursor: text; font-size: 0.95em; line-height: 1.4; color: var(--text-normal); word-break: break-word; flex-grow: 1;' } });
-        await MarkdownRenderer.render(this.plugin.app, textToRender, renderTarget, filePath, this);
-        this.hookInternalLinks(renderTarget, filePath);
-        this.hookImageZoom(renderTarget);
-        const firstP = renderTarget.querySelector('p');
-        if (firstP) {
-            firstP.style.marginTop = '0';
-            firstP.style.marginBottom = '0';
-        }
-
-        const actionsDiv = mainContentRow.createEl('div', { attr: { style: 'display: flex; gap: 8px; align-items: center; flex-shrink: 0; margin-top: 2px;' } });
-        const editBtn = actionsDiv.createSpan({ text: '✏️', attr: { style: 'cursor: pointer; font-size: 0.85em; opacity: 0.7; transition: opacity 0.2s;' } });
-                const deleteBtn = actionsDiv.createSpan({ text: '🗑️', attr: { style: 'cursor: pointer; font-size: 0.85em; opacity: 0.7; transition: opacity 0.2s;' } });
-        
+        // Action icons
+        const actions = topRow.createEl('div', { attr: { style: 'display:flex; gap:4px; align-items:flex-start; flex-shrink:0;' } });
+        const editBtn = actions.createEl('span', { text: '✏️', attr: { style: 'cursor:pointer; font-size:0.85em; opacity:0.7; transition:opacity 0.2s;', title: 'Edit' } });
         editBtn.addEventListener('mouseenter', () => editBtn.style.opacity = '1');
         editBtn.addEventListener('mouseleave', () => editBtn.style.opacity = '0.7');
-        deleteBtn.addEventListener('mouseenter', () => deleteBtn.style.opacity = '1');
-        deleteBtn.addEventListener('mouseleave', () => deleteBtn.style.opacity = '0.7');
+        const delBtn = actions.createEl('span', { text: '🗑️', attr: { style: 'cursor:pointer; font-size:0.85em; opacity:0.7; transition:opacity 0.2s;', title: 'Delete' } });
+        delBtn.addEventListener('mouseenter', () => delBtn.style.opacity = '1');
+        delBtn.addEventListener('mouseleave', () => delBtn.style.opacity = '0.7');
 
-        deleteBtn.addEventListener('click', async () => {
-            const modal = new ConfirmModal(this.plugin.app, 'Delete this task?', async () => {
-                await this.updateLineInFile(true, lineIndex, null);
-                if (isReview) await this.updateReviewTasksList();
-                else await this.updatePreview();
-            });
-            modal.open();
-        });
-
-        // Footer: Due Date & Context (Lower Left) + Capture Date (Lower Right)
-        const footerDiv = contentDiv.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: center; margin-top: 2px; flex-wrap: wrap; gap: 4px;' } });
-
-        const lowerLeftContainer = footerDiv.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 10px; font-size: 0.75em; color: var(--text-muted); flex-wrap: wrap;' } });
-        
-        if (parts.length >= 8) {
-            const dueDateContainer = lowerLeftContainer.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 4px;' } });
-            
-            // Overdue indicator — shown on the row itself so it's visible at a glance
-            if (dueDateRaw && !isDone) {
-                const dueM = moment(dueDateRaw, ['YYYY-MM-DD', this.plugin.settings.dateFormat], true);
-                const todayM = moment().startOf('day');
-                if (dueM.isValid() && dueM.isBefore(todayM, 'day')) {
-                    el.style.borderLeft = '3px solid var(--text-error)';
-                    el.style.paddingLeft = '8px';
-                    dueDateContainer.createSpan({
-                        text: '⚠ OVERDUE',
-                        attr: { style: 'color: var(--text-error); font-weight: 700; font-size: 0.85em; letter-spacing: 0.03em;' }
-                    });
-                }
-            }
-
-            dueDateContainer.createSpan({ text: '🗓️ Due:' });
-            const dateInput = dueDateContainer.createEl('input', { 
-                type: 'date', 
-                attr: { style: 'font-size: 1em; padding: 0; background: transparent; border: none; color: var(--text-normal); cursor: pointer; outline: none;' } 
-            });
-            dateInput.value = dueDateRaw;
-            dateInput.addEventListener('change', async () => {
-                const newVal = dateInput.value;
-                parts[4] = newVal ? ` [[${newVal}]] ` : ' ';
-                await this.updateLineInFile(true, lineIndex, parts.join('|'));
-                if (isReview) await this.updateReviewTasksList();
-            });
-        }
-
-        if (contextStr) {
-            lowerLeftContainer.createSpan({ 
-                text: contextStr, 
-                attr: { style: 'color: var(--text-accent); font-weight: 500; background-color: var(--background-secondary-alt); padding: 2px 6px; border-radius: 4px;' } 
-            });
-        }
-
-        const captureDateContainer = footerDiv.createEl('div', { attr: { style: 'font-size: 0.65em; color: var(--text-muted); opacity: 0.7;' } });
-        captureDateContainer.createSpan({ text: `${parts[2].trim()} ${parts[3].trim()}` });
-
-        const startEdit = () => {
-            const initialContext = contextStr; // already parsed correctly from the right column above
-            const initialDueDate = parts.length >= 8 ? parts[4].trim().replace(/[\[\]]/g, '') : null;
-            
+        editBtn.addEventListener('click', () => {
             const modal = new EditEntryModal(
-                this.plugin.app,
-                this.plugin,
-                textToRender,
-                initialContext,
-                initialDueDate,
+                this.plugin.app, this.plugin,
+                entry.body,
+                entry.context.map(c => `#${c}`).join(' '),
+                entry.due || null,
                 true,
-                async (newText: string, newContext: string, newDueDate: string | null) => {
-                    let changed = false;
-
-                    if (newText !== textToRender) {
-                        parts[contentIndex] = ` ${newText} `;
-                        changed = true;
-                    }
-
-                    if (parts.length >= 8 && newDueDate !== initialDueDate) {
-                        parts[4] = newDueDate ? ` [[${newDueDate}]] ` : ' ';
-                        changed = true;
-                    }
-
-                    // Match the same schema thresholds used when reading contextStr above
-                    const ctxIndex = parts.length >= 10 ? 8 : parts.length >= 8 ? 6 : 5;
-                    if (newContext !== initialContext) {
-                        parts[ctxIndex] = ` ${newContext} `;
-                        changed = true;
-                    }
-
-                    if (changed) {
-                        await this.updateLineInFile(true, lineIndex, parts.join('|'));
-                        await this.updatePreview();
-                    }
+                async (newText: string, newCtxStr: string, newDue: string | null) => {
+                    const ctxArr = newCtxStr ? newCtxStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : [];
+                    await this.plugin.editTaskBody(entry.filePath, newText.replace(/<br>/g, '\n'), ctxArr, newDue || undefined);
+                    this.updateReviewTasksList();
                 }
             );
             modal.open();
-        };
-        renderTarget.addEventListener('dblclick', startEdit);
-        editBtn.addEventListener('click', startEdit);
+        });
+
+        delBtn.addEventListener('click', () => {
+            new ConfirmModal(this.plugin.app, 'Move this task to trash?', async () => {
+                await this.plugin.deleteTaskFile(entry.filePath);
+                this.updateReviewTasksList();
+            }).open();
+        });
+
+        // Bottom meta row: due date (left) + context pills (right)
+        const metaRow = row.createEl('div', { attr: { style: 'display:flex; justify-content:space-between; align-items:center; margin-top:5px; flex-wrap:wrap; gap:4px;' } });
+
+        const dueLeft = metaRow.createEl('div', { attr: { style: 'display:flex; align-items:center; gap:4px;' } });
+        if (entry.due) {
+            const dueM = moment(entry.due, 'YYYY-MM-DD', true);
+            const todayM = moment().startOf('day');
+            const isOverdue = !isDone && dueM.isValid() && dueM.isBefore(todayM, 'day');
+            const color = isOverdue ? 'var(--text-error)' : 'var(--text-muted)';
+            dueLeft.createEl('span', {
+                text: `📅 ${entry.due}`,
+                attr: { style: `font-size:0.8em; color:${color}; ${isOverdue ? 'font-weight:600;' : ''}` }
+            });
+            if (isOverdue) dueLeft.createEl('span', { text: '⚠', attr: { style: 'font-size:0.8em; color:var(--text-error);' } });
+        }
+
+        const ctxRight = metaRow.createEl('div', { attr: { style: 'display:flex; flex-wrap:wrap; gap:4px; justify-content:flex-end;' } });
+        for (const ctx of entry.context) {
+            ctxRight.createEl('span', { text: `#${ctx}`, attr: { style: 'font-size:0.8em; color:var(--text-accent); background:var(--background-secondary-alt); padding:1px 6px; border-radius:4px;' } });
+        }
     }
 
     async renderThoughtRow(entry: ThoughtEntry, container: HTMLElement, filePath: string, level: number = 0) {
+        const isCollapsed = this.collapsedThreads.has(entry.filePath);
         const indentStep = (Platform.isMobile && !isTablet()) ? 12 : 24;
+
         const itemEl = container.createEl('div', {
             attr: { style: `margin-bottom: 3px; padding-bottom: 3px; display: flex; align-items: flex-start; ${level > 0 ? `margin-left: ${level * indentStep}px; border-left: 2px solid var(--background-modifier-border); padding-left: 6px;` : ''}` }
         });
 
-        // Icon Section (Collapse + Thinking Icon)
-        const iconSection = itemEl.createEl('div', { 
-            attr: { style: 'width: 28px; margin-right: 6px; margin-top: 2px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 2px;' } 
+        // Icon Section
+        const iconSection = itemEl.createEl('div', {
+            attr: { style: 'width: 28px; margin-right: 6px; margin-top: 2px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 2px;' }
         });
 
-        if (entry.children.length > 0) {
-            const isCollapsed = this.collapsedThreads.has(entry.id);
-            const collapseBtn = iconSection.createEl('div', { 
-                text: isCollapsed ? '▶' : '▼', 
-                attr: { style: 'cursor: pointer; font-size: 0.7em; opacity: 0.5; transition: 0.2s;' } 
+        if (level === 0 && entry.children.length > 0) {
+            const collapseBtn = iconSection.createEl('div', {
+                text: isCollapsed ? '▶' : '▼',
+                attr: { style: 'cursor: pointer; font-size: 0.7em; opacity: 0.5; transition: 0.2s;' }
             });
             collapseBtn.addEventListener('click', () => {
-                if (isCollapsed) this.collapsedThreads.delete(entry.id);
-                else this.collapsedThreads.add(entry.id);
+                if (isCollapsed) this.collapsedThreads.delete(entry.filePath);
+                else this.collapsedThreads.add(entry.filePath);
                 this.updateReviewThoughtsList();
             });
         }
@@ -3133,114 +3699,158 @@ ${duesContent}`;
         if (level === 0) {
             const iconContainer = iconSection.createEl('div', { attr: { style: 'width: 28px; height: 28px; border-radius: 50%; overflow: hidden; flex-shrink: 0;' } });
             const img = iconContainer.createEl('img', { attr: { style: 'width: 100%; height: 100%; display: block;' } });
-            img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(WOLF_SVG)}`;
+            img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(NINJA_AVATAR_SVG)}`;
         }
 
-        if (entry.children.length > 0) {
-            iconSection.createEl('div', { 
-                text: `${entry.children.length}`, 
-                attr: { style: 'font-size: 0.65em; color: var(--text-accent); font-weight: bold; background: var(--background-secondary-alt); padding: 1px 4px; border-radius: 4px; margin-top: 2px;' } 
+        if (level === 0 && entry.children.length > 0) {
+            iconSection.createEl('div', {
+                text: `${entry.children.length}`,
+                attr: { style: 'font-size: 0.65em; color: var(--text-accent); font-weight: bold; background: var(--background-secondary-alt); padding: 1px 4px; border-radius: 4px; margin-top: 2px;' }
             });
         }
 
         const contentDiv = itemEl.createEl('div', { attr: { style: 'flex-grow: 1; display: flex; flex-direction: column; min-width: 0;' } });
-
-        // Main Content Row (full-width card, actions overlaid inside on hover)
         const mainContentRow = contentDiv.createEl('div', { attr: { style: 'display: flex; margin-bottom: 0; position: relative;' } });
-
         const cardWrapper = mainContentRow.createEl('div', { attr: { style: 'position: relative; flex-grow: 1; min-width: 0;' } });
         const renderTarget = cardWrapper.createEl('div', { cls: 'mina-card', attr: { style: 'cursor: text; font-size: 0.95em; line-height: 1.4; color: var(--text-normal); word-break: break-word;' } });
+
+        // Date/time display in top right
+        const timeDisplay = `${entry.day} ${entry.created.split(' ')[1] || ''}`;
         renderTarget.createEl('span', {
-            text: `${entry.date.replace(/[\[\]]/g, '')} ${entry.time}`,
+            text: timeDisplay,
             attr: { style: 'float: right; font-size: 0.65em; color: var(--text-muted); opacity: 0.7; margin-left: 8px;' }
         });
-        // Decode <br> storage artifact → real newlines so markdown lists/checklists render correctly
-        const decodedText = entry.text.replace(/<br>/gi, '\n');
-        const textWithContext = decodedText + (entry.context ? ' ' + entry.context : '');
-        await MarkdownRenderer.render(this.plugin.app, textWithContext, renderTarget, filePath, this);
+
+        // Render body markdown
+        await MarkdownRenderer.render(this.plugin.app, entry.body, renderTarget, filePath, this);
         this.hookInternalLinks(renderTarget, filePath);
         this.hookImageZoom(renderTarget);
         this.hookCheckboxes(renderTarget, entry);
         const firstP = renderTarget.querySelector('p');
-        if (firstP) {
-            firstP.style.marginTop = '0';
-            firstP.style.marginBottom = '0';
-        }
+        if (firstP) { firstP.style.marginTop = '0'; firstP.style.marginBottom = '0'; }
 
+        // Actions overlay (on hover)
         const actionsDiv = cardWrapper.createEl('div', { attr: { style: 'position: absolute; top: 2px; right: 4px; display: flex; gap: 6px; align-items: center; opacity: 0; transition: opacity 0.15s; background: var(--background-secondary); border-radius: 4px; padding: 1px 4px;' } });
         cardWrapper.addEventListener('mouseenter', () => actionsDiv.style.opacity = '1');
         cardWrapper.addEventListener('mouseleave', () => actionsDiv.style.opacity = '0');
 
-        const replyBtn = actionsDiv.createSpan({ text: '↩️', attr: { style: 'cursor: pointer; font-size: 0.8em;' } });
-        const editBtn = actionsDiv.createSpan({ text: '✏️', attr: { style: 'cursor: pointer; font-size: 0.8em;' } });
-        
-        let deleteBtn: HTMLElement | null = null;
-        if (entry.children.length === 0) {
-            deleteBtn = actionsDiv.createSpan({ text: '🗑️', attr: { style: 'cursor: pointer; font-size: 0.8em;' } });
-            deleteBtn.addEventListener('click', async () => {
-                const modal = new ConfirmModal(this.plugin.app, 'Delete this thought?', async () => {
-                    await this.updateLineInFile(false, entry.lineIndex, null);
-                    await this.updatePreview();
-                });
-                modal.open();
-            });
-        }
-
-        replyBtn.addEventListener('click', () => {
-            this.replyToId = entry.id;
-            this.replyToText = entry.text.length > 50 ? entry.text.substring(0, 50) + '...' : entry.text;
-            this.showCaptureInThoughts = true;
-            this.renderView();
-            // Focus textarea
-            setTimeout(() => {
-                const ta = this.containerEl.querySelector('textarea');
-                if (ta) ta.focus();
-            }, 100);
+        // Open file link
+        const openBtn = actionsDiv.createSpan({ text: '🔗', attr: { style: 'cursor: pointer; font-size: 0.8em;', title: 'Open file' } });
+        openBtn.addEventListener('click', () => {
+            this.plugin.app.workspace.openLinkText(entry.filePath, '', 'window');
         });
 
-        // Footer (kept for future use)
-        const footerDiv = contentDiv.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: center; margin-top: 2px;' } });
-        const lowerLeftContainer = footerDiv.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 10px; font-size: 0.75em; color: var(--text-muted);' } });
+        const replyBtn = actionsDiv.createSpan({ text: '↩️', attr: { style: 'cursor: pointer; font-size: 0.8em;' } });
+        const editBtn = actionsDiv.createSpan({ text: '✏️', attr: { style: 'cursor: pointer; font-size: 0.8em;' } });
+        const deleteBtn = actionsDiv.createSpan({ text: '🗑️', attr: { style: 'cursor: pointer; font-size: 0.8em;' } });
+
+        deleteBtn.addEventListener('click', async () => {
+            new ConfirmModal(this.plugin.app, 'Move this thought to trash?', async () => {
+                await this.plugin.deleteThoughtFile(entry.filePath);
+                this.updateReviewThoughtsList();
+            }).open();
+        });
+
+        replyBtn.addEventListener('click', () => {
+            this.replyToId = entry.filePath;
+            this.replyToText = entry.body.length > 50 ? entry.body.substring(0, 50) + '...' : entry.body;
+            this.showCaptureInThoughts = true;
+            this.renderView();
+            setTimeout(() => {
+                const ta = this.containerEl.querySelector('textarea');
+                if (ta) (ta as HTMLTextAreaElement).focus();
+            }, 100);
+        });
 
         const startEdit = () => {
             const modal = new EditEntryModal(
                 this.plugin.app,
                 this.plugin,
-                entry.text,
-                entry.context,
+                entry.body,
+                entry.context.map(c => `#${c}`).join(' '),
                 null,
                 false,
-                async (newText: string, newContext: string, _: string | null) => {
-                    const { vault } = this.plugin.app;
-                    const folderPath = this.plugin.settings.captureFolder.trim();
-                    const fileName = this.plugin.settings.captureFilePath.trim();
-                    const fullPath = folderPath && folderPath !== '/' ? `${folderPath}/${fileName}` : fileName;
-                    const file = vault.getAbstractFileByPath(fullPath) as TFile;
-                    if (!file) return;
-
-                    const content = await vault.read(file);
-                    const lines = content.split('\n');
-                    const parts = lines[entry.lineIndex].split('|');
-                    
-                    let changed = false;
-                    // Match the same schema thresholds used when parsing ThoughtEntry
-                    let textIndex: number, ctxIndex: number;
-                    if (parts.length >= 9) { textIndex = 7; ctxIndex = 8; }       // 8-column new format
-                    else if (parts.length >= 7) { textIndex = 5; ctxIndex = 6; }  // 6-column old format
-                    else { textIndex = 3; ctxIndex = 4; }                          // legacy 4-column
-
-                    if (newText !== entry.text.replace(/\n/g, '<br>')) { parts[textIndex] = ` ${newText} `; changed = true; }
-                    if (newContext !== entry.context) { parts[ctxIndex] = ` ${newContext} `; changed = true; }
-                    if (changed) {
-                        await this.updateLineInFile(false, entry.lineIndex, parts.join('|'));
-                        await this.updatePreview();
-                    }
+                async (newText: string, newContextStr: string, _: string | null) => {
+                    const newContexts = newContextStr ? newContextStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : [];
+                    await this.plugin.editThoughtBody(entry.filePath, newText.replace(/<br>/g, '\n'), newContexts);
                 }
             );
             modal.open();
         };
         renderTarget.addEventListener('dblclick', startEdit);
         editBtn.addEventListener('click', startEdit);
+
+        // Context pills appended at end of body text
+        if (entry.context.length > 0) {
+            const ctxRow = renderTarget.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px;' } });
+            for (const ctx of entry.context) {
+                ctxRow.createEl('span', {
+                    text: `#${ctx}`,
+                    attr: { style: 'font-size: 0.75em; color: var(--text-accent); font-weight: 500; background-color: var(--background-secondary-alt); padding: 2px 6px; border-radius: 4px;' }
+                });
+            }
+        }
+
+        // Render replies if not collapsed
+        if (level === 0 && !isCollapsed && entry.children.length > 0) {
+            for (const reply of entry.children) {
+                await this.renderReplyRow(reply, entry, container);
+            }
+        }
+    }
+
+    async renderReplyRow(reply: ReplyEntry, parent: ThoughtEntry, container: HTMLElement) {
+        const indentStep = (Platform.isMobile && !isTablet()) ? 12 : 24;
+        const itemEl = container.createEl('div', {
+            attr: { style: `margin-bottom: 3px; padding-bottom: 3px; display: flex; align-items: flex-start; margin-left: ${indentStep}px; border-left: 2px solid var(--background-modifier-border); padding-left: 6px;` }
+        });
+
+        const contentDiv = itemEl.createEl('div', { attr: { style: 'flex-grow: 1; display: flex; flex-direction: column; min-width: 0;' } });
+        const mainContentRow = contentDiv.createEl('div', { attr: { style: 'display: flex; margin-bottom: 0; position: relative;' } });
+        const cardWrapper = mainContentRow.createEl('div', { attr: { style: 'position: relative; flex-grow: 1; min-width: 0;' } });
+        const renderTarget = cardWrapper.createEl('div', { cls: 'mina-card', attr: { style: 'cursor: text; font-size: 0.95em; line-height: 1.4; color: var(--text-normal); word-break: break-word;' } });
+
+        renderTarget.createEl('span', {
+            text: `${reply.date} ${reply.time}`,
+            attr: { style: 'float: right; font-size: 0.65em; color: var(--text-muted); opacity: 0.7; margin-left: 8px;' }
+        });
+
+        await MarkdownRenderer.render(this.plugin.app, reply.text, renderTarget, parent.filePath, this);
+        this.hookInternalLinks(renderTarget, parent.filePath);
+        this.hookImageZoom(renderTarget);
+        const firstP = renderTarget.querySelector('p');
+        if (firstP) { firstP.style.marginTop = '0'; firstP.style.marginBottom = '0'; }
+
+        const actionsDiv = cardWrapper.createEl('div', { attr: { style: 'position: absolute; top: 2px; right: 4px; display: flex; gap: 6px; align-items: center; opacity: 0; transition: opacity 0.15s; background: var(--background-secondary); border-radius: 4px; padding: 1px 4px;' } });
+        cardWrapper.addEventListener('mouseenter', () => actionsDiv.style.opacity = '1');
+        cardWrapper.addEventListener('mouseleave', () => actionsDiv.style.opacity = '0');
+
+        const editBtn = actionsDiv.createSpan({ text: '✏️', attr: { style: 'cursor: pointer; font-size: 0.8em;' } });
+        const deleteBtn = actionsDiv.createSpan({ text: '🗑️', attr: { style: 'cursor: pointer; font-size: 0.8em;' } });
+
+        deleteBtn.addEventListener('click', async () => {
+            new ConfirmModal(this.plugin.app, 'Delete this reply?', async () => {
+                await this.plugin.deleteReply(parent.filePath, reply.anchor);
+                this.updateReviewThoughtsList();
+            }).open();
+        });
+
+        const startReplyEdit = () => {
+            const modal = new EditEntryModal(
+                this.plugin.app,
+                this.plugin,
+                reply.text,
+                '',
+                null,
+                false,
+                async (newText: string, _: string, __: string | null) => {
+                    await this.plugin.editReply(parent.filePath, reply.anchor, newText.replace(/<br>/g, '\n'));
+                }
+            );
+            modal.open();
+        };
+        renderTarget.addEventListener('dblclick', startReplyEdit);
+        editBtn.addEventListener('click', startReplyEdit);
     }
 }
 
@@ -3250,11 +3860,12 @@ class MinaSettingTab extends PluginSettingTab {
 	display(): void {
 		const {containerEl} = this;
 		containerEl.empty();
-        new Setting(containerEl).setName('Capture Folder').setDesc('Folder for capture files.').addText(text => text.setPlaceholder('Enter folder path...').setValue(this.plugin.settings.captureFolder).onChange(async (value) => { this.plugin.settings.captureFolder = value; await this.plugin.saveSettings(); }));
-		new Setting(containerEl).setName('Thoughts File Name').setDesc('File for thoughts.').addText(text => text.setPlaceholder('Thoughts.md').setValue(this.plugin.settings.captureFilePath).onChange(async (value) => { this.plugin.settings.captureFilePath = value; await this.plugin.saveSettings(); }));
-        new Setting(containerEl).setName('Tasks File Name').setDesc('File for tasks.').addText(text => text.setPlaceholder('Tasks.md').setValue(this.plugin.settings.tasksFilePath).onChange(async (value) => { this.plugin.settings.tasksFilePath = value; await this.plugin.saveSettings(); }));
+        new Setting(containerEl).setName('Tasks Folder').setDesc('Folder where MINA V2 task files are stored.').addText(text => text.setPlaceholder('000 Bin/MINA V2 Tasks').setValue(this.plugin.settings.tasksFolder).onChange(async (value) => { this.plugin.settings.tasksFolder = value; await this.plugin.saveSettings(); }));
+        new Setting(containerEl).setName('Thoughts Folder').setDesc('Folder where MINA V2 thought files are stored.').addText(text => text.setPlaceholder('000 Bin/MINA V2').setValue(this.plugin.settings.thoughtsFolder).onChange(async (value) => { this.plugin.settings.thoughtsFolder = value; await this.plugin.saveSettings(); }));
+        new Setting(containerEl).setName('Personal Finance Folder').setDesc('Folder scanned by the Dues tab for recurring payment notes.').addText(text => text.setPlaceholder('000 Bin/MINA V2 PF').setValue(this.plugin.settings.pfFolder).onChange(async (value) => { this.plugin.settings.pfFolder = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('Date format').addText(text => text.setPlaceholder('YYYY-MM-DD').setValue(this.plugin.settings.dateFormat).onChange(async (value) => { this.plugin.settings.dateFormat = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('Time format').addText(text => text.setPlaceholder('HH:mm').setValue(this.plugin.settings.timeFormat).onChange(async (value) => { this.plugin.settings.timeFormat = value; await this.plugin.saveSettings(); }));
+        new Setting(containerEl).setName('New Note Folder').setDesc('Folder where notes created via the \\ link picker are saved.').addText(text => text.setPlaceholder('000 Bin').setValue(this.plugin.settings.newNoteFolder).onChange(async (value) => { this.plugin.settings.newNoteFolder = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('Gemini API Key').setDesc('API key for the MINA AI chat tab (Google Gemini).').addText(text => { text.setPlaceholder('AIza...').setValue(this.plugin.settings.geminiApiKey).onChange(async (value) => { this.plugin.settings.geminiApiKey = value.trim(); await this.plugin.saveSettings(); }); text.inputEl.type = 'password'; });
         new Setting(containerEl).setName('Gemini Model').setDesc('Model to use for the MINA AI chat.').addDropdown(drop => {
             const models: Record<string, string> = {
@@ -3279,3 +3890,4 @@ class MinaSettingTab extends PluginSettingTab {
         });
 	}
 }
+
