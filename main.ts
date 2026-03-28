@@ -2211,7 +2211,7 @@ class MinaView extends ItemView {
             this.chatHistory.push({ role: 'user', text });
             await this.renderChatHistory();
 
-            const thinking = this.chatContainer.createEl('div', { attr: { style: 'align-self: flex-start; font-size: 0.85em; color: var(--text-muted); font-style: italic;' } });
+            const thinking = this.chatContainer.createEl('div', { attr: { style: 'font-size: 0.85em; color: var(--text-muted); font-style: italic; margin-bottom: 8px;' } });
             this.chatContainer.prepend(thinking);
             thinking.setText('MINA is thinking…');
 
@@ -2296,9 +2296,9 @@ class MinaView extends ItemView {
             setTimeout(() => textarea.focus(), 50);
         }
 
-        // Chat history — scrollable area below
+        // Chat history — plain block scroll container (no flex, avoids height constraints on children)
         this.chatContainer = container.createEl('div', {
-            attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 8px 8px 200px 8px; display: flex; flex-direction: column; gap: 8px;' }
+            attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 8px 8px 200px 8px;' }
         });
         await this.renderChatHistory();
     }
@@ -2311,23 +2311,27 @@ class MinaView extends ItemView {
             return;
         }
 
-        // Render newest first
-        for (const msg of [...this.chatHistory].reverse()) {
+        const maxW = Platform.isMobile ? '95%' : '85%';
+
+        // Render oldest → newest (natural order), scroll to bottom after
+        for (const msg of this.chatHistory) {
             const isUser = msg.role === 'user';
-            const bubble = this.chatContainer.createEl('div', {
-                attr: { style: `max-width: ${Platform.isMobile ? '95%' : '85%'}; padding: 8px 12px; border-radius: 12px; font-size: 0.9em; line-height: 1.5; word-break: break-word; align-self: ${isUser ? 'flex-end' : 'flex-start'}; background: ${isUser ? 'var(--interactive-accent)' : 'var(--background-secondary)'}; color: ${isUser ? 'var(--text-on-accent)' : 'var(--text-normal)'};` }
+
+            // Row wrapper handles left/right alignment without constraining height
+            const row = this.chatContainer.createEl('div', {
+                attr: { style: `display: flex; justify-content: ${isUser ? 'flex-end' : 'flex-start'}; margin-bottom: 8px;` }
+            });
+            const bubble = row.createEl('div', {
+                attr: { style: `max-width: ${maxW}; padding: 8px 12px; border-radius: 12px; font-size: 0.9em; line-height: 1.5; word-break: break-word; background: ${isUser ? 'var(--interactive-accent)' : 'var(--background-secondary)'}; color: ${isUser ? 'var(--text-on-accent)' : 'var(--text-normal)'};` }
             });
 
             if (isUser) {
                 bubble.style.whiteSpace = 'pre-wrap';
                 bubble.setText(msg.text);
             } else {
-                // Render markdown for assistant messages
                 await MarkdownRenderer.render(this.plugin.app, msg.text, bubble, '', this);
                 this.hookInternalLinks(bubble, '');
-                // Remove default paragraph margin for tighter bubbles
                 bubble.querySelectorAll('p').forEach((p: HTMLElement) => { p.style.marginTop = '0'; p.style.marginBottom = '4px'; });
-                // Wrap tables in a scrollable container so they don't distort on mobile
                 bubble.querySelectorAll('table').forEach((table: HTMLElement) => {
                     const wrapper = document.createElement('div');
                     wrapper.style.cssText = 'overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; margin: 6px 0;';
@@ -2342,7 +2346,7 @@ class MinaView extends ItemView {
 
             // Save as Thought button — only on assistant messages
             if (!isUser) {
-                const actions = this.chatContainer.createEl('div', { attr: { style: 'align-self: flex-start; display: flex; gap: 6px; margin-top: -4px; margin-bottom: 2px;' } });
+                const actions = this.chatContainer.createEl('div', { attr: { style: 'display: flex; gap: 6px; margin-top: -4px; margin-bottom: 8px;' } });
                 const saveBtn = actions.createEl('button', {
                     text: '💾 Save as Thought',
                     attr: { style: 'padding: 2px 8px; font-size: 0.72em; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: transparent; color: var(--text-muted); cursor: pointer;' }
@@ -2364,6 +2368,9 @@ class MinaView extends ItemView {
                 });
             }
         }
+
+        // Scroll to bottom so newest message is always visible
+        this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
     }
 
     async callGemini(userMessage: string, groundedFiles: TFile[] = [], webSearch: boolean = false): Promise<string> {
