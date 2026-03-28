@@ -2273,7 +2273,7 @@ class MinaView extends ItemView {
         for (const msg of [...this.chatHistory].reverse()) {
             const isUser = msg.role === 'user';
             const bubble = this.chatContainer.createEl('div', {
-                attr: { style: `max-width: 85%; padding: 8px 12px; border-radius: 12px; font-size: 0.9em; line-height: 1.5; word-break: break-word; align-self: ${isUser ? 'flex-end' : 'flex-start'}; background: ${isUser ? 'var(--interactive-accent)' : 'var(--background-secondary)'}; color: ${isUser ? 'var(--text-on-accent)' : 'var(--text-normal)'};` }
+                attr: { style: `max-width: ${Platform.isMobile ? '95%' : '85%'}; padding: 8px 12px; border-radius: 12px; font-size: 0.9em; line-height: 1.5; word-break: break-word; align-self: ${isUser ? 'flex-end' : 'flex-start'}; background: ${isUser ? 'var(--interactive-accent)' : 'var(--background-secondary)'}; color: ${isUser ? 'var(--text-on-accent)' : 'var(--text-normal)'}; overflow: hidden;` }
             });
 
             if (isUser) {
@@ -2285,6 +2285,17 @@ class MinaView extends ItemView {
                 this.hookInternalLinks(bubble, '');
                 // Remove default paragraph margin for tighter bubbles
                 bubble.querySelectorAll('p').forEach((p: HTMLElement) => { p.style.marginTop = '0'; p.style.marginBottom = '4px'; });
+                // Wrap tables in a scrollable container so they don't distort on mobile
+                bubble.querySelectorAll('table').forEach((table: HTMLElement) => {
+                    const wrapper = document.createElement('div');
+                    wrapper.style.cssText = 'overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; margin: 6px 0;';
+                    table.parentNode?.insertBefore(wrapper, table);
+                    wrapper.appendChild(table);
+                    table.style.cssText = 'min-width: max-content; border-collapse: collapse; font-size: 0.9em;';
+                    table.querySelectorAll('th, td').forEach((cell: HTMLElement) => {
+                        cell.style.cssText = 'padding: 4px 8px; border: 1px solid var(--background-modifier-border); white-space: nowrap;';
+                    });
+                });
             }
 
             // Save as Thought button — only on assistant messages
