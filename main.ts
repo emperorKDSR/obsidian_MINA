@@ -2200,7 +2200,7 @@ class MinaView extends ItemView {
 
         // ── Chat container — scrollable area ────────────────────────────────
         this.chatContainer = wrapper.createEl('div', {
-            attr: { style: 'flex-grow:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 8px 80px 8px;' }
+            attr: { style: 'flex-grow:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 8px 130px 8px;' }
         });
         await this.renderChatHistory();
 
