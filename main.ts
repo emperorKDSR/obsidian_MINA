@@ -2125,13 +2125,8 @@ class MinaView extends ItemView {
     }
 
     async renderMinaMode(container: HTMLElement) {
-        container.style.display = 'flex';
-        container.style.flexDirection = 'column';
-        container.style.overflow = 'hidden';
-        if (!Platform.isMobile) container.style.height = '100%';
-
         if (!this.plugin.settings.geminiApiKey) {
-            const warn = container.createEl('div', { attr: { style: 'padding: 20px; color: var(--text-muted); font-size: 0.9em;' } });
+            const warn = container.createEl('div', { attr: { style: 'flex-grow:1;padding:20px;color:var(--text-muted);font-size:0.9em;' } });
             warn.createEl('p', { text: '⚠️ No Gemini API key set.' });
             warn.createEl('p', { text: 'Add your key in Settings → MINA → Gemini API Key.' });
             return;
@@ -2139,11 +2134,21 @@ class MinaView extends ItemView {
 
         const isMobilePhone = Platform.isMobile && !isTablet();
 
-        // ── 1+2. Grounded notes bar — TOP, just below tabs ────────────────────
-        const groundedBar = container.createEl('div', {
-            attr: { style: 'flex-shrink: 0; display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding: 5px 10px; border-bottom: 1px solid var(--background-modifier-border); background: var(--background-secondary); -webkit-overflow-scrolling: touch;' }
+        // ── Wrapper ─────────────────────────────────────────────────────────
+        const wrapper = container.createEl('div', {
+            attr: {
+                style: Platform.isMobile
+                    ? 'flex-grow:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;'
+                    : 'flex-grow:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;'
+            }
+        });
+
+        // ── Grounded notes bar — always at top ──────────────────────────────
+        const groundedBar = wrapper.createEl('div', {
+            attr: { style: 'flex-shrink:0;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:5px 10px;border-bottom:1px solid var(--background-modifier-border);background:var(--background-secondary);-webkit-overflow-scrolling:touch;' }
         });
         this.groundedNotesBar = groundedBar;
+
         const defaultChips = [{ icon: '💭', label: 'Th' }, { icon: '✅', label: 'Ta' }, { icon: '💳', label: 'Du' }];
         const defChipSty  = 'flex-shrink:0;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;background:var(--background-modifier-border);color:var(--text-muted);font-size:0.78em;font-weight:500;';
         const userChipSty = 'flex-shrink:0;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;background:var(--interactive-accent-hover);color:var(--text-normal);font-size:0.78em;font-weight:500;cursor:default;';
@@ -2170,53 +2175,31 @@ class MinaView extends ItemView {
         };
         refreshGroundedBar();
 
-        // ── 3. Chat area — fills available space between grounded bar and input ─
-        this.chatContainer = container.createEl('div', {
-            attr: { style: 'flex-grow:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 8px 12px 8px;' }
+        // ── Chat container — scrollable area ────────────────────────────────
+        this.chatContainer = wrapper.createEl('div', {
+            attr: { style: 'flex-grow:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 8px 80px 8px;' }
         });
         await this.renderChatHistory();
 
-        // ── 4. Input area — BOTTOM ─────────────────────────────────────────────
-        const inputRow = container.createEl('div', {
-            attr: { style: 'flex-shrink:0;position:relative;padding:8px;border-top:1px solid var(--background-modifier-border);background:var(--background-secondary);' }
-        });
-        // 3. Mobile: 1-row textarea, expands on focus
-        const textarea = inputRow.createEl('textarea', {
-            attr: {
-                placeholder: 'Ask MINA…',
-                rows: isMobilePhone ? '1' : '3',
-                style: 'width:100%;resize:none;font-size:0.9em;padding:8px 110px 8px 10px;border-radius:6px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);font-family:inherit;box-sizing:border-box;'
-            }
-        });
-        if (isMobilePhone) {
-            textarea.addEventListener('focus', () => { textarea.rows = 4; });
-            textarea.addEventListener('blur',  () => { if (!textarea.value.trim()) textarea.rows = 1; });
-        }
-        const overlayBtns   = inputRow.createEl('div', { attr: { style: 'position:absolute;bottom:16px;right:16px;display:flex;gap:4px;align-items:center;' } });
+        // ── Input area — shared textarea + buttons (created once) ───────────
+        const textarea = document.createElement('textarea');
+        textarea.placeholder = 'Ask MINA…';
+        textarea.rows = isMobilePhone ? 4 : 3;
+        textarea.style.cssText = 'width:100%;resize:none;font-size:0.9em;padding:8px 110px 8px 10px;border-radius:6px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);font-family:inherit;box-sizing:border-box;';
+
+        const overlayBtns = document.createElement('div');
+        overlayBtns.style.cssText = 'position:absolute;bottom:16px;right:16px;display:flex;gap:4px;align-items:center;';
         const sendBtn        = overlayBtns.createEl('button', { text: '↑',  attr: { style: 'padding:3px 10px;font-size:1em;font-weight:700;border-radius:5px;background:var(--interactive-accent);color:var(--text-on-accent);border:none;cursor:pointer;', title: 'Send' } });
         const saveSessionBtn = overlayBtns.createEl('button', { text: '📥', attr: { style: 'padding:3px 6px;font-size:0.85em;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;', title: 'Save session' } });
         const newChatBtn     = overlayBtns.createEl('button', { text: '🗒️', attr: { style: 'padding:3px 6px;font-size:0.85em;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;', title: 'New chat' } });
         const recallBtn      = overlayBtns.createEl('button', { text: '📂', attr: { style: 'padding:3px 6px;font-size:0.85em;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;', title: 'Recall session' } });
 
-        // 4. Mobile keyboard: shrink container height to visualViewport so input stays above keyboard
-        if (isMobilePhone) {
-            const vv = window.visualViewport;
-            const adjust = () => {
-                const vh = vv ? (vv.height + (vv.offsetTop ?? 0)) : window.innerHeight;
-                container.style.height = vh + 'px';
-                this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
-            };
-            vv?.addEventListener('resize', adjust);
-            vv?.addEventListener('scroll', adjust);
-        }
-
-        // ── Send logic ─────────────────────────────────────────────────────────
+        // ── Send logic ───────────────────────────────────────────────────────
         const send = async () => {
             const text = textarea.value.trim();
             if (!text) return;
             textarea.value = '';
-            // 5. On mobile: collapse textarea + hide keyboard before thinking
-            if (isMobilePhone) { textarea.rows = 1; textarea.blur(); }
+            if (isMobilePhone) { textarea.blur(); closeMobileInput(); }
             textarea.disabled = true;
             sendBtn.disabled = true;
 
@@ -2242,6 +2225,15 @@ class MinaView extends ItemView {
         };
 
         sendBtn.addEventListener('click', send);
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); return; }
+            if (e.key === '\\') {
+                e.preventDefault();
+                new NotePickerModal(this.plugin.app, async (file) => {
+                    if (!this.groundedNotes.find(n => n.path === file.path)) { this.groundedNotes.push(file); refreshGroundedBar(); new Notice(`📎 Grounded on: ${file.basename}`); }
+                }).open();
+            }
+        });
 
         saveSessionBtn.addEventListener('click', async () => {
             if (this.chatHistory.length === 0) { new Notice('No chat to save.'); return; }
@@ -2273,17 +2265,61 @@ class MinaView extends ItemView {
             }).open();
         });
 
-        textarea.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); return; }
-            if (e.key === '\\') {
-                e.preventDefault();
-                new NotePickerModal(this.plugin.app, async (file) => {
-                    if (!this.groundedNotes.find(n => n.path === file.path)) { this.groundedNotes.push(file); refreshGroundedBar(); new Notice(`📎 Grounded on: ${file.basename}`); }
-                }).open();
-            }
-        });
+        // ── Mobile: floating brain FAB + slide-up input overlay ─────────────
+        let mobileInputOverlay: HTMLElement | null = null;
+        let fab: HTMLElement | null = null;
 
-        if (!isMobilePhone) setTimeout(() => textarea.focus(), 50);
+        const closeMobileInput = () => {
+            if (mobileInputOverlay) { mobileInputOverlay.style.display = 'none'; }
+            if (fab) { fab.style.display = 'flex'; }
+        };
+
+        if (isMobilePhone) {
+            // FAB — floating brain button, bottom-right
+            fab = wrapper.createEl('div', {
+                attr: {
+                    style: 'position:absolute;bottom:24px;right:16px;z-index:20;width:52px;height:52px;border-radius:50%;background:var(--interactive-accent);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.3);cursor:pointer;-webkit-tap-highlight-color:transparent;',
+                    title: 'Ask MINA'
+                }
+            });
+            fab.innerHTML = NINJA_AVATAR_SVG;
+            const svgEl = fab.querySelector('svg');
+            if (svgEl) { svgEl.setAttribute('width', '28'); svgEl.setAttribute('height', '28'); svgEl.style.stroke = 'var(--text-on-accent)'; }
+
+            // Overlay panel — full-width bar that slides up from bottom
+            mobileInputOverlay = wrapper.createEl('div', {
+                attr: {
+                    style: 'position:absolute;bottom:0;left:0;right:0;z-index:20;padding:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));background:var(--background-secondary);border-top:1px solid var(--background-modifier-border);display:none;'
+                }
+            });
+            const inputWrap = mobileInputOverlay.createEl('div', { attr: { style: 'position:relative;' } });
+            inputWrap.appendChild(textarea);
+            inputWrap.appendChild(overlayBtns);
+
+            fab.addEventListener('click', () => {
+                fab!.style.display = 'none';
+                mobileInputOverlay!.style.display = 'block';
+                setTimeout(() => textarea.focus(), 50);
+            });
+
+            // When the user taps outside or keyboard dismisses
+            textarea.addEventListener('blur', () => {
+                // Short delay so button click events can fire first
+                setTimeout(() => {
+                    if (!textarea.value.trim() && document.activeElement !== textarea) {
+                        closeMobileInput();
+                    }
+                }, 200);
+            });
+        } else {
+            // Desktop: input row sits at the bottom of the flex column
+            const inputRow = wrapper.createEl('div', {
+                attr: { style: 'flex-shrink:0;position:relative;padding:8px;border-top:1px solid var(--background-modifier-border);background:var(--background-secondary);' }
+            });
+            inputRow.appendChild(textarea);
+            inputRow.appendChild(overlayBtns);
+            setTimeout(() => textarea.focus(), 50);
+        }
     }
 
     async renderChatHistory() {
