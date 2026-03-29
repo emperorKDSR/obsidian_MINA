@@ -17,7 +17,7 @@ All new captures need to be appended in the beginning of the file.
 The "MINA V2" plugin has been developed with the following features and implementations:
 
 1. **User Interface (UI) & Aesthetics**
-   - **Tabbed Navigation:** Five tabs with short labels: **Th** (Thoughts), **Ta** (Tasks), **Ai** (AI Chat), **Du** (Dues), **Se** (Settings).
+   - **Tabbed Navigation:** Six tabs with short labels: **Th** (Thoughts), **Ta** (Tasks), **Ai** (AI Chat), **Du** (Dues), **Vo** (Voice), **Se** (Settings).
    - **Modern Card-Based Layout:** Thoughts and tasks are displayed in responsive "cards" with rounded corners and dynamic backgrounds.
      - **Dark Mode:** Transparent white background (`rgba(255, 255, 255, 0.05)`).
      - **Light Mode:** Subtle grey background (`rgba(0, 0, 0, 0.05)`).
@@ -35,7 +35,9 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Toggle Switches:** Pill-shaped toggle switches for task status, History, and Capture visibility.
      - **Brain/Dragon Avatar:** Root thoughts are marked with a circular brain SVG icon (red outline, Lucide-style); replies are streamlined without the icon.
      - **Brain Ribbon Icon:** The Obsidian sidebar ribbon uses the same brain SVG as the plugin icon.
-   - **Desktop Optimization:** Standalone windows hide native tab headers and include a dedicated **drag handle** at the top.
+   - **Desktop Optimization:** 
+     - Standalone windows hide native tab headers and include a dedicated **drag handle** at the top.
+     - **Separate Windows:** Tabs can be opened into a separate window altogether via a pop-out button (⧉) in the navigation bar.
    - **Mobile Optimization:**
      - **Opens as Main Tab:** On mobile, MINA opens as a full workspace tab (not a sidebar).
      - **Vertical Reordering:** Toggles (History/Capture) move above filters on mobile for easier thumb access.
@@ -48,7 +50,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
        - Selection is **fully reset after each Sync** — both `this.selectedContexts = []` and `plugin.settings.selectedContexts = []` are cleared and saved before `renderView()` so re-initialization starts fresh.
      - **File Attachment Button (`📎`):** Absolutely positioned in the textarea, shifted left to make room for the `#` button. Triggers a hidden `<input type="file" multiple>` to attach images or files.
      - **Left-Aligned Due Date Selector:** On mobile, the task due date selector is left-aligned (no `margin-left: auto`).
-   - **Scroll Padding:** All four main scrollable tab areas (Thoughts, Tasks, AI Chat, Dues) have `padding-bottom: 200px` so the last row is never flush against the bottom of the viewport.
+   - **Scroll Padding:** All five main scrollable tab areas (Thoughts, Tasks, AI Chat, Dues, Voice) have `padding-bottom: 200px` so the last row is never flush against the bottom of the viewport.
 
 2. **Review & Management**
    - **Modification Tracking:** Every entry tracks its **Modified Date** and **Modified Time**.
@@ -102,6 +104,8 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - **Thoughts/Tasks File Names:** Fully customizable storage paths.
    - **Date/Time Formats:** User-configurable moment.js formats.
    - **New Note Folder:** Folder where notes created via the `\` link picker are saved. Default: `000 Bin`. Also exposed in Obsidian's plugin settings page.
+   - **Voice Memo Folder:** Folder where recorded voice notes are stored. Default: `000 Bin/MINA V2 Voice`.
+   - **Transcription Language:** Target language for audio transcription/translation. Default: `English`.
    - **Gemini API Key:** Stored securely (password field).
    - **Gemini Model:** Dropdown to select from available Gemini models. Default: `gemini-2.5-flash`.
    - **Max Output Tokens:** User-configurable `maxOutputTokens` for Gemini API (range: 256–65536, default: 65536). Prevents incomplete AI responses.
@@ -145,6 +149,21 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - Fields: Payable Name (→ filename), Save folder, Next Due Date, Last Payment Date, Amount, Notes.
      - Frontmatter written: `category`, `active_status`, `next_duedate`, `last_payment`, `amount`.
      - **Mobile:** Same top-anchored, keyboard-aware layout as Pay modal.
+
+7. **Voice Notes Tab (Vo)**
+   - **Recording UI:** Large central record button (●) with a running timer and status indicator.
+   - **Intelligent Media Recording:** 
+     - Automatically detects supported MIME types (`webm` on desktop/Android, `mp4/m4a` on iOS) for cross-platform playback compatibility.
+     - Saves files with timestamped names (e.g., `voice-YYYYMMDD-HHmmss.m4a`) to the configured `voiceMemoFolder`.
+   - **Voice Memo Cards:** Vertical stack layout showing Date/Time, native `<audio controls>` player, and action buttons.
+   - **Gemini Transcription & Translation:** 
+     - Uses Gemini 1.5 Flash (or user-selected model) to transcribe audio.
+     - **Two-Step Prompt:** "First, transcribe the audio in its original language. Second, translate the transcribed text into [Language]."
+     - Transcription saves as a new thought, tagged with `#transcribed` and `#voice-note`, and contains a link back to the audio file (e.g., `[[voice-20260329-103000.m4a]]`).
+   - **Transcription Status:** Backlink detection automatically marks recordings with a "✅ Transcribed" badge if they are linked from any file in the thoughts folder.
+   - **Management:** 
+     - **Native Playback:** Uses HTML5 `<audio>` element with `getResourcePath` for reliable performance on all platforms.
+     - **Internal Deletion:** `🗑️` button triggers a `ConfirmModal` (not a native browser popup) to safely remove recordings from the vault.
 
 ## Data Schema
 
@@ -204,7 +223,7 @@ When splitting a markdown table row by `|`, the part indices are:
 - **`#` context button (mobile phone):** Positioned `position:absolute; bottom:6px; right:6px` inside `textAreaWrapper`. The `📎` attach button shifts to `right:34px`. Tapping toggles `ctxPanelEl`. Panel layout: 2-row horizontal scroll grid of `inline-flex` pills + a bottom row with text input, `＋` add button, and Done button. `renderCtxPanel()` rebuilds the entire panel. `hideCtxPanel()` removes it. After Sync on mobile phone: `this.selectedContexts = []`, `this.plugin.settings.selectedContexts = []`, `await this.plugin.saveSettings()`, then `hideCtxPanel()` + `renderView()`.
 - **`\` note linker with create:** `FileSuggestModal` extends `SuggestModal<TFile | string>`. `getSuggestions(query)` returns fuzzy-matched files + a leading `string` entry (the raw query) when no exact basename match exists. `renderSuggestion` styles the string entry with a `＋` prefix in accent color. `onChooseSuggestion` for a string: ensures folder exists via `vault.getAbstractFileByPath` + `vault.createFolder`, then calls `vault.create(folder/name.md, '')`.
 - **`📎` attach button:** Absolutely positioned at `bottom:6px; right:34px` in `textAreaWrapper` (shifted left from `right:6px` to make room for `#` button on mobile). Hidden `<input type="file">` lives inside `textAreaWrapper`.
-- **Scroll padding:** `padding-bottom: 200px` applied to all four tab scroll containers: `reviewThoughtsContainer`, `reviewTasksContainer`, `chatContainer`, and the Dues `wrap` div. AI chat container uses 130px bottom padding on mobile.
+- **Scroll padding:** `padding-bottom: 200px` applied to all five tab scroll containers: `reviewThoughtsContainer`, `reviewTasksContainer`, `chatContainer`, the Dues `wrap` div, and the Voice `wrap` div. AI chat container uses 130px bottom padding on mobile.
 - **Task card layout:** Two-row flex column. Top row: `toggleContainer` + `content (flex:1)` + `actions`. Bottom `metaRow`: `dueLeft` (due date + overdue badge) left-aligned, `ctxRight` (context pills) right-aligned, separated by `justify-content: space-between`.
 - **Thought context placement:** Context pills appended as a `div` (flex row, `gap:4px`, `margin-top:5px`) directly inside `renderTarget` (the card body) after `MarkdownRenderer.render`.
 - **`hookImageZoom`:** `position:fixed; inset:0` overlay. Mouse drag via `mousedown` on image + `mousemove`/`mouseup` on document.
@@ -223,3 +242,6 @@ When splitting a markdown table row by `|`, the part indices are:
 - **Thoughts default filter:** `thoughtsFilterDate` defaults to `'last-5-days'`. Filter: `entryDay >= moment().subtract(4, 'days').startOf('day')`.
 - **Chat session save format:** `**You:** message\n\n**MINA:** response\n\n`. Parsed back by `parseChatSession()` line-by-line into `chatHistory` array.
 - **`ChatSessionPickerModal`:** Extends `FuzzySuggestModal<TFile>`. Lists files matching `MINA Chat *.md` in thoughts folder, sorted by `stat.mtime` descending.
+- **Dynamic MIME Recording:** `MediaRecorder` checks `isTypeSupported` to choose between `webm` and `mp4/m4a` (iOS), ensuring playable files across all devices.
+- **Transcription Translation:** `transcribeAudio` uses a two-step prompt ("Transcribe then Translate") to ensure voice notes are converted to the user's preferred language.
+- **Internal Confirmation:** Plugin uses its own `ConfirmModal` for voice note deletion to maintain a consistent UI and stay within the application flow.
