@@ -48,6 +48,8 @@ interface MinaSettings {
     geminiModel: string;
     maxOutputTokens: number;
     newNoteFolder: string;
+    voiceMemoFolder: string;
+    transcriptionLanguage: string;
 }
 
 /** Convert any locale-specific digit characters to ASCII 0-9.
@@ -84,7 +86,9 @@ const DEFAULT_SETTINGS: MinaSettings = {
     geminiApiKey: '',
     geminiModel: 'gemini-2.5-flash',
     maxOutputTokens: 65536,
-    newNoteFolder: '000 Bin'
+    newNoteFolder: '000 Bin',
+    voiceMemoFolder: '000 Bin/MINA V2 Voice',
+    transcriptionLanguage: 'English'
 }
 
 export default class MinaPlugin extends Plugin {
@@ -1733,7 +1737,16 @@ class MinaView extends ItemView {
     content: string;
     isTask: boolean;
     dueDate: string; // YYYY-MM-DD
-    activeTab: 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' | 'dues' = 'review-thoughts';
+    activeTab: 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' | 'dues' | 'vo' = 'review-thoughts';
+
+    // Voice Recording State
+    mediaRecorder: MediaRecorder | null = null;
+    audioChunks: Blob[] = [];
+    isRecording: boolean = false;
+    recordingStartTime: number = 0;
+    recordingTimerInterval: any = null;
+    playbackAudio: HTMLAudioElement | null = null;
+    currentObjectUrl: string | null = null;
 
     // AI Chat State
     chatHistory: { role: 'user' | 'assistant'; text: string }[] = [];
@@ -1922,6 +1935,12 @@ class MinaView extends ItemView {
         });
         duesTab.addEventListener('click', () => { this.activeTab = 'dues'; this.renderView(); });
 
+        const voiceTab = nav.createEl('button', { 
+            text: 'Vo', 
+            attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'vo' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` } 
+        });
+        voiceTab.addEventListener('click', () => { this.activeTab = 'vo'; this.renderView(); });
+
         const settingsTab = nav.createEl('button', {
             text: 'Se',
             attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'settings' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` }
@@ -1936,6 +1955,8 @@ class MinaView extends ItemView {
             this.renderDuesMode(container);
         } else if (this.activeTab === 'settings') {
             this.renderSettingsMode(container);
+        } else if (this.activeTab === 'vo') {
+            this.renderVoiceMode(container);
         } else {
             this.renderReviewThoughtsMode(container);
         }
@@ -2090,6 +2111,8 @@ class MinaView extends ItemView {
         field('Date Format', 'moment.js format, e.g. YYYY-MM-DD', row => input(row, this.plugin.settings.dateFormat, 'YYYY-MM-DD', 'text', async v => { this.plugin.settings.dateFormat = v; await this.plugin.saveSettings(); }));
         field('Time Format', 'moment.js format, e.g. HH:mm', row => input(row, this.plugin.settings.timeFormat, 'HH:mm', 'text', async v => { this.plugin.settings.timeFormat = v; await this.plugin.saveSettings(); }));
         field('New Note Folder', 'Folder where notes created via \\ link are saved.', row => input(row, this.plugin.settings.newNoteFolder, '000 Bin', 'text', async v => { this.plugin.settings.newNoteFolder = v; await this.plugin.saveSettings(); }));
+        field('Voice Memo Folder', 'Folder where recorded voice notes will be stored.', row => input(row, this.plugin.settings.voiceMemoFolder, '000 Bin/MINA V2 Voice', 'text', async v => { this.plugin.settings.voiceMemoFolder = v; await this.plugin.saveSettings(); }));
+        field('Transcription Language', 'Target language for audio transcription (e.g., English, Japanese).', row => input(row, this.plugin.settings.transcriptionLanguage, 'English', 'text', async v => { this.plugin.settings.transcriptionLanguage = v; await this.plugin.saveSettings(); }));
         field('Gemini API Key', 'Your Google Gemini API key.', row => input(row, this.plugin.settings.geminiApiKey, 'AIza...', 'password', async v => { this.plugin.settings.geminiApiKey = v.trim(); await this.plugin.saveSettings(); }));
 
         field('Gemini Model', 'Model to use for MINA AI chat.', row => {
@@ -4061,6 +4084,236 @@ ${duesContent}${groundedSection}`;
         renderTarget.addEventListener('dblclick', startReplyEdit);
         editBtn.addEventListener('click', startReplyEdit);
     }
+
+    async renderVoiceMode(container: HTMLElement) {
+        const wrap = container.createEl('div', { attr: { style: 'padding: 12px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; flex-grow: 1; padding-bottom: 200px;' } });
+
+        const recorderSection = wrap.createEl('div', { attr: { style: 'display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 15px; background: var(--background-secondary); border-radius: 8px;' } });
+        const recordButton = recorderSection.createEl('button', { attr: { style: 'width: 80px; height: 80px; border-radius: 50%; border: 4px solid var(--background-modifier-border); background-color: #c0392b; color: white; font-size: 1.2em; cursor: pointer; transition: all 0.2s;' } });
+        recordButton.setText('●');
+
+        const timerDisplay = recorderSection.createEl('div', { text: '00:00', attr: { style: 'font-family: monospace; font-size: 1.1em; color: var(--text-muted);' } });
+        const statusDisplay = recorderSection.createEl('div', { text: 'Ready to record', attr: { style: 'font-size: 0.8em; color: var(--text-faint);' } });
+
+        recordButton.addEventListener('click', () => {
+            if (this.isRecording) {
+                this.stopRecording();
+            } else {
+                this.startRecording(recordButton, timerDisplay, statusDisplay);
+            }
+        });
+
+        const listSection = wrap.createEl('div');
+        listSection.createEl('h4', { text: 'Your Voice Notes', attr: { style: 'margin-bottom: 10px;' } });
+        const recordingsContainer = listSection.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px;' } });
+
+        const voiceFolder = this.plugin.settings.voiceMemoFolder;
+        const files = this.app.vault.getFiles().filter(f => f.path.startsWith(voiceFolder + '/') && (f.extension === 'webm' || f.extension === 'mp3' || f.extension === 'wav' || f.extension === 'm4a'));
+        files.sort((a, b) => b.stat.ctime - a.stat.ctime);
+
+        if (files.length === 0) {
+            recordingsContainer.createEl('p', { text: 'No voice notes recorded yet.', attr: { style: 'color: var(--text-muted); font-size: 0.9em;' } });
+        } else {
+            for (const file of files) {
+                const card = recordingsContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--background-secondary); border-radius: 8px;' } });
+
+                const header = card.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
+                header.createEl('div', { text: moment(file.stat.ctime).format('YYYY-MM-DD HH:mm'), attr: { style: 'font-weight: 500;' } });
+
+                const transcriptionStatusContainer = header.createEl('div');
+                this.getTranscriptionStatus(file).then(isTranscribed => {
+                    if (isTranscribed) {
+                        transcriptionStatusContainer.createEl('span', { text: '✅ Transcribed', attr: { style: 'font-size: 0.8em; color: var(--text-success); background-color: var(--background-primary); padding: 3px 7px; border-radius: 4px;' } });
+                    }
+                });
+
+                const audioEl = card.createEl('audio', { attr: { controls: true, src: this.app.vault.getResourcePath(file), style: 'width: 100%; height: 35px;' } });
+
+                const actions = card.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
+
+                const transcribeBtn = actions.createEl('button', { text: 'Transcribe', attr: { style: 'background: var(--interactive-accent); color: var(--text-on-accent); font-size: 0.85em; padding: 5px 12px; border-radius: 5px;' } });
+                transcribeBtn.addEventListener('click', async () => {
+                    transcribeBtn.setText('...');
+                    transcribeBtn.disabled = true;
+                    try {
+                        new Notice('Starting transcription...');
+                        const transcription = await this.transcribeAudio(file);
+                        const thoughtText = `Transcription of [[${file.path}]]\n\n${transcription}`;
+                        await this.plugin.createThoughtFile(thoughtText, ['#transcribed', '#voice-note']);
+                        new Notice('Transcription saved as thought.');
+                        this.renderView();
+                    } catch (error) {
+                        new Notice('Transcription failed: ' + error.message);
+                        transcribeBtn.setText('Transcribe');
+                        transcribeBtn.disabled = false;
+                    }
+                });
+
+                const deleteBtn = actions.createEl('button', { text: '🗑️', attr: { title: 'Delete', style: 'background: none; border: none; font-size: 1.2em; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; padding: 5px;' } });
+                deleteBtn.addEventListener('click', async () => {
+                    new ConfirmModal(this.app, 'Delete this voice note?', async () => {
+                        await this.app.vault.delete(file);
+                        new Notice(`Voice note deleted.`);
+                        this.renderView();
+                    }).open();
+                });
+            }        }
+    }
+
+    async startRecording(recordButton: HTMLElement, timerDisplay: HTMLElement, statusDisplay: HTMLElement) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            let mimeType = 'audio/webm';
+            let ext = 'webm';
+            if (MediaRecorder.isTypeSupported('audio/webm')) {
+                mimeType = 'audio/webm';
+                ext = 'webm';
+            } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                mimeType = 'audio/mp4';
+                ext = 'm4a';
+            } else if (MediaRecorder.isTypeSupported('audio/mpeg')) {
+                mimeType = 'audio/mpeg';
+                ext = 'mp3';
+            } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+                mimeType = 'audio/ogg';
+                ext = 'ogg';
+            } else {
+                mimeType = '';
+                ext = 'm4a'; // safe fallback
+            }
+
+            this.mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+            this.audioChunks = [];
+            this.isRecording = true;
+            
+            this.mediaRecorder.ondataavailable = event => {
+                this.audioChunks.push(event.data);
+            };
+
+            this.mediaRecorder.onstop = async () => {
+                const audioBlob = mimeType ? new Blob(this.audioChunks, { type: mimeType }) : new Blob(this.audioChunks);
+                const arrayBuffer = await audioBlob.arrayBuffer();
+
+                const folderPath = this.plugin.settings.voiceMemoFolder;
+                if (!this.app.vault.getAbstractFileByPath(folderPath)) {
+                    await this.app.vault.createFolder(folderPath);
+                }
+
+                const filename = `voice-${moment().format('YYYYMMDD-HHmmss')}.${ext}`;
+                const filePath = `${folderPath}/${filename}`;
+                
+                await this.app.vault.createBinary(filePath, arrayBuffer);
+                
+                new Notice(`Voice note saved: ${filename}`);
+                this.isRecording = false;
+                stream.getTracks().forEach(track => track.stop());
+                this.renderView();
+            };
+
+            this.mediaRecorder.start();
+            statusDisplay.setText('Recording...');
+            recordButton.style.backgroundColor = '#e74c3c';
+            recordButton.setText('■');
+
+            this.recordingStartTime = Date.now();
+            this.recordingTimerInterval = setInterval(() => {
+                const elapsed = Date.now() - this.recordingStartTime;
+                const minutes = Math.floor(elapsed / 60000);
+                const seconds = Math.floor((elapsed % 60000) / 1000);
+                timerDisplay.setText(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+            }, 1000);
+
+        } catch (err) {
+            new Notice('Microphone access denied. Please enable it in your browser settings.');
+            console.error("Error accessing microphone:", err);
+        }
+    }
+
+    stopRecording() {
+        if (this.mediaRecorder && this.isRecording) {
+            this.mediaRecorder.stop();
+            this.isRecording = false;
+            if (this.recordingTimerInterval) {
+                clearInterval(this.recordingTimerInterval);
+                this.recordingTimerInterval = null;
+            }
+        }
+    }
+
+    async getTranscriptionStatus(audioFile: TFile): Promise<boolean> {
+        // @ts-ignore - getBacklinksForFile is an undocumented but stable API
+        const backlinks = (this.app.metadataCache as any).getBacklinksForFile(audioFile);
+        const thoughtFolder = this.plugin.settings.thoughtsFolder.trim();
+        if(!backlinks || !backlinks.data) return false;
+        
+        for (const path in backlinks.data) {
+            if (path.startsWith(thoughtFolder)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    async transcribeAudio(file: TFile): Promise<string> {
+        const { geminiApiKey, geminiModel, transcriptionLanguage } = this.plugin.settings;
+        if (!geminiApiKey) throw new Error("Gemini API key is not set.");
+
+        const audioBuffer = await this.app.vault.readBinary(file);
+        
+        // Browser-compatible way to convert ArrayBuffer to base64
+        let binary = '';
+        const bytes = new Uint8Array(audioBuffer);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        const base64Audio = btoa(binary);
+        
+        let mimeType = 'audio/webm';
+        if (file.extension === 'm4a' || file.extension === 'mp4') mimeType = 'audio/mp4';
+        else if (file.extension === 'mp3') mimeType = 'audio/mp3';
+        else if (file.extension === 'wav') mimeType = 'audio/wav';
+        else if (file.extension === 'ogg') mimeType = 'audio/ogg';
+
+        const requestBody = {
+            "contents": [{
+                "parts": [
+                    { "text": `First, transcribe the audio in its original language. Second, translate the transcribed text into ${transcriptionLanguage}.` },
+                    {
+                        "inline_data": {
+                            "mime_type": mimeType,
+                            "data": base64Audio
+                        }
+                    }
+                ]
+            }]
+        };
+
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            }
+        );
+
+        if (!response.ok) {
+            const error = await response.json();
+            console.error("Gemini API Error:", error);
+            throw new Error(error?.error?.message || `HTTP Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        if (!text) {
+            throw new Error("Could not extract transcription from Gemini response.");
+        }
+        
+        return text.trim();
+    }
 }
 
 class ChatSessionPickerModal extends FuzzySuggestModal<TFile> {
@@ -4095,6 +4348,8 @@ class MinaSettingTab extends PluginSettingTab {
         new Setting(containerEl).setName('Date format').addText(text => text.setPlaceholder('YYYY-MM-DD').setValue(this.plugin.settings.dateFormat).onChange(async (value) => { this.plugin.settings.dateFormat = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('Time format').addText(text => text.setPlaceholder('HH:mm').setValue(this.plugin.settings.timeFormat).onChange(async (value) => { this.plugin.settings.timeFormat = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('New Note Folder').setDesc('Folder where notes created via the \\ link picker are saved.').addText(text => text.setPlaceholder('000 Bin').setValue(this.plugin.settings.newNoteFolder).onChange(async (value) => { this.plugin.settings.newNoteFolder = value; await this.plugin.saveSettings(); }));
+        new Setting(containerEl).setName('Voice Memo Folder').setDesc('Folder where recorded voice notes will be stored.').addText(text => text.setPlaceholder('000 Bin/MINA V2 Voice').setValue(this.plugin.settings.voiceMemoFolder).onChange(async (value) => { this.plugin.settings.voiceMemoFolder = value; await this.plugin.saveSettings(); }));
+        new Setting(containerEl).setName('Transcription Language').setDesc('The target language for audio transcription (e.g., English, Japanese).').addText(text => text.setPlaceholder('English').setValue(this.plugin.settings.transcriptionLanguage).onChange(async (value) => { this.plugin.settings.transcriptionLanguage = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('Gemini API Key').setDesc('API key for the MINA AI chat tab (Google Gemini).').addText(text => { text.setPlaceholder('AIza...').setValue(this.plugin.settings.geminiApiKey).onChange(async (value) => { this.plugin.settings.geminiApiKey = value.trim(); await this.plugin.saveSettings(); }); text.inputEl.type = 'password'; });
         new Setting(containerEl).setName('Gemini Model').setDesc('Model to use for the MINA AI chat.').addDropdown(drop => {
             const models: Record<string, string> = {
