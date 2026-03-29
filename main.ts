@@ -2125,13 +2125,12 @@ class MinaView extends ItemView {
     }
 
     async renderMinaMode(container: HTMLElement) {
-        container.style.display = 'flex';
-        container.style.flexDirection = 'column';
-        container.style.overflow = 'hidden';
-        if (!Platform.isMobile) container.style.height = '100%';
+        // container is the outer flex-column (set up by renderView).
+        // We need ONE inner wrapper that takes exactly the remaining space after the nav bar.
+        // This wrapper is itself a flex-column so we can pin grounded bar to top and input to bottom.
 
         if (!this.plugin.settings.geminiApiKey) {
-            const warn = container.createEl('div', { attr: { style: 'padding: 20px; color: var(--text-muted); font-size: 0.9em;' } });
+            const warn = container.createEl('div', { attr: { style: 'flex-grow:1;padding: 20px; color: var(--text-muted); font-size: 0.9em;' } });
             warn.createEl('p', { text: '⚠️ No Gemini API key set.' });
             warn.createEl('p', { text: 'Add your key in Settings → MINA → Gemini API Key.' });
             return;
@@ -2139,8 +2138,13 @@ class MinaView extends ItemView {
 
         const isMobilePhone = Platform.isMobile && !isTablet();
 
+        // Inner wrapper: flex-grow:1 takes all space after nav bar; flex-column to stack children
+        const wrapper = container.createEl('div', {
+            attr: { style: 'flex:1 1 0;min-height:0;display:flex;flex-direction:column;overflow:hidden;' + (!Platform.isMobile ? 'height:0;' : '') }
+        });
+
         // ── 1+2. Grounded notes bar — TOP, just below tabs ────────────────────
-        const groundedBar = container.createEl('div', {
+        const groundedBar = wrapper.createEl('div', {
             attr: { style: 'flex-shrink: 0; display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding: 5px 10px; border-bottom: 1px solid var(--background-modifier-border); background: var(--background-secondary); -webkit-overflow-scrolling: touch;' }
         });
         this.groundedNotesBar = groundedBar;
@@ -2171,14 +2175,14 @@ class MinaView extends ItemView {
         refreshGroundedBar();
 
         // ── 3. Chat area — fills available space between grounded bar and input ─
-        this.chatContainer = container.createEl('div', {
+        this.chatContainer = wrapper.createEl('div', {
             attr: { style: 'flex-grow:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 8px 12px 8px;' }
         });
         await this.renderChatHistory();
 
         // ── 4. Input area — BOTTOM ─────────────────────────────────────────────
-        const inputRow = container.createEl('div', {
-            attr: { style: 'flex-shrink:0;position:relative;padding:8px;border-top:1px solid var(--background-modifier-border);background:var(--background-secondary);' }
+        const inputRow = wrapper.createEl('div', {
+            attr: { style: 'flex-shrink:0;position:relative;padding:8px;border-top:1px solid var(--background-modifier-border);background:var(--background-secondary);padding-bottom:calc(8px + env(safe-area-inset-bottom, 0px));' }
         });
         // 3. Mobile: 1-row textarea, expands on focus
         const textarea = inputRow.createEl('textarea', {
@@ -2198,16 +2202,13 @@ class MinaView extends ItemView {
         const newChatBtn     = overlayBtns.createEl('button', { text: '🗒️', attr: { style: 'padding:3px 6px;font-size:0.85em;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;', title: 'New chat' } });
         const recallBtn      = overlayBtns.createEl('button', { text: '📂', attr: { style: 'padding:3px 6px;font-size:0.85em;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;', title: 'Recall session' } });
 
-        // 4. Mobile keyboard: shrink container height to visualViewport so input stays above keyboard
+        // 4. Mobile keyboard: the onOpen syncViewport already handles the outer container.
+        // Here we just auto-scroll the chat when the viewport resizes (keyboard appears).
         if (isMobilePhone) {
             const vv = window.visualViewport;
-            const adjust = () => {
-                const vh = vv ? (vv.height + (vv.offsetTop ?? 0)) : window.innerHeight;
-                container.style.height = vh + 'px';
-                this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
-            };
-            vv?.addEventListener('resize', adjust);
-            vv?.addEventListener('scroll', adjust);
+            vv?.addEventListener('resize', () => {
+                this.chatContainer?.scrollTo({ top: this.chatContainer.scrollHeight, behavior: 'smooth' });
+            });
         }
 
         // ── Send logic ─────────────────────────────────────────────────────────
