@@ -3158,29 +3158,6 @@ ${duesContent}${groundedSection}`;
             });
 
 
-            // Toggle History
-            const historyToggleContainer = toggleGroup.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;' } });
-            historyToggleContainer.createSpan({ text: 'History' });
-            
-            const historyToggleLabel = historyToggleContainer.createEl('label', { 
-                attr: { style: 'position: relative; display: inline-block; width: 30px; height: 16px; cursor: pointer;' } 
-            });
-            const historyCb = historyToggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
-            historyCb.checked = this.showPreviousTasks;
-            const historySlider = historyToggleLabel.createEl('span', { 
-                attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${this.showPreviousTasks ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 16px;` } 
-            });
-            const historyKnob = historyToggleLabel.createEl('span', { 
-                attr: { style: `position: absolute; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${this.showPreviousTasks ? 'translateX(14px)' : 'translateX(0)'};` } 
-            });
-
-            historyCb.addEventListener('change', (e) => {
-                this.showPreviousTasks = (e.target as HTMLInputElement).checked;
-                historySlider.style.backgroundColor = this.showPreviousTasks ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
-                historyKnob.style.transform = this.showPreviousTasks ? 'translateX(14px)' : 'translateX(0)';
-                this.updateReviewTasksList();
-            });
-
             // Toggle Capture
             const captureToggleContainer = toggleGroup.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;' } });
             captureToggleContainer.createSpan({ text: 'Capture' });
@@ -3238,7 +3215,7 @@ ${duesContent}${groundedSection}`;
 
         const dateContainer = filterBar.createEl('div', { attr: { style: 'display: flex; gap: 5px; align-items: center; flex-wrap: wrap;' } });
         const dateSel = dateContainer.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px; text-align: center; text-align-last: center;' }});
-        [['all', 'All Dates'], ['today', 'Today'], ['today+overdue', 'Today + Overdue'], ['this-week', 'This Week'], ['next-week', 'Next Week'], ['overdue', 'Overdue Only'], ['custom', 'Custom Date']].forEach(([val, label]) => {
+        [['all', 'All Dates'], ['today', 'Today'], ['today+overdue', 'Today + Overdue'], ['this-week', 'This Week'], ['next-week', 'Next Week'], ['overdue', 'Overdue Only'], ['no-due', 'No Due Date'], ['custom', 'Custom Date']].forEach(([val, label]) => {
             const opt = dateSel.createEl('option', { value: val, text: label });
             if (this.tasksFilterDate === val) opt.selected = true;
         });
@@ -3500,10 +3477,25 @@ ${duesContent}${groundedSection}`;
             tasks = tasks.filter(e => this.tasksFilterContext.every((ctx: string) => e.context.includes(ctx)));
         }
 
-        // Apply history filter
-        if (!this.showPreviousTasks) {
-            const today = this.plugin.formatDate(new Date());
-            tasks = tasks.filter(e => e.day === today);
+        // Apply date filter on due date
+        const today = moment().locale('en').format('YYYY-MM-DD');
+        if (this.tasksFilterDate === 'today') {
+            tasks = tasks.filter(e => e.due === today);
+        } else if (this.tasksFilterDate === 'today+overdue') {
+            tasks = tasks.filter(e => e.due === today || (e.due && e.due < today));
+        } else if (this.tasksFilterDate === 'overdue') {
+            tasks = tasks.filter(e => e.due && e.due < today);
+        } else if (this.tasksFilterDate === 'this-week') {
+            const weekEnd = moment().locale('en').endOf('week').format('YYYY-MM-DD');
+            tasks = tasks.filter(e => e.due && e.due >= today && e.due <= weekEnd);
+        } else if (this.tasksFilterDate === 'next-week') {
+            const nextStart = moment().locale('en').add(1, 'week').startOf('week').format('YYYY-MM-DD');
+            const nextEnd   = moment().locale('en').add(1, 'week').endOf('week').format('YYYY-MM-DD');
+            tasks = tasks.filter(e => e.due && e.due >= nextStart && e.due <= nextEnd);
+        } else if (this.tasksFilterDate === 'no-due') {
+            tasks = tasks.filter(e => !e.due || e.due.trim() === '');
+        } else if (this.tasksFilterDate === 'custom' && this.tasksFilterDateStart && this.tasksFilterDateEnd) {
+            tasks = tasks.filter(e => e.due && e.due >= this.tasksFilterDateStart && e.due <= this.tasksFilterDateEnd);
         }
 
         // Sort: open tasks first, then by due date (earliest first), then by lastUpdate
