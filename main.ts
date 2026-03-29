@@ -2125,14 +2125,10 @@ class MinaView extends ItemView {
     }
 
     async renderMinaMode(container: HTMLElement) {
-        // Prime the container as a flex column on both desktop and mobile.
-        // Mobile: renderView already set the fixed pixel height; we still enforce display/overflow here.
         container.style.display = 'flex';
         container.style.flexDirection = 'column';
         container.style.overflow = 'hidden';
-        if (!Platform.isMobile) {
-            container.style.height = '100%';
-        }
+        if (!Platform.isMobile) container.style.height = '100%';
 
         if (!this.plugin.settings.geminiApiKey) {
             const warn = container.createEl('div', { attr: { style: 'padding: 20px; color: var(--text-muted); font-size: 0.9em;' } });
@@ -2141,79 +2137,95 @@ class MinaView extends ItemView {
             return;
         }
 
-        // Input area — full-width textarea with buttons overlaid bottom-right
-        const inputRow = container.createEl('div', {
-            attr: { style: 'flex-shrink: 0; position: relative; padding: 8px; border-bottom: 1px solid var(--background-modifier-border); background: var(--background-secondary);' }
-        });
-        const textarea = inputRow.createEl('textarea', { attr: { placeholder: 'Ask MINA… (type \\ to ground on a note)', rows: '4', style: 'width: 100%; resize: none; font-size: 0.9em; padding: 8px 100px 36px 10px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-family: inherit; box-sizing: border-box;' } });
-        const overlayBtns = inputRow.createEl('div', { attr: { style: 'position: absolute; bottom: 16px; right: 16px; display: flex; gap: 4px; align-items: center;' } });
-        const sendBtn = overlayBtns.createEl('button', { text: '↑', attr: { style: 'padding: 3px 10px; font-size: 1em; font-weight: 700; border-radius: 5px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; cursor: pointer;', title: 'Send' } });
-        const saveSessionBtn = overlayBtns.createEl('button', { text: '📥', attr: { style: 'padding: 3px 6px; font-size: 0.85em; border-radius: 5px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer;', title: 'Save chat session' } });
-        const newChatBtn = overlayBtns.createEl('button', { text: '🗒️', attr: { style: 'padding: 3px 6px; font-size: 0.85em; border-radius: 5px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer;', title: 'New chat session' } });
-        const recallBtn = overlayBtns.createEl('button', { text: '📂', attr: { style: 'padding: 3px 6px; font-size: 0.85em; border-radius: 5px; background: var(--background-modifier-border); color: var(--text-muted); border: none; cursor: pointer;', title: 'Recall saved session' } });
+        const isMobilePhone = Platform.isMobile && !isTablet();
 
-        // Grounded notes chip bar — always visible, shows default + user-selected note chips
+        // ── 1+2. Grounded notes bar — TOP, just below tabs ────────────────────
         const groundedBar = container.createEl('div', {
-            attr: { style: 'flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--background-modifier-border); background: var(--background-secondary);' }
+            attr: { style: 'flex-shrink: 0; display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding: 5px 10px; border-bottom: 1px solid var(--background-modifier-border); background: var(--background-secondary); -webkit-overflow-scrolling: touch;' }
         });
         this.groundedNotesBar = groundedBar;
-
-        const defaultChips = [
-            { icon: '💭', label: 'Th' },
-            { icon: '✅', label: 'Ta' },
-            { icon: '💳', label: 'Du' },
-        ];
-        const defaultChipStyle = 'display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; background: var(--background-modifier-border); color: var(--text-muted); font-size: 0.78em; font-weight: 500;';
-        const userChipStyle = 'display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; background: var(--interactive-accent-hover); color: var(--text-normal); font-size: 0.78em; font-weight: 500; cursor: default;';
+        const defaultChips = [{ icon: '💭', label: 'Th' }, { icon: '✅', label: 'Ta' }, { icon: '💳', label: 'Du' }];
+        const defChipSty  = 'flex-shrink:0;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;background:var(--background-modifier-border);color:var(--text-muted);font-size:0.78em;font-weight:500;';
+        const userChipSty = 'flex-shrink:0;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;background:var(--interactive-accent-hover);color:var(--text-normal);font-size:0.78em;font-weight:500;cursor:default;';
 
         const refreshGroundedBar = () => {
             groundedBar.empty();
-            groundedBar.style.display = 'flex';
-            groundedBar.createEl('span', { text: '📎', attr: { style: 'font-size: 0.8em; color: var(--text-muted); align-self: center; margin-right: 2px;' } });
-            // Always-on default chips
+            groundedBar.createEl('span', { text: '📎', attr: { style: 'flex-shrink:0;font-size:0.8em;color:var(--text-muted);align-self:center;margin-right:2px;' } });
             for (const d of defaultChips) {
-                const chip = groundedBar.createEl('span', { attr: { style: defaultChipStyle } });
+                const chip = groundedBar.createEl('span', { attr: { style: defChipSty } });
                 chip.createEl('span', { text: d.icon + ' ' + d.label });
             }
-            // User-selected note chips (removable)
             for (const f of [...this.groundedNotes]) {
-                const chip = groundedBar.createEl('span', { attr: { style: userChipStyle } });
-                const nameSpan = chip.createEl('span', { text: '📄 ' + f.basename, attr: { style: 'cursor: pointer; text-decoration: underline;' } });
-                nameSpan.addEventListener('click', () => {
-                    this.plugin.app.workspace.openLinkText(f.basename, f.path, 'window');
-                });
-                const x = chip.createEl('span', { text: '×', attr: { style: 'cursor: pointer; font-size: 1em; opacity: 0.7; margin-left: 2px;' } });
-                x.addEventListener('click', () => {
-                    this.groundedNotes = this.groundedNotes.filter(n => n.path !== f.path);
-                    refreshGroundedBar();
-                });
+                const chip = groundedBar.createEl('span', { attr: { style: userChipSty } });
+                const ns = chip.createEl('span', { text: '📄 ' + f.basename, attr: { style: 'cursor:pointer;text-decoration:underline;white-space:nowrap;' } });
+                ns.addEventListener('click', () => this.plugin.app.workspace.openLinkText(f.basename, f.path, 'window'));
+                const x = chip.createEl('span', { text: '×', attr: { style: 'cursor:pointer;opacity:0.7;margin-left:2px;' } });
+                x.addEventListener('click', () => { this.groundedNotes = this.groundedNotes.filter(n => n.path !== f.path); refreshGroundedBar(); });
             }
-            // Web search toggle chip
             const webChip = groundedBar.createEl('span', {
-                attr: { style: `margin-left: auto; display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 12px; font-size: 0.78em; font-weight: 600; cursor: pointer; border: 1px solid ${this.webSearchEnabled ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; background: ${this.webSearchEnabled ? 'var(--interactive-accent)' : 'transparent'}; color: ${this.webSearchEnabled ? 'var(--text-on-accent)' : 'var(--text-muted)'};`, title: 'Connect to Web (Google Search grounding)' }
+                attr: { style: `flex-shrink:0;margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:12px;font-size:0.78em;font-weight:600;cursor:pointer;border:1px solid ${this.webSearchEnabled ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'};background:${this.webSearchEnabled ? 'var(--interactive-accent)' : 'transparent'};color:${this.webSearchEnabled ? 'var(--text-on-accent)' : 'var(--text-muted)'};`, title: 'Connect to Web' }
             });
             webChip.createEl('span', { text: '🌐 Web' });
-            webChip.addEventListener('click', () => {
-                this.webSearchEnabled = !this.webSearchEnabled;
-                refreshGroundedBar();
-            });
+            webChip.addEventListener('click', () => { this.webSearchEnabled = !this.webSearchEnabled; refreshGroundedBar(); });
         };
+        refreshGroundedBar();
 
-        refreshGroundedBar(); // Show default chips immediately
+        // ── 3. Chat area — fills available space between grounded bar and input ─
+        this.chatContainer = container.createEl('div', {
+            attr: { style: 'flex-grow:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 8px 12px 8px;' }
+        });
+        await this.renderChatHistory();
 
+        // ── 4. Input area — BOTTOM ─────────────────────────────────────────────
+        const inputRow = container.createEl('div', {
+            attr: { style: 'flex-shrink:0;position:relative;padding:8px;border-top:1px solid var(--background-modifier-border);background:var(--background-secondary);' }
+        });
+        // 3. Mobile: 1-row textarea, expands on focus
+        const textarea = inputRow.createEl('textarea', {
+            attr: {
+                placeholder: 'Ask MINA…',
+                rows: isMobilePhone ? '1' : '3',
+                style: 'width:100%;resize:none;font-size:0.9em;padding:8px 110px 8px 10px;border-radius:6px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);font-family:inherit;box-sizing:border-box;'
+            }
+        });
+        if (isMobilePhone) {
+            textarea.addEventListener('focus', () => { textarea.rows = 4; });
+            textarea.addEventListener('blur',  () => { if (!textarea.value.trim()) textarea.rows = 1; });
+        }
+        const overlayBtns   = inputRow.createEl('div', { attr: { style: 'position:absolute;bottom:16px;right:16px;display:flex;gap:4px;align-items:center;' } });
+        const sendBtn        = overlayBtns.createEl('button', { text: '↑',  attr: { style: 'padding:3px 10px;font-size:1em;font-weight:700;border-radius:5px;background:var(--interactive-accent);color:var(--text-on-accent);border:none;cursor:pointer;', title: 'Send' } });
+        const saveSessionBtn = overlayBtns.createEl('button', { text: '📥', attr: { style: 'padding:3px 6px;font-size:0.85em;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;', title: 'Save session' } });
+        const newChatBtn     = overlayBtns.createEl('button', { text: '🗒️', attr: { style: 'padding:3px 6px;font-size:0.85em;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;', title: 'New chat' } });
+        const recallBtn      = overlayBtns.createEl('button', { text: '📂', attr: { style: 'padding:3px 6px;font-size:0.85em;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;', title: 'Recall session' } });
+
+        // 4. Mobile keyboard: shrink container height to visualViewport so input stays above keyboard
+        if (isMobilePhone) {
+            const vv = window.visualViewport;
+            const adjust = () => {
+                const vh = vv ? (vv.height + (vv.offsetTop ?? 0)) : window.innerHeight;
+                container.style.height = vh + 'px';
+                this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+            };
+            vv?.addEventListener('resize', adjust);
+            vv?.addEventListener('scroll', adjust);
+        }
+
+        // ── Send logic ─────────────────────────────────────────────────────────
         const send = async () => {
             const text = textarea.value.trim();
             if (!text) return;
             textarea.value = '';
+            // 5. On mobile: collapse textarea + hide keyboard before thinking
+            if (isMobilePhone) { textarea.rows = 1; textarea.blur(); }
             textarea.disabled = true;
             sendBtn.disabled = true;
 
             this.chatHistory.push({ role: 'user', text });
             await this.renderChatHistory();
 
-            const thinking = this.chatContainer.createEl('div', { attr: { style: 'font-size: 0.85em; color: var(--text-muted); font-style: italic; margin-bottom: 8px;' } });
-            this.chatContainer.prepend(thinking);
+            const thinking = this.chatContainer.createEl('div', { attr: { style: 'font-size:0.85em;color:var(--text-muted);font-style:italic;margin-bottom:8px;padding-left:4px;' } });
             thinking.setText('MINA is thinking…');
+            this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
 
             try {
                 const reply = await this.callGemini(text, [...this.groundedNotes], this.webSearchEnabled);
@@ -2223,11 +2235,10 @@ class MinaView extends ItemView {
                 thinking.remove();
                 this.chatHistory.push({ role: 'assistant', text: `⚠️ Error: ${e.message}` });
             }
-
             await this.renderChatHistory();
             textarea.disabled = false;
             sendBtn.disabled = false;
-            textarea.focus();
+            if (!isMobilePhone) textarea.focus();
         };
 
         sendBtn.addEventListener('click', send);
@@ -2238,69 +2249,41 @@ class MinaView extends ItemView {
             const folder = (this.plugin.settings.thoughtsFolder || '000 Bin/MINA V2').trim();
             const filename = `MINA Chat ${moment().locale('en').format('YYYY-MM-DD HHmm')}.md`;
             const lines: string[] = [`# MINA Chat Session — ${ts}`, ''];
-            for (const msg of this.chatHistory) {
-                lines.push(msg.role === 'user' ? `**You:** ${msg.text}` : `**MINA:** ${msg.text}`);
-                lines.push('');
-            }
-            const content = lines.join('\n');
+            for (const msg of this.chatHistory) { lines.push(msg.role === 'user' ? `**You:** ${msg.text}` : `**MINA:** ${msg.text}`); lines.push(''); }
             try {
                 const { vault } = this.plugin.app;
                 if (!vault.getAbstractFileByPath(folder)) await vault.createFolder(folder);
-                await vault.create(`${folder}/${filename}`, content);
+                await vault.create(`${folder}/${filename}`, lines.join('\n'));
                 new Notice(`✅ Chat saved to ${folder}/${filename}`);
-            } catch (e) {
-                new Notice('Error saving chat: ' + (e instanceof Error ? e.message : String(e)));
-            }
+            } catch (e) { new Notice('Error saving chat: ' + (e instanceof Error ? e.message : String(e))); }
         });
 
-        newChatBtn.addEventListener('click', async () => {
+        newChatBtn.addEventListener('click', () => {
             if (this.chatHistory.length === 0) return;
-            new ConfirmModal(this.plugin.app, 'Start a new chat session? Current history will be cleared.', async () => {
-                this.chatHistory = [];
-                await this.renderChatHistory();
-            }).open();
+            new ConfirmModal(this.plugin.app, 'Start a new chat session? Current history will be cleared.', async () => { this.chatHistory = []; await this.renderChatHistory(); }).open();
         });
 
         recallBtn.addEventListener('click', () => {
             const folder = (this.plugin.settings.thoughtsFolder || '000 Bin/MINA V2').trim();
-            const files = this.plugin.app.vault.getFiles()
-                .filter(f => f.path.startsWith(folder) && f.basename.startsWith('MINA Chat '))
-                .sort((a, b) => b.stat.mtime - a.stat.mtime);
+            const files = this.plugin.app.vault.getFiles().filter(f => f.path.startsWith(folder) && f.basename.startsWith('MINA Chat ')).sort((a, b) => b.stat.mtime - a.stat.mtime);
             if (files.length === 0) { new Notice('No saved chat sessions found.'); return; }
             new ChatSessionPickerModal(this.plugin.app, files, async (file) => {
-                try {
-                    const content = await this.plugin.app.vault.read(file);
-                    this.chatHistory = this.parseChatSession(content);
-                    await this.renderChatHistory();
-                    new Notice(`📂 Loaded: ${file.basename}`);
-                } catch (e) {
-                    new Notice('Error loading chat: ' + (e instanceof Error ? e.message : String(e)));
-                }
+                try { this.chatHistory = this.parseChatSession(await this.plugin.app.vault.read(file)); await this.renderChatHistory(); new Notice(`📂 Loaded: ${file.basename}`); }
+                catch (e) { new Notice('Error loading chat: ' + (e instanceof Error ? e.message : String(e))); }
             }).open();
         });
+
         textarea.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); return; }
             if (e.key === '\\') {
                 e.preventDefault();
                 new NotePickerModal(this.plugin.app, async (file) => {
-                    if (!this.groundedNotes.find(n => n.path === file.path)) {
-                        this.groundedNotes.push(file);
-                        refreshGroundedBar();
-                        new Notice(`📎 Grounded on: ${file.basename}`);
-                    }
+                    if (!this.groundedNotes.find(n => n.path === file.path)) { this.groundedNotes.push(file); refreshGroundedBar(); new Notice(`📎 Grounded on: ${file.basename}`); }
                 }).open();
             }
         });
 
-        if (!Platform.isMobile) {
-            setTimeout(() => textarea.focus(), 50);
-        }
-
-        // Chat history — plain block scroll container (no flex, avoids height constraints on children)
-        this.chatContainer = container.createEl('div', {
-            attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 8px 8px 200px 8px;' }
-        });
-        await this.renderChatHistory();
+        if (!isMobilePhone) setTimeout(() => textarea.focus(), 50);
     }
 
     async renderChatHistory() {
@@ -2329,6 +2312,8 @@ class MinaView extends ItemView {
                 bubble.style.whiteSpace = 'pre-wrap';
                 bubble.setText(msg.text);
             } else {
+                // Wrap bubble in position:relative so save icon can be overlaid
+                bubble.style.position = 'relative';
                 await MarkdownRenderer.render(this.plugin.app, msg.text, bubble, '', this);
                 this.hookInternalLinks(bubble, '');
                 bubble.querySelectorAll('p').forEach((p: HTMLElement) => { p.style.marginTop = '0'; p.style.marginBottom = '4px'; });
@@ -2342,30 +2327,30 @@ class MinaView extends ItemView {
                         cell.style.cssText = 'padding: 4px 8px; border: 1px solid var(--background-modifier-border); white-space: nowrap;';
                     });
                 });
-            }
-
-            // Save as Thought button — only on assistant messages
-            if (!isUser) {
-                const actions = this.chatContainer.createEl('div', { attr: { style: 'display: flex; gap: 6px; margin-top: -4px; margin-bottom: 8px;' } });
-                const saveBtn = actions.createEl('button', {
-                    text: '💾 Save as Thought',
-                    attr: { style: 'padding: 2px 8px; font-size: 0.72em; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: transparent; color: var(--text-muted); cursor: pointer;' }
+                // 7. Save-as-Thought: icon only, overlaid bottom-right of assistant bubble
+                const saveBtn = bubble.createEl('button', {
+                    text: '💾',
+                    attr: {
+                        title: 'Save as Thought',
+                        style: 'position:absolute;bottom:6px;right:6px;padding:2px 5px;font-size:0.8em;border-radius:6px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;opacity:0.5;transition:opacity 0.15s;'
+                    }
                 });
-                saveBtn.addEventListener('mouseenter', () => { saveBtn.style.background = 'var(--background-modifier-border)'; saveBtn.style.color = 'var(--text-normal)'; });
-                saveBtn.addEventListener('mouseleave', () => { saveBtn.style.background = 'transparent'; saveBtn.style.color = 'var(--text-muted)'; });
+                saveBtn.addEventListener('mouseenter', () => { saveBtn.style.opacity = '1'; });
+                saveBtn.addEventListener('mouseleave', () => { if (!saveBtn.disabled) saveBtn.style.opacity = '0.5'; });
                 saveBtn.addEventListener('click', async () => {
                     try {
                         saveBtn.disabled = true;
-                        saveBtn.textContent = 'Saving…';
+                        saveBtn.textContent = '✓';
+                        saveBtn.style.opacity = '1';
                         await this.plugin.createThoughtFile(msg.text, this.plugin.settings.selectedContexts ?? []);
-                        saveBtn.textContent = '✓ Saved';
-                        setTimeout(() => { saveBtn.textContent = '💾 Save as Thought'; saveBtn.disabled = false; }, 2000);
+                        setTimeout(() => { saveBtn.textContent = '💾'; saveBtn.style.opacity = '0.5'; saveBtn.disabled = false; }, 2000);
                     } catch (e) {
-                        saveBtn.textContent = '💾 Save as Thought';
-                        saveBtn.disabled = false;
+                        saveBtn.textContent = '💾'; saveBtn.style.opacity = '0.5'; saveBtn.disabled = false;
                         new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
                     }
                 });
+                // Add bottom padding so the icon doesn't overlap last text line
+                bubble.style.paddingBottom = '24px';
             }
         }
 
