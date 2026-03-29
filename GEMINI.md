@@ -242,6 +242,8 @@ When splitting a markdown table row by `|`, the part indices are:
 - **Thoughts default filter:** `thoughtsFilterDate` defaults to `'last-5-days'`. Filter: `entryDay >= moment().subtract(4, 'days').startOf('day')`.
 - **Chat session save format:** `**You:** message\n\n**MINA:** response\n\n`. Parsed back by `parseChatSession()` line-by-line into `chatHistory` array.
 - **`ChatSessionPickerModal`:** Extends `FuzzySuggestModal<TFile>`. Lists files matching `MINA Chat *.md` in thoughts folder, sorted by `stat.mtime` descending.
+- **Desktop Flex Layout:** The main container on desktop is explicitly set to `display: flex` and `flex-direction: column` with `height: 100%`. This ensures that child elements with `flex-grow: 1` (like the AI chat history) correctly expand to fill the available space and push input areas (like the AI chat input) to the bottom of the window.
+- **Separate Window State:** `getState()` and `setState()` are implemented in `MinaView` to persist the `activeTab`. This allows Obsidian to restore the correct tab when a view is opened in a separate window or after a restart.
 - **Dynamic MIME Recording:** `MediaRecorder` checks `isTypeSupported` to choose between `webm` and `mp4/m4a` (iOS), ensuring playable files across all devices.
 - **Transcription Translation:** `transcribeAudio` uses a two-step prompt ("Transcribe then Translate") to ensure voice notes are converted to the user's preferred language.
 - **Internal Confirmation:** Plugin uses its own `ConfirmModal` for voice note deletion to maintain a consistent UI and stay within the application flow.
