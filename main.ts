@@ -2266,6 +2266,8 @@ class MinaView extends ItemView {
         });
 
         // ── Mobile: floating brain FAB + slide-up input overlay ─────────────
+        // IMPORTANT: FAB and overlay are appended to `container` (the position:fixed
+        // outer element) — NOT inside `wrapper` which has overflow:hidden and would clip them.
         let mobileInputOverlay: HTMLElement | null = null;
         let fab: HTMLElement | null = null;
 
@@ -2275,10 +2277,10 @@ class MinaView extends ItemView {
         };
 
         if (isMobilePhone) {
-            // FAB — floating brain button, bottom-right
-            fab = wrapper.createEl('div', {
+            // FAB — floating brain button, bottom-right, on the outer fixed container
+            fab = container.createEl('div', {
                 attr: {
-                    style: 'position:absolute;bottom:24px;right:16px;z-index:20;width:52px;height:52px;border-radius:50%;background:var(--interactive-accent);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.3);cursor:pointer;-webkit-tap-highlight-color:transparent;',
+                    style: 'position:absolute;bottom:24px;right:16px;z-index:100;width:52px;height:52px;border-radius:50%;background:var(--interactive-accent);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.3);cursor:pointer;-webkit-tap-highlight-color:transparent;',
                     title: 'Ask MINA'
                 }
             });
@@ -2286,10 +2288,10 @@ class MinaView extends ItemView {
             const svgEl = fab.querySelector('svg');
             if (svgEl) { svgEl.setAttribute('width', '28'); svgEl.setAttribute('height', '28'); svgEl.style.stroke = 'var(--text-on-accent)'; }
 
-            // Overlay panel — full-width bar that slides up from bottom
-            mobileInputOverlay = wrapper.createEl('div', {
+            // Overlay panel — full-width bar at bottom of the fixed container
+            mobileInputOverlay = container.createEl('div', {
                 attr: {
-                    style: 'position:absolute;bottom:0;left:0;right:0;z-index:20;padding:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));background:var(--background-secondary);border-top:1px solid var(--background-modifier-border);display:none;'
+                    style: 'position:absolute;bottom:0;left:0;right:0;z-index:100;padding:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));background:var(--background-secondary);border-top:1px solid var(--background-modifier-border);display:none;'
                 }
             });
             const inputWrap = mobileInputOverlay.createEl('div', { attr: { style: 'position:relative;' } });
