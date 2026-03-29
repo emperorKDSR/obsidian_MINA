@@ -2125,12 +2125,8 @@ class MinaView extends ItemView {
     }
 
     async renderMinaMode(container: HTMLElement) {
-        // container is the outer flex-column (set up by renderView).
-        // We need ONE inner wrapper that takes exactly the remaining space after the nav bar.
-        // This wrapper is itself a flex-column so we can pin grounded bar to top and input to bottom.
-
         if (!this.plugin.settings.geminiApiKey) {
-            const warn = container.createEl('div', { attr: { style: 'flex-grow:1;padding: 20px; color: var(--text-muted); font-size: 0.9em;' } });
+            const warn = container.createEl('div', { attr: { style: 'flex-grow:1;padding:20px;color:var(--text-muted);font-size:0.9em;' } });
             warn.createEl('p', { text: '⚠️ No Gemini API key set.' });
             warn.createEl('p', { text: 'Add your key in Settings → MINA → Gemini API Key.' });
             return;
@@ -2138,16 +2134,25 @@ class MinaView extends ItemView {
 
         const isMobilePhone = Platform.isMobile && !isTablet();
 
-        // Inner wrapper: flex-grow:1 takes all space after nav bar; flex-column to stack children
+        // ── Wrapper ─────────────────────────────────────────────────────────
+        // Mobile: position:relative so absolute children work. flex-grow:1+min-height:0 ensures it fills
+        // all space below the nav bar within the outer fixed container.
+        // Desktop: flex column so children stack normally.
         const wrapper = container.createEl('div', {
-            attr: { style: 'flex:1 1 0;min-height:0;display:flex;flex-direction:column;overflow:hidden;' + (!Platform.isMobile ? 'height:0;' : '') }
+            attr: {
+                style: Platform.isMobile
+                    ? 'flex-grow:1;min-height:0;position:relative;overflow:hidden;'
+                    : 'flex-grow:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;'
+            }
         });
 
-        // ── 1+2. Grounded notes bar — TOP, just below tabs ────────────────────
-        const groundedBar = wrapper.createEl('div', {
-            attr: { style: 'flex-shrink: 0; display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding: 5px 10px; border-bottom: 1px solid var(--background-modifier-border); background: var(--background-secondary); -webkit-overflow-scrolling: touch;' }
-        });
+        // ── Grounded notes bar ───────────────────────────────────────────────
+        const gbStyle = Platform.isMobile
+            ? 'position:absolute;top:0;left:0;right:0;z-index:10;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:5px 10px;border-bottom:1px solid var(--background-modifier-border);background:var(--background-secondary);-webkit-overflow-scrolling:touch;'
+            : 'flex-shrink:0;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:5px 10px;border-bottom:1px solid var(--background-modifier-border);background:var(--background-secondary);-webkit-overflow-scrolling:touch;';
+        const groundedBar = wrapper.createEl('div', { attr: { style: gbStyle } });
         this.groundedNotesBar = groundedBar;
+
         const defaultChips = [{ icon: '💭', label: 'Th' }, { icon: '✅', label: 'Ta' }, { icon: '💳', label: 'Du' }];
         const defChipSty  = 'flex-shrink:0;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;background:var(--background-modifier-border);color:var(--text-muted);font-size:0.78em;font-weight:500;';
         const userChipSty = 'flex-shrink:0;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;background:var(--interactive-accent-hover);color:var(--text-normal);font-size:0.78em;font-weight:500;cursor:default;';
@@ -2174,17 +2179,13 @@ class MinaView extends ItemView {
         };
         refreshGroundedBar();
 
-        // ── 3. Chat area — fills available space between grounded bar and input ─
-        this.chatContainer = wrapper.createEl('div', {
-            attr: { style: 'flex-grow:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 8px 12px 8px;' }
-        });
-        await this.renderChatHistory();
+        // ── Input row — pinned to bottom on mobile, flex-shrink on desktop ───
+        // Created BEFORE chatContainer so we can measure it for bounds calculation.
+        const irStyle = Platform.isMobile
+            ? 'position:absolute;bottom:0;left:0;right:0;z-index:10;padding:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--background-modifier-border);background:var(--background-secondary);'
+            : 'flex-shrink:0;position:relative;padding:8px;border-top:1px solid var(--background-modifier-border);background:var(--background-secondary);';
+        const inputRow = wrapper.createEl('div', { attr: { style: irStyle } });
 
-        // ── 4. Input area — BOTTOM ─────────────────────────────────────────────
-        const inputRow = wrapper.createEl('div', {
-            attr: { style: 'flex-shrink:0;position:relative;padding:8px;border-top:1px solid var(--background-modifier-border);background:var(--background-secondary);padding-bottom:calc(8px + env(safe-area-inset-bottom, 0px));' }
-        });
-        // 3. Mobile: 1-row textarea, expands on focus
         const textarea = inputRow.createEl('textarea', {
             attr: {
                 placeholder: 'Ask MINA…',
@@ -2193,8 +2194,8 @@ class MinaView extends ItemView {
             }
         });
         if (isMobilePhone) {
-            textarea.addEventListener('focus', () => { textarea.rows = 4; });
-            textarea.addEventListener('blur',  () => { if (!textarea.value.trim()) textarea.rows = 1; });
+            textarea.addEventListener('focus', () => { textarea.rows = 4; adjustChatBounds(); });
+            textarea.addEventListener('blur',  () => { if (!textarea.value.trim()) { textarea.rows = 1; adjustChatBounds(); } });
         }
         const overlayBtns   = inputRow.createEl('div', { attr: { style: 'position:absolute;bottom:16px;right:16px;display:flex;gap:4px;align-items:center;' } });
         const sendBtn        = overlayBtns.createEl('button', { text: '↑',  attr: { style: 'padding:3px 10px;font-size:1em;font-weight:700;border-radius:5px;background:var(--interactive-accent);color:var(--text-on-accent);border:none;cursor:pointer;', title: 'Send' } });
@@ -2202,22 +2203,35 @@ class MinaView extends ItemView {
         const newChatBtn     = overlayBtns.createEl('button', { text: '🗒️', attr: { style: 'padding:3px 6px;font-size:0.85em;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;', title: 'New chat' } });
         const recallBtn      = overlayBtns.createEl('button', { text: '📂', attr: { style: 'padding:3px 6px;font-size:0.85em;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;', title: 'Recall session' } });
 
-        // 4. Mobile keyboard: the onOpen syncViewport already handles the outer container.
-        // Here we just auto-scroll the chat when the viewport resizes (keyboard appears).
-        if (isMobilePhone) {
-            const vv = window.visualViewport;
-            vv?.addEventListener('resize', () => {
-                this.chatContainer?.scrollTo({ top: this.chatContainer.scrollHeight, behavior: 'smooth' });
-            });
+        // ── Chat container — fills space between groundedBar and inputRow ────
+        const chatStyle = Platform.isMobile
+            ? 'position:absolute;left:0;right:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px;z-index:1;'
+            : 'flex-grow:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 8px 12px 8px;';
+        this.chatContainer = wrapper.createEl('div', { attr: { style: chatStyle } });
+
+        // On mobile: measure groundedBar+inputRow and explicitly set chatContainer top/bottom.
+        const adjustChatBounds = () => {
+            if (!Platform.isMobile || !this.chatContainer) return;
+            const gbH = groundedBar.offsetHeight;
+            const irH = inputRow.offsetHeight;
+            this.chatContainer.style.top = gbH + 'px';
+            this.chatContainer.style.bottom = irH + 'px';
+            this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+        };
+        requestAnimationFrame(adjustChatBounds);
+        if (Platform.isMobile) {
+            window.visualViewport?.addEventListener('resize', adjustChatBounds);
+            window.visualViewport?.addEventListener('scroll', adjustChatBounds);
         }
 
-        // ── Send logic ─────────────────────────────────────────────────────────
+        await this.renderChatHistory();
+
+        // ── Send logic ───────────────────────────────────────────────────────
         const send = async () => {
             const text = textarea.value.trim();
             if (!text) return;
             textarea.value = '';
-            // 5. On mobile: collapse textarea + hide keyboard before thinking
-            if (isMobilePhone) { textarea.rows = 1; textarea.blur(); }
+            if (isMobilePhone) { textarea.rows = 1; textarea.blur(); adjustChatBounds(); }
             textarea.disabled = true;
             sendBtn.disabled = true;
 
