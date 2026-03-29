@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, TFile, Notice, ItemView, WorkspaceLeaf, MarkdownRenderer, Platform, FuzzySuggestModal, SuggestModal, Modal, moment, addIcon } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, TFile, Notice, ItemView, WorkspaceLeaf, MarkdownRenderer, Platform, FuzzySuggestModal, SuggestModal, Modal, moment, addIcon, ViewStateResult } from 'obsidian';
 
 export const VIEW_TYPE_MINA = "mina-v2-view";
 
@@ -1829,6 +1829,27 @@ class MinaView extends ItemView {
     getDisplayText() { return "MINA V2"; }
     getIcon() { return "brain"; }
 
+    getState() {
+        return { activeTab: this.activeTab };
+    }
+
+    async setState(state: any, result: ViewStateResult): Promise<void> {
+        if (state && state.activeTab) {
+            this.activeTab = state.activeTab;
+            this.renderView();
+        }
+        await super.setState(state, result);
+    }
+
+    async detachTab(tabId: any) {
+        const leaf = this.app.workspace.getLeaf('window');
+        await leaf.setViewState({
+            type: VIEW_TYPE_MINA,
+            active: true,
+            state: { activeTab: tabId }
+        });
+    }
+
     async onOpen() {
         this.renderView();
 
@@ -1910,42 +1931,35 @@ class MinaView extends ItemView {
 
         // --- Navigation Tabs ---
         const nav = container.createEl('div', { attr: { style: 'display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 10px; flex-shrink: 0;' } });
-        
-        const reviewThoughtsTab = nav.createEl('button', { 
-            text: 'Th', 
-            attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'review-thoughts' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` } 
-        });
-        reviewThoughtsTab.addEventListener('click', () => { this.activeTab = 'review-thoughts'; this.renderView(); });
 
-        const reviewTasksTab = nav.createEl('button', { 
-            text: 'Ta', 
-            attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'review-tasks' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` } 
-        });
-        reviewTasksTab.addEventListener('click', () => { this.activeTab = 'review-tasks'; this.renderView(); });
+        const addTab = (id: string, label: string) => {
+            const btnWrap = nav.createEl('div', { attr: { style: 'flex: 1; display: flex; align-items: stretch; gap: 0;' } });
+            const hasPopout = !Platform.isMobile && id !== 'settings';
+            
+            const btn = btnWrap.createEl('button', { 
+                text: label, 
+                attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${hasPopout ? 'border-top-right-radius: 0; border-bottom-right-radius: 0;' : ''} ${this.activeTab === id ? 'background-color: var(--interactive-accent); color: var(--text-on-accent); border-color: var(--interactive-accent);' : ''}` } 
+            });
+            btn.addEventListener('click', () => { this.activeTab = id as any; this.renderView(); });
+            
+            if (hasPopout) {
+                const detachBtn = btnWrap.createEl('button', {
+                    text: '⧉',
+                    attr: { title: 'Pop out tab', style: `padding: 5px 4px; font-size: 0.7em; border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 1px solid var(--background-modifier-border); ${this.activeTab === id ? 'background-color: var(--interactive-accent); color: var(--text-on-accent); border-color: var(--interactive-accent);' : ''}` }
+                });
+                detachBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.detachTab(id);
+                });
+            }
+        };
 
-        const minaTab = nav.createEl('button', {
-            text: 'Ai',
-            attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'mina-ai' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` }
-        });
-        minaTab.addEventListener('click', () => { this.activeTab = 'mina-ai'; this.renderView(); });
-
-        const duesTab = nav.createEl('button', {
-            text: 'Du',
-            attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'dues' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` }
-        });
-        duesTab.addEventListener('click', () => { this.activeTab = 'dues'; this.renderView(); });
-
-        const voiceTab = nav.createEl('button', { 
-            text: 'Vo', 
-            attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'vo' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` } 
-        });
-        voiceTab.addEventListener('click', () => { this.activeTab = 'vo'; this.renderView(); });
-
-        const settingsTab = nav.createEl('button', {
-            text: 'Se',
-            attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${this.activeTab === 'settings' ? 'background-color: var(--interactive-accent); color: var(--text-on-accent);' : ''}` }
-        });
-        settingsTab.addEventListener('click', () => { this.activeTab = 'settings'; this.renderView(); });
+        addTab('review-thoughts', 'Th');
+        addTab('review-tasks', 'Ta');
+        addTab('mina-ai', 'Ai');
+        addTab('dues', 'Du');
+        addTab('vo', 'Vo');
+        addTab('settings', 'Se');
 
         if (this.activeTab === 'review-tasks') {
             this.renderReviewTasksMode(container);
