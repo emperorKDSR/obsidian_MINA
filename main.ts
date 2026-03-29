@@ -2135,22 +2135,18 @@ class MinaView extends ItemView {
         const isMobilePhone = Platform.isMobile && !isTablet();
 
         // ── Wrapper ─────────────────────────────────────────────────────────
-        // Mobile: position:relative so absolute children work. flex-grow:1+min-height:0 ensures it fills
-        // all space below the nav bar within the outer fixed container.
-        // Desktop: flex column so children stack normally.
         const wrapper = container.createEl('div', {
             attr: {
                 style: Platform.isMobile
-                    ? 'flex-grow:1;min-height:0;position:relative;overflow:hidden;'
+                    ? 'flex-grow:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;'
                     : 'flex-grow:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;'
             }
         });
 
-        // ── Grounded notes bar ───────────────────────────────────────────────
-        const gbStyle = Platform.isMobile
-            ? 'position:absolute;top:0;left:0;right:0;z-index:10;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:5px 10px;border-bottom:1px solid var(--background-modifier-border);background:var(--background-secondary);-webkit-overflow-scrolling:touch;'
-            : 'flex-shrink:0;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:5px 10px;border-bottom:1px solid var(--background-modifier-border);background:var(--background-secondary);-webkit-overflow-scrolling:touch;';
-        const groundedBar = wrapper.createEl('div', { attr: { style: gbStyle } });
+        // ── Grounded notes bar — always at top ──────────────────────────────
+        const groundedBar = wrapper.createEl('div', {
+            attr: { style: 'flex-shrink:0;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:5px 10px;border-bottom:1px solid var(--background-modifier-border);background:var(--background-secondary);-webkit-overflow-scrolling:touch;' }
+        });
         this.groundedNotesBar = groundedBar;
 
         const defaultChips = [{ icon: '💭', label: 'Th' }, { icon: '✅', label: 'Ta' }, { icon: '💳', label: 'Du' }];
@@ -2179,59 +2175,31 @@ class MinaView extends ItemView {
         };
         refreshGroundedBar();
 
-        // ── Input row — pinned to bottom on mobile, flex-shrink on desktop ───
-        // Created BEFORE chatContainer so we can measure it for bounds calculation.
-        const irStyle = Platform.isMobile
-            ? 'position:absolute;bottom:0;left:0;right:0;z-index:10;padding:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--background-modifier-border);background:var(--background-secondary);'
-            : 'flex-shrink:0;position:relative;padding:8px;border-top:1px solid var(--background-modifier-border);background:var(--background-secondary);';
-        const inputRow = wrapper.createEl('div', { attr: { style: irStyle } });
-
-        const textarea = inputRow.createEl('textarea', {
-            attr: {
-                placeholder: 'Ask MINA…',
-                rows: isMobilePhone ? '1' : '3',
-                style: 'width:100%;resize:none;font-size:0.9em;padding:8px 110px 8px 10px;border-radius:6px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);font-family:inherit;box-sizing:border-box;'
-            }
+        // ── Chat container — scrollable area ────────────────────────────────
+        this.chatContainer = wrapper.createEl('div', {
+            attr: { style: 'flex-grow:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 8px 80px 8px;' }
         });
-        if (isMobilePhone) {
-            textarea.addEventListener('focus', () => { textarea.rows = 4; adjustChatBounds(); });
-            textarea.addEventListener('blur',  () => { if (!textarea.value.trim()) { textarea.rows = 1; adjustChatBounds(); } });
-        }
-        const overlayBtns   = inputRow.createEl('div', { attr: { style: 'position:absolute;bottom:16px;right:16px;display:flex;gap:4px;align-items:center;' } });
+        await this.renderChatHistory();
+
+        // ── Input area — shared textarea + buttons (created once) ───────────
+        const textarea = document.createElement('textarea');
+        textarea.placeholder = 'Ask MINA…';
+        textarea.rows = isMobilePhone ? 4 : 3;
+        textarea.style.cssText = 'width:100%;resize:none;font-size:0.9em;padding:8px 110px 8px 10px;border-radius:6px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);font-family:inherit;box-sizing:border-box;';
+
+        const overlayBtns = document.createElement('div');
+        overlayBtns.style.cssText = 'position:absolute;bottom:16px;right:16px;display:flex;gap:4px;align-items:center;';
         const sendBtn        = overlayBtns.createEl('button', { text: '↑',  attr: { style: 'padding:3px 10px;font-size:1em;font-weight:700;border-radius:5px;background:var(--interactive-accent);color:var(--text-on-accent);border:none;cursor:pointer;', title: 'Send' } });
         const saveSessionBtn = overlayBtns.createEl('button', { text: '📥', attr: { style: 'padding:3px 6px;font-size:0.85em;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;', title: 'Save session' } });
         const newChatBtn     = overlayBtns.createEl('button', { text: '🗒️', attr: { style: 'padding:3px 6px;font-size:0.85em;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;', title: 'New chat' } });
         const recallBtn      = overlayBtns.createEl('button', { text: '📂', attr: { style: 'padding:3px 6px;font-size:0.85em;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;', title: 'Recall session' } });
-
-        // ── Chat container — fills space between groundedBar and inputRow ────
-        const chatStyle = Platform.isMobile
-            ? 'position:absolute;left:0;right:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px;z-index:1;'
-            : 'flex-grow:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 8px 12px 8px;';
-        this.chatContainer = wrapper.createEl('div', { attr: { style: chatStyle } });
-
-        // On mobile: measure groundedBar+inputRow and explicitly set chatContainer top/bottom.
-        const adjustChatBounds = () => {
-            if (!Platform.isMobile || !this.chatContainer) return;
-            const gbH = groundedBar.offsetHeight;
-            const irH = inputRow.offsetHeight;
-            this.chatContainer.style.top = gbH + 'px';
-            this.chatContainer.style.bottom = irH + 'px';
-            this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
-        };
-        requestAnimationFrame(adjustChatBounds);
-        if (Platform.isMobile) {
-            window.visualViewport?.addEventListener('resize', adjustChatBounds);
-            window.visualViewport?.addEventListener('scroll', adjustChatBounds);
-        }
-
-        await this.renderChatHistory();
 
         // ── Send logic ───────────────────────────────────────────────────────
         const send = async () => {
             const text = textarea.value.trim();
             if (!text) return;
             textarea.value = '';
-            if (isMobilePhone) { textarea.rows = 1; textarea.blur(); adjustChatBounds(); }
+            if (isMobilePhone) { textarea.blur(); closeMobileInput(); }
             textarea.disabled = true;
             sendBtn.disabled = true;
 
@@ -2257,6 +2225,15 @@ class MinaView extends ItemView {
         };
 
         sendBtn.addEventListener('click', send);
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); return; }
+            if (e.key === '\\') {
+                e.preventDefault();
+                new NotePickerModal(this.plugin.app, async (file) => {
+                    if (!this.groundedNotes.find(n => n.path === file.path)) { this.groundedNotes.push(file); refreshGroundedBar(); new Notice(`📎 Grounded on: ${file.basename}`); }
+                }).open();
+            }
+        });
 
         saveSessionBtn.addEventListener('click', async () => {
             if (this.chatHistory.length === 0) { new Notice('No chat to save.'); return; }
@@ -2288,17 +2265,61 @@ class MinaView extends ItemView {
             }).open();
         });
 
-        textarea.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); return; }
-            if (e.key === '\\') {
-                e.preventDefault();
-                new NotePickerModal(this.plugin.app, async (file) => {
-                    if (!this.groundedNotes.find(n => n.path === file.path)) { this.groundedNotes.push(file); refreshGroundedBar(); new Notice(`📎 Grounded on: ${file.basename}`); }
-                }).open();
-            }
-        });
+        // ── Mobile: floating brain FAB + slide-up input overlay ─────────────
+        let mobileInputOverlay: HTMLElement | null = null;
+        let fab: HTMLElement | null = null;
 
-        if (!isMobilePhone) setTimeout(() => textarea.focus(), 50);
+        const closeMobileInput = () => {
+            if (mobileInputOverlay) { mobileInputOverlay.style.display = 'none'; }
+            if (fab) { fab.style.display = 'flex'; }
+        };
+
+        if (isMobilePhone) {
+            // FAB — floating brain button, bottom-right
+            fab = wrapper.createEl('div', {
+                attr: {
+                    style: 'position:absolute;bottom:24px;right:16px;z-index:20;width:52px;height:52px;border-radius:50%;background:var(--interactive-accent);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.3);cursor:pointer;-webkit-tap-highlight-color:transparent;',
+                    title: 'Ask MINA'
+                }
+            });
+            fab.innerHTML = NINJA_AVATAR_SVG;
+            const svgEl = fab.querySelector('svg');
+            if (svgEl) { svgEl.setAttribute('width', '28'); svgEl.setAttribute('height', '28'); svgEl.style.stroke = 'var(--text-on-accent)'; }
+
+            // Overlay panel — full-width bar that slides up from bottom
+            mobileInputOverlay = wrapper.createEl('div', {
+                attr: {
+                    style: 'position:absolute;bottom:0;left:0;right:0;z-index:20;padding:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));background:var(--background-secondary);border-top:1px solid var(--background-modifier-border);display:none;'
+                }
+            });
+            const inputWrap = mobileInputOverlay.createEl('div', { attr: { style: 'position:relative;' } });
+            inputWrap.appendChild(textarea);
+            inputWrap.appendChild(overlayBtns);
+
+            fab.addEventListener('click', () => {
+                fab!.style.display = 'none';
+                mobileInputOverlay!.style.display = 'block';
+                setTimeout(() => textarea.focus(), 50);
+            });
+
+            // When the user taps outside or keyboard dismisses
+            textarea.addEventListener('blur', () => {
+                // Short delay so button click events can fire first
+                setTimeout(() => {
+                    if (!textarea.value.trim() && document.activeElement !== textarea) {
+                        closeMobileInput();
+                    }
+                }, 200);
+            });
+        } else {
+            // Desktop: input row sits at the bottom of the flex column
+            const inputRow = wrapper.createEl('div', {
+                attr: { style: 'flex-shrink:0;position:relative;padding:8px;border-top:1px solid var(--background-modifier-border);background:var(--background-secondary);' }
+            });
+            inputRow.appendChild(textarea);
+            inputRow.appendChild(overlayBtns);
+            setTimeout(() => textarea.focus(), 50);
+        }
     }
 
     async renderChatHistory() {
