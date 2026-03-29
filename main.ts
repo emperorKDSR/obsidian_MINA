@@ -2153,6 +2153,9 @@ class MinaView extends ItemView {
         const defChipSty  = 'flex-shrink:0;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;background:var(--background-modifier-border);color:var(--text-muted);font-size:0.78em;font-weight:500;';
         const userChipSty = 'flex-shrink:0;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;background:var(--interactive-accent-hover);color:var(--text-normal);font-size:0.78em;font-weight:500;cursor:default;';
 
+        // mobileInputArea reference — set later by the mobile branch, used by refreshGroundedBar
+        let mobileInputArea: HTMLElement | null = null;
+
         const refreshGroundedBar = () => {
             groundedBar.empty();
             groundedBar.createEl('span', { text: '📎', attr: { style: 'flex-shrink:0;font-size:0.8em;color:var(--text-muted);align-self:center;margin-right:2px;' } });
@@ -2172,6 +2175,26 @@ class MinaView extends ItemView {
             });
             webChip.createEl('span', { text: '🌐 Web' });
             webChip.addEventListener('click', () => { this.webSearchEnabled = !this.webSearchEnabled; refreshGroundedBar(); });
+
+            // Mobile: brain button at the end of the grounded bar
+            if (isMobilePhone) {
+                const brainBtn = groundedBar.createEl('span', {
+                    attr: {
+                        style: 'flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--interactive-accent);cursor:pointer;-webkit-tap-highlight-color:transparent;margin-left:6px;',
+                        title: 'Ask MINA'
+                    }
+                });
+                brainBtn.innerHTML = NINJA_AVATAR_SVG;
+                const svgEl = brainBtn.querySelector('svg');
+                if (svgEl) { svgEl.setAttribute('width', '16'); svgEl.setAttribute('height', '16'); svgEl.style.stroke = 'var(--text-on-accent)'; }
+
+                brainBtn.addEventListener('click', () => {
+                    if (!mobileInputArea) return;
+                    const isVisible = mobileInputArea.style.display !== 'none';
+                    mobileInputArea.style.display = isVisible ? 'none' : 'block';
+                    if (!isVisible) setTimeout(() => textarea.focus(), 50);
+                });
+            }
         };
         refreshGroundedBar();
 
@@ -2195,11 +2218,10 @@ class MinaView extends ItemView {
         const recallBtn      = overlayBtns.createEl('button', { text: '📂', attr: { style: 'padding:3px 6px;font-size:0.85em;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;', title: 'Recall session' } });
 
         // ── Send logic ───────────────────────────────────────────────────────
-        const send = async () => {
+        let send = async () => {
             const text = textarea.value.trim();
             if (!text) return;
             textarea.value = '';
-            if (isMobilePhone) { textarea.blur(); closeMobileInput(); }
             textarea.disabled = true;
             sendBtn.disabled = true;
 
@@ -2214,7 +2236,7 @@ class MinaView extends ItemView {
                 const reply = await this.callGemini(text, [...this.groundedNotes], this.webSearchEnabled);
                 thinking.remove();
                 this.chatHistory.push({ role: 'assistant', text: reply });
-            } catch (e) {
+            } catch (e: any) {
                 thinking.remove();
                 this.chatHistory.push({ role: 'assistant', text: `⚠️ Error: ${e.message}` });
             }
@@ -2265,54 +2287,62 @@ class MinaView extends ItemView {
             }).open();
         });
 
-        // ── Mobile: floating brain FAB + slide-up input overlay ─────────────
-        // IMPORTANT: FAB and overlay are appended to `container` (the position:fixed
-        // outer element) — NOT inside `wrapper` which has overflow:hidden and would clip them.
-        let mobileInputOverlay: HTMLElement | null = null;
-        let fab: HTMLElement | null = null;
-
-        const closeMobileInput = () => {
-            if (mobileInputOverlay) { mobileInputOverlay.style.display = 'none'; }
-            if (fab) { fab.style.display = 'flex'; }
-        };
-
+        // ── Mobile: inline input area toggled by brain button in grounded bar ─
+        // Everything in normal document flow — no absolute/fixed positioning.
         if (isMobilePhone) {
-            // FAB — floating brain button, bottom-right, on the outer fixed container
-            fab = container.createEl('div', {
-                attr: {
-                    style: 'position:absolute;bottom:24px;right:16px;z-index:100;width:52px;height:52px;border-radius:50%;background:var(--interactive-accent);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.3);cursor:pointer;-webkit-tap-highlight-color:transparent;',
-                    title: 'Ask MINA'
-                }
-            });
-            fab.innerHTML = NINJA_AVATAR_SVG;
-            const svgEl = fab.querySelector('svg');
-            if (svgEl) { svgEl.setAttribute('width', '28'); svgEl.setAttribute('height', '28'); svgEl.style.stroke = 'var(--text-on-accent)'; }
-
-            // Overlay panel — full-width bar at bottom of the fixed container
-            mobileInputOverlay = container.createEl('div', {
-                attr: {
-                    style: 'position:absolute;bottom:0;left:0;right:0;z-index:100;padding:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));background:var(--background-secondary);border-top:1px solid var(--background-modifier-border);display:none;'
-                }
-            });
-            const inputWrap = mobileInputOverlay.createEl('div', { attr: { style: 'position:relative;' } });
+            // The input area sits between groundedBar and chatContainer in the flex column.
+            mobileInputArea = document.createElement('div');
+            mobileInputArea.style.cssText = 'flex-shrink:0;padding:8px;border-bottom:1px solid var(--background-modifier-border);background:var(--background-secondary);display:none;';
+            const inputWrap = mobileInputArea.createEl('div', { attr: { style: 'position:relative;' } });
             inputWrap.appendChild(textarea);
             inputWrap.appendChild(overlayBtns);
+            // Insert mobileInputArea after groundedBar but before chatContainer
+            wrapper.insertBefore(mobileInputArea, this.chatContainer);
+            // Re-run refreshGroundedBar now that mobileInputArea is set, so brain button works
+            refreshGroundedBar();
 
-            fab.addEventListener('click', () => {
-                fab!.style.display = 'none';
-                mobileInputOverlay!.style.display = 'block';
-                setTimeout(() => textarea.focus(), 50);
-            });
+            const closeMobileInput = () => {
+                if (mobileInputArea) mobileInputArea.style.display = 'none';
+            };
 
-            // When the user taps outside or keyboard dismisses
             textarea.addEventListener('blur', () => {
-                // Short delay so button click events can fire first
                 setTimeout(() => {
                     if (!textarea.value.trim() && document.activeElement !== textarea) {
                         closeMobileInput();
                     }
                 }, 200);
             });
+
+            // Override send for mobile
+            send = async () => {
+                const text = textarea.value.trim();
+                if (!text) return;
+                textarea.value = '';
+                textarea.blur();
+                closeMobileInput();
+                textarea.disabled = true;
+                sendBtn.disabled = true;
+
+                this.chatHistory.push({ role: 'user', text });
+                await this.renderChatHistory();
+
+                const thinking = this.chatContainer.createEl('div', { attr: { style: 'font-size:0.85em;color:var(--text-muted);font-style:italic;margin-bottom:8px;padding-left:4px;' } });
+                thinking.setText('MINA is thinking…');
+                this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+
+                try {
+                    const reply = await this.callGemini(text, [...this.groundedNotes], this.webSearchEnabled);
+                    thinking.remove();
+                    this.chatHistory.push({ role: 'assistant', text: reply });
+                } catch (e: any) {
+                    thinking.remove();
+                    this.chatHistory.push({ role: 'assistant', text: `⚠️ Error: ${e.message}` });
+                }
+                await this.renderChatHistory();
+                textarea.disabled = false;
+                sendBtn.disabled = false;
+            };
+            sendBtn.onclick = () => send();
         } else {
             // Desktop: input row sits at the bottom of the flex column
             const inputRow = wrapper.createEl('div', {
