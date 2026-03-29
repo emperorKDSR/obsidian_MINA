@@ -33,8 +33,8 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Centered Filters:** Text in filter dropdowns is centered for improved readability.
    - **Contemporary Controls:**
      - **Toggle Switches:** Pill-shaped toggle switches for task status, History, and Capture visibility.
-     - **Brain/Dragon Avatar:** Root thoughts are marked with a circular brain SVG icon (red outline, Lucide-style); replies are streamlined without the icon.
-     - **Brain Ribbon Icon:** The Obsidian sidebar ribbon uses the same brain SVG as the plugin icon.
+     - **Alien Avatar:** Root thoughts are marked with a circular alien head SVG icon using the theme's accent color (currentColor).
+     - **Alien Ribbon Icon:** The Obsidian sidebar ribbon uses the same alien SVG as the plugin icon.
    - **Desktop Optimization:** 
      - Standalone windows hide native tab headers and include a dedicated **drag handle** at the top.
      - **Separate Windows:** Tabs can be opened into a separate window altogether via a pop-out button (⧉) in the navigation bar.
@@ -232,11 +232,11 @@ When splitting a markdown table row by `|`, the part indices are:
 - **`toAsciiDigits()`:** Module-level helper covering U+0660–U+0669 (Arabic-Indic), U+06F0–U+06F9 (Persian), U+0966–U+096F (Devanagari), U+09E6–U+09EF (Bengali), U+0E50–U+0E59 (Thai).
 - **`onClose()` in MinaView must be `async`** — TypeScript requires it to match ItemView's `() => Promise<void>` signature.
 - **Default Gemini model:** `gemini-2.5-flash` (set in `DEFAULT_SETTINGS` and as the dropdown fallback).
-- **Brain SVG:** `KATANA_ICON_SVG` (inner content for `addIcon`, 100×100 viewBox) uses `<g transform="translate(2,2) scale(4)">` to scale Lucide brain paths (24×24) up. `NINJA_AVATAR_SVG` is a full `<svg viewBox="0 0 24 24">` with the same paths, used inline. Both use `stroke="#c0392b"` (red), `fill="none"`, `stroke-width="2"`.
+- **Alien SVG:** `KATANA_ICON_SVG` (inner content for `addIcon`, 100×100 viewBox) uses `<g transform="translate(2,2) scale(4)">` to scale Lucide-style alien paths (24×24) up. `NINJA_AVATAR_SVG` is a full `<svg viewBox="0 0 24 24">` with the same paths, used inline. Both use `stroke="currentColor"` for theme compatibility.
 - **AI chat multi-turn:** `callGemini()` builds Gemini `contents` array from full `chatHistory` (role: user/model). Current user message is pushed to `chatHistory` before calling `callGemini`, so the API receives the complete conversation.
 - **AI response parsing:** Joins ALL `parts[].text` from response candidates (not just `parts[0]`) to handle web-search multi-part responses. `maxOutputTokens` defaults to 65536, configurable in settings.
-- **AI chat mobile input:** Brain icon (28px accent circle with `NINJA_AVATAR_SVG`) appended inside `refreshGroundedBar()` as last item when `isMobilePhone`. Clicking toggles `mobileInputArea` visibility. `mobileInputArea` is a normal `flex-shrink:0` div inserted via `wrapper.insertBefore(mobileInputArea, this.chatContainer)` — no absolute positioning needed.
-- **`refreshGroundedBar()`:** Called on init and whenever `groundedNotes` or `webSearchEnabled` changes. On mobile, also re-appends the brain icon button. The `mobileInputArea` reference is declared before `refreshGroundedBar` is defined so the closure can capture it.
+- **AI chat mobile input:** Alien icon (28px accent circle with `NINJA_AVATAR_SVG`) appended inside `refreshGroundedBar()` as last item when `isMobilePhone`. Clicking toggles `mobileInputArea` visibility. `mobileInputArea` is a normal `flex-shrink:0` div inserted via `wrapper.insertBefore(mobileInputArea, this.chatContainer)` — no absolute positioning needed.
+- **`refreshGroundedBar()`:** Called on init and whenever `groundedNotes` or `webSearchEnabled` changes. On mobile, also re-appends the alien icon button. The `mobileInputArea` reference is declared before `refreshGroundedBar` is defined so the closure can capture it.
 - **Save-as-Thought button in AI chat:** `position:absolute; bottom:6px; right:6px` inside assistant bubble (which has `position:relative; padding-bottom:24px`). Icon-only `💾`, shows `✓` on success, reverts after 2s.
 - **Tasks date filter logic:** `updateReviewTasksList()` filters `entry.due` (plain `YYYY-MM-DD` string, brackets stripped during parse) against current date using `moment()`. All filter options (Today, This Week, Next Week, Overdue Only, Today + Overdue, No Due Date, Custom Range) implemented as explicit date comparisons.
 - **Thoughts default filter:** `thoughtsFilterDate` defaults to `'last-5-days'`. Filter: `entryDay >= moment().subtract(4, 'days').startOf('day')`.

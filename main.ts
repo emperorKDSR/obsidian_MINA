@@ -2,35 +2,23 @@ import { App, Plugin, PluginSettingTab, Setting, TFile, Notice, ItemView, Worksp
 
 export const VIEW_TYPE_MINA = "mina-v2-view";
 
-// Brain icon — standard Lucide brain, red outline
+// Custom icon — Alien head
 const KATANA_ICON_ID = "mina-katana";
-// Obsidian addIcon uses viewBox="0 0 100 100"; scale the 24x24 Lucide paths up
-const KATANA_ICON_SVG = `
-  <g transform="translate(2,2) scale(4)" fill="none" stroke="#c0392b" stroke-width="0.6" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/>
-    <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/>
-    <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/>
-    <path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/>
-    <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"/>
-    <path d="M3.477 10.896a4 4 0 0 1 .585-.396"/>
-    <path d="M19.938 10.5a4 4 0 0 1 .585.396"/>
-    <path d="M6 18a4 4 0 0 1-1.967-.516"/>
-    <path d="M19.967 17.484A4 4 0 0 1 18 18"/>
-  </g>
-`;
+const MINA_ALIEN_PATH_HEAD = "M12 2C7.03 2 3 6.03 3 11c0 4.97 4.03 11 9 11s9-6.03 9-11c0-4.97-4.03-9-9-9z";
+const MINA_ALIEN_PATH_EYE_L = "M9 11a3 2 0 0 1-3 2 3 2 0 0 1 3-2z";
+const MINA_ALIEN_PATH_EYE_R = "M15 11a3 2 0 0 0 3 2 3 2 0 0 0-3-2z";
 
-const NINJA_AVATAR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/>
-  <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/>
-  <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/>
-  <path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/>
-  <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"/>
-  <path d="M3.477 10.896a4 4 0 0 1 .585-.396"/>
-  <path d="M19.938 10.5a4 4 0 0 1 .585.396"/>
-  <path d="M6 18a4 4 0 0 1-1.967-.516"/>
-  <path d="M19.967 17.484A4 4 0 0 1 18 18"/>
+// addIcon content — transform maps 24x24 coords into Obsidian's 100×100 icon space
+const KATANA_ICON_SVG = `<g transform="translate(2,2) scale(4)">
+    <path d="${MINA_ALIEN_PATH_HEAD}" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="${MINA_ALIEN_PATH_EYE_L}" fill="#39FF14" stroke="none"/>
+    <path d="${MINA_ALIEN_PATH_EYE_R}" fill="#39FF14" stroke="none"/>
+</g>`;
+const NINJA_AVATAR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#39FF14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="${MINA_ALIEN_PATH_HEAD}"/>
+    <path d="${MINA_ALIEN_PATH_EYE_L}" fill="#39FF14" stroke="none"/>
+    <path d="${MINA_ALIEN_PATH_EYE_R}" fill="#39FF14" stroke="none"/>
 </svg>`;
-
 const WOLF_SVG = NINJA_AVATAR_SVG;
 
 interface MinaSettings {
@@ -133,9 +121,10 @@ export default class MinaPlugin extends Plugin {
 
 		addIcon(KATANA_ICON_ID, KATANA_ICON_SVG);
 
-		this.addRibbonIcon(KATANA_ICON_ID, 'MINA V2', (evt: MouseEvent) => {
+		const ribbonIconEl = this.addRibbonIcon(KATANA_ICON_ID, 'MINA V2', (evt: MouseEvent) => {
 			this.activateView();
 		});
+
 
 		this.addCommand({
 			id: 'open-mina-v2',
@@ -1827,7 +1816,7 @@ class MinaView extends ItemView {
 
     getViewType() { return VIEW_TYPE_MINA; }
     getDisplayText() { return "MINA V2"; }
-    getIcon() { return "brain"; }
+    getIcon() { return KATANA_ICON_ID; }
 
     getState() {
         return { activeTab: this.activeTab };
@@ -2219,19 +2208,19 @@ class MinaView extends ItemView {
             webChip.createEl('span', { text: '🌐 Web' });
             webChip.addEventListener('click', () => { this.webSearchEnabled = !this.webSearchEnabled; refreshGroundedBar(); });
 
-            // Mobile: brain button at the end of the grounded bar
+            // Mobile: alien button at the end of the grounded bar
             if (isMobilePhone) {
-                const brainBtn = groundedBar.createEl('span', {
+                const alienBtn = groundedBar.createEl('span', {
                     attr: {
                         style: 'flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--interactive-accent);cursor:pointer;-webkit-tap-highlight-color:transparent;margin-left:6px;',
                         title: 'Ask MINA'
                     }
                 });
-                brainBtn.innerHTML = NINJA_AVATAR_SVG;
-                const svgEl = brainBtn.querySelector('svg');
-                if (svgEl) { svgEl.setAttribute('width', '16'); svgEl.setAttribute('height', '16'); svgEl.style.stroke = 'var(--text-on-accent)'; }
+                alienBtn.innerHTML = NINJA_AVATAR_SVG;
+                const svgEl = alienBtn.querySelector('svg');
+                if (svgEl) { svgEl.setAttribute('width', '16'); svgEl.setAttribute('height', '16'); svgEl.style.stroke = '#39FF14'; }
 
-                brainBtn.addEventListener('click', () => {
+                alienBtn.addEventListener('click', () => {
                     if (!mobileInputArea) return;
                     const isVisible = mobileInputArea.style.display !== 'none';
                     mobileInputArea.style.display = isVisible ? 'none' : 'block';
@@ -2330,7 +2319,7 @@ class MinaView extends ItemView {
             }).open();
         });
 
-        // ── Mobile: inline input area toggled by brain button in grounded bar ─
+        // ── Mobile: inline input area toggled by alien button in grounded bar ─
         // Everything in normal document flow — no absolute/fixed positioning.
         if (isMobilePhone) {
             // The input area sits between groundedBar and chatContainer in the flex column.
@@ -2341,7 +2330,7 @@ class MinaView extends ItemView {
             inputWrap.appendChild(overlayBtns);
             // Insert mobileInputArea after groundedBar but before chatContainer
             wrapper.insertBefore(mobileInputArea, this.chatContainer);
-            // Re-run refreshGroundedBar now that mobileInputArea is set, so brain button works
+            // Re-run refreshGroundedBar now that mobileInputArea is set, so alien button works
             refreshGroundedBar();
 
             const closeMobileInput = () => {
@@ -4405,4 +4394,5 @@ class MinaSettingTab extends PluginSettingTab {
         });
 	}
 }
+
 
