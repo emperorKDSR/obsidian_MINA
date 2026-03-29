@@ -1924,6 +1924,12 @@ class MinaView extends ItemView {
             container.style.maxHeight  = `${vvh}px`;
             container.style.overflow   = 'hidden';
         } else {
+            // Desktop: ensure container is flex column
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.height = '100%';
+            container.style.overflow = 'hidden';
+
             // Drag handle for desktop
             const dragHandle = container.createEl('div', { attr: { style: 'height: 14px; width: 100%; -webkit-app-region: drag; flex-shrink: 0; display: flex; justify-content: center; align-items: center; margin-bottom: 8px; cursor: grab;' } });
             dragHandle.createEl('div', { attr: { style: 'width: 40px; height: 4px; background-color: var(--background-modifier-border); border-radius: 4px;' }});
