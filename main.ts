@@ -1319,12 +1319,14 @@ class PaymentModal extends Modal {
     private file: TFile;
     private currentDueDate: string;
     private onPaid: () => void;
+    private defaultPayDate: string;
 
-    constructor(app: App, file: TFile, currentDueDate: string, onPaid: () => void) {
+    constructor(app: App, file: TFile, currentDueDate: string, onPaid: () => void, defaultPayDate?: string) {
         super(app);
         this.file = file;
         this.currentDueDate = currentDueDate;
         this.onPaid = onPaid;
+        this.defaultPayDate = defaultPayDate || moment().format('YYYY-MM-DD');
     }
 
     onOpen() {
@@ -1385,7 +1387,7 @@ class PaymentModal extends Modal {
         // Payment date
         const dateWrap = field('Payment Date');
         const dateInput = dateWrap.createEl('input', { type: 'date', attr: { style: 'padding: 5px 8px; border-radius: 5px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-size: 0.9em;' } });
-        dateInput.value = moment().format('YYYY-MM-DD');
+        dateInput.value = this.defaultPayDate;
 
         // Combined notes + image paste area
         const notesWrap = field('Notes, reference, snippets — paste images with Ctrl+V');
@@ -2074,11 +2076,16 @@ class MinaView extends ItemView {
                 // Pay button (only for recurring entries with due dates)
                 const tdPay = tr.createEl('td', { attr: { style: 'padding: 4px 8px; text-align: right;' } });
                 if (entry.hasRecurring) {
-                    const payBtn = tdPay.createEl('button', { text: 'Pay', attr: { style: 'padding: 3px 12px; border-radius: 5px; border: none; background: var(--interactive-accent); color: var(--text-on-accent); font-size: 0.8em; font-weight: 600; cursor: pointer;' } });
+                    const payWrap = tdPay.createEl('div', { attr: { style: 'display: flex; gap: 6px; justify-content: flex-end; align-items: center;' } });
+                    
+                    const quickDateInput = payWrap.createEl('input', { type: 'date', attr: { style: 'padding: 2px 6px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-size: 0.85em;' } });
+                    quickDateInput.value = moment().format('YYYY-MM-DD');
+
+                    const payBtn = payWrap.createEl('button', { text: 'Pay', attr: { style: 'padding: 3px 12px; border-radius: 5px; border: none; background: var(--interactive-accent); color: var(--text-on-accent); font-size: 0.8em; font-weight: 600; cursor: pointer;' } });
                     payBtn.addEventListener('click', () => {
                         const fileObj = vault.getFileByPath(entry.path) as TFile;
                         if (!fileObj) { new Notice('Note file not found.'); return; }
-                        new PaymentModal(this.plugin.app, fileObj, entry.dueDate, () => { this.renderView(); }).open();
+                        new PaymentModal(this.plugin.app, fileObj, entry.dueDate, () => { this.renderView(); }, quickDateInput.value).open();
                     });
                 }
             });
