@@ -135,13 +135,14 @@ The "MINA V2" plugin has been developed with the following features and implemen
 
 6. **Dues Tab (Du)**
    - Scans all vault notes for frontmatter `category: recurring payment` (supports plain string, comma-separated, or YAML list) and `active_status: true`.
-   - **Table columns:** Payable (clickable note link), Due Date (overdue = red ⚠, today = accent), Last Payment, Pay button.
+   - **Table columns:** Payable (clickable note link), Due Date (overdue = red ⚠, today = accent), Last Payment, Pay button (with inline quick payment date input defaulting to today).
    - Sorted by Due Date ascending; undated entries go to bottom.
    - **Pay Modal:** Records a payment against a recurring due.
-     - Payment date picker (defaults to today).
+     - Payment date picker (defaults to the date selected in the inline quick payment date input).
+     - Next Due Date picker (automatically calculates and defaults to 1 month after the selected Payment date).
      - Combined notes/snippet/reference textarea — paste images from clipboard (Ctrl+V) with thumbnail preview and ✕ removal.
      - Multi-file attachment picker.
-     - Updates `last_payment` and `next_duedate` (+1 month) in the note's frontmatter via `processFrontMatter`.
+     - Updates `last_payment` and `next_duedate` in the note's frontmatter via `processFrontMatter`.
      - Appends a `## Payment — YYYY-MM-DD` log entry with notes and embedded attachments to the note body.
      - Refreshes the Dues table automatically after saving.
      - **Mobile:** Anchored to top, centered via parent overlay flex, shrinks with visualViewport.
