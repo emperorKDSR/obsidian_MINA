@@ -1389,6 +1389,22 @@ class PaymentModal extends Modal {
         const dateInput = dateWrap.createEl('input', { type: 'date', attr: { style: 'padding: 5px 8px; border-radius: 5px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-size: 0.9em;' } });
         dateInput.value = this.defaultPayDate;
 
+        // Next Due Date
+        const nextDueWrap = field('Next Due Date');
+        const nextDueInput = nextDueWrap.createEl('input', { type: 'date', attr: { style: 'padding: 5px 8px; border-radius: 5px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-size: 0.9em;' } });
+        
+        // Initial setup for next due date
+        const updateNextDueDate = () => {
+            const payDate = dateInput.value;
+            if (payDate) {
+                nextDueInput.value = moment(payDate).add(1, 'month').format('YYYY-MM-DD');
+            }
+        };
+        updateNextDueDate();
+
+        // Update next due date when payment date changes
+        dateInput.addEventListener('change', updateNextDueDate);
+
         // Combined notes + image paste area
         const notesWrap = field('Notes, reference, snippets — paste images with Ctrl+V');
         const notesArea = notesWrap.createEl('textarea', { attr: { rows: '5', placeholder: 'e.g. REF-20260325-001, paid online, notes…', style: 'padding: 6px 8px; border-radius: 5px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); font-size: 0.9em; resize: vertical; font-family: inherit; width: 100%; box-sizing: border-box;' } });
@@ -1452,9 +1468,8 @@ class PaymentModal extends Modal {
 
             try {
                 // Compute new next_duedate = current next_duedate + 1 month
-                const dueMoment = moment(this.currentDueDate, ['YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY'], true);
-                const newDue = dueMoment.isValid()
-                    ? dueMoment.add(1, 'month').format('YYYY-MM-DD')
+                const newDue = nextDueInput.value 
+                    ? nextDueInput.value 
                     : moment(payDate).add(1, 'month').format('YYYY-MM-DD');
 
                 // Update frontmatter
