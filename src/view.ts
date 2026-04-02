@@ -248,7 +248,9 @@ export class MinaView extends ItemView {
             } 
         });
 
-        const addThoughtBtn = header.createEl('button', { 
+        const btnGroup = header.createEl('div', { attr: { style: 'display: flex; gap: 8px;' } });
+
+        const addThoughtBtn = btnGroup.createEl('button', { 
             text: '+Thought', 
             attr: { 
                 style: 'padding: 4px 12px; border-radius: 5px; background: var(--interactive-accent); color: var(--text-on-accent); font-size: 0.8em; font-weight: 600; cursor: pointer; border: none;' 
@@ -271,6 +273,14 @@ export class MinaView extends ItemView {
                 'New Thought'
             ).open();
         });
+
+        const refreshBtn = btnGroup.createEl('button', { 
+            text: 'Refresh', 
+            attr: { 
+                style: 'padding: 4px 12px; border-radius: 5px; background: var(--background-modifier-border); color: var(--text-muted); font-size: 0.8em; font-weight: 600; cursor: pointer; border: none;' 
+            } 
+        });
+        refreshBtn.addEventListener('click', () => this.renderView());
 
         const section1 = this.renderDailySection(wrap, "TODAY'S CHECKLIST", true);
         this.updateDailyThoughtTodos(section1);
