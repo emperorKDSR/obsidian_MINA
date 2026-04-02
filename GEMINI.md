@@ -18,7 +18,10 @@ The "MINA V2" plugin has been developed with the following features and implemen
 
 1. **User Interface (UI) & Aesthetics**
    - **Tabbed Navigation:** Seven tabs with short labels: **Da** (Daily), **Th** (Thoughts), **Ta** (Tasks), **Ai** (AI Chat), **Du** (Dues), **Vo** (Voice), **Se** (Settings).
-   - **Daily Tab (Da):** Positioned first, provides a placeholder for daily notes and focus. Accessible via a dedicated command palette entry.
+   - **Daily Tab (Da):** A high-focus dashboard with three foldable sections:
+     - **TODAY'S CHECKLIST:** A compact, one-line list of all open to-dos (`- [ ]`) extracted from your entire thought history. Interactive checkboxes update source notes instantly.
+     - **PENDING TASKS:** A compact rollup of open tasks from your tasks index that are due today or overdue.
+     - **TODAY'S THOUGHTS:** A full card-based view of thoughts captured today or containing today's date link. Avatars are hidden here to maximize horizontal space.
    - **Modern Card-Based Layout:** Thoughts and tasks are displayed in responsive "cards" with rounded corners and dynamic backgrounds.
      - **Dark Mode:** Transparent white background (`rgba(255, 255, 255, 0.05)`).
      - **Light Mode:** Subtle grey background (`rgba(0, 0, 0, 0.05)`).
@@ -78,7 +81,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - **Image Zoom Lightbox:** Clicking any image in a thought/task card opens a full-screen overlay.
      - Desktop: mouse-wheel zoom (0.2×–8×), drag to pan when zoomed, Escape to close.
      - Mobile: pinch-to-zoom, single-finger drag to pan, tap outside (when not zoomed) to close.
-   - **Inline Checklists (Thoughts tab):**
+   - **Inline Checklists:**
      - Type `** item text` in the capture textarea (or edit modal) — it auto-converts to `- [ ] item text` on the fly.
      - Checklist items render as interactive **circle toggles** (accent-colored circle with ✓ glyph when checked).
      - Clicking a circle immediately toggles the checked state and persists to the markdown file without re-rendering the whole list.
@@ -92,6 +95,9 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - **Hybrid Storage:**
      - **Table-Based:** `mina_v2.md` (thoughts) and `mina_2.md` (tasks) store data in structured Markdown tables.
      - **File-Based:** Individual Markdown files with YAML frontmatter in `thoughtsFolder` and `tasksFolder`.
+   - **Deep Metadata Extraction:** 
+     - Scans the **entire content** of notes (not just frontmatter) for date links in the `[[YYYY-MM-DD]]` format.
+     - This allows the Daily tab to rollup any thought that mentions a specific day, regardless of when the note was created.
    - **Stable IDs:** Uses robust unique IDs for new thoughts and **content-based stable hashing** for legacy 4-column entries.
    - **Automatic Context Discovery:** Scans files on load to extract unique tags, preserving casing and multi-word contexts.
    - **Settings Protection:** Iron-clad lock mechanism prevents configuration loss during sync or updates.
@@ -189,3 +195,5 @@ npm run build
 - **Componentization:** Each tab's logic is contained within `MinaView` but utilizes specialized modals from `src/modals/` for complex interactions.
 - **State Management:** `getState()` and `setState()` in `MinaView` ensure the `activeTab` persists across window pops and Obsidian restarts.
 - **Mobile Keyboard Fix:** Optimized `visualViewport` listeners are maintained in `MinaView` to handle iOS WebKit layout shifts.
+- **Deep Metadata Parsing:** The `allDates` array in `ThoughtEntry` captures every date link found in the entire file, enabling rich daily rollups.
+- **Layout Isolation:** Daily tab sections use `flex-shrink: 0` and `block` content layouts to prevent distortion during expansion/collapse.

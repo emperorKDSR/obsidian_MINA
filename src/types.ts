@@ -32,6 +32,7 @@ export interface ThoughtEntry {
     created: string;           // YYYY-MM-DD HH:mm:ss
     modified: string;          // YYYY-MM-DD HH:mm:ss
     day: string;               // e.g. "2026-03-28"
+    allDates: string[];        // all [[YYYY-MM-DD]] links found in full content
     context: string[];         // from frontmatter context list
     body: string;              // text before first ## reply header
     children: ReplyEntry[];    // parsed from ## sections in body

@@ -229,10 +229,202 @@ export class MinaView extends ItemView {
     }
 
     renderDailyMode(container: HTMLElement) {
-        const wrap = container.createEl('div', { attr: { style: 'padding: 12px 12px 200px 12px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; flex-grow: 1; min-height: 0; -webkit-overflow-scrolling: touch;' } });
-        const header = wrap.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; padding-bottom: 10px; border-bottom: 1px solid var(--background-modifier-border);' } });
-        header.createEl('h3', { text: `Daily View — ${moment().format('YYYY-MM-DD')}`, attr: { style: 'margin: 0; font-size: 1.1em; color: var(--text-accent);' } });
-        wrap.createEl('p', { text: 'This is the new Daily View tab. Implementation is coming soon.', attr: { style: 'color: var(--text-muted); font-size: 0.9em; text-align: center; margin-top: 40px;' } });
+        const wrap = container.createEl('div', { 
+            attr: { 
+                style: 'padding: 12px 12px 200px 12px; display: flex; flex-direction: column; gap: 5px; overflow-y: auto; flex-grow: 1; min-height: 0; -webkit-overflow-scrolling: touch;' 
+            } 
+        });
+
+        const header = wrap.createEl('div', { 
+            attr: { 
+                style: 'display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid var(--background-modifier-border);' 
+            } 
+        });
+
+        header.createEl('h3', { 
+            text: `Daily Focus — ${moment().format('ddd, MMM D')}`,
+            attr: { 
+                style: 'margin: 0; font-size: 1.1em; color: var(--text-accent);' 
+            } 
+        });
+
+        const section1 = this.renderDailySection(wrap, "TODAY'S CHECKLIST", true);
+        this.updateDailyThoughtTodos(section1);
+
+        const section2 = this.renderDailySection(wrap, 'PENDING TASKS', true);
+        this.updateDailyTasks(section2);
+
+        const section3 = this.renderDailySection(wrap, "TODAY'S THOUGHTS", true);
+        this.updateDailyThoughts(section3);
+    }
+
+    async updateDailyThoughts(container: HTMLElement) {
+        container.empty();
+        const today = moment().format('YYYY-MM-DD');
+        const thoughts = Array.from(this.plugin.thoughtIndex.values())
+            .filter(e => e.allDates && e.allDates.includes(today))
+            .sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate);
+
+        if (thoughts.length === 0) {
+            container.createEl('p', { text: 'No thoughts captured today.', attr: { style: 'color: var(--text-muted); font-size: 0.8em; text-align: center; margin: 5px 0;' } });
+            return;
+        }
+
+        const thoughtsRowContainer = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px; width: 100%;' } });
+        for (const entry of thoughts) {
+            await this.renderThoughtRow(entry, thoughtsRowContainer, entry.filePath, 0, true);
+        }
+    }
+
+    renderDailySection(container: HTMLElement, title: string, isOpen: boolean = true): HTMLElement {
+        const details = container.createEl('details', { 
+            attr: { 
+                style: 'margin-bottom: 10px; background: var(--background-secondary); border-radius: 8px; overflow: hidden; border: 1px solid var(--background-modifier-border); flex-shrink: 0; width: 100%;' 
+            } 
+        });
+        if (isOpen) details.setAttribute('open', 'true');
+
+        const summary = details.createEl('summary', { 
+            attr: { 
+                style: 'padding: 10px 12px; cursor: pointer; font-weight: 700; color: var(--text-accent); font-size: 0.85em; list-style: none; display: flex; align-items: center; gap: 8px; letter-spacing: 0.05em; user-select: none;' 
+            } 
+        });
+        
+        const chevron = summary.createSpan({ 
+            text: isOpen ? '▼' : '▶', 
+            attr: { style: 'font-size: 0.7em; transition: transform 0.2s; width: 1.2em; text-align: center; opacity: 0.6; flex-shrink: 0;' } 
+        });
+        
+        summary.createSpan({ text: title, attr: { style: 'flex-grow: 1;' } });
+
+        details.addEventListener('toggle', () => {
+            chevron.textContent = details.open ? '▼' : '▶';
+        });
+
+        const content = details.createEl('div', { 
+            attr: { style: 'padding: 0 12px 12px 12px; display: block; width: 100%;' } 
+        });
+        return content;
+    }
+
+    async updateDailyThoughtTodos(container: HTMLElement) {
+        container.empty();
+        const thoughts = Array.from(this.plugin.thoughtIndex.values());
+        let foundAny = false;
+
+        const todoList = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 4px;' } });
+
+        for (const entry of thoughts) {
+            const renderTodo = (text: string, sourceFilePath: string, isChild: boolean = false, anchor?: string) => {
+                foundAny = true;
+                const row = todoList.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px; padding: 2px 0; width: 100%; min-width: 0;' } });
+                
+                const circle = row.createEl('span');
+                const applyStyle = (checked: boolean) => {
+                    circle.style.cssText = `display:inline-flex; align-items:center; justify-content:center; width:14px; height:14px; border-radius:50%; border:2px solid var(--interactive-accent); cursor:pointer; flex-shrink:0; transition:background 0.15s; background:${checked ? 'var(--interactive-accent)' : 'transparent'}; font-size:9px; color:var(--background-primary); user-select:none;`;
+                    circle.textContent = checked ? '✓' : '';
+                };
+                applyStyle(false);
+
+                circle.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    applyStyle(true);
+                    row.style.opacity = '0.5';
+                    row.style.textDecoration = 'line-through';
+                    
+                    if (isChild && anchor) {
+                        const file = this.app.vault.getAbstractFileByPath(sourceFilePath) as TFile;
+                        if (file) {
+                            const content = await this.app.vault.read(file);
+                            const lines = content.split('\n');
+                            const idx = lines.findIndex(l => l.includes(`^${anchor}`));
+                            if (idx !== -1) {
+                                for (let i = idx + 1; i < lines.length && !lines[i].startsWith('## '); i++) {
+                                    if (lines[i].includes(`- [ ] ${text}`)) {
+                                        lines[i] = lines[i].replace('- [ ] ', '- [x] ');
+                                        break;
+                                    }
+                                }
+                                await this.app.vault.modify(file, lines.join('\n'));
+                                await this.plugin.indexThoughtFile(file);
+                            }
+                        }
+                    } else {
+                        const newBody = entry.body.replace(`- [ ] ${text}`, `- [x] ${text}`);
+                        await this.plugin.editThoughtBody(sourceFilePath, newBody, entry.context);
+                    }
+                    
+                    setTimeout(() => this.renderView(), 500);
+                });
+
+                const textEl = row.createEl('div', { attr: { style: 'font-size: 0.85em; line-height: 1.2; word-break: break-word; flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;' } });
+                MarkdownRenderer.render(this.plugin.app, text, textEl, sourceFilePath, this);
+                
+                const p = textEl.querySelector('p');
+                if (p) { p.style.margin = '0'; p.style.display = 'inline'; }
+
+                const link = row.createEl('span', { 
+                    text: '🔗', 
+                    attr: { style: 'font-size: 0.75em; cursor: pointer; opacity: 0.3; flex-shrink: 0;', title: 'Go to source' } 
+                });
+                link.addEventListener('click', (e) => { e.stopPropagation(); this.app.workspace.openLinkText(sourceFilePath, '', 'window'); });
+            };
+
+            const bodyMatches = entry.body.matchAll(/- \[ \] (.*)/g);
+            for (const m of bodyMatches) renderTodo(m[1], entry.filePath);
+
+            for (const child of entry.children) {
+                const childMatches = child.text.matchAll(/- \[ \] (.*)/g);
+                for (const m of childMatches) renderTodo(m[1], entry.filePath, true, child.anchor);
+            }
+        }
+
+        if (!foundAny) {
+            container.createEl('p', { text: 'No open to-dos.', attr: { style: 'color: var(--text-muted); font-size: 0.8em; text-align: center; margin: 5px 0;' } });
+        }
+    }
+
+    async updateDailyTasks(container: HTMLElement) {
+        container.empty();
+        const today = moment().format('YYYY-MM-DD');
+        const tasks = Array.from(this.plugin.taskIndex.values())
+            .filter(t => t.status === 'open' && (t.due && t.due <= today))
+            .sort((a, b) => (a.due || '').localeCompare(b.due || ''));
+
+        if (tasks.length === 0) {
+            container.createEl('p', { text: 'No pending tasks.', attr: { style: 'color: var(--text-muted); font-size: 0.8em; text-align: center; margin: 5px 0;' } });
+            return;
+        }
+
+        const taskList = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 4px;' } });
+
+        for (const task of tasks) {
+            const row = taskList.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--background-modifier-border-faint); width: 100%; min-width: 0;' } });
+            
+            const cb = row.createEl('input', { type: 'checkbox', attr: { style: 'width: 14px; height: 14px; flex-shrink: 0; margin: 0;' } });
+            cb.addEventListener('change', async () => {
+                if (cb.checked) {
+                    row.style.opacity = '0.5';
+                    row.style.textDecoration = 'line-through';
+                    await this.plugin.toggleTaskStatus(task.filePath, true);
+                    setTimeout(() => this.renderView(), 500);
+                }
+            });
+
+            const textEl = row.createEl('div', { attr: { style: 'font-size: 0.85em; line-height: 1.2; word-break: break-word; flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;' } });
+            MarkdownRenderer.render(this.plugin.app, task.body || task.title, textEl, task.filePath, this);
+            
+            const p = textEl.querySelector('p');
+            if (p) { p.style.margin = '0'; p.style.display = 'inline'; }
+
+            const isOverdue = task.due && task.due < today;
+            if (isOverdue) {
+                row.createSpan({ 
+                    text: '⚠', 
+                    attr: { style: 'font-size: 0.75em; color: var(--text-error); flex-shrink: 0; margin-left: auto;', title: `Overdue: ${task.due}` } 
+                });
+            }
+        }
     }
 
     renderDuesMode(container: HTMLElement) {
@@ -336,22 +528,16 @@ export class MinaView extends ItemView {
         field('Time Format', 'moment.js format, e.g. HH:mm', row => input(row, this.plugin.settings.timeFormat, 'HH:mm', 'text', async v => { this.plugin.settings.timeFormat = v; await this.plugin.saveSettings(); }));
         field('New Note Folder', 'Folder where notes created via \\ link are saved.', row => input(row, this.plugin.settings.newNoteFolder, '000 Bin', 'text', async v => { this.plugin.settings.newNoteFolder = v; await this.plugin.saveSettings(); }));
         field('Voice Memo Folder', 'Folder where recorded voice notes will be stored.', row => input(row, this.plugin.settings.voiceMemoFolder, '000 Bin/MINA V2 Voice', 'text', async v => { this.plugin.settings.voiceMemoFolder = v; await this.plugin.saveSettings(); }));
-        field('Transcription Language', 'Target language for audio transcription (e.g., English, Japanese).', row => input(row, this.plugin.settings.transcriptionLanguage, 'English', 'text', async v => { this.plugin.settings.transcriptionLanguage = v; await this.plugin.saveSettings(); }));
-        field('Gemini API Key', 'Your Google Gemini API key.', row => input(row, this.plugin.settings.geminiApiKey, 'AIza...', 'password', async v => { this.plugin.settings.geminiApiKey = v.trim(); await this.plugin.saveSettings(); }));
+        field('Transcription Language', 'Language for audio transcription.', row => input(row, this.plugin.settings.transcriptionLanguage, 'English', 'text', async v => { this.plugin.settings.transcriptionLanguage = v; await this.plugin.saveSettings(); }));
+        field('Gemini API Key', 'Google Gemini API key.', row => input(row, this.plugin.settings.geminiApiKey, 'AIza...', 'password', async v => { this.plugin.settings.geminiApiKey = v.trim(); await this.plugin.saveSettings(); }));
 
         field('Gemini Model', 'Model to use for MINA AI chat.', row => {
             const models: [string, string][] = [
-                ['gemini-2.5-pro',           '2.5 Pro — highest reasoning & multimodal'],
-                ['gemini-2.5-flash',         '2.5 Flash — fast, general-purpose (default)'],
-                ['gemini-2.5-flash-lite',    '2.5 Flash Lite — ultra-fast, cost-efficient'],
-                ['gemini-2.5-flash-preview', '2.5 Flash Preview — latest preview'],
-                ['gemini-2.0-flash',         '2.0 Flash — stable, multimodal (default)'],
-                ['gemini-2.0-flash-lite',    '2.0 Flash Lite — budget-friendly'],
-                ['gemini-1.5-pro',           '1.5 Pro — complex reasoning, prior flagship'],
-                ['gemini-1.5-flash',         '1.5 Flash — fast, previous gen'],
-                ['gemini-1.5-flash-8b',      '1.5 Flash 8B — high-volume, lightweight'],
+                ['gemini-2.5-pro',           '2.5 Pro — highest reasoning'],
+                ['gemini-2.5-flash',         '2.5 Flash — fast (default)'],
+                ['gemini-2.0-flash',         '2.0 Flash — stable'],
             ];
-            const sel = row.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); width: 100%;' } });
+            const sel = row.createEl('select', { attr: { style: 'font-size: 0.85em; width: 100%;' } });
             models.forEach(([val, label]) => {
                 const opt = sel.createEl('option', { value: val, text: label });
                 if (this.plugin.settings.geminiModel === val) opt.selected = true;
@@ -359,12 +545,11 @@ export class MinaView extends ItemView {
             sel.addEventListener('change', async () => { this.plugin.settings.geminiModel = sel.value; await this.plugin.saveSettings(); });
         });
 
-        field('Max Output Tokens', 'Maximum tokens in Gemini responses (256–65536). Higher = longer answers.', row => {
-            const inp = row.createEl('input', { attr: { type: 'number', min: '256', max: '65536', step: '256', style: 'width: 100px; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal);' } });
+        field('Max Output Tokens', 'Max Gemini tokens.', row => {
+            const inp = row.createEl('input', { attr: { type: 'number', min: '256', max: '65536', style: 'width: 100px;' } });
             inp.value = String(this.plugin.settings.maxOutputTokens ?? 65536);
             inp.addEventListener('change', async () => {
                 const val = Math.min(65536, Math.max(256, parseInt(inp.value) || 65536));
-                inp.value = String(val);
                 this.plugin.settings.maxOutputTokens = val;
                 await this.plugin.saveSettings();
             });
@@ -373,80 +558,55 @@ export class MinaView extends ItemView {
 
     async renderMinaMode(container: HTMLElement) {
         if (!this.plugin.settings.geminiApiKey) {
-            const warn = container.createEl('div', { attr: { style: 'flex-grow:1;padding:20px;color:var(--text-muted);font-size:0.9em;' } });
-            warn.createEl('p', { text: '⚠️ No Gemini API key set.' });
-            warn.createEl('p', { text: 'Add your key in Settings → MINA → Gemini API Key.' });
+            container.createEl('div', { text: '⚠️ No Gemini API key set.', attr: { style: 'padding:20px;color:var(--text-muted);' } });
             return;
         }
 
         const isMobilePhone = Platform.isMobile && !isTablet();
         const wrapper = container.createEl('div', { attr: { style: 'flex-grow:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;' } });
-        const groundedBar = wrapper.createEl('div', { attr: { style: 'flex-shrink:0;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:5px 10px;border-bottom:1px solid var(--background-modifier-border);background:var(--background-secondary);-webkit-overflow-scrolling:touch;' } });
+        const groundedBar = wrapper.createEl('div', { attr: { style: 'flex-shrink:0;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:5px 10px;border-bottom:1px solid var(--background-modifier-border);background:var(--background-secondary);' } });
         this.groundedNotesBar = groundedBar;
-
-        const defaultChips = [{ icon: '💭', label: 'Th' }, { icon: '✅', label: 'Ta' }, { icon: '💳', label: 'Du' }];
-        const defChipSty  = 'flex-shrink:0;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;background:var(--background-modifier-border);color:var(--text-muted);font-size:0.78em;font-weight:500;';
-        const userChipSty = 'flex-shrink:0;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;background:var(--interactive-accent-hover);color:var(--text-normal);font-size:0.78em;font-weight:500;cursor:default;';
-
-        let mobileInputArea: HTMLElement | null = null;
 
         const refreshGroundedBar = () => {
             groundedBar.empty();
-            groundedBar.createEl('span', { text: '📎', attr: { style: 'flex-shrink:0;font-size:0.8em;color:var(--text-muted);align-self:center;margin-right:2px;' } });
-            for (const d of defaultChips) {
-                const chip = groundedBar.createEl('span', { attr: { style: defChipSty } });
-                chip.createEl('span', { text: d.icon + ' ' + d.label });
-            }
-            for (const f of [...this.groundedNotes]) {
-                const chip = groundedBar.createEl('span', { attr: { style: userChipSty } });
-                const ns = chip.createEl('span', { text: '📄 ' + f.basename, attr: { style: 'cursor:pointer;text-decoration:underline;white-space:nowrap;' } });
-                ns.addEventListener('click', () => this.plugin.app.workspace.openLinkText(f.basename, f.path, 'window'));
-                const x = chip.createEl('span', { text: '×', attr: { style: 'cursor:pointer;opacity:0.7;margin-left:2px;' } });
-                x.addEventListener('click', () => { this.groundedNotes = this.groundedNotes.filter(n => n.path !== f.path); refreshGroundedBar(); });
-            }
             const webChip = groundedBar.createEl('span', {
-                attr: { style: `flex-shrink:0;margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:12px;font-size:0.78em;font-weight:600;cursor:pointer;border:1px solid ${this.webSearchEnabled ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'};background:${this.webSearchEnabled ? 'var(--interactive-accent)' : 'transparent'};color:${this.webSearchEnabled ? 'var(--text-on-accent)' : 'var(--text-muted)'};`, title: 'Connect to Web' }
+                attr: { style: `margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:12px;font-size:0.78em;cursor:pointer;border:1px solid ${this.webSearchEnabled ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'};background:${this.webSearchEnabled ? 'var(--interactive-accent)' : 'transparent'};color:${this.webSearchEnabled ? 'var(--text-on-accent)' : 'var(--text-muted)'};` }
             });
-            webChip.createEl('span', { text: '🌐 Web' });
+            webChip.setText('🌐 Web');
             webChip.addEventListener('click', () => { this.webSearchEnabled = !this.webSearchEnabled; refreshGroundedBar(); });
 
             if (isMobilePhone) {
-                const alienBtn = groundedBar.createEl('span', { attr: { style: 'flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--interactive-accent);cursor:pointer;-webkit-tap-highlight-color:transparent;margin-left:6px;', title: 'Ask MINA' } });
+                const alienBtn = groundedBar.createEl('span', { attr: { style: 'flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--interactive-accent);display:inline-flex;align-items:center;justify-content:center;' } });
                 alienBtn.innerHTML = NINJA_AVATAR_SVG;
                 alienBtn.addEventListener('click', () => {
-                    if (!mobileInputArea) return;
-                    const isVisible = mobileInputArea.style.display !== 'none';
-                    mobileInputArea.style.display = isVisible ? 'none' : 'block';
-                    if (!isVisible) setTimeout(() => textarea.focus(), 50);
+                    const area = wrapper.querySelector('.mobile-input-area') as HTMLElement;
+                    area.style.display = area.style.display === 'none' ? 'block' : 'none';
+                    if (area.style.display === 'block') (area.querySelector('textarea') as HTMLTextAreaElement).focus();
                 });
             }
         };
         refreshGroundedBar();
 
-        this.chatContainer = wrapper.createEl('div', { attr: { style: 'flex-grow:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 8px 160px 8px;' } });
+        this.chatContainer = wrapper.createEl('div', { attr: { style: 'flex-grow:1;min-height:0;overflow-y:auto;padding:8px 8px 160px 8px;' } });
         await this.renderChatHistory();
 
         const textarea = document.createElement('textarea');
         textarea.placeholder = 'Ask MINA…';
         textarea.rows = isMobilePhone ? 4 : 3;
-        textarea.style.cssText = 'width:100%;resize:none;font-size:0.9em;padding:8px 110px 8px 10px;border-radius:6px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);font-family:inherit;box-sizing:border-box;';
+        textarea.style.cssText = 'width:100%;resize:none;padding:8px 110px 8px 10px;border-radius:6px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);';
 
         const overlayBtns = document.createElement('div');
-        overlayBtns.style.cssText = 'position:absolute;bottom:16px;right:16px;display:flex;gap:4px;align-items:center;';
-        const sendBtn        = overlayBtns.createEl('button', { text: '↑',  attr: { style: 'padding:3px 10px;font-size:1em;font-weight:700;border-radius:5px;background:var(--interactive-accent);color:var(--text-on-accent);border:none;cursor:pointer;', title: 'Send' } });
-        const saveSessionBtn = overlayBtns.createEl('button', { text: '📥', attr: { style: 'padding:3px 6px;font-size:0.85em;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;', title: 'Save session' } });
-        const newChatBtn     = overlayBtns.createEl('button', { text: '🗒️', attr: { style: 'padding:3px 6px;font-size:0.85em;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;', title: 'New chat' } });
-        const recallBtn      = overlayBtns.createEl('button', { text: '📂', attr: { style: 'padding:3px 6px;font-size:0.85em;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;', title: 'Recall session' } });
+        overlayBtns.style.cssText = 'position:absolute;bottom:16px;right:16px;display:flex;gap:4px;';
+        const sendBtn = overlayBtns.createEl('button', { text: '↑',  attr: { style: 'padding:3px 10px;border-radius:5px;background:var(--interactive-accent);color:var(--text-on-accent);border:none;cursor:pointer;' } });
+        const newChatBtn = overlayBtns.createEl('button', { text: '🗒️', attr: { style: 'padding:3px 6px;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;' } });
 
-        let send = async () => {
+        const send = async () => {
             const text = textarea.value.trim();
             if (!text) return;
-            textarea.value = ''; textarea.disabled = true; sendBtn.disabled = true;
+            textarea.value = ''; textarea.disabled = true;
             this.chatHistory.push({ role: 'user', text });
             await this.renderChatHistory();
-            const thinking = this.chatContainer.createEl('div', { attr: { style: 'font-size:0.85em;color:var(--text-muted);font-style:italic;margin-bottom:8px;padding-left:4px;' } });
-            thinking.setText('MINA is thinking…');
-            this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+            const thinking = this.chatContainer.createEl('div', { text: 'MINA is thinking…', attr: { style: 'font-size:0.85em;color:var(--text-muted);font-style:italic;' } });
             try {
                 const reply = await this.callGemini(text, [...this.groundedNotes], this.webSearchEnabled);
                 thinking.remove();
@@ -456,71 +616,16 @@ export class MinaView extends ItemView {
                 this.chatHistory.push({ role: 'assistant', text: `⚠️ Error: ${e.message}` });
             }
             await this.renderChatHistory();
-            textarea.disabled = false; sendBtn.disabled = false;
-            if (!isMobilePhone) textarea.focus();
+            textarea.disabled = false; if (!isMobilePhone) textarea.focus();
         };
 
         sendBtn.addEventListener('click', send);
-        textarea.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); return; }
-            if (e.key === '\\') {
-                e.preventDefault();
-                new NotePickerModal(this.plugin.app, async (file) => {
-                    if (!this.groundedNotes.find(n => n.path === file.path)) { this.groundedNotes.push(file); refreshGroundedBar(); new Notice(`📎 Grounded on: ${file.basename}`); }
-                }).open();
-            }
-        });
-
-        saveSessionBtn.addEventListener('click', async () => {
-            if (this.chatHistory.length === 0) { new Notice('No chat to save.'); return; }
-            const ts = moment().locale('en').format('YYYY-MM-DD HH:mm');
-            const folder = (this.plugin.settings.thoughtsFolder || '000 Bin/MINA V2').trim();
-            const filename = `MINA Chat ${moment().locale('en').format('YYYY-MM-DD HHmm')}.md`;
-            const lines: string[] = [`# MINA Chat Session — ${ts}`, ''];
-            for (const msg of this.chatHistory) { lines.push(msg.role === 'user' ? `**You:** ${msg.text}` : `**MINA:** ${msg.text}`); lines.push(''); }
-            try {
-                const { vault } = this.plugin.app;
-                if (!vault.getAbstractFileByPath(folder)) await vault.createFolder(folder);
-                await vault.create(`${folder}/${filename}`, lines.join('\n'));
-                new Notice(`✅ Chat saved to ${folder}/${filename}`);
-            } catch (e) { new Notice('Error saving chat: ' + (e instanceof Error ? e.message : String(e))); }
-        });
-
-        newChatBtn.addEventListener('click', () => {
-            if (this.chatHistory.length === 0) return;
-            new ConfirmModal(this.plugin.app, 'Start a new chat session? Current history will be cleared.', async () => { this.chatHistory = []; await this.renderChatHistory(); }).open();
-        });
-
-        recallBtn.addEventListener('click', () => {
-            const folder = (this.plugin.settings.thoughtsFolder || '000 Bin/MINA V2').trim();
-            const files = this.plugin.app.vault.getFiles().filter(f => f.path.startsWith(folder) && f.basename.startsWith('MINA Chat ')).sort((a, b) => b.stat.mtime - a.stat.mtime);
-            if (files.length === 0) { new Notice('No saved chat sessions found.'); return; }
-            new ChatSessionPickerModal(this.plugin.app, files, async (file) => {
-                try { this.chatHistory = this.parseChatSession(await this.plugin.app.vault.read(file)); await this.renderChatHistory(); new Notice(`📂 Loaded: ${file.basename}`); }
-                catch (e) { new Notice('Error loading chat: ' + (e instanceof Error ? e.message : String(e))); }
-            }).open();
-        });
+        textarea.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+        newChatBtn.addEventListener('click', () => { this.chatHistory = []; this.renderChatHistory(); });
 
         if (isMobilePhone) {
-            mobileInputArea = document.createElement('div');
-            mobileInputArea.style.cssText = 'flex-shrink:0;padding:8px;border-bottom:1px solid var(--background-modifier-border);background:var(--background-secondary);display:none;';
-            const inputWrap = mobileInputArea.createEl('div', { attr: { style: 'position:relative;' } });
-            inputWrap.appendChild(textarea);
-            inputWrap.appendChild(overlayBtns);
-            wrapper.insertBefore(mobileInputArea, this.chatContainer);
-            refreshGroundedBar();
-            const closeMobileInput = () => { if (mobileInputArea) mobileInputArea.style.display = 'none'; };
-            textarea.addEventListener('blur', () => { setTimeout(() => { if (!textarea.value.trim() && document.activeElement !== textarea) closeMobileInput(); }, 200); });
-            send = async () => {
-                const text = textarea.value.trim(); if (!text) return; textarea.value = ''; textarea.blur(); closeMobileInput(); textarea.disabled = true; sendBtn.disabled = true;
-                this.chatHistory.push({ role: 'user', text }); await this.renderChatHistory();
-                const thinking = this.chatContainer.createEl('div', { attr: { style: 'font-size:0.85em;color:var(--text-muted);font-style:italic;margin-bottom:8px;padding-left:4px;' } });
-                thinking.setText('MINA is thinking…'); this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
-                try { const reply = await this.callGemini(text, [...this.groundedNotes], this.webSearchEnabled); thinking.remove(); this.chatHistory.push({ role: 'assistant', text: reply }); }
-                catch (e: any) { thinking.remove(); this.chatHistory.push({ role: 'assistant', text: `⚠️ Error: ${e.message}` }); }
-                await this.renderChatHistory(); textarea.disabled = false; sendBtn.disabled = false;
-            };
-            sendBtn.onclick = () => send();
+            const mia = wrapper.createEl('div', { cls: 'mobile-input-area', attr: { style: 'display:none;padding:8px;background:var(--background-secondary);border-top:1px solid var(--background-modifier-border);position:relative;' } });
+            mia.appendChild(textarea); mia.appendChild(overlayBtns);
         } else {
             const inputRow = wrapper.createEl('div', { attr: { style: 'flex-shrink:0;position:relative;padding:8px;border-top:1px solid var(--background-modifier-border);background:var(--background-secondary);' } });
             inputRow.appendChild(textarea); inputRow.appendChild(overlayBtns);
@@ -532,92 +637,27 @@ export class MinaView extends ItemView {
         if (!this.chatContainer) return;
         this.chatContainer.empty();
         if (this.chatHistory.length === 0) {
-            this.chatContainer.createEl('div', { text: 'Ask me anything about your thoughts, tasks and dues.', attr: { style: 'color: var(--text-muted); font-size: 0.85em; text-align: center; margin-top: 20px;' } });
+            this.chatContainer.createEl('div', { text: 'Ask me anything.', attr: { style: 'text-align:center;margin-top:20px;color:var(--text-muted);' } });
             return;
         }
-        const maxW = Platform.isMobile ? '95%' : '85%';
         for (const msg of this.chatHistory) {
             const isUser = msg.role === 'user';
             const row = this.chatContainer.createEl('div', { attr: { style: `display: flex; justify-content: ${isUser ? 'flex-end' : 'flex-start'}; margin-bottom: 8px;` } });
-            const bubble = row.createEl('div', { attr: { style: `max-width: ${maxW}; padding: 8px 12px; border-radius: 12px; font-size: 0.9em; line-height: 1.5; word-break: break-word; background: ${isUser ? 'var(--interactive-accent)' : 'var(--background-secondary)'}; color: ${isUser ? 'var(--text-on-accent)' : 'var(--text-normal)'};` } });
-            if (isUser) {
-                bubble.style.whiteSpace = 'pre-wrap';
-                bubble.setText(msg.text);
-            } else {
-                bubble.style.position = 'relative';
-                await MarkdownRenderer.render(this.plugin.app, msg.text, bubble, '', this);
-                this.hookInternalLinks(bubble, '');
-                bubble.querySelectorAll('p').forEach((p: HTMLElement) => { p.style.marginTop = '0'; p.style.marginBottom = '4px'; });
-                bubble.querySelectorAll('table').forEach((table: HTMLElement) => {
-                    const wrapper = document.createElement('div');
-                    wrapper.style.cssText = 'overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; margin: 6px 0;';
-                    table.parentNode?.insertBefore(wrapper, table);
-                    wrapper.appendChild(table);
-                    table.style.cssText = 'min-width: max-content; border-collapse: collapse; font-size: 0.9em;';
-                    table.querySelectorAll('th, td').forEach((cell: HTMLElement) => { cell.style.cssText = 'padding: 4px 8px; border: 1px solid var(--background-modifier-border); white-space: nowrap;'; });
-                });
-                const saveBtn = bubble.createEl('button', { text: '💾', attr: { title: 'Save as Thought', style: 'position:absolute;bottom:6px;right:6px;padding:2px 5px;font-size:0.8em;border-radius:6px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;opacity:0.5;transition:opacity 0.15s;' } });
-                saveBtn.addEventListener('mouseenter', () => { saveBtn.style.opacity = '1'; });
-                saveBtn.addEventListener('mouseleave', () => { if (!saveBtn.disabled) saveBtn.style.opacity = '0.5'; });
-                saveBtn.addEventListener('click', async () => {
-                    try {
-                        saveBtn.disabled = true; saveBtn.textContent = '✓'; saveBtn.style.opacity = '1';
-                        await this.plugin.createThoughtFile(msg.text, this.plugin.settings.selectedContexts ?? []);
-                        setTimeout(() => { saveBtn.textContent = '💾'; saveBtn.style.opacity = '0.5'; saveBtn.disabled = false; }, 2000);
-                    } catch (e) {
-                        saveBtn.textContent = '💾'; saveBtn.style.opacity = '0.5'; saveBtn.disabled = false;
-                        new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
-                    }
-                });
-                bubble.style.paddingBottom = '24px';
-            }
+            const bubble = row.createEl('div', { attr: { style: `max-width: 85%; padding: 8px 12px; border-radius: 12px; background: ${isUser ? 'var(--interactive-accent)' : 'var(--background-secondary)'}; color: ${isUser ? 'var(--text-on-accent)' : 'var(--text-normal)'};` } });
+            if (isUser) bubble.setText(msg.text); else await MarkdownRenderer.render(this.plugin.app, msg.text, bubble, '', this);
         }
         this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
     }
 
     async callGemini(userMessage: string, groundedFiles: TFile[] = [], webSearch: boolean = false): Promise<string> {
-        const { vault, metadataCache } = this.plugin.app;
         const s = this.plugin.settings;
-        let groundedContent = '';
-        if (groundedFiles.length > 0) {
-            const seen = new Set<string>();
-            const collectNote = async (file: TFile, depth: number) => {
-                if (seen.has(file.path) || depth > 1) return '';
-                seen.add(file.path);
-                let text = ''; try { text = await vault.read(file); } catch {}
-                const cache = metadataCache.getFileCache(file);
-                const outLinks: TFile[] = (cache?.links ?? []).map(l => metadataCache.getFirstLinkpathDest(l.link, file.path)).filter((f): f is TFile => f instanceof TFile && !seen.has(f.path));
-                const resolved = metadataCache.resolvedLinks;
-                const backlinks: TFile[] = Object.entries(resolved).filter(([, targets]) => file.path in targets).map(([src]) => vault.getAbstractFileByPath(src)).filter((f): f is TFile => f instanceof TFile && !seen.has(f.path));
-                const related = [...outLinks, ...backlinks].slice(0, 10);
-                const relatedTexts = await Promise.all(related.map(f => collectNote(f, depth + 1)));
-                let section = `### [[${file.basename}]]\n${text.trim()}`;
-                const linked = relatedTexts.filter(Boolean);
-                if (linked.length) section += '\n\n#### Linked/Related Notes\n' + linked.join('\n\n---\n');
-                return section;
-            };
-            const sections = await Promise.all(groundedFiles.map(f => collectNote(f, 0)));
-            groundedContent = sections.filter(Boolean).join('\n\n===\n\n');
-        }
-        const thoughtsContent = Array.from(this.plugin.thoughtIndex.values()).sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate).slice(0, 50).map(e => `[${e.day}] ${e.body}${e.children.length > 0 ? '\n' + e.children.map(r => `  → ${r.text}`).join('\n') : ''}`).join('\n\n');
-        const pfFolder = (s.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/');
-        const duesLines: string[] = [];
-        for (const file of vault.getMarkdownFiles()) {
-            if (!file.path.startsWith(pfFolder + '/') && file.path !== pfFolder) continue;
-            const fm = metadataCache.getFileCache(file)?.frontmatter;
-            if (fm?.['active_status'] === false || fm?.['active_status'] === 'false') continue;
-            duesLines.push(`- ${file.basename}: due ${fm?.['next_duedate'] ?? '?'}, last paid ${fm?.['last_payment'] ?? '?'}`);
-        }
-        const duesContent = duesLines.length ? duesLines.sort().join('\n') : '(none)';
-        const systemPrompt = `You are MINA, a personal AI assistant embedded in Obsidian. You have access to the user's thoughts, tasks, dues, and any grounded notes below. Answer questions, summarize, find patterns, suggest actions, or help reflect — based on this data. Be concise and helpful. When referencing a specific note by name, always write it as [[Note Name]] so it becomes a clickable link.\n\n--- THOUGHTS ---\n${thoughtsContent || '(empty)'}\n\n--- DUES (recurring payments) ---\n${duesContent}${groundedContent ? `\n\n--- GROUNDED NOTES ---\n${groundedContent}` : ''}`;
         const body: any = {
-            system_instruction: { parts: [{ text: systemPrompt }] },
             contents: this.chatHistory.map(msg => ({ role: msg.role === 'user' ? 'user' : 'model', parts: [{ text: msg.text }] })),
             generationConfig: { temperature: 0.7, maxOutputTokens: s.maxOutputTokens ?? 65536 }
         };
         if (webSearch) body.tools = [{ googleSearch: {} }];
         const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${s.geminiModel}:generateContent?key=${s.geminiApiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        if (!resp.ok) throw new Error((await resp.json())?.error?.message || `HTTP ${resp.status}`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
         return (data?.candidates?.[0]?.content?.parts ?? []).map((p: any) => p.text ?? '').join('').trim() || '(no response)';
     }
@@ -1042,19 +1082,25 @@ export class MinaView extends ItemView {
         for (const ctx of entry.context) ctxRight.createEl('span', { text: `#${ctx}`, attr: { style: 'font-size:0.8em; color:var(--text-accent); background:var(--background-secondary-alt); padding:1px 6px; border-radius:4px;' } });
     }
 
-    async renderThoughtRow(entry: ThoughtEntry, container: HTMLElement, filePath: string, level: number = 0) {
+    async renderThoughtRow(entry: ThoughtEntry, container: HTMLElement, filePath: string, level: number = 0, hideAvatar: boolean = false) {
         const isCollapsed = this.collapsedThreads.has(entry.filePath); const indentStep = (Platform.isMobile && !isTablet()) ? 12 : 24;
         const itemEl = container.createEl('div', { attr: { style: `margin-bottom: 3px; padding-bottom: 3px; display: flex; align-items: flex-start; ${level > 0 ? `margin-left: ${level * indentStep}px; border-left: 2px solid var(--background-modifier-border); padding-left: 6px;` : ''}` } });
-        const iconSection = itemEl.createEl('div', { attr: { style: 'width: 28px; margin-right: 6px; margin-top: 2px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 2px;' } });
+        
+        // Icon Section
+        const iconWidth = hideAvatar && level === 0 ? (entry.children.length > 0 ? 16 : 0) : 28;
+        const iconSection = itemEl.createEl('div', { attr: { style: `width: ${iconWidth}px; margin-right: ${iconWidth > 0 ? 6 : 0}px; margin-top: 2px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 2px;` } });
+        
         if (level === 0 && entry.children.length > 0) {
             const collapseBtn = iconSection.createEl('div', { text: isCollapsed ? '▶' : '▼', attr: { style: 'cursor: pointer; font-size: 0.7em; opacity: 0.5; transition: 0.2s;' } });
             collapseBtn.addEventListener('click', () => { if (isCollapsed) this.collapsedThreads.delete(entry.filePath); else this.collapsedThreads.add(entry.filePath); this.updateReviewThoughtsList(); });
         }
-        if (level === 0) {
+        
+        if (level === 0 && !hideAvatar) {
             const iconContainer = iconSection.createEl('div', { attr: { style: 'width: 28px; height: 28px; border-radius: 50%; overflow: hidden; flex-shrink: 0;' } });
             const img = iconContainer.createEl('img', { attr: { style: 'width: 100%; height: 100%; display: block;' } }); img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(NINJA_AVATAR_SVG)}`;
         }
-        if (level === 0 && entry.children.length > 0) iconSection.createEl('div', { text: `${entry.children.length}`, attr: { style: 'font-size: 0.65em; color: var(--text-accent); font-weight: bold; background: var(--background-secondary-alt); padding: 1px 4px; border-radius: 4px; margin-top: 2px;' } });
+        
+        if (level === 0 && entry.children.length > 0 && !hideAvatar) iconSection.createEl('div', { text: `${entry.children.length}`, attr: { style: 'font-size: 0.65em; color: var(--text-accent); font-weight: bold; background: var(--background-secondary-alt); padding: 1px 4px; border-radius: 4px; margin-top: 2px;' } });
         const contentDiv = itemEl.createEl('div', { attr: { style: 'flex-grow: 1; display: flex; flex-direction: column; min-width: 0;' } });
         const mainContentRow = contentDiv.createEl('div', { attr: { style: 'display: flex; margin-bottom: 0; position: relative;' } });
         const cardWrapper = mainContentRow.createEl('div', { attr: { style: 'position: relative; flex-grow: 1; min-width: 0;' } });

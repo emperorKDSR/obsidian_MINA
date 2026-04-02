@@ -574,7 +574,17 @@ export default class MinaPlugin extends Plugin {
         const parsedLastChild = children.length > 0 ? Date.parse(children[children.length-1].date + 'T' + children[children.length-1].time) : NaN;
         const lastChild = isNaN(parsedLastChild) ? 0 : parsedLastChild;
 
-        return { filePath, title, created, modified, day, context, body: bodyText, children, lastThreadUpdate: Math.max(modMs, lastChild) };
+        // Extract all [[YYYY-MM-DD]] links from entire content
+        const allDates: string[] = [];
+        const dateLinkRegex = /\[\[(\d{4}-\d{2}-\d{2})\]\]/g;
+        let dMatch;
+        while ((dMatch = dateLinkRegex.exec(content)) !== null) {
+            if (!allDates.includes(dMatch[1])) allDates.push(dMatch[1]);
+        }
+        // Also ensure 'day' from frontmatter is in the list
+        if (day && !allDates.includes(day)) allDates.push(day);
+
+        return { filePath, title, created, modified, day, allDates, context, body: bodyText, children, lastThreadUpdate: Math.max(modMs, lastChild) };
     }
 
     notifyViewRefresh(): void {
