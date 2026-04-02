@@ -37,6 +37,7 @@ export interface ThoughtEntry {
     body: string;              // text before first ## reply header
     children: ReplyEntry[];    // parsed from ## sections in body
     lastThreadUpdate: number;  // ms timestamp for sorting
+    pinned?: boolean;          // true if the thought is pinned
 }
 
 export interface TaskEntry {

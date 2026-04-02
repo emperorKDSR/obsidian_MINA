@@ -330,10 +330,10 @@ export default class MinaPlugin extends Plugin {
         return firstLine.replace(/[#*_`\[\]]/g, '').trim().substring(0, 60);
     }
 
-    buildFrontmatter(title: string, created: string, modified: string, dayStr: string, contexts: string[]): string {
+    buildFrontmatter(title: string, created: string, modified: string, dayStr: string, contexts: string[], pinned: boolean = false): string {
         const contextYaml = contexts.length > 0 ? contexts.map(c => `  - ${c}`).join('\n') : '  []';
         const tagsYaml = contextYaml;
-        return `---\ntitle: "${title.replace(/"/g, "'")}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA\ncontext:\n${contextYaml}\ntags:\n${tagsYaml}\n---\n`;
+        return `---\ntitle: "${title.replace(/"/g, "'")}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA\ncontext:\n${contextYaml}\ntags:\n${tagsYaml}\npinned: ${pinned}\n---\n`;
     }
 
     async createThoughtFile(text: string, contexts: string[]): Promise<TFile> {
@@ -409,19 +409,39 @@ export default class MinaPlugin extends Plugin {
             const content = (await vault.read(file)).replace(/\r\n/g, '\n');
             const fmMatch = content.match(/^---\n[\s\S]*?\n---\n/);
             if (!fmMatch) return;
-            const bodyStart = fmMatch[0].length;
-            const body = content.slice(bodyStart);
-            const replyIdx = body.search(/^## \[\[/m);
-            const replies = replyIdx >= 0 ? body.slice(replyIdx) : '';
+            const oldFm = fmMatch[0];
+            const createdMatch = oldFm.match(/^created: (.+)$/m);
+            const created = createdMatch ? createdMatch[1] : this.formatDateTime(new Date());
             const now = new Date();
             const dayStr = this.formatDate(now);
             const title = this.extractTitle(newText);
             const modifiedStr = this.formatDateTime(now);
-            const oldFm = fmMatch[0];
-            const createdMatch = oldFm.match(/^created: (.+)$/m);
-            const created = createdMatch ? createdMatch[1] : modifiedStr;
-            const newFm = this.buildFrontmatter(title, created, modifiedStr, dayStr, contexts);
-            await vault.modify(file, newFm + newText + (replies ? '\n\n' + replies : '\n'));
+            const pinnedMatch = oldFm.match(/^pinned: (.+)$/m);
+            const pinned = pinnedMatch ? pinnedMatch[1].trim() === 'true' : false;
+            const newFm = this.buildFrontmatter(title, created, modifiedStr, dayStr, contexts, pinned);
+            await vault.modify(file, newFm + newText + (content.includes('## [[') ? '\n\n' + content.slice(content.indexOf('## [[')) : '\n'));
+        } catch (e) {
+            new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
+        }
+    }
+
+    async toggleThoughtPin(filePath: string, pinned: boolean): Promise<void> {
+        const { vault } = this.app;
+        const file = vault.getAbstractFileByPath(filePath) as TFile;
+        if (!file) return;
+        try {
+            const content = (await vault.read(file)).replace(/\r\n/g, '\n');
+            let updated: string;
+            if (/^pinned:\s*(true|false)/m.test(content)) {
+                updated = content.replace(/^pinned:\s*(true|false).*/m, `pinned: ${pinned}`);
+            } else {
+                updated = content.replace(/^(modified: .*)$/m, `$1\npinned: ${pinned}`);
+            }
+            if (updated !== content) {
+                await vault.modify(file, updated);
+                const entry = this.thoughtIndex.get(filePath);
+                if (entry) { entry.pinned = pinned; this.notifyViewRefresh(); }
+            }
         } catch (e) {
             new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
         }
@@ -547,6 +567,7 @@ export default class MinaPlugin extends Plugin {
         const area    = get('area');
         if (area !== 'MINA') return null;
         const context = getList('context');
+        const pinned  = get('pinned') === 'true';
 
         const replyRegex = /^## \[\[[\d-]+\]\] [\d:]+ \^(reply-\d+)/gm;
         const children: ReplyEntry[] = [];
@@ -574,17 +595,13 @@ export default class MinaPlugin extends Plugin {
         const parsedLastChild = children.length > 0 ? Date.parse(children[children.length-1].date + 'T' + children[children.length-1].time) : NaN;
         const lastChild = isNaN(parsedLastChild) ? 0 : parsedLastChild;
 
-        // Extract all [[YYYY-MM-DD]] links from entire content
         const allDates: string[] = [];
         const dateLinkRegex = /\[\[(\d{4}-\d{2}-\d{2})\]\]/g;
         let dMatch;
-        while ((dMatch = dateLinkRegex.exec(content)) !== null) {
-            if (!allDates.includes(dMatch[1])) allDates.push(dMatch[1]);
-        }
-        // Also ensure 'day' from frontmatter is in the list
+        while ((dMatch = dateLinkRegex.exec(content)) !== null) { if (!allDates.includes(dMatch[1])) allDates.push(dMatch[1]); }
         if (day && !allDates.includes(day)) allDates.push(day);
 
-        return { filePath, title, created, modified, day, allDates, context, body: bodyText, children, lastThreadUpdate: Math.max(modMs, lastChild) };
+        return { filePath, title, created, modified, day, allDates, context, body: bodyText, children, lastThreadUpdate: Math.max(modMs, lastChild), pinned };
     }
 
     notifyViewRefresh(): void {
@@ -593,9 +610,7 @@ export default class MinaPlugin extends Plugin {
             const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MINA);
             for (const leaf of leaves) {
                 const view = leaf.view as MinaView;
-                if (view && typeof view.updateReviewThoughtsList === 'function') {
-                    view.updateReviewThoughtsList();
-                }
+                if (view && typeof view.updateReviewThoughtsList === 'function') view.updateReviewThoughtsList();
                 if (view && view.activeTab === 'daily') view.renderView();
             }
         }, 300);

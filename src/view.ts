@@ -291,6 +291,9 @@ export class MinaView extends ItemView {
         const sectionDues = this.renderDailySection(wrap, 'PENDING DUES', true);
         this.updateDailyDues(sectionDues);
 
+        const sectionPinned = this.renderDailySection(wrap, "PINNED THOUGHTS", true);
+        this.updatePinnedThoughts(sectionPinned);
+
         const section3 = this.renderDailySection(wrap, "TODAY'S THOUGHTS", true);
         this.updateDailyThoughts(section3);
     }
@@ -368,6 +371,23 @@ export class MinaView extends ItemView {
 
         if (thoughts.length === 0) {
             container.createEl('p', { text: 'No thoughts captured today.', attr: { style: 'color: var(--text-muted); font-size: 0.8em; text-align: center; margin: 5px 0;' } });
+            return;
+        }
+
+        const thoughtsRowContainer = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px; width: 100%;' } });
+        for (const entry of thoughts) {
+            await this.renderThoughtRow(entry, thoughtsRowContainer, entry.filePath, 0, true);
+        }
+    }
+
+    async updatePinnedThoughts(container: HTMLElement) {
+        container.empty();
+        const thoughts = Array.from(this.plugin.thoughtIndex.values())
+            .filter(e => e.pinned)
+            .sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate);
+
+        if (thoughts.length === 0) {
+            container.createEl('p', { text: 'No pinned thoughts.', attr: { style: 'color: var(--text-muted); font-size: 0.8em; text-align: center; margin: 5px 0;' } });
             return;
         }
 
@@ -1235,6 +1255,16 @@ export class MinaView extends ItemView {
         const firstP = renderTarget.querySelector('p'); if (firstP) { firstP.style.marginTop = '0'; firstP.style.marginBottom = '0'; }
         const actionsDiv = cardWrapper.createEl('div', { attr: { style: 'position: absolute; top: 2px; right: 4px; display: flex; gap: 6px; align-items: center; opacity: 0; transition: opacity 0.15s; background: var(--background-secondary); border-radius: 4px; padding: 1px 4px;' } });
         cardWrapper.addEventListener('mouseenter', () => actionsDiv.style.opacity = '1'); cardWrapper.addEventListener('mouseleave', () => actionsDiv.style.opacity = '0');
+        
+        const pinBtn = actionsDiv.createSpan({ 
+            text: entry.pinned ? '📌' : '📍', 
+            attr: { style: 'cursor: pointer; font-size: 0.8em;', title: entry.pinned ? 'Unpin' : 'Pin' } 
+        });
+        pinBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await this.plugin.toggleThoughtPin(entry.filePath, !entry.pinned);
+        });
+
         const openBtn = actionsDiv.createSpan({ text: '🔗', attr: { style: 'cursor: pointer; font-size: 0.8em;', title: 'Open file' } }); openBtn.addEventListener('click', () => { this.plugin.app.workspace.openLinkText(entry.filePath, '', 'window'); });
         const replyBtn = actionsDiv.createSpan({ text: '↩️', attr: { style: 'cursor: pointer; font-size: 0.8em;' } });
         const editBtn = actionsDiv.createSpan({ text: '✏️', attr: { style: 'cursor: pointer; font-size: 0.8em;' } });
