@@ -596,6 +596,7 @@ export default class MinaPlugin extends Plugin {
                 if (view && typeof view.updateReviewThoughtsList === 'function') {
                     view.updateReviewThoughtsList();
                 }
+                if (view && view.activeTab === 'daily') view.renderView();
             }
         }, 300);
     }
@@ -661,6 +662,7 @@ export default class MinaPlugin extends Plugin {
                 if (view && typeof view.updateReviewTasksList === 'function') {
                     view.updateReviewTasksList();
                 }
+                if (view && view.activeTab === 'daily') view.renderView();
             }
         }, 300);
     }

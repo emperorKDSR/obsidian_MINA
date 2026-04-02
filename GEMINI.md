@@ -21,6 +21,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - **Daily Tab (Da):** A high-focus dashboard with four foldable sections and quick capture:
      - **+Thought Button:** A right-aligned button in the header to instantly open the "New Thought" modal.
      - **Refresh Button:** Manual trigger to reload all daily sections immediately.
+     - **Auto-Refresh:** Automatically reloads the view whenever thoughts or tasks are updated while the Daily tab is active.
      - **TODAY'S CHECKLIST:** A compact, one-line list of all open to-dos (`- [ ]`) extracted from your entire thought history. Interactive checkboxes update source notes instantly.
      - **PENDING TASKS:** A compact rollup of open tasks from your tasks index that are due today or overdue.
      - **PENDING DUES:** A rollup of recurring payments that are due today or overdue, featuring an inline "Pay" button.
