@@ -89,6 +89,9 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - Checklist items render as interactive **circle toggles** (accent-colored circle with ✓ glyph when checked).
      - Clicking a circle immediately toggles the checked state and persists to the markdown file without re-rendering the whole list.
      - Works in both the capture textarea and the EditEntryModal textarea.
+   - **Natural Language Dates:**
+     - Type `@@date text ` (e.g., `@@March 9 ` or `@@tomorrow `) in any capture textarea or edit modal.
+     - It automatically converts to an Obsidian date link (e.g., `[[2026-03-09]] `) as soon as you type a space or newline after the date text.
    - **Context Tag Placement:**
      - **Thoughts:** Context pills render at the **bottom of the card body text** (inline, with `margin-top: 5px`).
      - **Tasks:** Context pills render **right-aligned** in a meta row below the body. Due date appears **left-aligned** on the same meta row.

@@ -2,7 +2,7 @@ import { ItemView, WorkspaceLeaf, MarkdownRenderer, Platform, moment, Notice, TF
 import MinaPlugin from './main';
 import { VIEW_TYPE_MINA, KATANA_ICON_ID, NINJA_AVATAR_SVG } from './constants';
 import { ThoughtEntry, TaskEntry, ReplyEntry, DueEntry } from './types';
-import { isTablet, toAsciiDigits } from './utils';
+import { isTablet, toAsciiDigits, parseNaturalDate } from './utils';
 import { FileSuggestModal } from './modals/FileSuggestModal';
 import { EditEntryModal } from './modals/EditEntryModal';
 import { ConfirmModal } from './modals/ConfirmModal';
@@ -886,6 +886,25 @@ export class MinaView extends ItemView {
         };
         textArea.addEventListener('input', (e) => { 
             const target = e.target as HTMLTextAreaElement; const val = target.value;
+            
+            // Natural Language Date conversion: @@date followed by space/newline
+            const dateMatch = val.match(/@@([^@\n\s]+(?: [^@\n\s]+)*)([\s\n])$/);
+            if (dateMatch) {
+                const rawDate = dateMatch[1];
+                const terminator = dateMatch[2];
+                const parsed = parseNaturalDate(rawDate);
+                if (parsed) {
+                    const before = val.substring(0, dateMatch.index);
+                    const insertText = `[[${parsed}]]${terminator}`;
+                    target.value = before + insertText;
+                    this.content = target.value;
+                    const newPos = (dateMatch.index ?? 0) + insertText.length;
+                    target.setSelectionRange(newPos, newPos);
+                    lastValue = target.value;
+                    return;
+                }
+            }
+
             if (val.length > lastValue.length) {
                 const cursorPosition = target.selectionStart;
                 if (cursorPosition > 0 && val.charAt(cursorPosition - 1) === '\\') {

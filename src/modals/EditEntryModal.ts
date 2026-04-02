@@ -1,6 +1,6 @@
 import { App, Modal, Platform, Notice, moment } from 'obsidian';
 import MinaPlugin from '../main';
-import { isTablet } from '../utils';
+import { isTablet, parseNaturalDate } from '../utils';
 import { FileSuggestModal } from './FileSuggestModal';
 
 export class EditEntryModal extends Modal {
@@ -107,6 +107,23 @@ export class EditEntryModal extends Modal {
             const target = e.target as HTMLTextAreaElement;
             const val = target.value;
             
+            // Natural Language Date conversion: @@date followed by space/newline
+            const dateMatch = val.match(/@@([^@\n\s]+(?: [^@\n\s]+)*)([\s\n])$/);
+            if (dateMatch) {
+                const rawDate = dateMatch[1];
+                const terminator = dateMatch[2];
+                const parsed = parseNaturalDate(rawDate);
+                if (parsed) {
+                    const before = val.substring(0, dateMatch.index);
+                    const insertText = `[[${parsed}]]${terminator}`;
+                    target.value = before + insertText;
+                    currentTextValue = target.value;
+                    const newPos = (dateMatch.index ?? 0) + insertText.length;
+                    target.setSelectionRange(newPos, newPos);
+                    return;
+                }
+            }
+
             if (val.length > currentTextValue.length) {
                 const cursorPosition = target.selectionStart;
                 if (cursorPosition > 0 && val.charAt(cursorPosition - 1) === '\\') {

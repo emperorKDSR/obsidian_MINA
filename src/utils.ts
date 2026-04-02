@@ -1,4 +1,5 @@
-import { Platform } from 'obsidian';
+import { Platform, moment } from 'obsidian';
+import * as chrono from 'chrono-node';
 
 /** Convert any locale-specific digit characters to ASCII 0-9.
  *  Covers Arabic-Indic (٠-٩), Persian (۰-۹), Devanagari (०-९),
@@ -18,4 +19,14 @@ export function toAsciiDigits(s: string): string {
  *  We distinguish tablets by their short-edge being ≥ 768 px. */
 export function isTablet(): boolean {
     return Platform.isMobile && Math.min(screen.width, screen.height) >= 768;
+}
+
+/** Parse natural language date and return YYYY-MM-DD or null */
+export function parseNaturalDate(text: string): string | null {
+    const results = chrono.parse(text);
+    if (results && results.length > 0) {
+        const date = results[0].start.date();
+        return moment(date).format('YYYY-MM-DD');
+    }
+    return null;
 }
