@@ -886,19 +886,23 @@ export class MinaView extends ItemView {
         };
         textArea.addEventListener('input', (e) => { 
             const target = e.target as HTMLTextAreaElement; const val = target.value;
+            const pos = target.selectionStart;
+            const textBeforeCursor = val.substring(0, pos);
             
             // Natural Language Date conversion: @@date followed by space/newline
-            const dateMatch = val.match(/@@([^@\n\s]+(?: [^@\n\s]+)*)([\s\n])$/);
+            const dateMatch = textBeforeCursor.match(/@@([^@\n\s]+(?: [^@\n\s]+)*)([\s\n])$/);
             if (dateMatch) {
                 const rawDate = dateMatch[1];
                 const terminator = dateMatch[2];
                 const parsed = parseNaturalDate(rawDate);
                 if (parsed) {
-                    const before = val.substring(0, dateMatch.index);
+                    const matchStart = dateMatch.index!;
+                    const before = val.substring(0, matchStart);
+                    const after = val.substring(pos);
                     const insertText = `[[${parsed}]]${terminator}`;
-                    target.value = before + insertText;
+                    target.value = before + insertText + after;
                     this.content = target.value;
-                    const newPos = (dateMatch.index ?? 0) + insertText.length;
+                    const newPos = matchStart + insertText.length;
                     target.setSelectionRange(newPos, newPos);
                     lastValue = target.value;
                     return;
