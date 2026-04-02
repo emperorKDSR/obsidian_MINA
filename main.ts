@@ -135,6 +135,15 @@ export default class MinaPlugin extends Plugin {
 			}
 		});
 
+		this.addCommand({
+			id: 'open-mina-daily',
+			name: 'Open MINA Daily',
+			icon: KATANA_ICON_ID,
+			callback: () => {
+				this.activateView('daily');
+			}
+		});
+
 		this.addSettingTab(new MinaSettingTab(this.app, this));
 	}
 
@@ -184,7 +193,7 @@ export default class MinaPlugin extends Plugin {
         }
     }
 
-    async activateView() {
+    async activateView(tabId?: string) {
         const { workspace } = this.app;
 
         if (Platform.isMobile) {
@@ -196,13 +205,21 @@ export default class MinaPlugin extends Plugin {
                 // (no new tab strip — the tab header is hidden in onOpen)
                 const leaf = workspace.getLeaf(false);
                 if (leaf) {
-                    await leaf.setViewState({ type: VIEW_TYPE_MINA, active: true });
+                    await leaf.setViewState({ 
+                        type: VIEW_TYPE_MINA, 
+                        active: true,
+                        state: tabId ? { activeTab: tabId } : undefined
+                    });
                     workspace.revealLeaf(leaf);
                 }
             } else {
                 // iPhone: open as a main content tab
                 const leaf = workspace.getLeaf('tab');
-                await leaf.setViewState({ type: VIEW_TYPE_MINA, active: true });
+                await leaf.setViewState({ 
+                    type: VIEW_TYPE_MINA, 
+                    active: true,
+                    state: tabId ? { activeTab: tabId } : undefined
+                });
                 workspace.revealLeaf(leaf);
             }
             return;
@@ -213,9 +230,20 @@ export default class MinaPlugin extends Plugin {
         const leaves = workspace.getLeavesOfType(VIEW_TYPE_MINA);
         if (leaves.length > 0) {
             leaf = leaves[0];
+            if (tabId) {
+                await leaf.setViewState({
+                    type: VIEW_TYPE_MINA,
+                    active: true,
+                    state: { activeTab: tabId }
+                });
+            }
         } else {
             leaf = workspace.getLeaf('window');
-            if (leaf) await leaf.setViewState({ type: VIEW_TYPE_MINA, active: true });
+            if (leaf) await leaf.setViewState({ 
+                type: VIEW_TYPE_MINA, 
+                active: true,
+                state: tabId ? { activeTab: tabId } : undefined
+            });
         }
         if (leaf) workspace.revealLeaf(leaf);
     }
@@ -1743,7 +1771,7 @@ class MinaView extends ItemView {
     content: string;
     isTask: boolean;
     dueDate: string; // YYYY-MM-DD
-    activeTab: 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' | 'dues' | 'vo' = 'review-thoughts';
+    activeTab: 'daily' | 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' | 'dues' | 'vo' = 'daily';
 
     // Voice Recording State
     mediaRecorder: MediaRecorder | null = null;
@@ -1966,6 +1994,7 @@ class MinaView extends ItemView {
             }
         };
 
+        addTab('daily', 'Da');
         addTab('review-thoughts', 'Th');
         addTab('review-tasks', 'Ta');
         addTab('mina-ai', 'Ai');
@@ -1983,9 +2012,39 @@ class MinaView extends ItemView {
             this.renderSettingsMode(container);
         } else if (this.activeTab === 'vo') {
             this.renderVoiceMode(container);
+        } else if (this.activeTab === 'daily') {
+            this.renderDailyMode(container);
         } else {
             this.renderReviewThoughtsMode(container);
         }
+    }
+
+    renderDailyMode(container: HTMLElement) {
+        const wrap = container.createEl('div', { 
+            attr: { 
+                style: 'padding: 12px 12px 200px 12px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; flex-grow: 1; min-height: 0; -webkit-overflow-scrolling: touch;' 
+            } 
+        });
+
+        const header = wrap.createEl('div', { 
+            attr: { 
+                style: 'display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; padding-bottom: 10px; border-bottom: 1px solid var(--background-modifier-border);' 
+            } 
+        });
+
+        header.createEl('h3', { 
+            text: `Daily View — ${moment().format('YYYY-MM-DD')}`,
+            attr: { 
+                style: 'margin: 0; font-size: 1.1em; color: var(--text-accent);' 
+            } 
+        });
+
+        wrap.createEl('p', { 
+            text: 'This is the new Daily View tab. Implementation is coming soon.',
+            attr: { 
+                style: 'color: var(--text-muted); font-size: 0.9em; text-align: center; margin-top: 40px;' 
+            } 
+        });
     }
 
     renderDuesMode(container: HTMLElement) {
