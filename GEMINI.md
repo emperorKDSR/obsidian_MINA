@@ -18,10 +18,12 @@ The "MINA V2" plugin has been developed with the following features and implemen
 
 1. **User Interface (UI) & Aesthetics**
    - **Tabbed Navigation:** Seven tabs with short labels: **Da** (Daily), **Th** (Thoughts), **Ta** (Tasks), **Ai** (AI Chat), **Du** (Dues), **Vo** (Voice), **Se** (Settings).
-   - **Daily Tab (Da):** A high-focus dashboard with three foldable sections:
+   - **Daily Tab (Da):** A high-focus dashboard with four foldable sections and quick capture:
+     - **+Thought Button:** A right-aligned button in the header to instantly open the "New Thought" modal.
      - **TODAY'S CHECKLIST:** A compact, one-line list of all open to-dos (`- [ ]`) extracted from your entire thought history. Interactive checkboxes update source notes instantly.
      - **PENDING TASKS:** A compact rollup of open tasks from your tasks index that are due today or overdue.
-     - **TODAY'S THOUGHTS:** A full card-based view of thoughts captured today or containing today's date link. Avatars are hidden here to maximize horizontal space.
+     - **PENDING DUES:** A rollup of recurring payments that are due today or overdue, featuring an inline "Pay" button.
+     - **TODAY'S THOUGHTS:** A full card-based view of thoughts captured today or containing today's date link. Avatars are hidden here to maximize space.
    - **Modern Card-Based Layout:** Thoughts and tasks are displayed in responsive "cards" with rounded corners and dynamic backgrounds.
      - **Dark Mode:** Transparent white background (`rgba(255, 255, 255, 0.05)`).
      - **Light Mode:** Subtle grey background (`rgba(0, 0, 0, 0.05)`).

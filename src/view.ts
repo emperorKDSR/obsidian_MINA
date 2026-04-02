@@ -248,14 +248,105 @@ export class MinaView extends ItemView {
             } 
         });
 
+        const addThoughtBtn = header.createEl('button', { 
+            text: '+Thought', 
+            attr: { 
+                style: 'padding: 4px 12px; border-radius: 5px; background: var(--interactive-accent); color: var(--text-on-accent); font-size: 0.8em; font-weight: 600; cursor: pointer; border: none;' 
+            } 
+        });
+
+        addThoughtBtn.addEventListener('click', () => {
+            new EditEntryModal(
+                this.plugin.app,
+                this.plugin,
+                '', 
+                '', 
+                null, 
+                false, 
+                async (newText, newContextStr) => {
+                    const ctxArr = newContextStr ? newContextStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : [];
+                    await this.plugin.createThoughtFile(newText.replace(/<br>/g, '\n'), ctxArr);
+                    this.renderView();
+                },
+                'New Thought'
+            ).open();
+        });
+
         const section1 = this.renderDailySection(wrap, "TODAY'S CHECKLIST", true);
         this.updateDailyThoughtTodos(section1);
 
         const section2 = this.renderDailySection(wrap, 'PENDING TASKS', true);
         this.updateDailyTasks(section2);
 
+        const sectionDues = this.renderDailySection(wrap, 'PENDING DUES', true);
+        this.updateDailyDues(sectionDues);
+
         const section3 = this.renderDailySection(wrap, "TODAY'S THOUGHTS", true);
         this.updateDailyThoughts(section3);
+    }
+
+    async updateDailyDues(container: HTMLElement) {
+        container.empty();
+        const { metadataCache, vault } = this.plugin.app;
+        const pfFolder = (this.plugin.settings.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/');
+        const today = moment().startOf('day');
+        
+        const dues: DueEntry[] = [];
+        for (const file of vault.getMarkdownFiles()) {
+            if (!file.path.startsWith(pfFolder + '/') && file.path !== pfFolder) continue;
+            const fm = metadataCache.getFileCache(file)?.frontmatter;
+            const activeStatus = fm?.['active_status'];
+            if (activeStatus === false || activeStatus === 'false' || activeStatus === 'False') continue;
+            
+            const dueDate = (fm?.['next_duedate'] ?? '').toString().trim();
+            const dueMoment = dueDate ? moment(dueDate, ['YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY'], true) : null;
+            
+            if (dueMoment && dueMoment.isValid() && dueMoment.isSameOrBefore(today, 'day')) {
+                dues.push({ 
+                    title: file.basename, 
+                    path: file.path, 
+                    dueDate, 
+                    lastPayment: (fm?.['last_payment'] ?? '').toString().trim(),
+                    dueMoment,
+                    hasRecurring: true,
+                    isActive: true
+                });
+            }
+        }
+
+        if (dues.length === 0) {
+            container.createEl('p', { text: 'No pending dues.', attr: { style: 'color: var(--text-muted); font-size: 0.8em; text-align: center; margin: 5px 0;' } });
+            return;
+        }
+
+        dues.sort((a, b) => a.dueMoment.valueOf() - b.dueMoment.valueOf());
+        const duesList = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 4px;' } });
+
+        for (const entry of dues) {
+            const row = duesList.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--background-modifier-border-faint); width: 100%; min-width: 0;' } });
+            row.createSpan({ text: '💳', attr: { style: 'font-size: 0.9em; flex-shrink: 0;' } });
+            const textEl = row.createEl('div', { 
+                text: entry.title,
+                attr: { style: 'font-size: 0.85em; line-height: 1.2; flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-accent); cursor: pointer;' } 
+            });
+            textEl.addEventListener('click', () => this.app.workspace.openLinkText(entry.title, entry.path, 'window'));
+
+            const isOverdue = entry.dueMoment.isBefore(today, 'day');
+            row.createSpan({ 
+                text: entry.dueDate, 
+                attr: { style: `font-size: 0.75em; color: ${isOverdue ? 'var(--text-error)' : 'var(--interactive-accent)'}; font-weight: 600; flex-shrink: 0;` } 
+            });
+
+            const payBtn = row.createEl('button', { 
+                text: 'Pay', 
+                attr: { style: 'padding: 2px 8px; border-radius: 4px; border: none; background: var(--interactive-accent); color: var(--text-on-accent); font-size: 0.7em; font-weight: 600; cursor: pointer; flex-shrink: 0;' } 
+            });
+            payBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const fileObj = vault.getAbstractFileByPath(entry.path) as TFile;
+                if (fileObj) new PaymentModal(this.plugin.app, fileObj, entry.dueDate, () => this.renderView()).open();
+            });
+        }
     }
 
     async updateDailyThoughts(container: HTMLElement) {
