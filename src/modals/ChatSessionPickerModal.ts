@@ -1,25 +1,21 @@
-import { TFile, FuzzySuggestModal } from 'obsidian';
+import { App, TFile, FuzzySuggestModal, moment } from 'obsidian';
 
 export class ChatSessionPickerModal extends FuzzySuggestModal<TFile> {
     files: TFile[];
     onChoose: (file: TFile) => void;
 
-    constructor(app: any, files: TFile[], onChoose: (file: TFile) => void) {
+    constructor(app: App, files: TFile[], onChoose: (file: TFile) => void) {
         super(app);
         this.files = files;
         this.onChoose = onChoose;
-        this.setPlaceholder('Select a saved chat session...');
+        this.setPlaceholder('Select a saved chat session…');
     }
 
-    getItems(): TFile[] {
-        return this.files;
+    getItems(): TFile[] { return this.files; }
+
+    getItemText(file: TFile): string {
+        return `${file.basename} (${moment(file.stat.mtime).locale('en').format('YYYY-MM-DD HH:mm')})`;
     }
 
-    getItemText(item: TFile): string {
-        return item.basename.replace(/^MINA Chat /, '');
-    }
-
-    onChooseItem(item: TFile, evt: MouseEvent | KeyboardEvent): void {
-        this.onChoose(item);
-    }
+    onChooseItem(file: TFile): void { this.onChoose(file); }
 }
