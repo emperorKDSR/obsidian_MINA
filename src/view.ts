@@ -1,7 +1,7 @@
 import { ItemView, WorkspaceLeaf, MarkdownRenderer, Platform, moment, Notice, TFile, ViewStateResult, App } from 'obsidian';
 import MinaPlugin from './main';
 import { VIEW_TYPE_MINA, KATANA_ICON_ID, NINJA_AVATAR_SVG } from './constants';
-import { ThoughtEntry, TaskEntry, ReplyEntry, DueEntry } from './types';
+import { ThoughtEntry, TaskEntry, ReplyEntry, DueEntry, MinaSettings } from './types';
 import { isTablet, toAsciiDigits, parseNaturalDate } from './utils';
 import { FileSuggestModal } from './modals/FileSuggestModal';
 import { EditEntryModal } from './modals/EditEntryModal';
@@ -248,7 +248,32 @@ export class MinaView extends ItemView {
             } 
         });
 
-        const btnGroup = header.createEl('div', { attr: { style: 'display: flex; gap: 8px;' } });
+        const btnGroup = header.createEl('div', { attr: { style: 'display: flex; gap: 8px; align-items: center;' } });
+
+        // Individual Section Toggles
+        const renderToggle = (label: string, settingKey: keyof MinaSettings) => {
+            const toggleContainer = btnGroup.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 4px; font-size: 0.75em; color: var(--text-muted); cursor: pointer;' } });
+            toggleContainer.createSpan({ text: label });
+            const toggleLabel = toggleContainer.createEl('label', { attr: { style: 'position: relative; display: inline-block; width: 24px; height: 12px; cursor: pointer;' } });
+            const cb = toggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
+            cb.checked = !!this.plugin.settings[settingKey];
+            const slider = toggleLabel.createEl('span', { attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${cb.checked ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 12px;` } });
+            const knob = toggleLabel.createEl('span', { attr: { style: `position: absolute; height: 8px; width: 8px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${cb.checked ? 'translateX(12px)' : 'translateX(0)'};` } });
+            
+            cb.addEventListener('change', async () => {
+                (this.plugin.settings[settingKey] as any) = cb.checked;
+                slider.style.backgroundColor = cb.checked ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
+                knob.style.transform = cb.checked ? 'translateX(12px)' : 'translateX(0)';
+                await this.plugin.saveSettings();
+                this.renderView();
+            });
+        };
+
+        renderToggle('Cl', 'showDailyChecklist');
+        renderToggle('Ta', 'showDailyTasks');
+        renderToggle('Du', 'showDailyDues');
+        renderToggle('Pi', 'showDailyPinned');
+        renderToggle('Th', 'showDailyThoughts');
 
         const addThoughtBtn = btnGroup.createEl('button', { 
             text: '+Thought', 
@@ -282,20 +307,30 @@ export class MinaView extends ItemView {
         });
         refreshBtn.addEventListener('click', () => this.renderView());
 
-        const section1 = this.renderDailySection(wrap, "TODAY'S CHECKLIST", true);
-        this.updateDailyThoughtTodos(section1);
+        if (this.plugin.settings.showDailyChecklist) {
+            const section1 = this.renderDailySection(wrap, "TODAY'S CHECKLIST", 'checklist');
+            this.updateDailyThoughtTodos(section1);
+        }
 
-        const section2 = this.renderDailySection(wrap, 'PENDING TASKS', true);
-        this.updateDailyTasks(section2);
+        if (this.plugin.settings.showDailyTasks) {
+            const section2 = this.renderDailySection(wrap, 'PENDING TASKS', 'tasks');
+            this.updateDailyTasks(section2);
+        }
 
-        const sectionDues = this.renderDailySection(wrap, 'PENDING DUES', true);
-        this.updateDailyDues(sectionDues);
+        if (this.plugin.settings.showDailyDues) {
+            const sectionDues = this.renderDailySection(wrap, 'PENDING DUES', 'dues');
+            this.updateDailyDues(sectionDues);
+        }
 
-        const sectionPinned = this.renderDailySection(wrap, "PINNED THOUGHTS", true);
-        this.updatePinnedThoughts(sectionPinned);
+        if (this.plugin.settings.showDailyPinned) {
+            const sectionPinned = this.renderDailySection(wrap, "PINNED THOUGHTS", 'pinned');
+            this.updatePinnedThoughts(sectionPinned);
+        }
 
-        const section3 = this.renderDailySection(wrap, "TODAY'S THOUGHTS", true);
-        this.updateDailyThoughts(section3);
+        if (this.plugin.settings.showDailyThoughts) {
+            const section3 = this.renderDailySection(wrap, "TODAY'S THOUGHTS", 'thoughts');
+            this.updateDailyThoughts(section3);
+        }
     }
 
     async updateDailyDues(container: HTMLElement) {
@@ -397,13 +432,16 @@ export class MinaView extends ItemView {
         }
     }
 
-    renderDailySection(container: HTMLElement, title: string, isOpen: boolean = true): HTMLElement {
+    renderDailySection(container: HTMLElement, title: string, key: string): HTMLElement {
+        if (!this.plugin.settings.dailySectionStates) this.plugin.settings.dailySectionStates = {};
+        const isOpen = this.plugin.settings.dailySectionStates[key] !== false;
+        
         const details = container.createEl('details', { 
             attr: { 
                 style: 'margin-bottom: 10px; background: var(--background-secondary); border-radius: 8px; overflow: hidden; border: 1px solid var(--background-modifier-border); flex-shrink: 0; width: 100%;' 
             } 
         });
-        if (isOpen) details.setAttribute('open', 'true');
+        details.open = isOpen;
 
         const summary = details.createEl('summary', { 
             attr: { 
@@ -418,8 +456,15 @@ export class MinaView extends ItemView {
         
         summary.createSpan({ text: title, attr: { style: 'flex-grow: 1;' } });
 
-        details.addEventListener('toggle', () => {
-            chevron.textContent = details.open ? '▼' : '▶';
+        details.addEventListener('toggle', async () => {
+            const newState = details.open;
+            chevron.textContent = newState ? '▼' : '▶';
+            
+            // Only update and save if the state actually changed from the stored preference
+            if (this.plugin.settings.dailySectionStates[key] !== newState) {
+                this.plugin.settings.dailySectionStates[key] = newState;
+                await this.plugin.saveSettings();
+            }
         });
 
         const content = details.createEl('div', { 

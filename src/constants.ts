@@ -39,5 +39,12 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     maxOutputTokens: 65536,
     newNoteFolder: '000 Bin',
     voiceMemoFolder: '000 Bin/MINA V2 Voice',
-    transcriptionLanguage: 'English'
+    transcriptionLanguage: 'English',
+    dailySectionStates: {},
+    showDailySections: true,
+    showDailyChecklist: true,
+    showDailyTasks: true,
+    showDailyDues: true,
+    showDailyThoughts: true,
+    showDailyPinned: true
 }

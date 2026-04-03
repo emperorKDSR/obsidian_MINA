@@ -17,6 +17,13 @@ export interface MinaSettings {
     newNoteFolder: string;
     voiceMemoFolder: string;
     transcriptionLanguage: string;
+    dailySectionStates: Record<string, boolean>;
+    showDailySections: boolean;
+    showDailyChecklist: boolean;
+    showDailyTasks: boolean;
+    showDailyDues: boolean;
+    showDailyThoughts: boolean;
+    showDailyPinned: boolean;
 }
 
 export interface ReplyEntry {

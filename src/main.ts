@@ -170,6 +170,8 @@ export default class MinaPlugin extends Plugin {
 	async loadSettings() {
 		const loadedData = await this.loadData();
         this.settings = Object.assign({}, DEFAULT_SETTINGS);
+        // Ensure dailySectionStates is a fresh object even if loadedData is empty
+        this.settings.dailySectionStates = { ...DEFAULT_SETTINGS.dailySectionStates };
 
         if (!loadedData || Object.keys(loadedData).length === 0) {
             this.settings.contexts = [];
@@ -205,6 +207,13 @@ export default class MinaPlugin extends Plugin {
             if (loadedData.voiceMemoFolder !== undefined) this.settings.voiceMemoFolder = loadedData.voiceMemoFolder;
             if (loadedData.transcriptionLanguage !== undefined) this.settings.transcriptionLanguage = loadedData.transcriptionLanguage;
             if (loadedData.maxOutputTokens !== undefined) this.settings.maxOutputTokens = loadedData.maxOutputTokens;
+            if (loadedData.dailySectionStates !== undefined) this.settings.dailySectionStates = { ...loadedData.dailySectionStates };
+            if (loadedData.showDailySections !== undefined) this.settings.showDailySections = loadedData.showDailySections;
+            if (loadedData.showDailyChecklist !== undefined) this.settings.showDailyChecklist = loadedData.showDailyChecklist;
+            if (loadedData.showDailyTasks !== undefined) this.settings.showDailyTasks = loadedData.showDailyTasks;
+            if (loadedData.showDailyDues !== undefined) this.settings.showDailyDues = loadedData.showDailyDues;
+            if (loadedData.showDailyThoughts !== undefined) this.settings.showDailyThoughts = loadedData.showDailyThoughts;
+            if (loadedData.showDailyPinned !== undefined) this.settings.showDailyPinned = loadedData.showDailyPinned;
             this.settingsInitialized = true;
         }
 

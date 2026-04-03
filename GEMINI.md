@@ -18,15 +18,17 @@ The "MINA V2" plugin has been developed with the following features and implemen
 
 1. **User Interface (UI) & Aesthetics**
    - **Tabbed Navigation:** Seven tabs with short labels: **Da** (Daily), **Th** (Thoughts), **Ta** (Tasks), **Ai** (AI Chat), **Du** (Dues), **Vo** (Voice), **Se** (Settings).
-   - **Daily Tab (Da):** A high-focus dashboard with four foldable sections and quick capture:
+   - **Daily Tab (Da):** A high-focus dashboard with five foldable sections and quick capture:
+     - **Persistent Section State:** Sections (`details` elements) now remember their collapsed or expanded state across refreshes and restarts.
+     - **Individual Visibility Toggles:** Five pill-shaped toggles in the header (**Cl**, **Ta**, **Du**, **Pi**, **Th**) allow showing/hiding specific dashboard sections.
      - **+Thought Button:** A right-aligned button in the header to instantly open the "New Thought" modal.
      - **Refresh Button:** Manual trigger to reload all daily sections immediately.
      - **Auto-Refresh:** Automatically reloads the view whenever thoughts or tasks are updated while the Daily tab is active.
-     - **TODAY'S CHECKLIST:** A compact, one-line list of all open to-dos (`- [ ]`) extracted from your entire thought history. Interactive checkboxes update source notes instantly.
-     - **PENDING TASKS:** A compact rollup of open tasks from your tasks index that are due today or overdue.
-     - **PENDING DUES:** A rollup of recurring payments that are due today or overdue, featuring an inline "Pay" button.
-     - **PINNED THOUGHTS:** A rollup of any thought note marked as `pinned: true` in its frontmatter.
-     - **TODAY'S THOUGHTS:** A full card-based view of thoughts captured today or containing today's date link. Avatars are hidden here to maximize space.
+     - **TODAY'S CHECKLIST (Cl):** A compact, one-line list of all open to-dos (`- [ ]`) extracted from your entire thought history. Interactive checkboxes update source notes instantly.
+     - **PENDING TASKS (Ta):** A compact rollup of open tasks from your tasks index that are due today or overdue.
+     - **PENDING DUES (Du):** A rollup of recurring payments that are due today or overdue, featuring an inline "Pay" button.
+     - **PINNED THOUGHTS (Pi):** A rollup of any thought note marked as `pinned: true` in its frontmatter.
+     - **TODAY'S THOUGHTS (Th):** A full card-based view of thoughts captured today or containing today's date link. Avatars are hidden here to maximize space.
    - **Modern Card-Based Layout:** Thoughts and tasks are displayed in responsive "cards" with rounded corners and dynamic backgrounds.
      - **Dark Mode:** Transparent white background (`rgba(255, 255, 255, 0.05)`).
      - **Light Mode:** Subtle grey background (`rgba(0, 0, 0, 0.05)`).
