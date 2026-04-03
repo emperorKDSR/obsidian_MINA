@@ -18,6 +18,7 @@ export class MinaView extends ItemView {
     isTask: boolean;
     dueDate: string; // YYYY-MM-DD
     activeTab: 'daily' | 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' | 'dues' | 'vo' = 'daily';
+    isDedicated: boolean = false;
 
     // Voice Recording State
     mediaRecorder: MediaRecorder | null = null;
@@ -101,16 +102,17 @@ export class MinaView extends ItemView {
     }
 
     getViewType() { return VIEW_TYPE_MINA; }
-    getDisplayText() { return "MINA V2"; }
+    getDisplayText() { return this.isDedicated ? "Daily Focus" : "MINA V2"; }
     getIcon() { return KATANA_ICON_ID; }
 
     getState() {
-        return { activeTab: this.activeTab };
+        return { activeTab: this.activeTab, isDedicated: this.isDedicated };
     }
 
     async setState(state: any, result: ViewStateResult): Promise<void> {
-        if (state && state.activeTab) {
-            this.activeTab = state.activeTab;
+        if (state) {
+            if (state.activeTab) this.activeTab = state.activeTab;
+            if (state.isDedicated !== undefined) this.isDedicated = state.isDedicated;
             this.renderView();
         }
         await super.setState(state, result);
@@ -192,35 +194,36 @@ export class MinaView extends ItemView {
             dragHandle.createEl('div', { attr: { style: 'width: 40px; height: 4px; background-color: var(--background-modifier-border); border-radius: 4px;' }});
         }
 
-        const nav = container.createEl('div', { attr: { style: 'display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 10px; flex-shrink: 0;' } });
+        if (!this.isDedicated) {
+            const nav = container.createEl('div', { attr: { style: 'display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 10px; flex-shrink: 0;' } });
 
-        const addTab = (id: string, label: string) => {
-            const btnWrap = nav.createEl('div', { attr: { style: 'flex: 1; display: flex; align-items: stretch; gap: 0;' } });
-            const hasPopout = !Platform.isMobile && id !== 'settings';
-            const btn = btnWrap.createEl('button', { 
-                text: label, 
-                attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${hasPopout ? 'border-top-right-radius: 0; border-bottom-right-radius: 0;' : ''} ${this.activeTab === id ? 'background-color: var(--interactive-accent); color: var(--text-on-accent); border-color: var(--interactive-accent);' : ''}` } 
-            });
-            btn.addEventListener('click', () => { this.activeTab = id as any; this.renderView(); });
-            if (hasPopout) {
-                const detachBtn = btnWrap.createEl('button', {
-                    text: '⧉',
-                    attr: { title: 'Pop out tab', style: `padding: 5px 4px; font-size: 0.7em; border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 1px solid var(--background-modifier-border); ${this.activeTab === id ? 'background-color: var(--interactive-accent); color: var(--text-on-accent); border-color: var(--interactive-accent);' : ''}` }
+            const addTab = (id: string, label: string) => {
+                const btnWrap = nav.createEl('div', { attr: { style: 'flex: 1; display: flex; align-items: stretch; gap: 0;' } });
+                const hasPopout = !Platform.isMobile && id !== 'settings';
+                const btn = btnWrap.createEl('button', {
+                    text: label,
+                    attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${hasPopout ? 'border-top-right-radius: 0; border-bottom-right-radius: 0;' : ''} ${this.activeTab === id ? 'background-color: var(--interactive-accent); color: var(--text-on-accent); border-color: var(--interactive-accent);' : ''}` }
                 });
-                detachBtn.addEventListener('click', (e) => { e.stopPropagation(); this.detachTab(id); });
+                btn.addEventListener('click', () => { this.activeTab = id as any; this.renderView(); });
+                if (hasPopout) {
+                    const detachBtn = btnWrap.createEl('button', {
+                        text: '⧉',
+                        attr: { title: 'Pop out tab', style: `padding: 5px 4px; font-size: 0.7em; border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 1px solid var(--background-modifier-border); ${this.activeTab === id ? 'background-color: var(--interactive-accent); color: var(--text-on-accent); border-color: var(--interactive-accent);' : ''}` }
+                    });
+                    detachBtn.addEventListener('click', (e) => { e.stopPropagation(); this.detachTab(id); });
+                }
+            };
+
+            addTab('daily', 'Da');
+            addTab('review-thoughts', 'Th');
+            addTab('review-tasks', 'Ta');
+            addTab('mina-ai', 'Ai');
+            addTab('dues', 'Du');
+            addTab('vo', 'Vo');
+            addTab('settings', 'Se');
             }
-        };
 
-        addTab('daily', 'Da');
-        addTab('review-thoughts', 'Th');
-        addTab('review-tasks', 'Ta');
-        addTab('mina-ai', 'Ai');
-        addTab('dues', 'Du');
-        addTab('vo', 'Vo');
-        addTab('settings', 'Se');
-
-        if (this.activeTab === 'review-tasks') this.renderReviewTasksMode(container);
-        else if (this.activeTab === 'mina-ai') this.renderMinaMode(container);
+            if (this.activeTab === 'review-tasks') this.renderReviewTasksMode(container);        else if (this.activeTab === 'mina-ai') this.renderMinaMode(container);
         else if (this.activeTab === 'dues') this.renderDuesMode(container);
         else if (this.activeTab === 'settings') this.renderSettingsMode(container);
         else if (this.activeTab === 'vo') this.renderVoiceMode(container);

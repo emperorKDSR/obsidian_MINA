@@ -69,6 +69,15 @@ export default class MinaPlugin extends Plugin {
 			}
 		});
 
+		this.addCommand({
+			id: 'open-mina-daily-dedicated',
+			name: 'Open MINA Daily (Dedicated Window)',
+			icon: KATANA_ICON_ID,
+			callback: () => {
+				this.activateView('daily', true);
+			}
+		});
+
 		this.addSettingTab(new MinaSettingTab(this.app, this));
 	}
 
@@ -117,7 +126,7 @@ export default class MinaPlugin extends Plugin {
         }
     }
 
-    async activateView(tabId?: string) {
+    async activateView(tabId?: string, isDedicated: boolean = false) {
         const { workspace } = this.app;
 
         if (Platform.isMobile) {
@@ -146,25 +155,26 @@ export default class MinaPlugin extends Plugin {
         }
 
         let leaf: WorkspaceLeaf | null = null;
-        const leaves = workspace.getLeavesOfType(VIEW_TYPE_MINA);
-        if (leaves.length > 0) {
-            leaf = leaves[0];
-            if (tabId) {
-                await leaf.setViewState({
-                    type: VIEW_TYPE_MINA,
-                    active: true,
-                    state: { activeTab: tabId }
-                });
-            }
-        } else {
+        
+        if (isDedicated) {
             leaf = workspace.getLeaf('window');
-            if (leaf) await leaf.setViewState({ 
-                type: VIEW_TYPE_MINA, 
-                active: true,
-                state: tabId ? { activeTab: tabId } : undefined
-            });
+        } else {
+            const leaves = workspace.getLeavesOfType(VIEW_TYPE_MINA);
+            if (leaves.length > 0) {
+                leaf = leaves[0];
+            } else {
+                leaf = workspace.getLeaf('window');
+            }
         }
-        if (leaf) workspace.revealLeaf(leaf);
+
+        if (leaf) {
+            await leaf.setViewState({
+                type: VIEW_TYPE_MINA,
+                active: true,
+                state: { activeTab: tabId || 'daily', isDedicated }
+            });
+            workspace.revealLeaf(leaf);
+        }
     }
 
 	async loadSettings() {
