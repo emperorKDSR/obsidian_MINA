@@ -69,6 +69,15 @@ export default class MinaPlugin extends Plugin {
 			}
 		});
 
+		this.addCommand({
+			id: 'open-mina-timeline',
+			name: 'Open timeline',
+			icon: KATANA_ICON_ID,
+			callback: () => {
+				this.activateView('timeline');
+			}
+		});
+
 		this.addSettingTab(new MinaSettingTab(this.app, this));
 	}
 

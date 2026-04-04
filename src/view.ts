@@ -17,8 +17,9 @@ export class MinaView extends ItemView {
     content: string;
     isTask: boolean;
     dueDate: string; // YYYY-MM-DD
-    activeTab: 'daily' | 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' | 'dues' | 'vo' = 'daily';
+    activeTab: 'daily' | 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' | 'dues' | 'vo' | 'timeline' = 'daily';
     isDedicated: boolean = false;
+    timelineSelectedDate: string = moment().format('YYYY-MM-DD');
 
     // Voice Recording State
     mediaRecorder: MediaRecorder | null = null;
@@ -238,6 +239,7 @@ export class MinaView extends ItemView {
         else if (this.activeTab === 'settings') this.renderSettingsMode(container);
         else if (this.activeTab === 'vo') this.renderVoiceMode(container);
         else if (this.activeTab === 'daily') this.renderDailyMode(container);
+        else if (this.activeTab === 'timeline') this.renderTimelineMode(container);
         else this.renderReviewThoughtsMode(container);
     }
 
@@ -466,6 +468,196 @@ export class MinaView extends ItemView {
         const thoughtsRowContainer = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px; width: 100%;' } });
         for (const entry of thoughts) {
             await this.renderThoughtRow(entry, thoughtsRowContainer, entry.filePath, 0, true);
+        }
+    }
+
+    timelineDateElements: Map<string, HTMLElement> = new Map();
+    timelineDaySections: Map<string, HTMLElement> = new Map();
+    timelineCarousel: HTMLElement;
+    timelineScrollBody: HTMLElement;
+    timelineStartDate: moment.Moment;
+    timelineEndDate: moment.Moment;
+
+    renderTimelineMode(container: HTMLElement) {
+        const wrap = container.createEl('div', { 
+            attr: { 
+                style: 'display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--background-primary);' 
+            } 
+        });
+
+        // Header with Date Carousel
+        const carouselContainer = wrap.createEl('div', {
+            attr: {
+                style: 'flex-shrink: 0; position: relative; border-bottom: 1px solid var(--background-modifier-border); padding: 10px 0; background: var(--background-primary-alt);'
+            }
+        });
+
+        this.timelineCarousel = carouselContainer.createEl('div', {
+            attr: {
+                class: 'mina-timeline-carousel',
+                style: 'display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 0 45%; scrollbar-width: none;'
+            }
+        });
+        (this.timelineCarousel.style as any).msOverflowStyle = 'none';
+        (this.timelineCarousel.style as any).scrollbarWidth = 'none';
+
+        this.timelineScrollBody = wrap.createEl('div', {
+            attr: {
+                class: 'mina-timeline-body',
+                style: 'flex-grow: 1; overflow-y: auto; padding: 15px; -webkit-overflow-scrolling: touch;'
+            }
+        });
+
+        carouselContainer.createEl('div', {
+            attr: {
+                style: 'position: absolute; left: 50%; bottom: 0; width: 20px; height: 3px; background: var(--interactive-accent); transform: translateX(-50%); border-radius: 3px 3px 0 0;'
+            }
+        });
+
+        this.timelineDateElements.clear();
+        this.timelineDaySections.clear();
+
+        const today = moment();
+        this.timelineStartDate = today.clone().subtract(10, 'days');
+        this.timelineEndDate = today.clone().add(10, 'days');
+
+        for (let m = this.timelineStartDate.clone(); m.isSameOrBefore(this.timelineEndDate); m.add(1, 'days')) {
+            this.addTimelineDay(m.format('YYYY-MM-DD'), 'append');
+        }
+
+        // Sync Vertical Scroll with Carousel
+        let isScrollingBody = false;
+        this.timelineScrollBody.addEventListener('scroll', () => {
+            if (isScrollingBody) return;
+            isScrollingBody = true;
+            requestAnimationFrame(() => {
+                const rect = this.timelineScrollBody.getBoundingClientRect();
+                const centerY = rect.top + 50; 
+                const elements = document.elementsFromPoint(rect.left + rect.width / 2, centerY);
+                const section = elements.find(el => (el as HTMLElement).hasAttribute('data-date')) as HTMLElement;
+                if (section) {
+                    const dateStr = section.getAttribute('data-date')!;
+                    if (this.timelineSelectedDate !== dateStr) {
+                        this.timelineSelectedDate = dateStr;
+                        this.updateCarouselSelection(dateStr, true);
+                    }
+                }
+
+                // Check for infinite scroll
+                if (this.timelineScrollBody.scrollTop < 200) {
+                    this.loadMoreTimelineDays('prepend');
+                } else if (this.timelineScrollBody.scrollHeight - this.timelineScrollBody.scrollTop - this.timelineScrollBody.clientHeight < 200) {
+                    this.loadMoreTimelineDays('append');
+                }
+
+                isScrollingBody = false;
+            });
+        });
+
+        // Initial scroll to today
+        const todayStr = today.format('YYYY-MM-DD');
+        setTimeout(() => {
+            this.timelineDaySections.get(todayStr)?.scrollIntoView({ block: 'start' });
+            this.updateCarouselSelection(todayStr);
+        }, 100);
+    }
+
+    loadMoreTimelineDays(direction: 'append' | 'prepend') {
+        if (direction === 'prepend') {
+            const currentTopDay = this.timelineStartDate.clone();
+            for (let i = 1; i <= 10; i++) {
+                const dateStr = currentTopDay.subtract(1, 'days').format('YYYY-MM-DD');
+                this.addTimelineDay(dateStr, 'prepend');
+                this.timelineStartDate = currentTopDay.clone();
+            }
+        } else {
+            const currentBottomDay = this.timelineEndDate.clone();
+            for (let i = 1; i <= 10; i++) {
+                const dateStr = currentBottomDay.add(1, 'days').format('YYYY-MM-DD');
+                this.addTimelineDay(dateStr, 'append');
+                this.timelineEndDate = currentBottomDay.clone();
+            }
+        }
+    }
+
+    addTimelineDay(dateStr: string, position: 'append' | 'prepend') {
+        const dateMoment = moment(dateStr);
+        
+        // Date Carousel Item
+        const dateItem = document.createElement('div');
+        dateItem.style.cssText = 'flex-shrink: 0; width: 60px; text-align: center; cursor: pointer; scroll-snap-align: center; padding: 5px 0;';
+        dateItem.createEl('div', { text: dateMoment.format('MMM'), attr: { style: 'font-size: 0.7em; text-transform: uppercase; opacity: 0.6;' } });
+        dateItem.createEl('div', { text: dateMoment.format('D'), attr: { style: 'font-size: 1.1em; font-weight: 700;' } });
+        
+        if (position === 'prepend') {
+            this.timelineCarousel.prepend(dateItem);
+        } else {
+            this.timelineCarousel.append(dateItem);
+        }
+        this.timelineDateElements.set(dateStr, dateItem);
+
+        dateItem.addEventListener('click', () => {
+            this.timelineSelectedDate = dateStr;
+            this.timelineDaySections.get(dateStr)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            this.updateCarouselSelection(dateStr);
+        });
+
+        // Day Section in Scroll Body
+        const section = document.createElement('div');
+        section.setAttribute('data-date', dateStr);
+        section.style.cssText = 'margin-bottom: 40px; min-height: 100px;';
+        
+        const sectionHeader = section.createEl('h2', {
+            text: dateMoment.format('dddd, MMMM D, YYYY'),
+            attr: { style: 'font-size: 1em; color: var(--text-accent); margin-bottom: 15px; border-left: 3px solid var(--interactive-accent); padding-left: 10px;' }
+        });
+
+        this.renderTimelineDay(dateStr, section);
+
+        if (position === 'prepend') {
+            const oldScrollHeight = this.timelineScrollBody.scrollHeight;
+            const oldScrollTop = this.timelineScrollBody.scrollTop;
+            this.timelineScrollBody.prepend(section);
+            // Adjust scroll to prevent jumping when prepending
+            this.timelineScrollBody.scrollTop = oldScrollTop + (this.timelineScrollBody.scrollHeight - oldScrollHeight);
+        } else {
+            this.timelineScrollBody.append(section);
+        }
+        this.timelineDaySections.set(dateStr, section);
+    }
+
+    updateCarouselSelection(selectedDate: string, smoothScroll: boolean = false) {
+        this.timelineDateElements.forEach((el, date) => {
+            if (date === selectedDate) {
+                el.style.color = 'var(--interactive-accent)';
+                el.style.opacity = '1';
+                if (smoothScroll) {
+                    el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                } else {
+                    el.scrollIntoView({ inline: 'center', block: 'nearest' });
+                }
+            } else {
+                el.style.color = 'var(--text-muted)';
+                el.style.opacity = '0.6';
+            }
+        });
+    }
+
+    async renderTimelineDay(dateStr: string, container: HTMLElement) {
+        const tasks = Array.from(this.plugin.taskIndex.values()).filter(t => t.due === dateStr);
+        const thoughts = Array.from(this.plugin.thoughtIndex.values()).filter(t => t.day === dateStr && !t.context.includes('journal'));
+
+        if (tasks.length === 0 && thoughts.length === 0) {
+            container.createEl('p', { text: 'No tasks or thoughts for this day.', attr: { style: 'color: var(--text-muted); font-size: 0.85em; font-style: italic; text-align: center;' } });
+            return;
+        }
+
+        for (const task of tasks) {
+            await this.renderTaskRow(task, container);
+        }
+
+        for (const thought of thoughts) {
+            await this.renderThoughtRow(thought, container, thought.filePath, 0, true);
         }
     }
 
