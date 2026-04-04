@@ -149,7 +149,7 @@ export class MinaView extends ItemView {
                 vv.removeEventListener('scroll', syncViewport);
             };
         }
-        if (!Platform.isMobile || isTablet()) {
+        if (!Platform.isMobile || isTablet() || this.isDedicated) {
             const hideNativeHeaders = () => {
                 const headerEl = this.containerEl.querySelector('.view-header');
                 if (headerEl) (headerEl as HTMLElement).style.display = 'none';
@@ -254,8 +254,22 @@ export class MinaView extends ItemView {
             } 
         });
 
-        header.createEl('h3', { 
-            text: `Daily Focus — ${moment().format('ddd, MMM D')}`,
+        const leftHeader = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px;' } });
+
+        if (this.isDedicated) {
+            const closeBtn = leftHeader.createEl('button', {
+                text: '✕',
+                attr: { style: 'padding: 4px 8px; border-radius: 4px; background: transparent; color: var(--text-muted); font-size: 1.2em; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;' }
+            });
+            closeBtn.addEventListener('click', () => {
+                this.leaf.detach();
+            });
+        }
+
+        const isMobileDedicated = Platform.isMobile && this.isDedicated;
+
+        leftHeader.createEl('h3', { 
+            text: isMobileDedicated ? moment().format('ddd, MMM D') : `Daily Focus — ${moment().format('ddd, MMM D')}`,
             attr: { 
                 style: 'margin: 0; font-size: 1.1em; color: var(--text-accent);' 
             } 
@@ -263,9 +277,19 @@ export class MinaView extends ItemView {
 
         const btnGroup = header.createEl('div', { attr: { style: 'display: flex; gap: 8px; align-items: center;' } });
 
+        let actionTarget = btnGroup;
+        let toggleTarget = btnGroup;
+
+        if (isMobileDedicated) {
+            // Row 2: Section Toggles (Action buttons now share Row 1)
+            toggleTarget = wrap.createEl('div', { 
+                attr: { style: 'display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--background-modifier-border);' } 
+            });
+        }
+
         // Individual Section Toggles
         const renderToggle = (label: string, settingKey: keyof MinaSettings) => {
-            const toggleContainer = btnGroup.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 4px; font-size: 0.75em; color: var(--text-muted); cursor: pointer;' } });
+            const toggleContainer = toggleTarget.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 4px; font-size: 0.75em; color: var(--text-muted); cursor: pointer;' } });
             toggleContainer.createSpan({ text: label });
             const toggleLabel = toggleContainer.createEl('label', { attr: { style: 'position: relative; display: inline-block; width: 24px; height: 12px; cursor: pointer;' } });
             const cb = toggleLabel.createEl('input', { type: 'checkbox', attr: { style: 'opacity: 0; width: 0; height: 0; position: absolute;' } });
@@ -288,7 +312,7 @@ export class MinaView extends ItemView {
         renderToggle('Pi', 'showDailyPinned');
         renderToggle('Th', 'showDailyThoughts');
 
-        const addThoughtBtn = btnGroup.createEl('button', { 
+        const addThoughtBtn = actionTarget.createEl('button', { 
             text: '+Thought', 
             attr: { 
                 style: 'padding: 4px 12px; border-radius: 5px; background: var(--interactive-accent); color: var(--text-on-accent); font-size: 0.8em; font-weight: 600; cursor: pointer; border: none;' 
@@ -312,7 +336,7 @@ export class MinaView extends ItemView {
             ).open();
         });
 
-        const refreshBtn = btnGroup.createEl('button', { 
+        const refreshBtn = actionTarget.createEl('button', { 
             text: 'Refresh', 
             attr: { 
                 style: 'padding: 4px 12px; border-radius: 5px; background: var(--background-modifier-border); color: var(--text-muted); font-size: 0.8em; font-weight: 600; cursor: pointer; border: none;' 

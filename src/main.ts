@@ -52,17 +52,8 @@ export default class MinaPlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: 'open-mina-v2',
-			name: 'Open MINA V2',
-			icon: KATANA_ICON_ID,
-			callback: () => {
-				this.activateView();
-			}
-		});
-
-		this.addCommand({
-			id: 'open-mina-daily',
-			name: 'Open MINA Daily',
+			id: 'open-mina-full-mode',
+			name: 'Full Mode',
 			icon: KATANA_ICON_ID,
 			callback: () => {
 				this.activateView('daily');
@@ -70,8 +61,8 @@ export default class MinaPlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: 'open-mina-daily-dedicated',
-			name: 'Open MINA Daily (Dedicated Window)',
+			id: 'open-mina-daily-mode',
+			name: 'Daily Mode',
 			icon: KATANA_ICON_ID,
 			callback: () => {
 				this.activateView('daily', true);
@@ -138,7 +129,7 @@ export default class MinaPlugin extends Plugin {
                     await leaf.setViewState({ 
                         type: VIEW_TYPE_MINA, 
                         active: true,
-                        state: tabId ? { activeTab: tabId } : undefined
+                        state: { activeTab: tabId || 'daily', isDedicated }
                     });
                     workspace.revealLeaf(leaf);
                 }
@@ -147,7 +138,7 @@ export default class MinaPlugin extends Plugin {
                 await leaf.setViewState({ 
                     type: VIEW_TYPE_MINA, 
                     active: true,
-                    state: tabId ? { activeTab: tabId } : undefined
+                    state: { activeTab: tabId || 'daily', isDedicated }
                 });
                 workspace.revealLeaf(leaf);
             }
@@ -163,7 +154,7 @@ export default class MinaPlugin extends Plugin {
             if (leaves.length > 0) {
                 leaf = leaves[0];
             } else {
-                leaf = workspace.getLeaf('window');
+                leaf = workspace.getRightLeaf(false);
             }
         }
 
