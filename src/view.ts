@@ -150,15 +150,25 @@ export class MinaView extends ItemView {
             };
         }
         if (!Platform.isMobile || isTablet()) {
-            const headerEl = this.containerEl.querySelector('.view-header');
-            if (headerEl) (headerEl as HTMLElement).style.display = 'none';
-            setTimeout(() => {
+            const hideNativeHeaders = () => {
+                const headerEl = this.containerEl.querySelector('.view-header');
+                if (headerEl) (headerEl as HTMLElement).style.display = 'none';
+                
                 const tabContainer = this.containerEl.closest('.workspace-tabs');
                 if (tabContainer) {
-                    const tabHeader = tabContainer.querySelector('.workspace-tab-header-container');
-                    if (tabHeader) (tabHeader as HTMLElement).style.display = 'none';
+                    const isWindow = this.containerEl.closest('.mod-root') === null && this.containerEl.closest('.mod-window') !== null;
+                    if (isWindow || this.isDedicated) {
+                        const tabHeader = tabContainer.querySelector('.workspace-tab-header-container');
+                        if (tabHeader) (tabHeader as HTMLElement).style.display = 'none';
+                    }
                 }
-            }, 100);
+            };
+            
+            hideNativeHeaders();
+            setTimeout(hideNativeHeaders, 100);
+            setTimeout(hideNativeHeaders, 500);
+            setTimeout(hideNativeHeaders, 1000);
+            setTimeout(hideNativeHeaders, 2000);
         }
     }
 
