@@ -74,7 +74,7 @@ export default class MinaPlugin extends Plugin {
 			name: 'Open timeline',
 			icon: KATANA_ICON_ID,
 			callback: () => {
-				this.activateView('timeline');
+				this.activateView('timeline', true);
 			}
 		});
 

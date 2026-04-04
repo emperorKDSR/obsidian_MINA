@@ -103,7 +103,10 @@ export class MinaView extends ItemView {
     }
 
     getViewType() { return VIEW_TYPE_MINA; }
-    getDisplayText() { return this.isDedicated ? "Daily Focus" : "MINA V2"; }
+    getDisplayText() { 
+        if (this.activeTab === 'timeline') return "Timeline";
+        return this.isDedicated ? "Daily Focus" : "MINA V2"; 
+    }
     getIcon() { return KATANA_ICON_ID; }
 
     getState() {
@@ -205,7 +208,7 @@ export class MinaView extends ItemView {
             dragHandle.createEl('div', { attr: { style: 'width: 40px; height: 4px; background-color: var(--background-modifier-border); border-radius: 4px;' }});
         }
 
-        if (!this.isDedicated) {
+        if (!this.isDedicated && this.activeTab !== 'timeline') {
             const nav = container.createEl('div', { attr: { style: 'display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 10px; flex-shrink: 0;' } });
 
             const addTab = (id: string, label: string) => {
@@ -488,14 +491,22 @@ export class MinaView extends ItemView {
         // Header with Date Carousel
         const carouselContainer = wrap.createEl('div', {
             attr: {
-                style: 'flex-shrink: 0; position: relative; border-bottom: 1px solid var(--background-modifier-border); padding: 10px 0; background: var(--background-primary-alt);'
+                style: 'flex-shrink: 0; position: relative; border-bottom: 1px solid var(--background-modifier-border); padding: 10px 0; background: var(--background-primary-alt); display: flex; align-items: center;'
             }
+        });
+
+        const closeBtn = carouselContainer.createEl('button', {
+            text: '✕',
+            attr: { style: 'margin-left: 10px; flex-shrink: 0; padding: 4px 8px; border-radius: 4px; background: transparent; color: var(--text-muted); font-size: 1.2em; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;' }
+        });
+        closeBtn.addEventListener('click', () => {
+            this.leaf.detach();
         });
 
         this.timelineCarousel = carouselContainer.createEl('div', {
             attr: {
                 class: 'mina-timeline-carousel',
-                style: 'display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 0 45%; scrollbar-width: none;'
+                style: 'flex-grow: 1; display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 0 45%; scrollbar-width: none;'
             }
         });
         (this.timelineCarousel.style as any).msOverflowStyle = 'none';
