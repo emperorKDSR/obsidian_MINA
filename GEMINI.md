@@ -24,9 +24,9 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **+Thought Button:** A right-aligned button in the header to instantly open the "New Thought" modal.
      - **Refresh Button:** Manual trigger to reload all daily sections immediately.
      - **Auto-Refresh:** Automatically reloads the view whenever thoughts or tasks are updated while the Daily tab is active.
-     - **Daily Mode:** A dedicated command "Daily Mode" opens the dashboard in a high-focus view. On desktop, this is a standalone pop-out window. On mobile, it's a full-screen view with both native and plugin navigation hidden for maximum space.
+     - **Daily Mode:** A dedicated command "Daily Mode" opens the dashboard in a high-focus view. On desktop, this is a standalone pop-out window. On mobile, it's a full-screen view with both native and plugin navigation hidden for maximum space. Includes a **✕ (Close)** button to exit the focused view.
      - **Full Mode:** Opens the dashboard with full sidebar navigation and all tabs (Thoughts, Tasks, AI, etc.) accessible.
-     - **Mobile-Optimized Header:** In "Daily Mode" on mobile, the header is streamlined to show only the date, action buttons (+Thought, Refresh), and a close button on one row, with section toggles on a second row.
+     - **Mobile-Optimized Header:** In "Daily Mode" on mobile, the header is streamlined to show only the date, action buttons (+Thought, Refresh), and the close button on one row, with section toggles on a second row.
      - **TODAY'S CHECKLIST (Cl):** A compact, one-line list of all open to-dos (`- [ ]`) extracted from your entire thought history. Interactive checkboxes update source notes instantly.
      - **PENDING TASKS (Ta):** A compact rollup of open tasks from your tasks index that are due today or overdue.
      - **PENDING DUES (Du):** A rollup of recurring payments that are due today or overdue, featuring an inline "Pay" button.
