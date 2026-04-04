@@ -26,7 +26,12 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Auto-Refresh:** Automatically reloads the view whenever thoughts or tasks are updated while the Daily tab is active.
      - **Daily Mode:** A dedicated command "Daily Mode" opens the dashboard in a high-focus view. On desktop, this is a standalone pop-out window. On mobile, it's a full-screen view with both native and plugin navigation hidden for maximum space. Includes a **✕ (Close)** button to exit the focused view.
      - **Full Mode:** Opens the dashboard with full sidebar navigation and all tabs (Thoughts, Tasks, AI, etc.) accessible.
-     - **Timeline View:** A chronological list of thoughts and tasks. Features a horizontal date carousel at the top and an infinite vertical scroll. Thoughts with "journal" context are excluded.
+     - **Timeline View:** A chronological list of thoughts and tasks accessible via the "Open timeline" command.
+       - **Horizontal Date Carousel:** A scrollable date strip at the top for quick navigation. Selected date is centered, highlighted, and bolded.
+       - **Infinite Vertical Scroll:** Chronological list of tasks and thoughts that dynamically loads more days as you scroll.
+       - **Visual Structure:** Each date is separated by a thin horizontal divider with the full date overlaid in a clean, non-bold font.
+       - **Exclusions:** Automatically excludes thoughts tagged with the `journal` context.
+       - **Dedicated Mode:** Opens in a high-focus view (pop-out on desktop, full-screen on mobile) with navigation tabs hidden.
      - **Mobile-Optimized Header:** In "Daily Mode" on mobile, the header is streamlined to show only the date, action buttons (+Thought, Refresh), and a close button on one row, with section toggles on a second row.
      - **TODAY'S CHECKLIST (Cl):** A compact, one-line list of all open to-dos (`- [ ]`) extracted from your entire thought history. Interactive checkboxes update source notes instantly.
      - **PENDING TASKS (Ta):** A compact rollup of open tasks from your tasks index that are due today or overdue.
