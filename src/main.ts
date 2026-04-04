@@ -630,7 +630,7 @@ export default class MinaPlugin extends Plugin {
             for (const leaf of leaves) {
                 const view = leaf.view as MinaView;
                 if (view && typeof view.updateReviewThoughtsList === 'function') view.updateReviewThoughtsList();
-                if (view && view.activeTab === 'daily') view.renderView();
+                if (view && (view.activeTab === 'daily' || view.activeTab === 'timeline')) view.renderView();
             }
         }, 300);
     }

@@ -481,7 +481,7 @@ export class MinaView extends ItemView {
     timelineStartDate: moment.Moment;
     timelineEndDate: moment.Moment;
 
-    renderTimelineMode(container: HTMLElement) {
+    async renderTimelineMode(container: HTMLElement) {
         const wrap = container.createEl('div', { 
             attr: { 
                 style: 'display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--background-primary);' 
@@ -519,7 +519,7 @@ export class MinaView extends ItemView {
         this.timelineEndDate = today.clone().add(10, 'days');
 
         for (let m = this.timelineStartDate.clone(); m.isSameOrBefore(this.timelineEndDate); m.add(1, 'days')) {
-            this.addTimelineDay(m.format('YYYY-MM-DD'), 'append');
+            await this.addTimelineDay(m.format('YYYY-MM-DD'), 'append');
         }
 
         // Sync Vertical Scroll with Carousel
@@ -527,7 +527,7 @@ export class MinaView extends ItemView {
         this.timelineScrollBody.addEventListener('scroll', () => {
             if (isScrollingBody) return;
             isScrollingBody = true;
-            requestAnimationFrame(() => {
+            requestAnimationFrame(async () => {
                 const rect = this.timelineScrollBody.getBoundingClientRect();
                 const centerY = rect.top + 50; 
                 const elements = document.elementsFromPoint(rect.left + rect.width / 2, centerY);
@@ -542,9 +542,9 @@ export class MinaView extends ItemView {
 
                 // Check for infinite scroll
                 if (this.timelineScrollBody.scrollTop < 200) {
-                    this.loadMoreTimelineDays('prepend');
+                    await this.loadMoreTimelineDays('prepend');
                 } else if (this.timelineScrollBody.scrollHeight - this.timelineScrollBody.scrollTop - this.timelineScrollBody.clientHeight < 200) {
-                    this.loadMoreTimelineDays('append');
+                    await this.loadMoreTimelineDays('append');
                 }
 
                 isScrollingBody = false;
@@ -559,25 +559,25 @@ export class MinaView extends ItemView {
         }, 100);
     }
 
-    loadMoreTimelineDays(direction: 'append' | 'prepend') {
+    async loadMoreTimelineDays(direction: 'append' | 'prepend') {
         if (direction === 'prepend') {
             const currentTopDay = this.timelineStartDate.clone();
             for (let i = 1; i <= 10; i++) {
                 const dateStr = currentTopDay.subtract(1, 'days').format('YYYY-MM-DD');
-                this.addTimelineDay(dateStr, 'prepend');
+                await this.addTimelineDay(dateStr, 'prepend');
                 this.timelineStartDate = currentTopDay.clone();
             }
         } else {
             const currentBottomDay = this.timelineEndDate.clone();
             for (let i = 1; i <= 10; i++) {
                 const dateStr = currentBottomDay.add(1, 'days').format('YYYY-MM-DD');
-                this.addTimelineDay(dateStr, 'append');
+                await this.addTimelineDay(dateStr, 'append');
                 this.timelineEndDate = currentBottomDay.clone();
             }
         }
     }
 
-    addTimelineDay(dateStr: string, position: 'append' | 'prepend') {
+    async addTimelineDay(dateStr: string, position: 'append' | 'prepend') {
         const dateMoment = moment(dateStr);
         
         // Date Carousel Item
@@ -608,7 +608,7 @@ export class MinaView extends ItemView {
             attr: { style: 'font-size: 1em; color: var(--text-accent); margin-bottom: 15px; border-left: 3px solid var(--interactive-accent); padding-left: 10px;' }
         });
 
-        this.renderTimelineDay(dateStr, section);
+        await this.renderTimelineDay(dateStr, section);
 
         if (position === 'prepend') {
             const oldScrollHeight = this.timelineScrollBody.scrollHeight;
@@ -643,7 +643,7 @@ export class MinaView extends ItemView {
 
     async renderTimelineDay(dateStr: string, container: HTMLElement) {
         const tasks = Array.from(this.plugin.taskIndex.values()).filter(t => t.due === dateStr);
-        const thoughts = Array.from(this.plugin.thoughtIndex.values()).filter(t => t.day === dateStr && !t.context.includes('journal'));
+        const thoughts = Array.from(this.plugin.thoughtIndex.values()).filter(t => t.allDates.includes(dateStr) && !t.context.includes('journal'));
 
         if (tasks.length === 0 && thoughts.length === 0) {
             container.createEl('p', { text: 'No tasks or thoughts for this day.', attr: { style: 'color: var(--text-muted); font-size: 0.85em; font-style: italic; text-align: center;' } });
