@@ -506,7 +506,7 @@ export class MinaView extends ItemView {
         this.timelineCarousel = carouselContainer.createEl('div', {
             attr: {
                 class: 'mina-timeline-carousel',
-                style: 'flex-grow: 1; display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 0 45%; scrollbar-width: none;'
+                style: 'flex-grow: 1; display: flex; gap: 5px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 0 calc(50% - 35px); scrollbar-width: none;'
             }
         });
         (this.timelineCarousel.style as any).msOverflowStyle = 'none';
@@ -596,9 +596,8 @@ export class MinaView extends ItemView {
         
         // Date Carousel Item
         const dateItem = document.createElement('div');
-        dateItem.style.cssText = 'flex-shrink: 0; width: 60px; text-align: center; cursor: pointer; scroll-snap-align: center; padding: 5px 0;';
-        dateItem.createEl('div', { text: dateMoment.format('MMM'), attr: { style: 'font-size: 0.7em; text-transform: uppercase; opacity: 0.6;' } });
-        dateItem.createEl('div', { text: dateMoment.format('D'), attr: { style: 'font-size: 1.1em; font-weight: 700;' } });
+        dateItem.style.cssText = 'flex-shrink: 0; min-width: 70px; text-align: center; cursor: pointer; scroll-snap-align: center; padding: 10px 0; font-size: 0.85em; transition: all 0.2s;';
+        dateItem.textContent = dateMoment.format('MMM D');
         
         if (position === 'prepend') {
             this.timelineCarousel.prepend(dateItem);
@@ -642,6 +641,7 @@ export class MinaView extends ItemView {
             if (date === selectedDate) {
                 el.style.color = 'var(--interactive-accent)';
                 el.style.opacity = '1';
+                el.style.fontWeight = '700';
                 if (smoothScroll) {
                     el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                 } else {
@@ -650,6 +650,7 @@ export class MinaView extends ItemView {
             } else {
                 el.style.color = 'var(--text-muted)';
                 el.style.opacity = '0.6';
+                el.style.fontWeight = '400';
             }
         });
     }
