@@ -603,9 +603,17 @@ export class MinaView extends ItemView {
         section.setAttribute('data-date', dateStr);
         section.style.cssText = 'margin-bottom: 40px; min-height: 100px;';
         
-        const sectionHeader = section.createEl('h2', {
+        const dividerContainer = section.createEl('div', {
+            attr: { style: 'display: flex; align-items: center; justify-content: center; margin-bottom: 20px; position: relative; height: 20px;' }
+        });
+        
+        dividerContainer.createEl('div', {
+            attr: { style: 'position: absolute; width: 100%; height: 1px; background-color: var(--background-modifier-border); top: 50%; left: 0;' }
+        });
+
+        dividerContainer.createEl('span', {
             text: dateMoment.format('dddd, MMMM D, YYYY'),
-            attr: { style: 'font-size: 1em; color: var(--text-accent); margin-bottom: 15px; border-left: 3px solid var(--interactive-accent); padding-left: 10px;' }
+            attr: { style: 'position: relative; background-color: var(--background-primary); padding: 0 10px; font-size: 0.75em; color: var(--text-muted); font-weight: 400;' }
         });
 
         await this.renderTimelineDay(dateStr, section);
