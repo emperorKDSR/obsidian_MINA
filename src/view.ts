@@ -495,14 +495,6 @@ export class MinaView extends ItemView {
             }
         });
 
-        const closeBtn = carouselContainer.createEl('button', {
-            text: '✕',
-            attr: { style: 'margin-left: 10px; flex-shrink: 0; padding: 4px 8px; border-radius: 4px; background: transparent; color: var(--text-muted); font-size: 1.2em; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;' }
-        });
-        closeBtn.addEventListener('click', () => {
-            this.leaf.detach();
-        });
-
         this.timelineCarousel = carouselContainer.createEl('div', {
             attr: {
                 class: 'mina-timeline-carousel',
@@ -516,12 +508,6 @@ export class MinaView extends ItemView {
             attr: {
                 class: 'mina-timeline-body',
                 style: 'flex-grow: 1; overflow-y: auto; padding: 15px; -webkit-overflow-scrolling: touch;'
-            }
-        });
-
-        carouselContainer.createEl('div', {
-            attr: {
-                style: 'position: absolute; left: 50%; bottom: 0; width: 20px; height: 3px; background: var(--interactive-accent); transform: translateX(-50%); border-radius: 3px 3px 0 0;'
             }
         });
 
