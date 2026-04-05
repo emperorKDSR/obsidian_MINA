@@ -228,14 +228,13 @@ export class MinaView extends ItemView {
                 }
             };
 
-            addTab('daily', 'Da');
             addTab('review-thoughts', 'Th');
             addTab('review-tasks', 'Ta');
             addTab('mina-ai', 'Ai');
             addTab('dues', 'Du');
             addTab('vo', 'Vo');
             addTab('settings', 'Se');
-            }
+        }
 
         if (this.activeTab === 'review-tasks') this.renderReviewTasksMode(container);
         else if (this.activeTab === 'mina-ai') this.renderMinaMode(container);

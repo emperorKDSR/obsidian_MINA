@@ -18,12 +18,12 @@ The "MINA V2" plugin has been developed with the following features and implemen
 
 1. **User Interface (UI) & Aesthetics**
    - **Tabbed Navigation:** Seven tabs with short labels: **Da** (Daily), **Th** (Thoughts), **Ta** (Tasks), **Ai** (AI Chat), **Du** (Dues), **Vo** (Voice), **Se** (Settings).
-   - **Daily Tab (Da):** A high-focus dashboard with five foldable sections:
+   - **Daily Tab (Da):** A high-focus dashboard with five foldable sections. **Note:** This tab is hidden in "Full Mode" and is primarily accessed via "Daily Mode" or "Timeline Mode".
      - **Persistent Section State:** Sections (`details` elements) now remember their collapsed or expanded state across refreshes and restarts.
      - **Individual Visibility Toggles:** Five pill-shaped toggles in the header (**Cl**, **Ta**, **Du**, **Pi**, **Th**) allow showing/hiding specific dashboard sections.
      - **Auto-Refresh:** Automatically reloads the view whenever thoughts or tasks are updated while the Daily tab is active.
      - **Daily Mode:** A dedicated command "Daily Mode" opens the dashboard in a high-focus view. On desktop, this is a standalone pop-out window. On mobile, it's a full-screen view with both native and plugin navigation hidden for maximum space. Includes a **✕ (Close)** button to exit the focused view.
-     - **Full Mode:** Opens the dashboard with full sidebar navigation and all tabs (Thoughts, Tasks, AI, etc.) accessible.
+     - **Full Mode:** Opens the dashboard with full sidebar navigation and all tabs (Thoughts, Tasks, AI, etc.) accessible. **Daily Tab is hidden in this mode.**
      - **Timeline View:** A chronological list of thoughts and tasks accessible via the "Open timeline" command.
        - **Horizontal Date Carousel:** A scrollable date strip at the top for quick navigation. Selected date is centered, highlighted, and bolded.
        - **Infinite Vertical Scroll:** Chronological list of tasks and thoughts that dynamically loads more days as you scroll.

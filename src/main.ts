@@ -145,7 +145,7 @@ export default class MinaPlugin extends Plugin {
                 await targetLeaf.setViewState({ 
                     type: VIEW_TYPE_MINA, 
                     active: true,
-                    state: { activeTab: tabId || 'daily', isDedicated }
+                    state: { activeTab: tabId || (isDedicated ? 'daily' : 'review-thoughts'), isDedicated }
                 });
                 workspace.revealLeaf(targetLeaf);
             }
@@ -189,7 +189,7 @@ export default class MinaPlugin extends Plugin {
             await targetLeaf.setViewState({
                 type: VIEW_TYPE_MINA,
                 active: true,
-                state: { activeTab: tabId || 'daily', isDedicated }
+                state: { activeTab: tabId || (isDedicated ? 'daily' : 'review-thoughts'), isDedicated }
             });
             workspace.revealLeaf(targetLeaf);
         }
