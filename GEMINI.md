@@ -26,7 +26,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **AI Mode:** A dedicated command "AI Mode" opens the AI Chat in a high-focus view (pop-out window on desktop, full-screen on mobile). Features a clean interface with a close button and is focused exclusively on AI interactions.
      - **Gemini Tool Conflict:** Due to API limitations, **🌐 Web Search** and **File Creation** are mutually exclusive. When Web search is active, the AI cannot create files. Disable Web search to enable autonomous file creation.
      - **Detailed Error Reporting:** AI Chat now displays specific error messages from the Gemini API (e.g., rate limits, invalid keys) to facilitate troubleshooting.
-     - **Full Mode:** Opens the dashboard with full sidebar navigation and all tabs (Thoughts, Tasks, AI, etc.) accessible. **Daily Tab is hidden in this mode.**
+     - **Full Mode:** Opens the complete plugin interface in a high-focus, standalone window. Features a clean interface with a dedicated header, close button, and internal tab navigation (**Th**, **Ta**, **Ai**, etc.). The "Daily" tab is hidden in this mode. Native Obsidian tab headers are hidden for a truly clean look.
      - **Timeline View:** A chronological list of thoughts and tasks accessible via the "Open timeline" command.
        - **Horizontal Date Carousel:** A scrollable date strip at the top for quick navigation. Selected date is centered, highlighted, and bolded.
        - **Infinite Vertical Scroll:** Chronological list of tasks and thoughts that dynamically loads more days as you scroll.
@@ -61,8 +61,8 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Alien Avatar:** Root thoughts are marked with a circular alien head SVG icon using the theme's accent color (currentColor).
      - **Alien Ribbon Icon:** The Obsidian sidebar ribbon uses the same alien SVG as the plugin icon.
    - **Desktop Optimization:** 
-     - Standalone windows hide native tab headers and include a dedicated **drag handle** at the top.
-     - **Separate Windows:** Tabs can be opened into a separate window altogether via a pop-out button (⧉) in the navigation bar.
+     - Standalone windows (Full Mode, Daily Mode, Timeline, AI Mode) hide native tab headers and include a dedicated **drag handle** at the top.
+     - **Seamless Transitions:** Robust handling of mode switching by identifying and reusing existing windows or sidebar leaves.
    - **Mobile Optimization:**
      - **Opens as Main Tab:** On mobile, MINA opens as a full workspace tab (not a sidebar).
      - **Vertical Reordering:** Toggles (History/Capture) move above filters on mobile for easier thumb access.
@@ -127,7 +127,8 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - **Settings Protection:** Iron-clad lock mechanism prevents configuration loss during sync or updates.
    - **English-locale Timestamps:** All stored timestamps use `moment().locale('en').format(...)` wrapped with `toAsciiDigits()` to prevent non-ASCII numerals on devices with non-English locale settings.
    - **Settings Corruption Guard:** `loadSettings()` validates `timeFormat` (must contain H/h/k) and `dateFormat` (must contain Y/M/D); resets to defaults if corrupted.
-   - **Seamless Mode Transitions:** Switching between "Full Mode" and "Dedicated Mode" (Daily/Timeline) is handled automatically. The plugin identifies existing instances and updates their state or window/sidebar placement in a single action, preventing the view from closing during the transition.
+   - **Seamless Mode Transitions:** Switching between "Full Mode", "Daily Mode", and "Timeline Mode" is handled automatically. The plugin identifies existing instances and updates their state or window/sidebar placement in a single action.
+   - **Simultaneous Instances:** Users can now open different modes at the same time (e.g., Timeline in one window and Daily Focus in another). The plugin identifies unique instances by their mode and active tab, allowing multiple MINA views to coexist without interference.
    - **Rendering Safety:** Each thought row renders independently — a bad entry logs an error and shows a placeholder without stopping subsequent entries from rendering.
    - **`<br>` Decoding:** Stored `<br>` line-break tokens are decoded to real newlines before markdown rendering, so checklist syntax (`- [ ] `) parses correctly.
 

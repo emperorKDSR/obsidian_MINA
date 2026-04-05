@@ -47,7 +47,7 @@ export default class MinaPlugin extends Plugin {
 
 		addIcon(KATANA_ICON_ID, KATANA_ICON_SVG);
 
-		this.addRibbonIcon(KATANA_ICON_ID, 'MINA V2', () => {
+		this.addRibbonIcon(KATANA_ICON_ID, 'Full Mode', () => {
 			this.activateView();
 		});
 
@@ -137,16 +137,22 @@ export default class MinaPlugin extends Plugin {
 
     async activateView(tabId?: string, isDedicated: boolean = false) {
         const { workspace } = this.app;
+        const targetTab = tabId || (isDedicated ? 'daily' : 'review-thoughts');
 
         if (Platform.isMobile) {
             const leaves = workspace.getLeavesOfType(VIEW_TYPE_MINA);
-            let targetLeaf: WorkspaceLeaf;
+            let targetLeaf: WorkspaceLeaf | null = null;
 
-            if (leaves.length > 0) {
-                targetLeaf = leaves[0];
-                // If there are other leaves, clean them up, but keep our target
-                leaves.slice(1).forEach(l => l.detach());
-            } else {
+            // Try to find a leaf that matches our desired mode/tab
+            for (const leaf of leaves) {
+                const view = leaf.view as MinaView;
+                if (view && view.isDedicated === isDedicated && (isDedicated ? view.activeTab === targetTab : true)) {
+                    targetLeaf = leaf;
+                    break;
+                }
+            }
+
+            if (!targetLeaf) {
                 targetLeaf = isTablet() ? workspace.getLeaf(false) : workspace.getLeaf('tab');
             }
 
@@ -154,51 +160,43 @@ export default class MinaPlugin extends Plugin {
                 await targetLeaf.setViewState({ 
                     type: VIEW_TYPE_MINA, 
                     active: true,
-                    state: { activeTab: tabId || (isDedicated ? 'daily' : 'review-thoughts'), isDedicated }
+                    state: { activeTab: targetTab, isDedicated }
                 });
                 workspace.revealLeaf(targetLeaf);
             }
             return;
         }
 
-        // Desktop: Handle Mode Transition
+        // Desktop: Simultaneous Instances
         const allLeaves = workspace.getLeavesOfType(VIEW_TYPE_MINA);
-        
-        // Find existing leaves by mode
-        const dedicatedLeaves = allLeaves.filter(l => (l.view as MinaView)?.isDedicated === true);
-        const fullModeLeaves = allLeaves.filter(l => (l.view as MinaView)?.isDedicated !== true);
-
         let targetLeaf: WorkspaceLeaf | null = null;
 
-        if (isDedicated) {
-            // User wants a Dedicated Window (Daily or Timeline mode)
-            // 1. Close any existing Full Mode leaves to "switch"
-            fullModeLeaves.forEach(l => l.detach());
-            
-            // 2. Reuse existing dedicated leaf if one exists, otherwise open a new window
-            if (dedicatedLeaves.length > 0) {
-                targetLeaf = dedicatedLeaves[0];
-            } else {
-                targetLeaf = workspace.getLeaf('window');
+        // Try to find an existing leaf that matches the specific mode and tab (if dedicated)
+        for (const leaf of allLeaves) {
+            const view = leaf.view as MinaView;
+            if (view && view.isDedicated === isDedicated) {
+                // For dedicated views, we want a tab match (e.g. unique window for Daily, unique for Timeline)
+                if (isDedicated && view.activeTab === targetTab) {
+                    targetLeaf = leaf;
+                    break;
+                }
+                // For Full Mode, we just want the one instance
+                if (!isDedicated) {
+                    targetLeaf = leaf;
+                    break;
+                }
             }
-        } else {
-            // User wants Full Mode
-            // 1. Close any existing Dedicated leaves to "switch"
-            dedicatedLeaves.forEach(l => l.detach());
-            
-            // 2. Reuse existing full mode leaf if one exists, otherwise open in right sidebar
-            if (fullModeLeaves.length > 0) {
-                targetLeaf = fullModeLeaves[0];
-            } else {
-                targetLeaf = workspace.getRightLeaf(false);
-            }
+        }
+
+        if (!targetLeaf) {
+            targetLeaf = workspace.getLeaf('window');
         }
 
         if (targetLeaf) {
             await targetLeaf.setViewState({
                 type: VIEW_TYPE_MINA,
                 active: true,
-                state: { activeTab: tabId || (isDedicated ? 'daily' : 'review-thoughts'), isDedicated }
+                state: { activeTab: targetTab, isDedicated }
             });
             workspace.revealLeaf(targetLeaf);
         }
@@ -657,7 +655,7 @@ export default class MinaPlugin extends Plugin {
             for (const leaf of leaves) {
                 const view = leaf.view as MinaView;
                 if (view && typeof view.updateReviewThoughtsList === 'function') view.updateReviewThoughtsList();
-                if (view && (view.activeTab === 'daily' || view.activeTab === 'timeline')) view.renderView();
+                if (view && typeof view.renderView === 'function') view.renderView();
             }
         }, 300);
     }
@@ -723,7 +721,7 @@ export default class MinaPlugin extends Plugin {
                 if (view && typeof view.updateReviewTasksList === 'function') {
                     view.updateReviewTasksList();
                 }
-                if (view && (view.activeTab === 'daily' || view.activeTab === 'timeline')) view.renderView();
+                if (view && typeof view.renderView === 'function') view.renderView();
             }
         }, 300);
     }

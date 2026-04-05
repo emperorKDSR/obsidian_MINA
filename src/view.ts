@@ -107,7 +107,7 @@ export class MinaView extends ItemView {
     getDisplayText() { 
         if (this.activeTab === 'timeline') return "Timeline";
         if (this.activeTab === 'mina-ai' && this.isDedicated) return "AI Chat";
-        return this.isDedicated ? "Daily Focus" : "MINA V2"; 
+        return this.isDedicated ? "Daily Focus" : "Full Mode"; 
     }
     getIcon() { return KATANA_ICON_ID; }
 
@@ -129,7 +129,7 @@ export class MinaView extends ItemView {
         await leaf.setViewState({
             type: VIEW_TYPE_MINA,
             active: true,
-            state: { activeTab: tabId }
+            state: { activeTab: tabId, isDedicated: true }
         });
     }
 
@@ -155,18 +155,15 @@ export class MinaView extends ItemView {
                 vv.removeEventListener('scroll', syncViewport);
             };
         }
-        if (!Platform.isMobile || isTablet() || this.isDedicated) {
+        if (!Platform.isMobile) {
             const hideNativeHeaders = () => {
                 const headerEl = this.containerEl.querySelector('.view-header');
                 if (headerEl) (headerEl as HTMLElement).style.display = 'none';
                 
                 const tabContainer = this.containerEl.closest('.workspace-tabs');
                 if (tabContainer) {
-                    const isWindow = this.containerEl.closest('.mod-root') === null && this.containerEl.closest('.mod-window') !== null;
-                    if (isWindow || this.isDedicated) {
-                        const tabHeader = tabContainer.querySelector('.workspace-tab-header-container');
-                        if (tabHeader) (tabHeader as HTMLElement).style.display = 'none';
-                    }
+                    const tabHeader = tabContainer.querySelector('.workspace-tab-header-container');
+                    if (tabHeader) (tabHeader as HTMLElement).style.display = 'none';
                 }
             };
             
@@ -175,6 +172,21 @@ export class MinaView extends ItemView {
             setTimeout(hideNativeHeaders, 500);
             setTimeout(hideNativeHeaders, 1000);
             setTimeout(hideNativeHeaders, 2000);
+        } else if (isTablet() || this.isDedicated) {
+            const hideNativeHeaders = () => {
+                const headerEl = this.containerEl.querySelector('.view-header');
+                if (headerEl) (headerEl as HTMLElement).style.display = 'none';
+                
+                const tabContainer = this.containerEl.closest('.workspace-tabs');
+                if (tabContainer) {
+                    const tabHeader = tabContainer.querySelector('.workspace-tab-header-container');
+                    if (tabHeader) (tabHeader as HTMLElement).style.display = 'none';
+                }
+            };
+            
+            hideNativeHeaders();
+            setTimeout(hideNativeHeaders, 100);
+            setTimeout(hideNativeHeaders, 500);
         }
     }
 
@@ -208,6 +220,28 @@ export class MinaView extends ItemView {
             container.style.overflow = 'hidden';
             const dragHandle = container.createEl('div', { attr: { style: 'height: 14px; width: 100%; -webkit-app-region: drag; flex-shrink: 0; display: flex; justify-content: center; align-items: center; margin-bottom: 8px; cursor: grab;' } });
             dragHandle.createEl('div', { attr: { style: 'width: 40px; height: 4px; background-color: var(--background-modifier-border); border-radius: 4px;' }});
+        }
+
+        const isWindow = !Platform.isMobile && this.containerEl.closest('.mod-window') !== null;
+
+        if (isWindow && !this.isDedicated && this.activeTab !== 'timeline') {
+            const header = container.createEl('div', { 
+                attr: { 
+                    style: 'display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; padding: 10px 12px; border-bottom: 1px solid var(--background-modifier-border); background: var(--background-primary-alt);' 
+                } 
+            });
+            const leftHeader = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px;' } });
+            const closeBtn = leftHeader.createEl('button', {
+                text: '✕',
+                attr: { style: 'padding: 4px 8px; border-radius: 4px; background: transparent; color: var(--text-muted); font-size: 1.2em; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;' }
+            });
+            closeBtn.addEventListener('click', () => {
+                this.leaf.detach();
+            });
+            leftHeader.createEl('h3', { 
+                text: 'Full Mode',
+                attr: { style: 'margin: 0; font-size: 1.1em; color: var(--text-accent);' } 
+            });
         }
 
         if (!this.isDedicated && this.activeTab !== 'timeline') {
