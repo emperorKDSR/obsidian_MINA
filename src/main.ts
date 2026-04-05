@@ -71,7 +71,7 @@ export default class MinaPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'open-mina-timeline',
-			name: 'Open timeline',
+			name: 'Timeline Mode',
 			icon: KATANA_ICON_ID,
 			callback: () => {
 				this.activateView('timeline', true);
@@ -696,7 +696,7 @@ export default class MinaPlugin extends Plugin {
                 if (view && typeof view.updateReviewTasksList === 'function') {
                     view.updateReviewTasksList();
                 }
-                if (view && view.activeTab === 'daily') view.renderView();
+                if (view && (view.activeTab === 'daily' || view.activeTab === 'timeline')) view.renderView();
             }
         }, 300);
     }
