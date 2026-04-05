@@ -106,6 +106,7 @@ export class MinaView extends ItemView {
     getViewType() { return VIEW_TYPE_MINA; }
     getDisplayText() { 
         if (this.activeTab === 'timeline') return "Timeline";
+        if (this.activeTab === 'mina-ai' && this.isDedicated) return "AI Chat";
         return this.isDedicated ? "Daily Focus" : "MINA V2"; 
     }
     getIcon() { return KATANA_ICON_ID; }
@@ -363,6 +364,15 @@ export class MinaView extends ItemView {
                         new VoiceMemoModal(this.plugin.app, this.plugin, () => {
                             this.renderView();
                         }).open();
+                    })
+            );
+
+            menu.addItem((item: MenuItem) =>
+                item
+                    .setTitle('AI Mode')
+                    .setIcon('bot')
+                    .onClick(() => {
+                        this.plugin.activateView('mina-ai', true);
                     })
             );
 
@@ -1059,6 +1069,27 @@ export class MinaView extends ItemView {
 
         const isMobilePhone = Platform.isMobile && !isTablet();
         const wrapper = container.createEl('div', { attr: { style: 'flex-grow:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;' } });
+
+        if (this.isDedicated) {
+            const header = wrapper.createEl('div', { 
+                attr: { 
+                    style: 'display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; padding: 10px 12px; border-bottom: 1px solid var(--background-modifier-border); background: var(--background-primary-alt);' 
+                } 
+            });
+            const leftHeader = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px;' } });
+            const closeBtn = leftHeader.createEl('button', {
+                text: '✕',
+                attr: { style: 'padding: 4px 8px; border-radius: 4px; background: transparent; color: var(--text-muted); font-size: 1.2em; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;' }
+            });
+            closeBtn.addEventListener('click', () => {
+                this.leaf.detach();
+            });
+            leftHeader.createEl('h3', { 
+                text: 'AI Chat',
+                attr: { style: 'margin: 0; font-size: 1.1em; color: var(--text-accent);' } 
+            });
+        }
+
         const groundedBar = wrapper.createEl('div', { attr: { style: 'flex-shrink:0;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:5px 10px;border-bottom:1px solid var(--background-modifier-border);background:var(--background-secondary);' } });
         this.groundedNotesBar = groundedBar;
 
@@ -1119,7 +1150,7 @@ export class MinaView extends ItemView {
         newChatBtn.addEventListener('click', () => { this.chatHistory = []; this.renderChatHistory(); });
 
         if (isMobilePhone) {
-            const mia = wrapper.createEl('div', { cls: 'mobile-input-area', attr: { style: 'display:none;padding:8px;background:var(--background-secondary);border-top:1px solid var(--background-modifier-border);position:relative;' } });
+            const mia = wrapper.createEl('div', { cls: 'mobile-input-area', attr: { style: 'display:block;padding:8px;background:var(--background-secondary);border-top:1px solid var(--background-modifier-border);position:relative;' } });
             mia.appendChild(textarea); mia.appendChild(overlayBtns);
         } else {
             const inputRow = wrapper.createEl('div', { attr: { style: 'flex-shrink:0;position:relative;padding:8px;border-top:1px solid var(--background-modifier-border);background:var(--background-secondary);' } });
@@ -1146,15 +1177,87 @@ export class MinaView extends ItemView {
 
     async callGemini(userMessage: string, groundedFiles: TFile[] = [], webSearch: boolean = false): Promise<string> {
         const s = this.plugin.settings;
+        
+        // 1. Gather default grounding: Thoughts (excluding journal context)
+        const allThoughts = Array.from(this.plugin.thoughtIndex.values())
+            .filter(t => !t.context.includes('journal'))
+            .sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate)
+            .slice(0, 50);
+
+        let systemPrompt = "You are MINA AI, a helpful personal assistant integrated into an Obsidian vault.\n\n";
+        
+        if (allThoughts.length > 0) {
+            systemPrompt += "Below are your most recent thoughts for context:\n\n";
+            allThoughts.forEach(t => {
+                systemPrompt += `--- Thought: ${t.title} (${t.day}) ---\n${t.body}\n\n`;
+            });
+        }
+
+        // 2. Add specific grounded files if any
+        if (groundedFiles.length > 0) {
+            systemPrompt += "\nAdditional context from specifically linked files:\n\n";
+            for (const file of groundedFiles) {
+                const content = await this.app.vault.read(file);
+                systemPrompt += `--- File: ${file.path} ---\n${content}\n\n`;
+            }
+        }
+
+        const tools = [
+            {
+                function_declarations: [
+                    {
+                        name: "create_file",
+                        description: "Create a new file in the Obsidian vault. Use this when the user asks to save data, reports, tables, or lists to a file (CSV, MD, TXT, etc.).",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                filename: { type: "string", description: "The name of the file, including extension (e.g. 'data.csv', 'report.md')." },
+                                content: { type: "string", description: "The full text content of the file." }
+                            },
+                            required: ["filename", "content"]
+                        }
+                    }
+                ]
+            }
+        ];
+
+        const contents = this.chatHistory.map(msg => ({ 
+            role: msg.role === 'user' ? 'user' : 'model', 
+            parts: [{ text: msg.text }] 
+        }));
+        
         const body: any = {
-            contents: this.chatHistory.map(msg => ({ role: msg.role === 'user' ? 'user' : 'model', parts: [{ text: msg.text }] })),
-            generationConfig: { temperature: 0.7, maxOutputTokens: s.maxOutputTokens ?? 65536 }
+            contents: contents,
+            system_instruction: { parts: [{ text: systemPrompt }] },
+            generationConfig: { temperature: 0.7, maxOutputTokens: s.maxOutputTokens ?? 65536 },
+            tools: tools
         };
-        if (webSearch) body.tools = [{ googleSearch: {} }];
-        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${s.geminiModel}:generateContent?key=${s.geminiApiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (webSearch) body.tools.push({ googleSearch: {} });
+
+        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${s.geminiModel}:generateContent?key=${s.geminiApiKey}`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(body) 
+        });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
-        return (data?.candidates?.[0]?.content?.parts ?? []).map((p: any) => p.text ?? '').join('').trim() || '(no response)';
+        
+        const candidate = data?.candidates?.[0];
+        const part = candidate?.content?.parts?.[0];
+
+        if (part?.functionCall) {
+            const { name, args } = part.functionCall;
+            if (name === 'create_file') {
+                try {
+                    await this.plugin.createFile(args.filename, args.content);
+                    return `✅ I've created the file "${args.filename}" for you.`;
+                } catch (err) {
+                    return `❌ Failed to create file: ${err.message}`;
+                }
+            }
+        }
+
+        return (candidate?.content?.parts ?? []).map((p: any) => p.text ?? '').join('').trim() || '(no response)';
     }
 
     parseChatSession(content: string): { role: 'user' | 'assistant'; text: string }[] {

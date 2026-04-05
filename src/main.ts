@@ -78,6 +78,15 @@ export default class MinaPlugin extends Plugin {
 			}
 		});
 
+		this.addCommand({
+			id: 'open-mina-ai-mode',
+			name: 'AI Mode',
+			icon: KATANA_ICON_ID,
+			callback: () => {
+				this.activateView('mina-ai', true);
+			}
+		});
+
 		this.addSettingTab(new MinaSettingTab(this.app, this));
 	}
 
@@ -865,6 +874,47 @@ export default class MinaPlugin extends Plugin {
             await this.app.vault.modify(file, current.slice(0, insertPos) + entry + current.slice(insertPos));
         } catch (e) {
             new Notice(`Error saving payment: ${e.message}`);
+        }
+    }
+
+    async createFile(filename: string, content: string): Promise<TFile> {
+        const { vault } = this.app;
+        const folder = this.settings.captureFolder.trim() || '000 Bin/MINA V2';
+        
+        // Ensure folder exists
+        if (folder && folder !== '/') {
+            const parts = folder.split('/');
+            let currentPath = '';
+            for (const part of parts) {
+                currentPath += (currentPath ? '/' : '') + part;
+                if (!vault.getAbstractFileByPath(currentPath)) {
+                    await vault.createFolder(currentPath);
+                }
+            }
+        }
+
+        const fullPath = folder ? `${folder}/${filename}` : filename;
+        
+        // Handle duplicate filenames
+        let finalPath = fullPath;
+        let counter = 1;
+        while (vault.getAbstractFileByPath(finalPath)) {
+            const extIdx = fullPath.lastIndexOf('.');
+            if (extIdx !== -1) {
+                finalPath = `${fullPath.substring(0, extIdx)} (${counter})${fullPath.substring(extIdx)}`;
+            } else {
+                finalPath = `${fullPath} (${counter})`;
+            }
+            counter++;
+        }
+
+        try {
+            const file = await vault.create(finalPath, content);
+            new Notice(`Created file: ${file.path}`);
+            return file;
+        } catch (e) {
+            new Notice(`Error creating file: ${e.message}`);
+            throw e;
         }
     }
 }

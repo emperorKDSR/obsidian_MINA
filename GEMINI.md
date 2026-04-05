@@ -23,6 +23,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Individual Visibility Toggles:** Five pill-shaped toggles in the header (**Cl**, **Ta**, **Du**, **Pi**, **Th**) allow showing/hiding specific dashboard sections.
      - **Auto-Refresh:** Automatically reloads the view whenever thoughts or tasks are updated while the Daily tab is active.
      - **Daily Mode:** A dedicated command "Daily Mode" opens the dashboard in a high-focus view. On desktop, this is a standalone pop-out window. On mobile, it's a full-screen view with both native and plugin navigation hidden for maximum space. Includes a **✕ (Close)** button to exit the focused view.
+     - **AI Mode:** A dedicated command "AI Mode" opens the AI Chat in a high-focus view (pop-out window on desktop, full-screen on mobile). Features a clean interface with a close button and is focused exclusively on AI interactions.
      - **Full Mode:** Opens the dashboard with full sidebar navigation and all tabs (Thoughts, Tasks, AI, etc.) accessible. **Daily Tab is hidden in this mode.**
      - **Timeline View:** A chronological list of thoughts and tasks accessible via the "Open timeline" command.
        - **Horizontal Date Carousel:** A scrollable date strip at the top for quick navigation. Selected date is centered, highlighted, and bolded.
@@ -139,10 +140,12 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - **Gemini Model:** Dropdown to select from available Gemini models. Default: `gemini-2.5-flash`.
    - **Max Output Tokens:** User-configurable `maxOutputTokens` for Gemini API (range: 256–65536, default: 65536).
 
-5. **MINA AI Chat Tab (Ai)**
-   - Embedded AI assistant powered by Google Gemini.
-   - Sends recent thoughts (up to 50), tasks file, and dues data as context on every message.
-   - **Multi-turn History:** Full `chatHistory` array sent to Gemini as `contents` (role: user/model) on every request for coherent multi-turn conversations.
+- **MINA AI Chat Tab (Ai)**
+  - Embedded AI assistant powered by Google Gemini.
+  - **File Creation:** MINA AI can now autonomously create files in your vault (CSV, MD, TXT, etc.) upon request using tool-calling capabilities.
+  - **Default Grounding:** Automatically sends up to 50 of your most recent thoughts (excluding those with "journal" context) as context on every message for highly personalized assistance.
+  - Sends tasks file and dues data as additional context.
+  - **Multi-turn History:** Full `chatHistory` array sent to Gemini as `contents` (role: user/model) on every request for coherent multi-turn conversations.
    - **Markdown Rendering:** Assistant responses rendered via `MarkdownRenderer.render()`.
    - **Grounded Notes Bar:** Horizontal scrollable chip strip showing default context chips (Th, Ta, Du), any user-pinned vault notes, and the 🌐 Web toggle.
    - **🌐 Web Search Toggle:** Chip in the grounded bar. When active, sends `tools: [{ googleSearch: {} }]` to Gemini API for real-time web-grounded responses.
