@@ -32,7 +32,8 @@ The "MINA V2" plugin has been developed with the following features and implemen
        - **Dedicated Mode:** Opens in a high-focus view (pop-out on desktop, full-screen on mobile) with navigation tabs hidden.
      - **Floating Action Button (FAB):** A movable circular button with the alien avatar icon available in all views.
        - **Movable:** Can be dragged and repositioned anywhere within the plugin view.
-       - **Quick Actions:** Clicking the FAB opens a menu with options to quickly "Add thought" or "Add task," triggering the respective capture modals.
+       - **Quick Actions:** Clicking the FAB opens a menu with options to quickly "Add thought", "Add task", or "Add voice memo".
+       - **Voice Memo Modal:** Selecting "Add voice memo" opens a specialized movable modal for recording audio, featuring a central record toggle, live timer, and instant saving to the vault.
      - **Mobile-Optimized Header:** In "Daily Mode" on mobile, the header is streamlined to show only the date and the close button on one row, with section toggles on a second row.
      - **TODAY'S CHECKLIST (Cl):** A compact, one-line list of all open to-dos (`- [ ]`) extracted from your entire thought history. Interactive checkboxes update source notes instantly.
      - **PENDING TASKS (Ta):** A compact rollup of open tasks from your tasks index that are due today or overdue.

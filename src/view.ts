@@ -11,6 +11,7 @@ import { PaymentModal } from './modals/PaymentModal';
 import { NewDueModal } from './modals/NewDueModal';
 import { NotePickerModal } from './modals/NotePickerModal';
 import { ChatSessionPickerModal } from './modals/ChatSessionPickerModal';
+import { VoiceMemoModal } from './modals/VoiceMemoModal';
 
 export class MinaView extends ItemView {
     plugin: MinaPlugin;
@@ -351,6 +352,17 @@ export class MinaView extends ItemView {
                             },
                             'New Task'
                         ).open();
+                    })
+            );
+
+            menu.addItem((item: MenuItem) =>
+                item
+                    .setTitle('Add voice memo')
+                    .setIcon('microphone')
+                    .onClick(() => {
+                        new VoiceMemoModal(this.plugin.app, this.plugin, () => {
+                            this.renderView();
+                        }).open();
                     })
             );
 
