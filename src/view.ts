@@ -544,7 +544,7 @@ export class MinaView extends ItemView {
 
         const thoughtsRowContainer = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px; width: 100%;' } });
         for (const entry of thoughts) {
-            await this.renderThoughtRow(entry, thoughtsRowContainer, entry.filePath, 0, true);
+            await this.renderThoughtRow(entry, thoughtsRowContainer, entry.filePath, 0, true, true);
         }
     }
 
@@ -561,7 +561,7 @@ export class MinaView extends ItemView {
 
         const thoughtsRowContainer = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px; width: 100%;' } });
         for (const entry of thoughts) {
-            await this.renderThoughtRow(entry, thoughtsRowContainer, entry.filePath, 0, true);
+            await this.renderThoughtRow(entry, thoughtsRowContainer, entry.filePath, 0, true, true);
         }
     }
 
@@ -753,11 +753,11 @@ export class MinaView extends ItemView {
         }
 
         for (const task of tasks) {
-            await this.renderTaskRow(task, container);
+            await this.renderTaskRow(task, container, true);
         }
 
         for (const thought of thoughts) {
-            await this.renderThoughtRow(thought, container, thought.filePath, 0, true);
+            await this.renderThoughtRow(thought, container, thought.filePath, 0, true, true);
         }
     }
 
@@ -1564,7 +1564,7 @@ export class MinaView extends ItemView {
         }
     }
 
-    async renderTaskRow(entry: TaskEntry, container: HTMLElement) {
+    async renderTaskRow(entry: TaskEntry, container: HTMLElement, hideMetadata: boolean = false) {
         const isDone = entry.status === 'done';
         const row = container.createEl('div', { attr: { style: `display:flex; flex-direction:column; padding:8px; margin-bottom:4px; border-radius:6px; background:var(--background-secondary); opacity:${isDone ? '0.5' : '1'};` } });
         const topRow = row.createEl('div', { attr: { style: 'display:flex; gap:8px; align-items:flex-start;' } });
@@ -1589,18 +1589,21 @@ export class MinaView extends ItemView {
             }).open();
         });
         delBtn.addEventListener('click', () => { new ConfirmModal(this.plugin.app, 'Move this task to trash?', async () => { await this.plugin.deleteTaskFile(entry.filePath); this.updateReviewTasksList(); }).open(); });
-        const metaRow = row.createEl('div', { attr: { style: 'display:flex; justify-content:space-between; align-items:center; margin-top:5px; flex-wrap:wrap; gap:4px;' } });
-        const dueLeft = metaRow.createEl('div', { attr: { style: 'display:flex; align-items:center; gap:4px;' } });
-        if (entry.due) {
-            const dueM = moment(entry.due, 'YYYY-MM-DD', true); const isOverdue = !isDone && dueM.isValid() && dueM.isBefore(moment().startOf('day'), 'day');
-            dueLeft.createEl('span', { text: `📅 ${entry.due}`, attr: { style: `font-size:0.8em; color:${isOverdue ? 'var(--text-error)' : 'var(--text-muted)'}; ${isOverdue ? 'font-weight:600;' : ''}` } });
-            if (isOverdue) dueLeft.createEl('span', { text: '⚠', attr: { style: 'font-size:0.8em; color:var(--text-error);' } });
+        
+        if (!hideMetadata) {
+            const metaRow = row.createEl('div', { attr: { style: 'display:flex; justify-content:space-between; align-items:center; margin-top:5px; flex-wrap:wrap; gap:4px;' } });
+            const dueLeft = metaRow.createEl('div', { attr: { style: 'display:flex; align-items:center; gap:4px;' } });
+            if (entry.due) {
+                const dueM = moment(entry.due, 'YYYY-MM-DD', true); const isOverdue = !isDone && dueM.isValid() && dueM.isBefore(moment().startOf('day'), 'day');
+                dueLeft.createEl('span', { text: `📅 ${entry.due}`, attr: { style: `font-size:0.8em; color:${isOverdue ? 'var(--text-error)' : 'var(--text-muted)'}; ${isOverdue ? 'font-weight:600;' : ''}` } });
+                if (isOverdue) dueLeft.createEl('span', { text: '⚠', attr: { style: 'font-size:0.8em; color:var(--text-error);' } });
+            }
+            const ctxRight = metaRow.createEl('div', { attr: { style: 'display:flex; flex-wrap:wrap; gap:4px; justify-content:flex-end;' } });
+            for (const ctx of entry.context) ctxRight.createEl('span', { text: `#${ctx}`, attr: { style: 'font-size:0.8em; color:var(--text-accent); background:var(--background-secondary-alt); padding:1px 6px; border-radius:4px;' } });
         }
-        const ctxRight = metaRow.createEl('div', { attr: { style: 'display:flex; flex-wrap:wrap; gap:4px; justify-content:flex-end;' } });
-        for (const ctx of entry.context) ctxRight.createEl('span', { text: `#${ctx}`, attr: { style: 'font-size:0.8em; color:var(--text-accent); background:var(--background-secondary-alt); padding:1px 6px; border-radius:4px;' } });
     }
 
-    async renderThoughtRow(entry: ThoughtEntry, container: HTMLElement, filePath: string, level: number = 0, hideAvatar: boolean = false) {
+    async renderThoughtRow(entry: ThoughtEntry, container: HTMLElement, filePath: string, level: number = 0, hideAvatar: boolean = false, hideMetadata: boolean = false) {
         const isCollapsed = this.collapsedThreads.has(entry.filePath); const indentStep = (Platform.isMobile && !isTablet()) ? 12 : 24;
         const itemEl = container.createEl('div', { attr: { style: `margin-bottom: 3px; padding-bottom: 3px; display: flex; align-items: flex-start; ${level > 0 ? `margin-left: ${level * indentStep}px; border-left: 2px solid var(--background-modifier-border); padding-left: 6px;` : ''}` } });
         
@@ -1649,7 +1652,11 @@ export class MinaView extends ItemView {
         const startEdit = () => { new EditEntryModal(this.plugin.app, this.plugin, entry.body, entry.context.map(c => `#${c}`).join(' '), null, false, async (newText, newContextStr) => { const newContexts = newContextStr ? newContextStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : []; await this.plugin.editThoughtBody(entry.filePath, newText.replace(/<br>/g, '\n'), newContexts); this.updateReviewThoughtsList(); }).open(); };
         renderTarget.addEventListener('dblclick', startEdit); editBtn.addEventListener('click', startEdit);
         convertBtn.addEventListener('click', () => { new ConvertToTaskModal(this.plugin.app, entry.body, entry.context, async (dueDate) => { await this.plugin.createTaskFile(entry.body.replace(/<br>/g, '\n'), entry.context, dueDate || undefined); const updatedContexts = [...new Set([...entry.context, 'converted_to_tasks'])]; await this.plugin.editThoughtBody(entry.filePath, entry.body.replace(/<br>/g, '\n'), updatedContexts); new Notice('✅ Thought converted to task!'); this.updateReviewThoughtsList(); }).open(); });
-        if (entry.context.length > 0) { const ctxRow = renderTarget.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px;' } }); for (const ctx of entry.context) ctxRow.createEl('span', { text: `#${ctx}`, attr: { style: 'font-size: 0.75em; color: var(--text-accent); font-weight: 500; background-color: var(--background-secondary-alt); padding: 2px 6px; border-radius: 4px;' } }); }
+        
+        if (!hideMetadata && entry.context.length > 0) { 
+            const ctxRow = renderTarget.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px;' } }); for (const ctx of entry.context) ctxRow.createEl('span', { text: `#${ctx}`, attr: { style: 'font-size: 0.75em; color: var(--text-accent); font-weight: 500; background-color: var(--background-secondary-alt); padding: 2px 6px; border-radius: 4px;' } }); 
+        }
+        
         if (level === 0 && !isCollapsed && entry.children.length > 0) { for (const reply of entry.children) await this.renderReplyRow(reply, entry, container); }
     }
 

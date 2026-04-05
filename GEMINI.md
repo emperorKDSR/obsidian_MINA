@@ -27,7 +27,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Timeline View:** A chronological list of thoughts and tasks accessible via the "Open timeline" command.
        - **Horizontal Date Carousel:** A scrollable date strip at the top for quick navigation. Selected date is centered, highlighted, and bolded.
        - **Infinite Vertical Scroll:** Chronological list of tasks and thoughts that dynamically loads more days as you scroll.
-       - **Visual Structure:** Each date is separated by a thin horizontal divider with the full date overlaid in a clean, non-bold font.
+       - **Visual Structure:** Each date is separated by a thin horizontal divider with the full date overlaid in a clean, non-bold font. **Context and due dates are hidden in this view for a cleaner look.**
        - **Exclusions:** Automatically excludes thoughts tagged with the `journal` context.
        - **Dedicated Mode:** Opens in a high-focus view (pop-out on desktop, full-screen on mobile) with navigation tabs hidden.
      - **Floating Action Button (FAB):** A movable circular button with the alien avatar icon available in all views.
@@ -39,7 +39,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **PENDING TASKS (Ta):** A compact rollup of open tasks from your tasks index that are due today or overdue.
      - **PENDING DUES (Du):** A rollup of recurring payments that are due today or overdue, featuring an inline "Pay" button.
      - **PINNED THOUGHTS (Pi):** A rollup of any thought note marked as `pinned: true` in its frontmatter.
-     - **TODAY'S THOUGHTS (Th):** A full card-based view of thoughts captured today or containing today's date link. Avatars are hidden here to maximize space.
+     - **TODAY'S THOUGHTS (Th):** A full card-based view of thoughts captured today or containing today's date link. Avatars, context tags, and due dates are hidden here to maximize space and focus.
    - **Modern Card-Based Layout:** Thoughts and tasks are displayed in responsive "cards" with rounded corners and dynamic backgrounds.
      - **Dark Mode:** Transparent white background (`rgba(255, 255, 255, 0.05)`).
      - **Light Mode:** Subtle grey background (`rgba(0, 0, 0, 0.05)`).
