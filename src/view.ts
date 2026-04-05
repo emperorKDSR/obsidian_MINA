@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, MarkdownRenderer, Platform, moment, Notice, TFile, ViewStateResult, App } from 'obsidian';
+import { ItemView, WorkspaceLeaf, MarkdownRenderer, Platform, moment, Notice, TFile, ViewStateResult, App, Menu, MenuItem } from 'obsidian';
 import MinaPlugin from './main';
 import { VIEW_TYPE_MINA, KATANA_ICON_ID, NINJA_AVATAR_SVG } from './constants';
 import { ThoughtEntry, TaskEntry, ReplyEntry, DueEntry, MinaSettings } from './types';
@@ -237,13 +237,126 @@ export class MinaView extends ItemView {
             addTab('settings', 'Se');
             }
 
-            if (this.activeTab === 'review-tasks') this.renderReviewTasksMode(container);        else if (this.activeTab === 'mina-ai') this.renderMinaMode(container);
+        if (this.activeTab === 'review-tasks') this.renderReviewTasksMode(container);
+        else if (this.activeTab === 'mina-ai') this.renderMinaMode(container);
         else if (this.activeTab === 'dues') this.renderDuesMode(container);
         else if (this.activeTab === 'settings') this.renderSettingsMode(container);
         else if (this.activeTab === 'vo') this.renderVoiceMode(container);
         else if (this.activeTab === 'daily') this.renderDailyMode(container);
         else if (this.activeTab === 'timeline') this.renderTimelineMode(container);
         else this.renderReviewThoughtsMode(container);
+
+        this.renderFAB();
+    }
+
+    renderFAB() {
+        if (this.fabEl && this.fabEl.parentElement === this.containerEl) return;
+        if (this.fabEl) this.fabEl.remove();
+
+        this.fabEl = this.containerEl.createEl('div', {
+            cls: 'mina-fab',
+            attr: { style: `position: absolute; bottom: ${this.fabPos.bottom}px; right: ${this.fabPos.right}px; width: 50px; height: 50px; border-radius: 50%; background-color: var(--interactive-accent); color: var(--text-on-accent); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: grab; z-index: 100; user-select: none; touch-action: none; overflow: hidden;` }
+        });
+        const img = this.fabEl.createEl('img', { 
+            attr: { style: 'width: 70%; height: 70%; display: block;' } 
+        });
+        img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(NINJA_AVATAR_SVG)}`;
+
+        let isDragging = false;
+        let moved = false;
+        let startX: number, startY: number;
+        let startRight: number, startBottom: number;
+
+        this.fabEl.addEventListener('pointerdown', (e) => {
+            isDragging = true;
+            moved = false;
+            this.fabEl!.style.cursor = 'grabbing';
+            startX = e.clientX;
+            startY = e.clientY;
+            startRight = this.fabPos.right;
+            startBottom = this.fabPos.bottom;
+            this.fabEl!.setPointerCapture(e.pointerId);
+            e.stopPropagation();
+        });
+
+        this.fabEl.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            const dx = startX - e.clientX;
+            const dy = startY - e.clientY;
+            
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                moved = true;
+            }
+
+            this.fabPos.right = startRight + dx;
+            this.fabPos.bottom = startBottom + dy;
+            
+            this.fabEl!.style.right = `${this.fabPos.right}px`;
+            this.fabEl!.style.bottom = `${this.fabPos.bottom}px`;
+        });
+
+        this.fabEl.addEventListener('pointerup', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            this.fabEl!.style.cursor = 'grab';
+            this.fabEl!.releasePointerCapture(e.pointerId);
+        });
+
+        this.fabEl.addEventListener('click', (e) => {
+            if (moved) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+            
+            const menu = new Menu();
+            
+            menu.addItem((item: MenuItem) =>
+                item
+                    .setTitle('Add thought')
+                    .setIcon('pencil')
+                    .onClick(() => {
+                        new EditEntryModal(
+                            this.plugin.app,
+                            this.plugin,
+                            '', 
+                            '', 
+                            null, 
+                            false, 
+                            async (newText, newContextStr) => {
+                                const ctxArr = newContextStr ? newContextStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : [];
+                                await this.plugin.createThoughtFile(newText.replace(/<br>/g, '\n'), ctxArr);
+                                this.renderView();
+                            },
+                            'New Thought'
+                        ).open();
+                    })
+            );
+
+            menu.addItem((item: MenuItem) =>
+                item
+                    .setTitle('Add task')
+                    .setIcon('checkmark')
+                    .onClick(() => {
+                        new EditEntryModal(
+                            this.plugin.app,
+                            this.plugin,
+                            '', 
+                            '', 
+                            moment().format('YYYY-MM-DD'), 
+                            true, 
+                            async (newText, newContextStr, newDue) => {
+                                const ctxArr = newContextStr ? newContextStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : [];
+                                await this.plugin.createTaskFile(newText.replace(/<br>/g, '\n'), ctxArr, newDue || undefined);
+                                this.renderView();
+                            },
+                            'New Task'
+                        ).open();
+                    })
+            );
+
+            menu.showAtMouseEvent(e);
+        });
     }
 
     renderDailyMode(container: HTMLElement) {
@@ -480,6 +593,9 @@ export class MinaView extends ItemView {
     timelineScrollBody: HTMLElement;
     timelineStartDate: moment.Moment;
     timelineEndDate: moment.Moment;
+
+    fabEl: HTMLElement | null = null;
+    fabPos = { right: 30, bottom: 100 };
 
     async renderTimelineMode(container: HTMLElement) {
         const wrap = container.createEl('div', { 

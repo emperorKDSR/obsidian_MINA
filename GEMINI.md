@@ -32,6 +32,9 @@ The "MINA V2" plugin has been developed with the following features and implemen
        - **Visual Structure:** Each date is separated by a thin horizontal divider with the full date overlaid in a clean, non-bold font.
        - **Exclusions:** Automatically excludes thoughts tagged with the `journal` context.
        - **Dedicated Mode:** Opens in a high-focus view (pop-out on desktop, full-screen on mobile) with navigation tabs hidden.
+     - **Floating Action Button (FAB):** A movable circular button with the alien avatar icon available in all views.
+       - **Movable:** Can be dragged and repositioned anywhere within the plugin view.
+       - **Quick Actions:** Clicking the FAB opens a menu with options to quickly "Add thought" or "Add task," triggering the respective capture modals.
      - **Mobile-Optimized Header:** In "Daily Mode" on mobile, the header is streamlined to show only the date, action buttons (+Thought, Refresh), and a close button on one row, with section toggles on a second row.
      - **TODAY'S CHECKLIST (Cl):** A compact, one-line list of all open to-dos (`- [ ]`) extracted from your entire thought history. Interactive checkboxes update source notes instantly.
      - **PENDING TASKS (Ta):** A compact rollup of open tasks from your tasks index that are due today or overdue.
