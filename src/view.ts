@@ -44,7 +44,7 @@ export class MinaView extends ItemView {
     tasksFilterDateStart: string = '';
     tasksFilterDateEnd: string = '';
     showPreviousTasks: boolean = true;
-    showCaptureInTasks: boolean = true;
+    showCaptureInTasks: boolean = false;
     showTasksFilter: boolean = false;
 
     // Threads State
@@ -60,7 +60,7 @@ export class MinaView extends ItemView {
     thoughtsFilterDateEnd: string = '';
     thoughtsFilterTodo: boolean = false;
     showPreviousThoughts: boolean = true;
-    showCaptureInThoughts: boolean = true;
+    showCaptureInThoughts: boolean = false;
     showThoughtsFilter: boolean = false;
 
     reviewTasksContainer: HTMLElement;
@@ -98,7 +98,7 @@ export class MinaView extends ItemView {
         // @ts-ignore
         this.dueDate = moment().format('YYYY-MM-DD');
         this.showPreviousThoughts = true;
-        this.showCaptureInThoughts = true;
+        this.showCaptureInThoughts = false;
         this.selectedContexts = Array.isArray(this.plugin.settings.selectedContexts) ? [...this.plugin.settings.selectedContexts] : [];
     }
 
@@ -395,7 +395,6 @@ export class MinaView extends ItemView {
 
         const btnGroup = header.createEl('div', { attr: { style: 'display: flex; gap: 8px; align-items: center;' } });
 
-        let actionTarget = btnGroup;
         let toggleTarget = btnGroup;
 
         if (isMobileDedicated) {
@@ -429,38 +428,6 @@ export class MinaView extends ItemView {
         renderToggle('Du', 'showDailyDues');
         renderToggle('Pi', 'showDailyPinned');
         renderToggle('Th', 'showDailyThoughts');
-
-        const addThoughtBtn = actionTarget.createEl('button', { 
-            text: '+Thought', 
-            attr: { 
-                style: 'padding: 4px 12px; border-radius: 5px; background: var(--interactive-accent); color: var(--text-on-accent); font-size: 0.8em; font-weight: 600; cursor: pointer; border: none;' 
-            } 
-        });
-
-        addThoughtBtn.addEventListener('click', () => {
-            new EditEntryModal(
-                this.plugin.app,
-                this.plugin,
-                '', 
-                '', 
-                null, 
-                false, 
-                async (newText, newContextStr) => {
-                    const ctxArr = newContextStr ? newContextStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : [];
-                    await this.plugin.createThoughtFile(newText.replace(/<br>/g, '\n'), ctxArr);
-                    this.renderView();
-                },
-                'New Thought'
-            ).open();
-        });
-
-        const refreshBtn = actionTarget.createEl('button', { 
-            text: 'Refresh', 
-            attr: { 
-                style: 'padding: 4px 12px; border-radius: 5px; background: var(--background-modifier-border); color: var(--text-muted); font-size: 0.8em; font-weight: 600; cursor: pointer; border: none;' 
-            } 
-        });
-        refreshBtn.addEventListener('click', () => this.renderView());
 
         if (this.plugin.settings.showDailyChecklist) {
             const section1 = this.renderDailySection(wrap, "TODAY'S CHECKLIST", 'checklist');

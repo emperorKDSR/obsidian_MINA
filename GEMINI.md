@@ -18,11 +18,9 @@ The "MINA V2" plugin has been developed with the following features and implemen
 
 1. **User Interface (UI) & Aesthetics**
    - **Tabbed Navigation:** Seven tabs with short labels: **Da** (Daily), **Th** (Thoughts), **Ta** (Tasks), **Ai** (AI Chat), **Du** (Dues), **Vo** (Voice), **Se** (Settings).
-   - **Daily Tab (Da):** A high-focus dashboard with five foldable sections and quick capture:
+   - **Daily Tab (Da):** A high-focus dashboard with five foldable sections:
      - **Persistent Section State:** Sections (`details` elements) now remember their collapsed or expanded state across refreshes and restarts.
      - **Individual Visibility Toggles:** Five pill-shaped toggles in the header (**Cl**, **Ta**, **Du**, **Pi**, **Th**) allow showing/hiding specific dashboard sections.
-     - **+Thought Button:** A right-aligned button in the header to instantly open the "New Thought" modal.
-     - **Refresh Button:** Manual trigger to reload all daily sections immediately.
      - **Auto-Refresh:** Automatically reloads the view whenever thoughts or tasks are updated while the Daily tab is active.
      - **Daily Mode:** A dedicated command "Daily Mode" opens the dashboard in a high-focus view. On desktop, this is a standalone pop-out window. On mobile, it's a full-screen view with both native and plugin navigation hidden for maximum space. Includes a **✕ (Close)** button to exit the focused view.
      - **Full Mode:** Opens the dashboard with full sidebar navigation and all tabs (Thoughts, Tasks, AI, etc.) accessible.
@@ -35,7 +33,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Floating Action Button (FAB):** A movable circular button with the alien avatar icon available in all views.
        - **Movable:** Can be dragged and repositioned anywhere within the plugin view.
        - **Quick Actions:** Clicking the FAB opens a menu with options to quickly "Add thought" or "Add task," triggering the respective capture modals.
-     - **Mobile-Optimized Header:** In "Daily Mode" on mobile, the header is streamlined to show only the date, action buttons (+Thought, Refresh), and a close button on one row, with section toggles on a second row.
+     - **Mobile-Optimized Header:** In "Daily Mode" on mobile, the header is streamlined to show only the date and the close button on one row, with section toggles on a second row.
      - **TODAY'S CHECKLIST (Cl):** A compact, one-line list of all open to-dos (`- [ ]`) extracted from your entire thought history. Interactive checkboxes update source notes instantly.
      - **PENDING TASKS (Ta):** A compact rollup of open tasks from your tasks index that are due today or overdue.
      - **PENDING DUES (Du):** A rollup of recurring payments that are due today or overdue, featuring an inline "Pay" button.
@@ -45,12 +43,12 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Dark Mode:** Transparent white background (`rgba(255, 255, 255, 0.05)`).
      - **Light Mode:** Subtle grey background (`rgba(0, 0, 0, 0.05)`).
    - **Integrated Capture Area:**
-     - The capture input is docked directly inside both the Thoughts and Tasks tabs for instant entry.
+     - The capture input is docked inside both the Thoughts and Tasks tabs but is **hidden by default** to maximize viewing space.
      - **Threaded Thoughts:** Support for hierarchical replies. Each thought can be replied to using the `↩️` button, creating a nested thread.
      - **Visual Indicators:** Thoughts with replies show a **reply count badge** and a collapse/expand chevron (▶/▼).
      - **Inline Sync:** The "Sync" button sits next to the text area for a compact, chat-like feel.
      - **Context-Aware:** Automatically hides "As Task" in Thoughts tab and forces task mode with a due date picker in Tasks tab.
-     - **Visibility Toggle:** A "Capture" toggle in the header allows hiding/showing the input section.
+     - **Visibility Toggle:** A "Capture" toggle in the header allows hiding/showing the input section (default is hidden).
    - **Streamlined Header:** 
      - Filters (Status, Context, Date) and Toggles (History, Capture) are combined into a single compact, rounded bar.
      - **Centered Filters:** Text in filter dropdowns is centered for improved readability.
