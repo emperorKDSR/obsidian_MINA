@@ -130,50 +130,68 @@ export default class MinaPlugin extends Plugin {
         const { workspace } = this.app;
 
         if (Platform.isMobile) {
-            workspace.getLeavesOfType(VIEW_TYPE_MINA).forEach(l => l.detach());
+            const leaves = workspace.getLeavesOfType(VIEW_TYPE_MINA);
+            let targetLeaf: WorkspaceLeaf;
 
-            if (isTablet()) {
-                const leaf = workspace.getLeaf(false);
-                if (leaf) {
-                    await leaf.setViewState({ 
-                        type: VIEW_TYPE_MINA, 
-                        active: true,
-                        state: { activeTab: tabId || 'daily', isDedicated }
-                    });
-                    workspace.revealLeaf(leaf);
-                }
+            if (leaves.length > 0) {
+                targetLeaf = leaves[0];
+                // If there are other leaves, clean them up, but keep our target
+                leaves.slice(1).forEach(l => l.detach());
             } else {
-                const leaf = workspace.getLeaf('tab');
-                await leaf.setViewState({ 
+                targetLeaf = isTablet() ? workspace.getLeaf(false) : workspace.getLeaf('tab');
+            }
+
+            if (targetLeaf) {
+                await targetLeaf.setViewState({ 
                     type: VIEW_TYPE_MINA, 
                     active: true,
                     state: { activeTab: tabId || 'daily', isDedicated }
                 });
-                workspace.revealLeaf(leaf);
+                workspace.revealLeaf(targetLeaf);
             }
             return;
         }
 
-        let leaf: WorkspaceLeaf | null = null;
+        // Desktop: Handle Mode Transition
+        const allLeaves = workspace.getLeavesOfType(VIEW_TYPE_MINA);
         
+        // Find existing leaves by mode
+        const dedicatedLeaves = allLeaves.filter(l => (l.view as MinaView)?.isDedicated === true);
+        const fullModeLeaves = allLeaves.filter(l => (l.view as MinaView)?.isDedicated !== true);
+
+        let targetLeaf: WorkspaceLeaf | null = null;
+
         if (isDedicated) {
-            leaf = workspace.getLeaf('window');
-        } else {
-            const leaves = workspace.getLeavesOfType(VIEW_TYPE_MINA);
-            if (leaves.length > 0) {
-                leaf = leaves[0];
+            // User wants a Dedicated Window (Daily or Timeline mode)
+            // 1. Close any existing Full Mode leaves to "switch"
+            fullModeLeaves.forEach(l => l.detach());
+            
+            // 2. Reuse existing dedicated leaf if one exists, otherwise open a new window
+            if (dedicatedLeaves.length > 0) {
+                targetLeaf = dedicatedLeaves[0];
             } else {
-                leaf = workspace.getRightLeaf(false);
+                targetLeaf = workspace.getLeaf('window');
+            }
+        } else {
+            // User wants Full Mode
+            // 1. Close any existing Dedicated leaves to "switch"
+            dedicatedLeaves.forEach(l => l.detach());
+            
+            // 2. Reuse existing full mode leaf if one exists, otherwise open in right sidebar
+            if (fullModeLeaves.length > 0) {
+                targetLeaf = fullModeLeaves[0];
+            } else {
+                targetLeaf = workspace.getRightLeaf(false);
             }
         }
 
-        if (leaf) {
-            await leaf.setViewState({
+        if (targetLeaf) {
+            await targetLeaf.setViewState({
                 type: VIEW_TYPE_MINA,
                 active: true,
                 state: { activeTab: tabId || 'daily', isDedicated }
             });
-            workspace.revealLeaf(leaf);
+            workspace.revealLeaf(targetLeaf);
         }
     }
 

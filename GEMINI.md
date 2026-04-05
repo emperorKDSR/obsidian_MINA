@@ -123,6 +123,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - **Settings Protection:** Iron-clad lock mechanism prevents configuration loss during sync or updates.
    - **English-locale Timestamps:** All stored timestamps use `moment().locale('en').format(...)` wrapped with `toAsciiDigits()` to prevent non-ASCII numerals on devices with non-English locale settings.
    - **Settings Corruption Guard:** `loadSettings()` validates `timeFormat` (must contain H/h/k) and `dateFormat` (must contain Y/M/D); resets to defaults if corrupted.
+   - **Seamless Mode Transitions:** Switching between "Full Mode" and "Dedicated Mode" (Daily/Timeline) is handled automatically. The plugin identifies existing instances and updates their state or window/sidebar placement in a single action, preventing the view from closing during the transition.
    - **Rendering Safety:** Each thought row renders independently — a bad entry logs an error and shows a placeholder without stopping subsequent entries from rendering.
    - **`<br>` Decoding:** Stored `<br>` line-break tokens are decoded to real newlines before markdown rendering, so checklist syntax (`- [ ] `) parses correctly.
 
