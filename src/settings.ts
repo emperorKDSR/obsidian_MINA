@@ -31,7 +31,7 @@ export class MinaSettingTab extends PluginSettingTab {
             for (const [value, label] of Object.entries(models)) {
                 drop.addOption(value, label);
             }
-            drop.setValue(this.plugin.settings.geminiModel || 'gemini-2.5-flash');
+            drop.setValue(this.plugin.settings.geminiModel || 'gemini-2.5-pro');
             drop.onChange(async (value) => { this.plugin.settings.geminiModel = value; await this.plugin.saveSettings(); });
         });
         new Setting(containerEl).setName('Max Output Tokens').setDesc('Maximum tokens in Gemini AI responses (256–65536). Higher = longer answers. Default: 65536.').addText(text => {

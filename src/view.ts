@@ -1229,17 +1229,27 @@ export class MinaView extends ItemView {
         const body: any = {
             contents: contents,
             system_instruction: { parts: [{ text: systemPrompt }] },
-            generationConfig: { temperature: 0.7, maxOutputTokens: s.maxOutputTokens ?? 65536 },
-            tools: tools
+            generationConfig: { temperature: 0.7, maxOutputTokens: s.maxOutputTokens ?? 65536 }
         };
-        if (webSearch) body.tools.push({ googleSearch: {} });
+
+        // Gemini API Limitation: Built-in tools (google_search) and function calling 
+        // cannot be combined in the same request.
+        if (webSearch) {
+            body.tools = [{ googleSearch: {} }];
+        } else {
+            body.tools = tools;
+        }
 
         const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${s.geminiModel}:generateContent?key=${s.geminiApiKey}`, { 
             method: 'POST', 
             headers: { 'Content-Type': 'application/json' }, 
             body: JSON.stringify(body) 
         });
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        
+        if (!resp.ok) {
+            const errData = await resp.json().catch(() => ({}));
+            throw new Error(`HTTP ${resp.status}: ${errData.error?.message || resp.statusText}`);
+        }
         const data = await resp.json();
         
         const candidate = data?.candidates?.[0];

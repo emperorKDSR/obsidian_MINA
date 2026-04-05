@@ -35,7 +35,7 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     contexts: [], 
     selectedContexts: [],
     geminiApiKey: '',
-    geminiModel: 'gemini-2.5-flash',
+    geminiModel: 'gemini-2.5-pro',
     maxOutputTokens: 65536,
     newNoteFolder: '000 Bin',
     voiceMemoFolder: '000 Bin/MINA V2 Voice',

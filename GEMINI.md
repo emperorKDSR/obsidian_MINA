@@ -24,6 +24,8 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Auto-Refresh:** Automatically reloads the view whenever thoughts or tasks are updated while the Daily tab is active.
      - **Daily Mode:** A dedicated command "Daily Mode" opens the dashboard in a high-focus view. On desktop, this is a standalone pop-out window. On mobile, it's a full-screen view with both native and plugin navigation hidden for maximum space. Includes a **✕ (Close)** button to exit the focused view.
      - **AI Mode:** A dedicated command "AI Mode" opens the AI Chat in a high-focus view (pop-out window on desktop, full-screen on mobile). Features a clean interface with a close button and is focused exclusively on AI interactions.
+     - **Gemini Tool Conflict:** Due to API limitations, **🌐 Web Search** and **File Creation** are mutually exclusive. When Web search is active, the AI cannot create files. Disable Web search to enable autonomous file creation.
+     - **Detailed Error Reporting:** AI Chat now displays specific error messages from the Gemini API (e.g., rate limits, invalid keys) to facilitate troubleshooting.
      - **Full Mode:** Opens the dashboard with full sidebar navigation and all tabs (Thoughts, Tasks, AI, etc.) accessible. **Daily Tab is hidden in this mode.**
      - **Timeline View:** A chronological list of thoughts and tasks accessible via the "Open timeline" command.
        - **Horizontal Date Carousel:** A scrollable date strip at the top for quick navigation. Selected date is centered, highlighted, and bolded.
