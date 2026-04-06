@@ -1451,6 +1451,7 @@ export class MinaView extends ItemView {
         // 2. Build System Prompt with Citations instructions
         let systemPrompt = "You are MINA AI, a helpful personal assistant integrated into an Obsidian vault.\n\n";
         systemPrompt += "CRITICAL INSTRUCTION: When you use information from the provided sources, you MUST cite them using numeric tags like [1], [2], etc.\n";
+        systemPrompt += "If there are multiple sources for one statement, cite them individually like [1][2] instead of [1, 2].\n";
         systemPrompt += "The user will see these as hyperlinks to the actual notes.\n\n";
         
         if (sources.length > 0) {
@@ -1524,6 +1525,12 @@ export class MinaView extends ItemView {
         let reply = (candidate?.content?.parts ?? []).map((p: any) => p.text ?? '').join('').trim() || '(no response)';
 
         // 3. Post-process response to add hyperlinks to citations
+        // First, normalize grouped citations: [1, 2, 3] -> [1][2][3]
+        reply = reply.replace(/\[(\d+(?:,\s*\d+)*)\]/g, (match: string, p1: string) => {
+            if (!p1.includes(',')) return match;
+            return p1.split(',').map((num: string) => `[${num.trim()}]`).join('');
+        });
+
         sources.forEach(src => {
             const citationTag = `[${src.id}]`;
             // If it's a vault file, use [[Path|[n]]]
