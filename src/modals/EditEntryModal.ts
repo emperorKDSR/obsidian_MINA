@@ -165,7 +165,7 @@ export class EditEntryModal extends Modal {
                 }
             }
 
-            const converted = target.value.replace(/^\*\* /gm, '- [ ] ');
+            const converted = target.value.replace(/^\+ /gm, '- [ ] ');
             if (converted !== target.value) {
                 const cursor = target.selectionStart;
                 const diff = converted.length - target.value.length;

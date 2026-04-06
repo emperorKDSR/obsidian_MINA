@@ -104,7 +104,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - Desktop: mouse-wheel zoom (0.2×–8×), drag to pan when zoomed, Escape to close.
      - Mobile: pinch-to-zoom, single-finger drag to pan, tap outside (when not zoomed) to close.
    - **Inline Checklists:**
-     - Type `** item text` in the capture textarea (or edit modal) — it auto-converts to `- [ ] item text` on the fly.
+     - Type `+ item text` in the capture textarea (or edit modal) — it auto-converts to `- [ ] item text` on the fly.
      - Checklist items render as interactive **circle toggles** (accent-colored circle with ✓ glyph when checked).
      - Clicking a circle immediately toggles the checked state and persists to the markdown file without re-rendering the whole list.
      - Works in both the capture textarea and the EditEntryModal textarea.
