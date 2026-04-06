@@ -1515,6 +1515,18 @@ export class MinaView extends ItemView {
     }
 
     renderReviewTasksMode(container: HTMLElement) {
+        if (this.isDedicated) {
+            const header = container.createEl('div', { 
+                attr: { 
+                    style: 'display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; padding: 10px 12px; border-bottom: 1px solid var(--background-modifier-border); background: var(--background-primary-alt);' 
+                } 
+            });
+            const leftHeader = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px;' } });
+            leftHeader.createEl('h3', { 
+                text: 'Task Mode',
+                attr: { style: 'margin: 0; font-size: 1.1em; color: var(--text-accent);' } 
+            });
+        }
         const headerSection = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px; background-color: var(--background-secondary); padding: 10px; border-radius: 5px;' } });
         let filterBarEl: HTMLElement | null = null;
         const renderToggles = (parent: HTMLElement) => {
@@ -1719,6 +1731,18 @@ export class MinaView extends ItemView {
         await MarkdownRenderer.render(this.plugin.app, entry.body || entry.title, textEl, entry.filePath, this);
         this.hookInternalLinks(textEl, entry.filePath); this.hookImageZoom(textEl);
         const firstP = textEl.querySelector('p'); if (firstP) { firstP.style.marginTop = '0'; firstP.style.marginBottom = '0'; }
+
+        const isTaskMode = this.activeTab === 'review-tasks' && this.isDedicated;
+        if (isTaskMode && entry.due) {
+            const dueM = moment(entry.due, 'YYYY-MM-DD', true);
+            const isOverdue = !isDone && dueM.isValid() && dueM.isBefore(moment().startOf('day'), 'day');
+            const inlineDue = textEl.createSpan({ 
+                text: `  📅 ${entry.due}`, 
+                attr: { style: `font-size:0.8em; color:${isOverdue ? 'var(--text-error)' : 'var(--text-muted)'}; ${isOverdue ? 'font-weight:600;' : ''}` } 
+            });
+            if (isOverdue) inlineDue.createSpan({ text: ' ⚠', attr: { style: 'font-size:0.8em; color:var(--text-error);' } });
+        }
+
         const actions = topRow.createEl('div', { attr: { style: 'display:flex; gap:4px; align-items:flex-start; flex-shrink:0;' } });
         const editBtn = actions.createEl('span', { text: '✏️', attr: { style: 'cursor:pointer; font-size:0.85em; opacity:0.7; transition:opacity 0.2s;', title: 'Edit' } });
         const delBtn = actions.createEl('span', { text: '🗑️', attr: { style: 'cursor:pointer; font-size:0.85em; opacity:0.7; transition:opacity 0.2s;', title: 'Delete' } });
@@ -1731,7 +1755,7 @@ export class MinaView extends ItemView {
         });
         delBtn.addEventListener('click', () => { new ConfirmModal(this.plugin.app, 'Move this task to trash?', async () => { await this.plugin.deleteTaskFile(entry.filePath); this.updateReviewTasksList(); }).open(); });
         
-        if (!hideMetadata) {
+        if (!hideMetadata && !isTaskMode) {
             const metaRow = row.createEl('div', { attr: { style: 'display:flex; justify-content:space-between; align-items:center; margin-top:5px; flex-wrap:wrap; gap:4px;' } });
             const dueLeft = metaRow.createEl('div', { attr: { style: 'display:flex; align-items:center; gap:4px;' } });
             if (entry.due) {

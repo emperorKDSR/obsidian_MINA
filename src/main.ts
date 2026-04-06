@@ -79,6 +79,15 @@ export default class MinaPlugin extends Plugin {
 		});
 
 		this.addCommand({
+			id: 'open-mina-task-mode',
+			name: 'Task Mode',
+			icon: KATANA_ICON_ID,
+			callback: () => {
+				this.activateView('review-tasks', true);
+			}
+		});
+
+		this.addCommand({
 			id: 'open-mina-ai-mode',
 			name: 'AI Mode',
 			icon: KATANA_ICON_ID,
