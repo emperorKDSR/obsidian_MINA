@@ -16,6 +16,7 @@ export interface MinaSettings {
     maxOutputTokens: number;
     newNoteFolder: string;
     voiceMemoFolder: string;
+    aiChatFolder: string;
     transcriptionLanguage: string;
     dailySectionStates: Record<string, boolean>;
     showDailySections: boolean;

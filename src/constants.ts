@@ -39,6 +39,7 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     maxOutputTokens: 65536,
     newNoteFolder: '000 Bin',
     voiceMemoFolder: '000 Bin/MINA V2 Voice',
+    aiChatFolder: '000 Bin/MINA V2 AI Chat',
     transcriptionLanguage: 'English',
     dailySectionStates: {},
     showDailySections: true,

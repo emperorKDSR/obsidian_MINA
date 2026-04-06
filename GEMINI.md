@@ -140,25 +140,34 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - **Date/Time Formats:** User-configurable moment.js formats.
    - **New Note Folder:** Folder where notes created via the `[[` link picker are saved. Default: `000 Bin`.
    - **Voice Memo Folder:** Folder where recorded voice notes are stored. Default: `000 Bin/MINA V2 Voice`.
+   - **AI Chat Folder:** Folder where AI chat sessions are automatically saved. Default: `000 Bin/MINA V2 AI Chat`.
    - **Transcription Language:** Target language for audio transcription/translation. Default: `English`.
    - **Gemini API Key:** Stored securely (password field).
-   - **Gemini Model:** Dropdown to select from available Gemini models. Default: `gemini-2.5-flash`.
+   - **Gemini Model:** Dropdown to select from available Gemini models. Default: `gemini-2.5-pro`.
    - **Max Output Tokens:** User-configurable `maxOutputTokens` for Gemini API (range: 256–65536, default: 65536).
 
 - **MINA AI Chat Tab (Ai)**
   - Embedded AI assistant powered by Google Gemini.
-  - **File Creation:** MINA AI can now autonomously create files in your vault (CSV, MD, TXT, etc.) upon request using tool-calling capabilities.
-  - **Default Grounding:** Automatically sends up to 50 of your most recent thoughts (excluding those with "journal" context) as context on every message for highly personalized assistance.
-  - Sends tasks file and dues data as additional context.
-  - **Multi-turn History:** Full `chatHistory` array sent to Gemini as `contents` (role: user/model) on every request for coherent multi-turn conversations.
-   - **Markdown Rendering:** Assistant responses rendered via `MarkdownRenderer.render()`.
-   - **Grounded Notes Bar:** Horizontal scrollable chip strip showing default context chips (Th, Ta, Du), any user-pinned vault notes, and the 🌐 Web toggle.
-   - **🌐 Web Search Toggle:** Chip in the grounded bar. When active, sends `tools: [{ googleSearch: {} }]` to Gemini API for real-time web-grounded responses.
-   - **`[[` Note Grounding:** Typing `[[` in the chat textarea opens the note picker.
-   - **Save Session (`📥`):** Saves full chat to `MINA Chat YYYY-MM-DD HHmm.md`.
-   - **New Chat (`🗒️`):** Clears chat history with a confirmation modal.
-   - **Recall Session (`📂`):** Opens `ChatSessionPickerModal` to reload a saved chat file.
-   - **Save as Thought (`💾`):** Icon-only button overlaid bottom-right inside each assistant bubble.
+  - **High-Focus Mode:** Dedicated "AI Mode" opens a standalone, distraction-free window (pop-out on desktop, full-screen on mobile) with a simplified header.
+  - **Automatic Session Saving:** Every conversation is automatically persisted to a timestamped Markdown file in the `000 Bin/MINA V2 AI Chat` folder.
+  - **Multimodal Grounding:**
+    - **Image Support:** Ground images via pasting from clipboard, drag-and-drop, or the upload button (`📎`). Grounded images are automatically saved to the vault's `998 Attachments` folder.
+    - **File Grounding:** Ground any vault file (Markdown, CSV, etc.) for context. Grounded objects appear as interactive chips in the grounding bar.
+    - **Understanding:** Gemini "sees" and understands the content of grounded images when answering.
+  - **Numeric Citations:** AI responses include hyperlinked numeric tags (e.g., `[1]`). Clicking a citation instantly opens the source note or image in your vault.
+  - **Grounded Notes Bar:** Horizontal scrollable chip strip showing context chips (Th, Ta, Du), grounded files/images (click to open), and the 🌐 Web toggle.
+  - **Message Actions:** Hover over chat bubbles to access:
+    - **Copy (`📋`):** Copy raw message text to clipboard.
+    - **Save as Thought (`💾`):** Instantly save an assistant response as a new MINA thought (tagged `#ai-response`).
+  - **Session Controls (Reorganized):** Buttons follow a logical sequence for a smooth workflow: Attach (`📎`), Save (`📥`), Open (`📂`), Enter (`↑`), and New Session (`🗒️`).
+    - **New Chat (`🗒️`):** Resets the session and starts a new save file.
+    - **Save Session (`📥`):** Manually trigger a save of the current history.
+    - **Recall Session (`📂`):** Select and reload a previously saved chat file back into the window.
+  - **Grounded Note Opening:** Click any grounded chip (🖼️ Image or 📄 File) to render it in a new window.
+  - **File Creation:** MINA AI can autonomously create files in your vault (CSV, MD, TXT, etc.) using tool-calling.
+  - **Default Grounding:** Automatically sends up to 50 of your most recent thoughts (excluding `#journal`) as context.
+  - **`[[` Note Grounding:** Typing `[[` in the chat textarea opens the note picker to pin context.
+  - **🌐 Web Search Toggle:** Chip in the grounded bar for real-time web-grounded responses.
 
 6. **Dues Tab (Du)**
    - Scans all vault notes for frontmatter `category: recurring payment` and `active_status: true`.

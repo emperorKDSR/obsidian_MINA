@@ -33,11 +33,12 @@ export class MinaView extends ItemView {
     currentObjectUrl: string | null = null;
 
     // AI Chat State
-    chatHistory: { role: 'user' | 'assistant'; text: string }[] = [];
+    chatHistory: { role: 'user' | 'assistant'; text: string; sources?: string[] }[] = [];
     chatContainer: HTMLElement;
     groundedNotes: TFile[] = [];
     groundedNotesBar: HTMLElement | null = null;
     webSearchEnabled: boolean = false;
+    currentChatFile: string | null = null;
     
     // Tasks Review Filters
     tasksFilterStatus: 'all' | 'pending' | 'completed' = 'pending';
@@ -1112,13 +1113,6 @@ export class MinaView extends ItemView {
                 } 
             });
             const leftHeader = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px;' } });
-            const closeBtn = leftHeader.createEl('button', {
-                text: '✕',
-                attr: { style: 'padding: 4px 8px; border-radius: 4px; background: transparent; color: var(--text-muted); font-size: 1.2em; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;' }
-            });
-            closeBtn.addEventListener('click', () => {
-                this.leaf.detach();
-            });
             leftHeader.createEl('h3', { 
                 text: 'AI Chat',
                 attr: { style: 'margin: 0; font-size: 1.1em; color: var(--text-accent);' } 
@@ -1130,6 +1124,23 @@ export class MinaView extends ItemView {
 
         const refreshGroundedBar = () => {
             groundedBar.empty();
+            this.groundedNotes.forEach(file => {
+                const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'heic', 'heif'].includes(file.extension.toLowerCase());
+                const chip = groundedBar.createEl('span', {
+                    attr: { style: 'display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:0.78em;background:var(--background-primary-alt);border:1px solid var(--background-modifier-border);color:var(--text-muted);cursor:pointer;' }
+                });
+                chip.createSpan({ text: (isImage ? '🖼️ ' : '📄 ') + file.basename });
+                chip.addEventListener('click', () => {
+                    this.app.workspace.openLinkText(file.path, '', 'window');
+                });
+                const unpin = chip.createSpan({ text: '×', attr: { style: 'margin-left:4px;opacity:0.5;cursor:pointer;font-weight:bold;' } });
+                unpin.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.groundedNotes = this.groundedNotes.filter(f => f.path !== file.path);
+                    refreshGroundedBar();
+                });
+            });
+
             const webChip = groundedBar.createEl('span', {
                 attr: { style: `margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:12px;font-size:0.78em;cursor:pointer;border:1px solid ${this.webSearchEnabled ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'};background:${this.webSearchEnabled ? 'var(--interactive-accent)' : 'transparent'};color:${this.webSearchEnabled ? 'var(--text-on-accent)' : 'var(--text-muted)'};` }
             });
@@ -1154,12 +1165,61 @@ export class MinaView extends ItemView {
         const textarea = document.createElement('textarea');
         textarea.placeholder = 'Ask MINA…';
         textarea.rows = isMobilePhone ? 4 : 3;
-        textarea.style.cssText = 'width:100%;resize:none;padding:8px 110px 8px 10px;border-radius:6px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);';
+        textarea.style.cssText = 'width:100%;resize:none;padding:8px 140px 8px 10px;border-radius:6px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);';
+
+        const handleChatFiles = async (files: FileList) => {
+            const attachmentFolder = '998 Attachments';
+            const { vault } = this.plugin.app;
+            if (!vault.getAbstractFileByPath(attachmentFolder)) {
+                await vault.createFolder(attachmentFolder);
+            }
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (!file || file.size === 0) continue;
+                try {
+                    const isImage = file.type.startsWith('image/');
+                    const arrayBuffer = await file.arrayBuffer();
+                    const extension = file.name.includes('.') ? file.name.split('.').pop() : (file.type.split('/')[1] || 'png');
+                    const baseName = file.name.includes('.') ? file.name.substring(0, file.name.lastIndexOf('.')) : `AI Attachment ${moment().format('YYYYMMDDHHmmss')}`;
+                    const fileName = `${baseName}.${extension}`;
+                    
+                    let finalPath = '';
+                    if (isImage) {
+                        finalPath = `${attachmentFolder}/${fileName}`;
+                        let counter = 1;
+                        while (vault.getAbstractFileByPath(finalPath)) {
+                            finalPath = `${attachmentFolder}/${baseName} (${counter}).${extension}`;
+                            counter++;
+                        }
+                    } else {
+                        finalPath = await this.plugin.app.fileManager.getAvailablePathForAttachment(fileName);
+                    }
+
+                    const newFile = await vault.createBinary(finalPath, arrayBuffer);
+                    if (!this.groundedNotes.some(f => f.path === newFile.path)) {
+                        this.groundedNotes.push(newFile);
+                        refreshGroundedBar();
+                    }
+                    new Notice(`Grounded: ${newFile.name}`);
+                } catch (err) {
+                    new Notice('Failed to ground file.');
+                }
+            }
+        };
+
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file'; fileInput.multiple = true; fileInput.style.display = 'none';
+        fileInput.accept = 'image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,*';
+        fileInput.addEventListener('change', async () => { if (fileInput.files) await handleChatFiles(fileInput.files); fileInput.value = ''; });
 
         const overlayBtns = document.createElement('div');
         overlayBtns.style.cssText = 'position:absolute;bottom:16px;right:16px;display:flex;gap:4px;';
+        const attachBtn = overlayBtns.createEl('button', { text: '📎', attr: { title: 'Attach for Grounding', style: 'padding:3px 6px;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;' } });
+        const saveBtn = overlayBtns.createEl('button', { text: '📥', attr: { title: 'Save Session', style: 'padding:3px 6px;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;' } });
+        const recallBtn = overlayBtns.createEl('button', { text: '📂', attr: { title: 'Recall Session', style: 'padding:3px 6px;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;' } });
         const sendBtn = overlayBtns.createEl('button', { text: '↑',  attr: { style: 'padding:3px 10px;border-radius:5px;background:var(--interactive-accent);color:var(--text-on-accent);border:none;cursor:pointer;' } });
-        const newChatBtn = overlayBtns.createEl('button', { text: '🗒️', attr: { style: 'padding:3px 6px;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;' } });
+        const newChatBtn = overlayBtns.createEl('button', { text: '🗒️', attr: { title: 'New Chat', style: 'padding:3px 6px;border-radius:5px;background:var(--background-modifier-border);color:var(--text-muted);border:none;cursor:pointer;' } });
 
         const send = async () => {
             const text = textarea.value.trim();
@@ -1167,6 +1227,7 @@ export class MinaView extends ItemView {
             textarea.value = ''; textarea.disabled = true;
             this.chatHistory.push({ role: 'user', text });
             await this.renderChatHistory();
+            await this.saveChatSession();
             const thinking = this.chatContainer.createEl('div', { text: 'MINA is thinking…', attr: { style: 'font-size:0.85em;color:var(--text-muted);font-style:italic;' } });
             try {
                 const reply = await this.callGemini(text, [...this.groundedNotes], this.webSearchEnabled);
@@ -1177,10 +1238,24 @@ export class MinaView extends ItemView {
                 this.chatHistory.push({ role: 'assistant', text: `⚠️ Error: ${e.message}` });
             }
             await this.renderChatHistory();
+            await this.saveChatSession();
             textarea.disabled = false; if (!isMobilePhone) textarea.focus();
         };
 
         sendBtn.addEventListener('click', send);
+        attachBtn.addEventListener('click', () => fileInput.click());
+        textarea.addEventListener('paste', async (e: ClipboardEvent) => {
+            if (e.clipboardData && e.clipboardData.files.length > 0) {
+                e.preventDefault();
+                await handleChatFiles(e.clipboardData.files);
+            }
+        });
+        textarea.addEventListener('drop', async (e: DragEvent) => {
+            if (e.dataTransfer && e.dataTransfer.files.length > 0) {
+                e.preventDefault();
+                await handleChatFiles(e.dataTransfer.files);
+            }
+        });
         textarea.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
         textarea.addEventListener('input', (e) => {
             const target = e.target as HTMLTextAreaElement;
@@ -1199,7 +1274,30 @@ export class MinaView extends ItemView {
                 }).open();
             }
         });
-        newChatBtn.addEventListener('click', () => { this.chatHistory = []; this.renderChatHistory(); });
+        saveBtn.addEventListener('click', async () => {
+            await this.saveChatSession();
+            new Notice('Chat session saved');
+        });
+        recallBtn.addEventListener('click', () => {
+            const folder = this.plugin.settings.aiChatFolder.trim() || '000 Bin/MINA V2 AI Chat';
+            const files = this.plugin.app.vault.getMarkdownFiles().filter(f => f.path.startsWith(folder + '/'));
+            if (files.length === 0) {
+                new Notice('No saved chat sessions found');
+                return;
+            }
+            new ChatSessionPickerModal(this.plugin.app, files, async (file) => {
+                const content = await this.plugin.app.vault.read(file);
+                this.chatHistory = this.parseChatSession(content);
+                this.currentChatFile = file.path;
+                await this.renderChatHistory();
+                new Notice(`Loaded: ${file.basename}`);
+            }).open();
+        });
+        newChatBtn.addEventListener('click', () => { 
+            this.chatHistory = []; 
+            this.currentChatFile = null;
+            this.renderChatHistory(); 
+        });
 
         if (isMobilePhone) {
             const mia = wrapper.createEl('div', { cls: 'mobile-input-area', attr: { style: 'display:block;padding:8px;background:var(--background-secondary);border-top:1px solid var(--background-modifier-border);position:relative;' } });
@@ -1220,38 +1318,149 @@ export class MinaView extends ItemView {
         }
         for (const msg of this.chatHistory) {
             const isUser = msg.role === 'user';
-            const row = this.chatContainer.createEl('div', { attr: { style: `display: flex; justify-content: ${isUser ? 'flex-end' : 'flex-start'}; margin-bottom: 8px;` } });
-            const bubble = row.createEl('div', { attr: { style: `max-width: 85%; padding: 8px 12px; border-radius: 12px; background: ${isUser ? 'var(--interactive-accent)' : 'var(--background-secondary)'}; color: ${isUser ? 'var(--text-on-accent)' : 'var(--text-normal)'};` } });
-            if (isUser) bubble.setText(msg.text); else await MarkdownRenderer.render(this.plugin.app, msg.text, bubble, '', this);
+            const row = this.chatContainer.createEl('div', { attr: { style: `display: flex; justify-content: ${isUser ? 'flex-end' : 'flex-start'}; margin-bottom: 12px;` } });
+            const bubble = row.createEl('div', { attr: { style: `max-width: 85%; padding: 10px 14px; border-radius: 12px; background: ${isUser ? 'var(--interactive-accent)' : 'var(--background-secondary)'}; color: ${isUser ? 'var(--text-on-accent)' : 'var(--text-normal)'}; position: relative; min-width: 60px;` } });
+            
+            const textContent = bubble.createEl('div', { attr: { style: 'margin-bottom: 4px;' } });
+            if (isUser) {
+                textContent.setText(msg.text);
+            } else {
+                await MarkdownRenderer.render(this.plugin.app, msg.text, textContent, '', this);
+                this.hookInternalLinks(textContent, '');
+                this.hookImageZoom(textContent);
+            }
+
+            const actions = bubble.createEl('div', { attr: { style: 'position: absolute; bottom: 4px; right: 8px; display: flex; gap: 6px; opacity: 0; transition: opacity 0.2s; background: inherit; padding-left: 10px; border-bottom-right-radius: 12px;' } });
+            bubble.addEventListener('mouseenter', () => actions.style.opacity = '1');
+            bubble.addEventListener('mouseleave', () => actions.style.opacity = '0');
+
+            const copyBtn = actions.createEl('span', { text: '📋', attr: { style: 'cursor: pointer; font-size: 0.75em; filter: grayscale(1) brightness(1.5);', title: 'Copy' } });
+            copyBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                await navigator.clipboard.writeText(msg.text);
+                new Notice('Copied to clipboard');
+            });
+
+            if (!isUser) {
+                const saveBtn = actions.createEl('span', { text: '💾', attr: { style: 'cursor: pointer; font-size: 0.75em; filter: grayscale(1) brightness(1.5);', title: 'Save as Thought' } });
+                saveBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    await this.plugin.createThoughtFile(msg.text, ['#ai-response']);
+                    new Notice('Saved as thought');
+                });
+            }
         }
         this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+    }
+
+    async saveChatSession() {
+        if (this.chatHistory.length === 0) return;
+        const s = this.plugin.settings;
+        const folder = s.aiChatFolder.trim() || '000 Bin/MINA V2 AI Chat';
+        const { vault } = this.plugin.app;
+
+        if (!vault.getAbstractFileByPath(folder)) {
+            const parts = folder.split('/');
+            let currentPath = '';
+            for (const part of parts) {
+                currentPath += (currentPath ? '/' : '') + part;
+                if (!vault.getAbstractFileByPath(currentPath)) {
+                    await vault.createFolder(currentPath);
+                }
+            }
+        }
+
+        if (!this.currentChatFile) {
+            this.currentChatFile = `${folder}/MINA Chat ${moment().format('YYYY-MM-DD HHmm')}.md`;
+        }
+
+        let content = `---\ntitle: "AI Chat ${moment().format('YYYY-MM-DD HH:mm')}"\ncreated: ${moment().format('YYYY-MM-DD HH:mm:ss')}\n---\n\n`;
+        
+        // Explicitly list session-wide grounding sources if any
+        const allSources = new Set<string>();
+        this.chatHistory.forEach(msg => msg.sources?.forEach(src => allSources.add(src)));
+        
+        if (allSources.size > 0) {
+            content += `### Session Grounding Sources\n`;
+            allSources.forEach(src => content += `- [[${src}]]\n`);
+            content += `\n---\n\n`;
+        }
+
+        for (const msg of this.chatHistory) {
+            const role = msg.role === 'user' ? 'You' : 'MINA';
+            content += `**${role}:** ${msg.text}\n\n`;
+            if (msg.sources && msg.sources.length > 0) {
+                content += `*Sources: ${msg.sources.map(s => `[[${s}]]`).join(', ')}*\n\n`;
+            }
+            content += `---\n\n`;
+        }
+
+        const file = vault.getAbstractFileByPath(this.currentChatFile);
+        if (file instanceof TFile) {
+            await vault.modify(file, content);
+        } else {
+            await vault.create(this.currentChatFile, content);
+        }
     }
 
     async callGemini(userMessage: string, groundedFiles: TFile[] = [], webSearch: boolean = false): Promise<string> {
         const s = this.plugin.settings;
         
-        // 1. Gather default grounding: Thoughts (excluding journal context)
+        // 1. Gather all potential sources
         const allThoughts = Array.from(this.plugin.thoughtIndex.values())
             .filter(t => !t.context.includes('journal'))
             .sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate)
             .slice(0, 50);
 
-        let systemPrompt = "You are MINA AI, a helpful personal assistant integrated into an Obsidian vault.\n\n";
-        
-        if (allThoughts.length > 0) {
-            systemPrompt += "Below are your most recent thoughts for context:\n\n";
-            allThoughts.forEach(t => {
-                systemPrompt += `--- Thought: ${t.title} (${t.day}) ---\n${t.body}\n\n`;
-            });
+        interface SourceItem {
+            id: number;
+            title: string;
+            path: string;
+            type: 'thought' | 'file' | 'image';
+            content?: string;
+            file?: TFile;
         }
 
-        // 2. Add specific grounded files if any
-        if (groundedFiles.length > 0) {
-            systemPrompt += "\nAdditional context from specifically linked files:\n\n";
-            for (const file of groundedFiles) {
+        const sources: SourceItem[] = [];
+        let sourceCounter = 1;
+
+        // Add thoughts as sources
+        allThoughts.forEach(t => {
+            sources.push({ id: sourceCounter++, title: t.title, path: t.filePath, type: 'thought', content: t.body });
+        });
+
+        const imageParts: any[] = [];
+        // Add specific grounded files/images as sources
+        for (const file of groundedFiles) {
+            const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'heic', 'heif'].includes(file.extension.toLowerCase());
+            if (isImage) {
+                const buffer = await this.app.vault.readBinary(file);
+                let binary = '';
+                const bytes = new Uint8Array(buffer);
+                for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+                const base64 = btoa(binary);
+                const mimeType = `image/${file.extension === 'jpg' ? 'jpeg' : file.extension}`;
+                imageParts.push({ inline_data: { mime_type: mimeType, data: base64 } });
+                sources.push({ id: sourceCounter++, title: file.basename, path: file.path, type: 'image', file });
+            } else {
                 const content = await this.app.vault.read(file);
-                systemPrompt += `--- File: ${file.path} ---\n${content}\n\n`;
+                sources.push({ id: sourceCounter++, title: file.basename, path: file.path, type: 'file', content, file });
             }
+        }
+
+        // 2. Build System Prompt with Citations instructions
+        let systemPrompt = "You are MINA AI, a helpful personal assistant integrated into an Obsidian vault.\n\n";
+        systemPrompt += "CRITICAL INSTRUCTION: When you use information from the provided sources, you MUST cite them using numeric tags like [1], [2], etc.\n";
+        systemPrompt += "The user will see these as hyperlinks to the actual notes.\n\n";
+        
+        if (sources.length > 0) {
+            systemPrompt += "### SOURCES AVAILABLE:\n";
+            sources.forEach(src => {
+                systemPrompt += `[${src.id}] Source: ${src.title} (${src.path})\n`;
+                if (src.content) systemPrompt += `Content: ${src.content}\n`;
+                if (src.type === 'image') systemPrompt += `(This is an image attached to the current message)\n`;
+                systemPrompt += `---\n`;
+            });
         }
 
         const tools = [
@@ -1273,10 +1482,14 @@ export class MinaView extends ItemView {
             }
         ];
 
-        const contents = this.chatHistory.map(msg => ({ 
-            role: msg.role === 'user' ? 'user' : 'model', 
-            parts: [{ text: msg.text }] 
-        }));
+        const contents = this.chatHistory.map((msg, idx) => {
+            const isLastMessage = idx === this.chatHistory.length - 1;
+            const parts: any[] = [{ text: msg.text }];
+            if (isLastMessage && msg.role === 'user' && imageParts.length > 0) {
+                parts.push(...imageParts);
+            }
+            return { role: msg.role === 'user' ? 'user' : 'model', parts: parts };
+        });
         
         const body: any = {
             contents: contents,
@@ -1284,18 +1497,10 @@ export class MinaView extends ItemView {
             generationConfig: { temperature: 0.7, maxOutputTokens: s.maxOutputTokens ?? 65536 }
         };
 
-        // Gemini API Limitation: Built-in tools (google_search) and function calling 
-        // cannot be combined in the same request.
-        if (webSearch) {
-            body.tools = [{ googleSearch: {} }];
-        } else {
-            body.tools = tools;
-        }
+        if (webSearch) body.tools = [{ googleSearch: {} }]; else body.tools = tools;
 
         const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${s.geminiModel}:generateContent?key=${s.geminiApiKey}`, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify(body) 
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) 
         });
         
         if (!resp.ok) {
@@ -1303,7 +1508,6 @@ export class MinaView extends ItemView {
             throw new Error(`HTTP ${resp.status}: ${errData.error?.message || resp.statusText}`);
         }
         const data = await resp.json();
-        
         const candidate = data?.candidates?.[0];
         const part = candidate?.content?.parts?.[0];
 
@@ -1313,13 +1517,30 @@ export class MinaView extends ItemView {
                 try {
                     await this.plugin.createFile(args.filename, args.content);
                     return `✅ I've created the file "${args.filename}" for you.`;
-                } catch (err) {
-                    return `❌ Failed to create file: ${err.message}`;
-                }
+                } catch (err) { return `❌ Failed to create file: ${err.message}`; }
             }
         }
 
-        return (candidate?.content?.parts ?? []).map((p: any) => p.text ?? '').join('').trim() || '(no response)';
+        let reply = (candidate?.content?.parts ?? []).map((p: any) => p.text ?? '').join('').trim() || '(no response)';
+
+        // 3. Post-process response to add hyperlinks to citations
+        sources.forEach(src => {
+            const citationTag = `[${src.id}]`;
+            // If it's a vault file, use [[Path|[n]]]
+            // If it's a thought, we can use [[FilePath|[n]]]
+            const link = `[[${src.path}|${citationTag}]]`;
+            // Use a regex to replace the citation tag only when it's not already inside a link
+            const regex = new RegExp(`\\${citationTag}(?![^\\[]*\\]\\])`, 'g');
+            reply = reply.replace(regex, link);
+        });
+
+        // 4. Update the last message in history with the sources used
+        const lastUserMsg = this.chatHistory[this.chatHistory.length - 1];
+        if (lastUserMsg && lastUserMsg.role === 'user') {
+            lastUserMsg.sources = sources.filter(src => groundedFiles.some(gf => gf.path === src.path)).map(src => src.path);
+        }
+
+        return reply;
     }
 
     parseChatSession(content: string): { role: 'user' | 'assistant'; text: string }[] {
