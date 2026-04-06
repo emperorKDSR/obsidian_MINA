@@ -110,8 +110,8 @@ export class EditEntryModal extends Modal {
             const pos = target.selectionStart;
             const textBeforeCursor = val.substring(0, pos);
             
-            // Natural Language Date conversion: @@date followed by space/newline
-            const dateMatch = textBeforeCursor.match(/@@([^@\n\s]+(?: [^@\n\s]+)*)([\s\n])$/);
+            // Natural Language Date conversion: @date followed by space/newline
+            const dateMatch = textBeforeCursor.match(/@([^@\n\s]+(?: [^@\n\s]+)*)([\s\n])$/);
             if (dateMatch) {
                 const rawDate = dateMatch[1];
                 const terminator = dateMatch[2];

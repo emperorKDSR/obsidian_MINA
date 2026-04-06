@@ -1395,7 +1395,7 @@ export class MinaView extends ItemView {
         }
         const inputSection = container.createEl('div', { attr: { style: 'flex-shrink: 0; margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-end;' } });
         const textAreaWrapper = inputSection.createEl('div', { attr: { style: 'flex-grow: 1;' } });
-        const textArea = textAreaWrapper.createEl('textarea', { attr: { placeholder: Platform.isMobile && !isTablet() ? 'Type your thought… use @ for context, \\ for links' : 'Enter your thought or task… Shift+Enter to save', rows: isTablet() ? '4' : '3', style: 'width: 100%; font-family: var(--font-text); resize: vertical; display: block;' } });
+        const textArea = textAreaWrapper.createEl('textarea', { attr: { placeholder: Platform.isMobile && !isTablet() ? 'Type thought… use @ for date, # for context, \\ for links' : 'Enter thought or task… Shift+Enter to save', rows: isTablet() ? '4' : '3', style: 'width: 100%; font-family: var(--font-text); resize: vertical; display: block;' } });
         textArea.value = this.content;
         if (Platform.isMobile) textArea.addEventListener('focus', () => { setTimeout(() => { textArea.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300); });
         let lastValue = this.content;
@@ -1404,8 +1404,8 @@ export class MinaView extends ItemView {
             const pos = target.selectionStart;
             const textBeforeCursor = val.substring(0, pos);
             
-            // Natural Language Date conversion: @@date followed by space/newline
-            const dateMatch = textBeforeCursor.match(/@@([^@\n\s]+(?: [^@\n\s]+)*)([\s\n])$/);
+            // Natural Language Date conversion: @date followed by space/newline
+            const dateMatch = textBeforeCursor.match(/@([^@\n\s]+(?: [^@\n\s]+)*)([\s\n])$/);
             if (dateMatch) {
                 const rawDate = dateMatch[1];
                 const terminator = dateMatch[2];
