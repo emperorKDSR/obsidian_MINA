@@ -69,11 +69,12 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Adaptive Indentation:** Thread nesting is reduced on mobile to preserve horizontal space.
      - **Responsive Modals:** Popups anchor to the top and shrink with the `visualViewport` to stay above the virtual keyboard. Auto-scroll focuses inputs into view.
      - **Keyboard / Black-Bar Fix:** Uses `position: fixed` + `visualViewport` `resize`/`scroll` listeners to prevent iOS WebKit from sliding the container off-screen when the keyboard appears.
-     - **Context Picker via `#` Button (mobile phone only):** On mobile phones, context pills are hidden to save space. A `#` button is absolutely positioned in the lower-right corner of the textarea (next to `📎`). Tapping it toggles a context panel below the input containing:
-       - A **2-row horizontally scrollable grid** (`grid-template-rows: repeat(2, auto)`, `grid-auto-flow: column`, `overflow-x: auto`) — swipe left/right to browse all contexts; selected pills show accent background + ✓.
-       - A **bottom action row**: `[New context… input]` `[＋]` `[Done]` — type a name and tap ＋ (or press Enter) to save a new context to settings and auto-select it; Done closes the panel.
-       - Selection is **fully reset after each Sync** — both `this.selectedContexts = []` and `plugin.settings.selectedContexts = []` are cleared and saved before `renderView()` so re-initialization starts fresh.
-     - **File Attachment Button (`📎`):** Absolutely positioned in the textarea, shifted left to make room for the `#` button. Triggers a hidden `<input type="file" multiple>` to attach images or files.
+     - **Context Picker via `#` Trigger (Unified):** Typing `#` in any capture textarea (Thoughts, Tasks, or Edit Modal) instantly opens a search-and-select suggest modal for contexts.
+       - **Fuzzy Filtering:** The list automatically filters as you type.
+       - **Auto-Creation:** If a context doesn't exist, a **`＋ Create "name"`** option allows adding it to settings and the current entry in one click.
+       - **Clean Input:** Upon selection, the trigger `#` is removed from the text, and the context is added to the entry's metadata, keeping the body text clean.
+       - **UI Simplification:** All old static context pills, manual "add" inputs, and mobile-specific popup panels have been removed in favor of this unified trigger.
+     - **File Attachment Button (`📎`):** Absolutely positioned in the textarea. Triggers a hidden `<input type="file" multiple>` to attach images or files.
      - **Left-Aligned Due Date Selector:** On mobile, the task due date selector is left-aligned (no `margin-left: auto`).
    - **Scroll Padding:** All main scrollable tab areas have `padding-bottom: 200px` so the last row is never flush against the bottom of the viewport.
 

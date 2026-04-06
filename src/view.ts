@@ -4,6 +4,7 @@ import { VIEW_TYPE_MINA, KATANA_ICON_ID, NINJA_AVATAR_SVG } from './constants';
 import { ThoughtEntry, TaskEntry, ReplyEntry, DueEntry, MinaSettings } from './types';
 import { isTablet, toAsciiDigits, parseNaturalDate } from './utils';
 import { FileSuggestModal } from './modals/FileSuggestModal';
+import { ContextSuggestModal } from './modals/ContextSuggestModal';
 import { EditEntryModal } from './modals/EditEntryModal';
 import { ConfirmModal } from './modals/ConfirmModal';
 import { ConvertToTaskModal } from './modals/ConvertToTaskModal';
@@ -1398,33 +1399,6 @@ export class MinaView extends ItemView {
         textArea.value = this.content;
         if (Platform.isMobile) textArea.addEventListener('focus', () => { setTimeout(() => { textArea.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300); });
         let lastValue = this.content;
-        let ctxPanelEl: HTMLElement | null = null;
-        const hideCtxPanel = () => { ctxPanelEl?.remove(); ctxPanelEl = null; };
-        const renderCtxPanel = () => {
-            ctxPanelEl?.remove();
-            ctxPanelEl = textAreaWrapper.createEl('div', { attr: { style: 'position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--background-primary); border:1px solid var(--background-modifier-border); border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,0.22); z-index:200; overflow:hidden; display:flex; flex-direction:column' } });
-            const grid = ctxPanelEl.createEl('div', { attr: { style: 'display:grid; grid-template-rows:repeat(2,auto); grid-auto-flow:column; gap:6px; padding:8px 10px; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; flex-shrink:0' } });
-            this.plugin.settings.contexts.forEach((ctx) => {
-                const isSelected = this.selectedContexts.includes(ctx);
-                const pill = grid.createEl('div', { attr: { style: `display:inline-flex; align-items:center; gap:4px; padding:6px 14px; border-radius:20px; font-size:0.85em; cursor:pointer; flex-shrink:0; user-select:none; transition:background 0.1s; ${isSelected ? 'background:var(--interactive-accent); color:var(--text-on-accent); border:1px solid var(--interactive-accent);' : 'background:var(--background-secondary); color:var(--text-normal); border:1px solid var(--background-modifier-border);'}` } });
-                if (isSelected) pill.createSpan({ text: '✓', attr: { style: 'font-size:0.75em; font-weight:bold; flex-shrink:0;' } });
-                pill.createSpan({ text: `#${ctx}` });
-                pill.addEventListener('mousedown', (ev) => { ev.preventDefault(); if (isSelected) this.selectedContexts = this.selectedContexts.filter(c => c !== ctx); else this.selectedContexts.push(ctx); renderCtxPanel(); });
-            });
-            const addRow = ctxPanelEl.createEl('div', { attr: { style: 'display:flex; align-items:center; gap:6px; padding:7px 10px; border-top:1px solid var(--background-modifier-border)' } });
-            const newInput = addRow.createEl('input', { attr: { type: 'text', placeholder: 'New context…', style: 'flex:1; min-width:0; padding:5px 10px; border-radius:16px; border:1px solid var(--background-modifier-border); background:var(--background-secondary); color:var(--text-normal); font-size:0.85em; outline:none' } }) as HTMLInputElement;
-            const addBtn = addRow.createEl('button', { attr: { style: 'padding:5px 10px; border-radius:16px; border:none; background:var(--interactive-accent); color:var(--text-on-accent); font-size:0.85em; font-weight:600; cursor:pointer; flex-shrink:0' }, text: '＋' });
-            const doneBtn = addRow.createEl('button', { attr: { style: 'padding:5px 12px; border-radius:16px; border:none; background:var(--background-modifier-border); color:var(--text-muted); font-size:0.85em; cursor:pointer; flex-shrink:0' }, text: 'Done' });
-            const doAdd = async () => {
-                const val = newInput.value.trim().replace(/^#+/, ''); if (!val) return;
-                if (!this.plugin.settings.contexts.includes(val)) { this.plugin.settings.contexts.push(val); await this.plugin.saveSettings(); }
-                if (!this.selectedContexts.includes(val)) this.selectedContexts.push(val);
-                newInput.value = ''; renderCtxPanel();
-            };
-            addBtn.addEventListener('mousedown', (ev) => { ev.preventDefault(); doAdd(); });
-            newInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); doAdd(); } });
-            doneBtn.addEventListener('mousedown', (ev) => { ev.preventDefault(); hideCtxPanel(); textArea.focus(); });
-        };
         textArea.addEventListener('input', (e) => { 
             const target = e.target as HTMLTextAreaElement; const val = target.value;
             const pos = target.selectionStart;
@@ -1458,12 +1432,30 @@ export class MinaView extends ItemView {
                         target.value = before + insertText + after; this.content = target.value;
                         setTimeout(() => { target.focus(); target.setSelectionRange(before.length + insertText.length, before.length + insertText.length); }, 50);
                     }, this.plugin.settings.newNoteFolder).open();
+                } else if (cursorPosition > 0 && val.charAt(cursorPosition - 1) === '#') {
+                    new ContextSuggestModal(this.plugin.app, this.plugin.settings.contexts, async (ctx) => {
+                        if (!this.plugin.settings.contexts.includes(ctx)) {
+                            this.plugin.settings.contexts.push(ctx);
+                            await this.plugin.saveSettings();
+                        }
+                        if (!this.selectedContexts.includes(ctx)) {
+                            this.selectedContexts.push(ctx);
+                            this.plugin.settings.selectedContexts = [...this.selectedContexts];
+                            await this.plugin.saveSettings();
+                        }
+                        const before = val.substring(0, cursorPosition - 1);
+                        const after = val.substring(cursorPosition);
+                        target.value = before + after;
+                        this.content = target.value;
+                        
+                        setTimeout(() => { target.focus(); target.setSelectionRange(before.length, before.length); }, 50);
+                    }).open();
                 }
             }
             const converted = val.replace(/^\*\* /gm, '- [ ] '); if (converted !== val) { const cursor = target.selectionStart; const diff = converted.length - val.length; target.value = converted; target.setSelectionRange(cursor + diff, cursor + diff); }
             lastValue = target.value; this.content = target.value;
         });
-        textArea.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') hideCtxPanel(); });
+        textArea.addEventListener('keydown', (ev) => { });
         textArea.addEventListener('paste', async (e: ClipboardEvent) => { e.stopPropagation(); if (e.clipboardData && e.clipboardData.files.length > 0) { let hasImage = false; for (let i = 0; i < e.clipboardData.items.length; i++) { if (e.clipboardData.items[i].type.indexOf('image') !== -1) { hasImage = true; break; } } if (hasImage) { e.preventDefault(); await this.handleFiles(e.clipboardData.files); } } });
         textArea.addEventListener('dragover', (e) => { e.stopPropagation(); e.preventDefault(); });
         textArea.addEventListener('drop', async (e: DragEvent) => { e.stopPropagation(); if (e.dataTransfer && e.dataTransfer.files.length > 0) { e.preventDefault(); await this.handleFiles(e.dataTransfer.files); } });
@@ -1472,24 +1464,9 @@ export class MinaView extends ItemView {
         fileInput.addEventListener('change', async () => { if (fileInput.files && fileInput.files.length > 0) { await this.handleFiles(fileInput.files); fileInput.value = ''; } });
         const attachBtn = textAreaWrapper.createEl('button', { attr: { title: 'Attach image or file', style: 'position:absolute; bottom:6px; right:34px; background:transparent; border:none; color:var(--text-muted); opacity:0.5; padding:2px 4px; cursor:pointer; font-size:1em; line-height:1; transition:opacity 0.15s; z-index:1' } });
         attachBtn.textContent = '📎'; attachBtn.addEventListener('mouseenter', () => attachBtn.style.opacity = '1'); attachBtn.addEventListener('mouseleave', () => attachBtn.style.opacity = '0.5'); attachBtn.addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
-        if (Platform.isMobile && !isTablet()) {
-            const ctxBtn = textAreaWrapper.createEl('button', { attr: { title: 'Add context', style: 'position:absolute; bottom:6px; right:6px; background:transparent; border:none; color:var(--text-muted); opacity:0.5; padding:2px 4px; cursor:pointer; font-size:1em; line-height:1; transition:opacity 0.15s; z-index:1' } });
-            ctxBtn.textContent = '#'; ctxBtn.style.fontWeight = '700'; ctxBtn.addEventListener('click', (e) => { e.preventDefault(); if (ctxPanelEl) hideCtxPanel(); else renderCtxPanel(); });
-        }
         const submitBtn = inputSection.createEl('button', { text: 'Sync', attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); padding: 8px 16px; height: 100%; min-height: 40px;' } });
         const controlsDiv = container.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; margin-bottom: 15px;' } });
-        const contextsDiv = controlsDiv.createEl('div', { attr: { style: `display: ${Platform.isMobile && !isTablet() ? 'none' : 'flex'}; flex-wrap: wrap; gap: 5px; align-items: center;` } });
-        const renderContextTags = () => {
-            contextsDiv.empty();
-            this.plugin.settings.contexts.forEach(ctx => {
-                const isSelected = this.selectedContexts.includes(ctx);
-                const tagEl = contextsDiv.createEl('span', { text: `#${ctx}`, attr: { style: `cursor: pointer; padding: 2px 8px; border-radius: 12px; font-size: 0.85em; user-select: none; border: 1px solid var(--background-modifier-border); ${isSelected ? 'background-color: var(--interactive-accent); color: var(--text-on-accent); border-color: var(--interactive-accent);' : 'background-color: var(--background-secondary); color: var(--text-muted);'}` } });
-                tagEl.addEventListener('click', async () => { if (isSelected) this.selectedContexts = this.selectedContexts.filter(c => c !== ctx); else this.selectedContexts.push(ctx); this.plugin.settings.selectedContexts = [...this.selectedContexts]; await this.plugin.saveSettings(); renderContextTags(); });
-            });
-            const newCtxInput = contextsDiv.createEl('input', { type: 'text', placeholder: '+ add', attr: { style: 'padding: 2px 8px; border-radius: 12px; font-size: 0.85em; border: 1px dashed var(--background-modifier-border); background: transparent; width: 60px; outline: none;' } });
-            newCtxInput.addEventListener('keydown', async (e) => { if (e.key === 'Enter') { const val = newCtxInput.value.trim().replace(/^#/, ''); if (val && !this.plugin.settings.contexts.includes(val)) { this.plugin.settings.contexts.push(val); this.selectedContexts.push(val); this.plugin.settings.selectedContexts = [...this.selectedContexts]; await this.plugin.saveSettings(); renderContextTags(); } } });
-        };
-        renderContextTags();
+        
         if (!isThoughtsOnly && !isTasksOnly) {
             const taskToggleDiv = controlsDiv.createEl('div', { attr: { style: `display: flex; align-items: center; gap: 8px; ${Platform.isMobile && !isTablet() ? '' : 'margin-left: auto;'}` } });
             const taskCheckbox = taskToggleDiv.createEl('input', { type: 'checkbox', attr: { id: 'is-task-checkbox' } }); taskCheckbox.checked = this.isTask;
@@ -1513,7 +1490,7 @@ export class MinaView extends ItemView {
                 else await this.plugin.createThoughtFile(this.content.trim(), this.selectedContexts);
                 this.content = ''; textArea.value = ''; this.replyToId = null; this.replyToText = null;
                 if (Platform.isMobile && !isTablet()) { this.selectedContexts = []; this.plugin.settings.selectedContexts = []; await this.plugin.saveSettings(); }
-                hideCtxPanel(); this.renderView();
+                this.renderView();
             } else new Notice('Please enter some text');
         };
         submitBtn.addEventListener('click', submitAction);

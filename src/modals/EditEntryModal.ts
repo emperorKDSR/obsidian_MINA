@@ -2,6 +2,7 @@ import { App, Modal, Platform, Notice, moment } from 'obsidian';
 import MinaPlugin from '../main';
 import { isTablet, parseNaturalDate } from '../utils';
 import { FileSuggestModal } from './FileSuggestModal';
+import { ContextSuggestModal } from './ContextSuggestModal';
 
 export class EditEntryModal extends Modal {
     initialText: string;
@@ -144,6 +145,23 @@ export class EditEntryModal extends Modal {
                         }, 50);
                     }, this.plugin.settings.newNoteFolder);
                     modal.open();
+                } else if (cursorPosition > 0 && val.charAt(cursorPosition - 1) === '#') {
+                    const modal = new ContextSuggestModal(this.plugin.app, this.plugin.settings.contexts, async (ctx) => {
+                        if (!this.plugin.settings.contexts.includes(ctx)) {
+                            this.plugin.settings.contexts.push(ctx);
+                            await this.plugin.saveSettings();
+                        }
+                        if (!this.initialContexts.includes(ctx)) {
+                            this.initialContexts.push(ctx);
+                        }
+                        const before = val.substring(0, cursorPosition - 1);
+                        const after = val.substring(cursorPosition);
+                        target.value = before + after;
+                        currentTextValue = target.value;
+                        
+                        setTimeout(() => { target.focus(); target.setSelectionRange(before.length, before.length); }, 50);
+                    });
+                    modal.open();
                 }
             }
 
@@ -204,68 +222,7 @@ export class EditEntryModal extends Modal {
             if (e.dataTransfer && e.dataTransfer.files.length > 0) { e.preventDefault(); await handleModalFiles(e.dataTransfer.files); }
         });
 
-        // Contexts Selector
-        const contextsDiv = contentEl.createEl('div', { attr: { style: 'margin-bottom: 15px;' } });
-        contextsDiv.createEl('div', { text: 'Contexts', attr: { style: 'font-size: 0.78em; color: var(--text-muted); font-weight: 600; margin-bottom: 6px;' } });
-        const pillsRow = contextsDiv.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 5px; align-items: center;' } });
-
-        const renderContextTags = () => {
-            pillsRow.empty();
-            const allContexts = [...new Set([
-                ...this.plugin.settings.contexts,
-                ...this.initialContexts
-            ])];
-
-            allContexts.forEach(ctx => {
-                const isSelected = this.initialContexts.includes(ctx);
-                const tagEl = pillsRow.createEl('span', {
-                    attr: {
-                        style: `cursor: pointer; padding: 3px 10px; border-radius: 12px; font-size: 0.85em; user-select: none; border: 1px solid var(--background-modifier-border); display: inline-flex; align-items: center; gap: 4px; ${isSelected ? 'background-color: var(--interactive-accent); color: var(--text-on-accent); border-color: var(--interactive-accent);' : 'background-color: var(--background-secondary); color: var(--text-muted);'}`
-                    }
-                });
-                tagEl.createSpan({ text: `#${ctx}` });
-                if (isSelected) {
-                    tagEl.createSpan({ text: '×', attr: { style: 'font-size: 1em; line-height: 1; opacity: 0.7;' } });
-                }
-                tagEl.addEventListener('click', () => {
-                    if (isSelected) this.initialContexts = this.initialContexts.filter(c => c !== ctx);
-                    else this.initialContexts.push(ctx);
-                    renderContextTags();
-                });
-            });
-
-            const addRow = pillsRow.createEl('div', { attr: { style: 'display: flex; gap: 4px; align-items: center;' } });
-            const newCtxInput = addRow.createEl('input', {
-                type: 'text',
-                placeholder: 'New context…',
-                attr: { style: 'padding: 3px 8px; border-radius: 12px; font-size: 0.85em; border: 1px dashed var(--background-modifier-border); background: transparent; width: 110px; outline: none; color: var(--text-normal);' }
-            });
-            const addCtxBtn = addRow.createEl('button', {
-                text: '+',
-                attr: { style: 'padding: 2px 8px; border-radius: 10px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-muted); cursor: pointer; font-size: 0.9em; line-height: 1.4;' }
-            });
-
-            const commitNewCtx = async () => {
-                const val = newCtxInput.value.trim().replace(/^#/, '');
-                if (!val) return;
-                newCtxInput.value = '';
-                if (!this.initialContexts.includes(val)) {
-                    this.initialContexts.push(val);
-                }
-                if (!this.plugin.settings.contexts.includes(val)) {
-                    this.plugin.settings.contexts.push(val);
-                    await this.plugin.saveSettings();
-                }
-                renderContextTags();
-            };
-
-            addCtxBtn.addEventListener('click', commitNewCtx);
-            newCtxInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commitNewCtx(); } });
-            newCtxInput.addEventListener('blur', () => { if (newCtxInput.value.trim()) commitNewCtx(); });
-        };
-        renderContextTags();
-
-        const metadataContainer = contentEl.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;' } });
+        const metadataContainer = contentEl.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-top: 15px;' } });
 
         let dateInput: HTMLInputElement | null = null;
         if (this.isTask) {
