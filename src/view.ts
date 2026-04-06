@@ -1066,7 +1066,7 @@ export class MinaView extends ItemView {
         field('Personal Finance Folder', 'Folder scanned by the Dues tab for recurring payment notes.', row => input(row, this.plugin.settings.pfFolder, '000 Bin/MINA V2 PF', 'text', async v => { this.plugin.settings.pfFolder = v; await this.plugin.saveSettings(); }));
         field('Date Format', 'moment.js format, e.g. YYYY-MM-DD', row => input(row, this.plugin.settings.dateFormat, 'YYYY-MM-DD', 'text', async v => { this.plugin.settings.dateFormat = v; await this.plugin.saveSettings(); }));
         field('Time Format', 'moment.js format, e.g. HH:mm', row => input(row, this.plugin.settings.timeFormat, 'HH:mm', 'text', async v => { this.plugin.settings.timeFormat = v; await this.plugin.saveSettings(); }));
-        field('New Note Folder', 'Folder where notes created via \\ link are saved.', row => input(row, this.plugin.settings.newNoteFolder, '000 Bin', 'text', async v => { this.plugin.settings.newNoteFolder = v; await this.plugin.saveSettings(); }));
+        field('New Note Folder', 'Folder where notes created via [[ link are saved.', row => input(row, this.plugin.settings.newNoteFolder, '000 Bin', 'text', async v => { this.plugin.settings.newNoteFolder = v; await this.plugin.saveSettings(); }));
         field('Voice Memo Folder', 'Folder where recorded voice notes will be stored.', row => input(row, this.plugin.settings.voiceMemoFolder, '000 Bin/MINA V2 Voice', 'text', async v => { this.plugin.settings.voiceMemoFolder = v; await this.plugin.saveSettings(); }));
         field('Transcription Language', 'Language for audio transcription.', row => input(row, this.plugin.settings.transcriptionLanguage, 'English', 'text', async v => { this.plugin.settings.transcriptionLanguage = v; await this.plugin.saveSettings(); }));
         field('Gemini API Key', 'Google Gemini API key.', row => input(row, this.plugin.settings.geminiApiKey, 'AIza...', 'password', async v => { this.plugin.settings.geminiApiKey = v.trim(); await this.plugin.saveSettings(); }));
@@ -1182,6 +1182,23 @@ export class MinaView extends ItemView {
 
         sendBtn.addEventListener('click', send);
         textarea.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+        textarea.addEventListener('input', (e) => {
+            const target = e.target as HTMLTextAreaElement;
+            const pos = target.selectionStart;
+            if (pos >= 2 && target.value.substring(pos - 2, pos) === '[[') {
+                new NotePickerModal(this.plugin.app, (file) => {
+                    if (!this.groundedNotes.some(f => f.path === file.path)) {
+                        this.groundedNotes.push(file);
+                        refreshGroundedBar();
+                    }
+                    const before = target.value.substring(0, pos - 2);
+                    const after = target.value.substring(pos);
+                    target.value = before + after;
+                    target.focus();
+                    target.setSelectionRange(before.length, before.length);
+                }).open();
+            }
+        });
         newChatBtn.addEventListener('click', () => { this.chatHistory = []; this.renderChatHistory(); });
 
         if (isMobilePhone) {
@@ -1395,7 +1412,7 @@ export class MinaView extends ItemView {
         }
         const inputSection = container.createEl('div', { attr: { style: 'flex-shrink: 0; margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-end;' } });
         const textAreaWrapper = inputSection.createEl('div', { attr: { style: 'flex-grow: 1;' } });
-        const textArea = textAreaWrapper.createEl('textarea', { attr: { placeholder: Platform.isMobile && !isTablet() ? 'Type thought… use @ for date, # for context, \\ for links' : 'Enter thought or task… Shift+Enter to save', rows: isTablet() ? '4' : '3', style: 'width: 100%; font-family: var(--font-text); resize: vertical; display: block;' } });
+        const textArea = textAreaWrapper.createEl('textarea', { attr: { placeholder: Platform.isMobile && !isTablet() ? 'Type thought… use @ for date, # for context, [[ for links' : 'Enter thought or task… Shift+Enter to save', rows: isTablet() ? '4' : '3', style: 'width: 100%; font-family: var(--font-text); resize: vertical; display: block;' } });
         textArea.value = this.content;
         if (Platform.isMobile) textArea.addEventListener('focus', () => { setTimeout(() => { textArea.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300); });
         let lastValue = this.content;
@@ -1426,9 +1443,9 @@ export class MinaView extends ItemView {
 
             if (val.length > lastValue.length) {
                 const cursorPosition = target.selectionStart;
-                if (cursorPosition > 0 && val.charAt(cursorPosition - 1) === '\\') {
+                if (cursorPosition >= 2 && val.substring(cursorPosition - 2, cursorPosition) === '[[') {
                     new FileSuggestModal(this.plugin.app, (file) => {
-                        const before = val.substring(0, cursorPosition - 1); const after = val.substring(cursorPosition); const insertText = `[[${file.basename}]]`;
+                        const before = val.substring(0, cursorPosition - 2); const after = val.substring(cursorPosition); const insertText = `[[${file.basename}]]`;
                         target.value = before + insertText + after; this.content = target.value;
                         setTimeout(() => { target.focus(); target.setSelectionRange(before.length + insertText.length, before.length + insertText.length); }, 50);
                     }, this.plugin.settings.newNoteFolder).open();

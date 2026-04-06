@@ -96,7 +96,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Thread Protection:** Deletion (`🗑️`) is restricted for entries that have active replies to prevent orphaned threads.
    - **Convert Thought to Task:** `📋` button in the thought hover overlay opens `ConvertToTaskModal` with a due date picker and preview. Creates a task entry and tags the original thought with `#converted_to_tasks` context.
    - **File & Image Support:** Paste images or drag files directly into capture areas or edit modals.
-   - **Smart Autocomplete:** Typing `\` opens a fuzzy search for vault note referencing.
+   - **Smart Autocomplete:** Typing `[[` opens a fuzzy search for vault note referencing.
      - If the typed name does not match any existing note, a **`＋ Create "name"`** option appears at the top of the list.
      - Selecting it creates `<New Note Folder>/<name>.md` (auto-creates the folder if missing) and inserts `[[name]]` into the thought.
    - **Internal Link Navigation:** Clicking `[[note]]` links inside thought/task cards opens the linked note — new window on desktop, new tab on mobile.
@@ -137,7 +137,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - **Capture Folder:** Target directory for all MINA files.
    - **Thoughts/Tasks File Names:** Fully customizable storage paths.
    - **Date/Time Formats:** User-configurable moment.js formats.
-   - **New Note Folder:** Folder where notes created via the `\` link picker are saved. Default: `000 Bin`.
+   - **New Note Folder:** Folder where notes created via the `[[` link picker are saved. Default: `000 Bin`.
    - **Voice Memo Folder:** Folder where recorded voice notes are stored. Default: `000 Bin/MINA V2 Voice`.
    - **Transcription Language:** Target language for audio transcription/translation. Default: `English`.
    - **Gemini API Key:** Stored securely (password field).
@@ -153,7 +153,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - **Markdown Rendering:** Assistant responses rendered via `MarkdownRenderer.render()`.
    - **Grounded Notes Bar:** Horizontal scrollable chip strip showing default context chips (Th, Ta, Du), any user-pinned vault notes, and the 🌐 Web toggle.
    - **🌐 Web Search Toggle:** Chip in the grounded bar. When active, sends `tools: [{ googleSearch: {} }]` to Gemini API for real-time web-grounded responses.
-   - **`\` Note Grounding:** Typing `\` in the chat textarea opens the note picker.
+   - **`[[` Note Grounding:** Typing `[[` in the chat textarea opens the note picker.
    - **Save Session (`📥`):** Saves full chat to `MINA Chat YYYY-MM-DD HHmm.md`.
    - **New Chat (`🗒️`):** Clears chat history with a confirmation modal.
    - **Recall Session (`📂`):** Opens `ChatSessionPickerModal` to reload a saved chat file.

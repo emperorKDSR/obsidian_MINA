@@ -131,9 +131,9 @@ export class EditEntryModal extends Modal {
 
             if (val.length > currentTextValue.length) {
                 const cursorPosition = target.selectionStart;
-                if (cursorPosition > 0 && val.charAt(cursorPosition - 1) === '\\') {
+                if (cursorPosition >= 2 && val.substring(cursorPosition - 2, cursorPosition) === '[[') {
                     const modal = new FileSuggestModal(this.plugin.app, (file) => {
-                        const before = val.substring(0, cursorPosition - 1);
+                        const before = val.substring(0, cursorPosition - 2);
                         const after = val.substring(cursorPosition);
                         const insertText = `[[${file.basename}]]`;
                         target.value = before + insertText + after;
