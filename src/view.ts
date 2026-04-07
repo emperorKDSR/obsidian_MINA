@@ -1146,25 +1146,12 @@ export class MinaView extends ItemView {
             });
             webChip.setText('🌐 Web');
             webChip.addEventListener('click', () => { this.webSearchEnabled = !this.webSearchEnabled; refreshGroundedBar(); });
-
-            if (isMobilePhone) {
-                const alienBtn = groundedBar.createEl('span', { attr: { style: 'flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--interactive-accent);display:inline-flex;align-items:center;justify-content:center;' } });
-                alienBtn.innerHTML = NINJA_AVATAR_SVG;
-                alienBtn.addEventListener('click', () => {
-                    const area = wrapper.querySelector('.mobile-input-area') as HTMLElement;
-                    area.style.display = area.style.display === 'none' ? 'block' : 'none';
-                    if (area.style.display === 'block') (area.querySelector('textarea') as HTMLTextAreaElement).focus();
-                });
-            }
         };
         refreshGroundedBar();
 
-        this.chatContainer = wrapper.createEl('div', { attr: { style: 'flex-grow:1;min-height:0;overflow-y:auto;padding:8px 8px 160px 8px;' } });
-        await this.renderChatHistory();
-
         const textarea = document.createElement('textarea');
         textarea.placeholder = 'Ask MINA…';
-        textarea.rows = isMobilePhone ? 4 : 3;
+        textarea.rows = 3;
         textarea.style.cssText = 'width:100%;resize:none;padding:8px 140px 8px 10px;border-radius:6px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);';
 
         const handleChatFiles = async (files: FileList) => {
@@ -1299,12 +1286,19 @@ export class MinaView extends ItemView {
             this.renderChatHistory(); 
         });
 
-        if (isMobilePhone) {
-            const mia = wrapper.createEl('div', { cls: 'mobile-input-area', attr: { style: 'display:block;padding:8px;background:var(--background-secondary);border-top:1px solid var(--background-modifier-border);position:relative;' } });
-            mia.appendChild(textarea); mia.appendChild(overlayBtns);
-        } else {
-            const inputRow = wrapper.createEl('div', { attr: { style: 'flex-shrink:0;position:relative;padding:8px;border-top:1px solid var(--background-modifier-border);background:var(--background-secondary);' } });
-            inputRow.appendChild(textarea); inputRow.appendChild(overlayBtns);
+        const inputRow = document.createElement('div');
+        inputRow.style.cssText = `flex-shrink:0;position:relative;padding:8px;background:var(--background-secondary);z-index:10;${Platform.isMobile ? 'border-bottom:1px solid var(--background-modifier-border);' : 'border-top:1px solid var(--background-modifier-border);'}`;
+        inputRow.appendChild(textarea); inputRow.appendChild(overlayBtns);
+
+        if (Platform.isMobile) {
+            wrapper.appendChild(inputRow);
+        }
+
+        this.chatContainer = wrapper.createEl('div', { attr: { style: `flex-grow:1;min-height:0;overflow-y:auto;padding:8px;padding-bottom:${Platform.isMobile ? '120px' : '8px'};` } });
+        await this.renderChatHistory();
+
+        if (!Platform.isMobile) {
+            wrapper.appendChild(inputRow);
             setTimeout(() => textarea.focus(), 50);
         }
     }

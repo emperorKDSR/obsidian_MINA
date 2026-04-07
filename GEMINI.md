@@ -148,7 +148,9 @@ The "MINA V2" plugin has been developed with the following features and implemen
 
 - **MINA AI Chat Tab (Ai)**
   - Embedded AI assistant powered by Google Gemini.
-  - **High-Focus Mode:** Dedicated "AI Mode" opens a standalone, distraction-free window (pop-out on desktop, full-screen on mobile) with a simplified header.
+  - **High-Focus Mode:** Dedicated "AI Mode" opens a standalone, distraction-free window (pop-out on desktop, full-screen on mobile).
+    - **Unified Interface:** The chat input is always visible at the bottom on desktop and at the **top (below the grounding bar)** on mobile to ensure it remains accessible when the virtual keyboard is open.
+    - **Optimized Scrolling:** The mobile view includes 120px of extra bottom padding to ensure the last responses are easily scrollable and visible.
   - **Automatic Session Saving:** Every conversation is automatically persisted to a timestamped Markdown file in the `000 Bin/MINA V2 AI Chat` folder.
   - **Multimodal Grounding:**
     - **Image Support:** Ground images via pasting from clipboard, drag-and-drop, or the upload button (`📎`). Grounded images are automatically saved to the vault's `998 Attachments` folder.
