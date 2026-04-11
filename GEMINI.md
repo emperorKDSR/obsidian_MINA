@@ -68,7 +68,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Alien:** Opens Full Mode.
      - **Pen:** Opens Journal Mode.
      - **Sun:** Opens Daily Mode.
-     - **Sparkle/Bot:** Opens AI Mode.
+     - **Robot:** Opens AI Mode.
      - **Clock:** Opens Timeline Mode.
    - **Desktop Optimization:** 
      - Standalone windows (Full Mode, Daily Mode, Timeline, AI Mode) hide native tab headers and include a dedicated **drag handle** at the top.

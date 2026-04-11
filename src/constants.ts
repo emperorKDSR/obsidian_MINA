@@ -37,7 +37,11 @@ export const DAILY_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
 
 export const AI_CHAT_ICON_ID = "mina-ai-icon";
 export const AI_CHAT_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
-    <path d="m12 3 1.9 5.8 5.9 1.3-5.3 3 1.1 6.1-3.6-2.8-3.6 2.8 1.1-6.1-5.3-3 5.9-1.3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+    <rect x="5" y="6" width="14" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+    <circle cx="9" cy="11" r="1.5" fill="currentColor"/>
+    <circle cx="15" cy="11" r="1.5" fill="currentColor"/>
+    <path d="M12 2v4M8 2h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M9 15h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </g>`;
 
 export const TIMELINE_ICON_ID = "mina-timeline-icon";
