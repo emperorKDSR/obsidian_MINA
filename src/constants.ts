@@ -57,6 +57,14 @@ export const FOCUS_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <path d="M12 2v3M12 19v3M2 12h3M19 12h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </g>`;
 
+export const GRUNDFOS_ICON_ID = "mina-grundfos-icon";
+export const GRUNDFOS_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
+    <circle cx="9" cy="14" r="5" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="M14 14h5M16.5 14v-6M19 8h-2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M9 9V5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M12 5H6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+</g>`;
+
 export const DEFAULT_SETTINGS: MinaSettings = {
     captureFolder: '000 Bin',
 	captureFilePath: 'mina_v2.md',
@@ -82,5 +90,7 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     showDailyDues: true,
     showDailyThoughts: true,
     showDailyPinned: true,
-    focusModeOrder: []
+    focusModeOrder: [],
+    grundfosModeOrder: [],
+    blurredNotes: []
 }

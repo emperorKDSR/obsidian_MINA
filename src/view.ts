@@ -19,7 +19,7 @@ export class MinaView extends ItemView {
     content: string;
     isTask: boolean;
     dueDate: string; // YYYY-MM-DD
-    activeTab: 'daily' | 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' | 'dues' | 'vo' | 'timeline' | 'journal' | 'focus' = 'daily';
+    activeTab: 'daily' | 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' | 'dues' | 'vo' | 'timeline' | 'journal' | 'focus' | 'grundfos' = 'daily';
     isDedicated: boolean = false;
     timelineSelectedDate: string = moment().format('YYYY-MM-DD');
 
@@ -91,9 +91,11 @@ export class MinaView extends ItemView {
     private tasksOffset   = 0;
     private thoughtsOffset = 0;
     private focusOffset = 0;
+    private grundfosOffset = 0;
     private tasksRowContainer: HTMLElement | null = null;
     private thoughtsRowContainer: HTMLElement | null = null;
     private focusRowContainer: HTMLElement | null = null;
+    private grundfosRowContainer: HTMLElement | null = null;
 
     constructor(leaf: WorkspaceLeaf, plugin: MinaPlugin) {
         super(leaf);
@@ -281,6 +283,7 @@ export class MinaView extends ItemView {
         else if (this.activeTab === 'journal') this.renderJournalMode(container);
         else if (this.activeTab === 'dues') this.renderDuesMode(container);
         else if (this.activeTab === 'focus') this.renderFocusMode(container);
+        else if (this.activeTab === 'grundfos') this.renderGrundfosMode(container);
         else if (this.activeTab === 'settings') this.renderSettingsMode(container);
         else if (this.activeTab === 'vo') this.renderVoiceMode(container);
         else if (this.activeTab === 'daily') this.renderDailyMode(container);
@@ -2024,7 +2027,7 @@ export class MinaView extends ItemView {
         }
     }
 
-    async renderThoughtRow(entry: ThoughtEntry, container: HTMLElement, filePath: string, level: number = 0, hideAvatar: boolean = false, hideMetadata: boolean = false) {
+    async renderThoughtRow(entry: ThoughtEntry, container: HTMLElement, filePath: string, level: number = 0, hideAvatar: boolean = false, hideMetadata: boolean = false, blur: boolean = false) {
         const isCollapsed = this.collapsedThreads.has(entry.filePath); const indentStep = (Platform.isMobile && !isTablet()) ? 12 : 24;
         const itemEl = container.createEl('div', { attr: { style: `margin-bottom: 3px; padding-bottom: 3px; display: flex; align-items: flex-start; ${level > 0 ? `margin-left: ${level * indentStep}px; border-left: 2px solid var(--background-modifier-border); padding-left: 6px;` : ''}` } });
         
@@ -2046,7 +2049,7 @@ export class MinaView extends ItemView {
         const contentDiv = itemEl.createEl('div', { attr: { style: 'flex-grow: 1; display: flex; flex-direction: column; min-width: 0;' } });
         const mainContentRow = contentDiv.createEl('div', { attr: { style: 'display: flex; margin-bottom: 0; position: relative;' } });
         const cardWrapper = mainContentRow.createEl('div', { attr: { style: 'position: relative; flex-grow: 1; min-width: 0;' } });
-        const renderTarget = cardWrapper.createEl('div', { cls: 'mina-card', attr: { style: 'cursor: text; font-size: 0.95em; line-height: 1.4; color: var(--text-normal); word-break: break-word;' } });
+        const renderTarget = cardWrapper.createEl('div', { cls: 'mina-card' + (blur ? ' mina-blurred' : ''), attr: { style: 'cursor: text; font-size: 0.95em; line-height: 1.4; color: var(--text-normal); word-break: break-word;' } });
         renderTarget.createEl('span', { text: `${entry.day} ${entry.created.split(' ')[1] || ''}`, attr: { style: 'float: right; font-size: 0.65em; color: var(--text-muted); opacity: 0.7; margin-left: 8px;' } });
         await MarkdownRenderer.render(this.plugin.app, entry.body, renderTarget, filePath, this);
         this.hookInternalLinks(renderTarget, filePath); this.hookImageZoom(renderTarget); this.hookCheckboxes(renderTarget, entry);
@@ -2063,6 +2066,24 @@ export class MinaView extends ItemView {
             await this.plugin.toggleThoughtPin(entry.filePath, !entry.pinned);
         });
 
+        if (this.activeTab === 'grundfos') {
+            const isBlurred = this.plugin.settings.blurredNotes.includes(entry.filePath);
+            const blurBtn = actionsDiv.createSpan({ 
+                text: isBlurred ? '👁️‍🗨️' : '👁️', 
+                attr: { style: 'cursor: pointer; font-size: 0.8em;', title: isBlurred ? 'Unblur' : 'Blur' } 
+            });
+            blurBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (isBlurred) {
+                    this.plugin.settings.blurredNotes = this.plugin.settings.blurredNotes.filter(p => p !== entry.filePath);
+                } else {
+                    this.plugin.settings.blurredNotes.push(entry.filePath);
+                }
+                await this.plugin.saveSettings();
+                this.updateGrundfosList();
+            });
+        }
+
         const openBtn = actionsDiv.createSpan({ text: '🔗', attr: { style: 'cursor: pointer; font-size: 0.8em;', title: 'Open file' } }); openBtn.addEventListener('click', () => { this.plugin.app.workspace.openLinkText(entry.filePath, '', 'window'); });
         const replyBtn = actionsDiv.createSpan({ text: '↩️', attr: { style: 'cursor: pointer; font-size: 0.8em;' } });
         const editBtn = actionsDiv.createSpan({ text: '✏️', attr: { style: 'cursor: pointer; font-size: 0.8em;' } });
@@ -2078,15 +2099,15 @@ export class MinaView extends ItemView {
             const ctxRow = renderTarget.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px;' } }); for (const ctx of entry.context) ctxRow.createEl('span', { text: `#${ctx}`, attr: { style: 'font-size: 0.75em; color: var(--text-accent); font-weight: 500; background-color: var(--background-secondary-alt); padding: 2px 6px; border-radius: 4px;' } }); 
         }
         
-        if (level === 0 && !isCollapsed && entry.children.length > 0) { for (const reply of entry.children) await this.renderReplyRow(reply, entry, container); }
+        if (level === 0 && !isCollapsed && entry.children.length > 0) { for (const reply of entry.children) await this.renderReplyRow(reply, entry, container, blur); }
     }
 
-    async renderReplyRow(reply: ReplyEntry, parent: ThoughtEntry, container: HTMLElement) {
+    async renderReplyRow(reply: ReplyEntry, parent: ThoughtEntry, container: HTMLElement, blur: boolean = false) {
         const indentStep = (Platform.isMobile && !isTablet()) ? 12 : 24; const itemEl = container.createEl('div', { attr: { style: `margin-bottom: 3px; padding-bottom: 3px; display: flex; align-items: flex-start; margin-left: ${indentStep}px; border-left: 2px solid var(--background-modifier-border); padding-left: 6px;` } });
         const contentDiv = itemEl.createEl('div', { attr: { style: 'flex-grow: 1; display: flex; flex-direction: column; min-width: 0;' } });
         const mainContentRow = contentDiv.createEl('div', { attr: { style: 'display: flex; margin-bottom: 0; position: relative;' } });
         const cardWrapper = mainContentRow.createEl('div', { attr: { style: 'position: relative; flex-grow: 1; min-width: 0;' } });
-        const renderTarget = cardWrapper.createEl('div', { cls: 'mina-card', attr: { style: 'cursor: text; font-size: 0.95em; line-height: 1.4; color: var(--text-normal); word-break: break-word;' } });
+        const renderTarget = cardWrapper.createEl('div', { cls: 'mina-card' + (blur ? ' mina-blurred' : ''), attr: { style: 'cursor: text; font-size: 0.95em; line-height: 1.4; color: var(--text-normal); word-break: break-word;' } });
         renderTarget.createEl('span', { text: `${reply.date} ${reply.time}`, attr: { style: 'float: right; font-size: 0.65em; color: var(--text-muted); opacity: 0.7; margin-left: 8px;' } });
         await MarkdownRenderer.render(this.plugin.app, reply.text, renderTarget, parent.filePath, this);
         this.hookInternalLinks(renderTarget, parent.filePath); this.hookImageZoom(renderTarget);
@@ -2275,6 +2296,109 @@ export class MinaView extends ItemView {
             if (path) newOrder.push(path);
         });
         this.plugin.settings.focusModeOrder = newOrder;
+        await this.plugin.saveSettings();
+    }
+
+    renderGrundfosMode(container: HTMLElement) {
+        const innerContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; padding: 15px 15px 200px 15px; -webkit-overflow-scrolling: touch;' } });
+        this.grundfosRowContainer = innerContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
+        this.updateGrundfosList();
+    }
+
+    async updateGrundfosList() {
+        if (!this.grundfosRowContainer) return;
+        this.grundfosRowContainer.empty();
+        
+        let entries = Array.from(this.plugin.thoughtIndex.values()).filter(e => e.context.includes('Grundfos'));
+        const order = this.plugin.settings.grundfosModeOrder || [];
+        
+        entries.sort((a, b) => {
+            const idxA = order.indexOf(a.filePath);
+            const idxB = order.indexOf(b.filePath);
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
+            return b.lastThreadUpdate - a.lastThreadUpdate;
+        });
+
+        if (entries.length === 0) {
+            this.grundfosRowContainer.createEl('p', { text: 'No Grundfos notes found.', attr: { style: 'color: var(--text-muted); text-align: center; margin-top: 20px;' } });
+            return;
+        }
+
+        let draggedEl: HTMLElement | null = null;
+
+        for (const entry of entries) {
+            const dragWrapper = this.grundfosRowContainer.createEl('div', { 
+                attr: { 
+                    draggable: 'true',
+                    'data-filepath': entry.filePath,
+                    style: 'cursor: grab; transition: transform 0.2s, opacity 0.2s;'
+                } 
+            });
+
+            dragWrapper.addEventListener('dragstart', (e) => {
+                draggedEl = dragWrapper;
+                dragWrapper.style.opacity = '0.5';
+                if (e.dataTransfer) {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', entry.filePath);
+                }
+            });
+
+            dragWrapper.addEventListener('dragend', () => {
+                dragWrapper.style.opacity = '1';
+                this.focusRowContainer?.querySelectorAll('div').forEach(el => (el as HTMLElement).style.borderTop = '');
+            });
+
+            dragWrapper.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+                const rect = dragWrapper.getBoundingClientRect();
+                const midpoint = rect.top + rect.height / 2;
+                if (e.clientY < midpoint) {
+                    dragWrapper.style.borderTop = '2px solid var(--interactive-accent)';
+                    dragWrapper.style.borderBottom = '';
+                } else {
+                    dragWrapper.style.borderTop = '';
+                    dragWrapper.style.borderBottom = '2px solid var(--interactive-accent)';
+                }
+            });
+
+            dragWrapper.addEventListener('dragleave', () => {
+                dragWrapper.style.borderTop = '';
+                dragWrapper.style.borderBottom = '';
+            });
+
+            dragWrapper.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                dragWrapper.style.borderTop = '';
+                dragWrapper.style.borderBottom = '';
+                if (draggedEl && draggedEl !== dragWrapper) {
+                    const rect = dragWrapper.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+                    if (e.clientY < midpoint) {
+                        this.grundfosRowContainer?.insertBefore(draggedEl, dragWrapper);
+                    } else {
+                        this.grundfosRowContainer?.insertBefore(draggedEl, dragWrapper.nextSibling);
+                    }
+                    await this.saveGrundfosOrder();
+                }
+            });
+
+            const isBlurred = this.plugin.settings.blurredNotes.includes(entry.filePath);
+            await this.renderThoughtRow(entry, dragWrapper, entry.filePath, 0, true, true, isBlurred);
+        }
+    }
+
+    async saveGrundfosOrder() {
+        if (!this.grundfosRowContainer) return;
+        const newOrder: string[] = [];
+        this.grundfosRowContainer.querySelectorAll('[data-filepath]').forEach(el => {
+            const path = el.getAttribute('data-filepath');
+            if (path) newOrder.push(path);
+        });
+        this.plugin.settings.grundfosModeOrder = newOrder;
         await this.plugin.saveSettings();
     }
 }

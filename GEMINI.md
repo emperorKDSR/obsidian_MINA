@@ -74,6 +74,10 @@ The "MINA V2" plugin has been developed with the following features and implemen
        - **Pinned-Only:** Displays strictly only notes that are pinned (`pinned: true`).
        - **High-Focus UI:** Hides the header, close button, and capture area to maintain focus on existing pinned content.
        - **Persistent Reordering:** Supports drag-and-drop to reorder pinned notes. The custom order is persisted across app reloads.
+     - **Pump:** Opens Grundfos Mode.
+       - **Context-Specific:** Displays notes with the "Grundfos" context/tag.
+       - **Sensitivity Blur:** Includes a note-by-note toggle to blur/unblur note content for privacy.
+       - **Persistent Privacy:** Individual blur states and custom reordering are persisted across app reloads.
    - **Desktop Optimization:** 
      - Standalone windows (Full Mode, Daily Mode, Timeline, AI Mode) hide native tab headers and include a dedicated **drag handle** at the top.
      - **Seamless Transitions:** Robust handling of mode switching by identifying and reusing existing windows or sidebar leaves.

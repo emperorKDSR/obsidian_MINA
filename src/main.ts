@@ -1,5 +1,5 @@
 import { Plugin, TFile, Notice, WorkspaceLeaf, Platform, moment, addIcon } from 'obsidian';
-import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG } from './constants';
+import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG, GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG } from './constants';
 import { MinaSettings, ThoughtEntry, TaskEntry, ReplyEntry } from './types';
 import { isTablet, toAsciiDigits } from './utils';
 import { MinaView } from './view';
@@ -51,6 +51,7 @@ export default class MinaPlugin extends Plugin {
 		addIcon(AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG);
 		addIcon(TIMELINE_ICON_ID, TIMELINE_ICON_SVG);
 		addIcon(FOCUS_ICON_ID, FOCUS_ICON_SVG);
+		addIcon(GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG);
 
 		this.addRibbonIcon(KATANA_ICON_ID, 'Full Mode', () => {
 			this.activateView();
@@ -74,6 +75,10 @@ export default class MinaPlugin extends Plugin {
 
 		this.addRibbonIcon(FOCUS_ICON_ID, 'Focus Mode', () => {
 			this.activateView('focus', true);
+		});
+
+		this.addRibbonIcon(GRUNDFOS_ICON_ID, 'Grundfos Mode', () => {
+			this.activateView('grundfos', true);
 		});
 
 		this.addCommand({
@@ -118,6 +123,15 @@ export default class MinaPlugin extends Plugin {
 			icon: FOCUS_ICON_ID,
 			callback: () => {
 				this.activateView('focus', true);
+			}
+		});
+
+		this.addCommand({
+			id: 'open-mina-grundfos-mode',
+			name: 'Grundfos Mode',
+			icon: GRUNDFOS_ICON_ID,
+			callback: () => {
+				this.activateView('grundfos', true);
 			}
 		});
 
@@ -301,6 +315,9 @@ export default class MinaPlugin extends Plugin {
             if (loadedData.showDailyDues !== undefined) this.settings.showDailyDues = loadedData.showDailyDues;
             if (loadedData.showDailyThoughts !== undefined) this.settings.showDailyThoughts = loadedData.showDailyThoughts;
             if (loadedData.showDailyPinned !== undefined) this.settings.showDailyPinned = loadedData.showDailyPinned;
+            if (loadedData.focusModeOrder !== undefined) this.settings.focusModeOrder = [...loadedData.focusModeOrder];
+            if (loadedData.grundfosModeOrder !== undefined) this.settings.grundfosModeOrder = [...loadedData.grundfosModeOrder];
+            if (loadedData.blurredNotes !== undefined) this.settings.blurredNotes = [...loadedData.blurredNotes];
             this.settingsInitialized = true;
         }
 

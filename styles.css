@@ -11,3 +11,8 @@
 .theme-light .mina-card {
     background-color: rgba(0, 0, 0, 0.05); /* Transparent grey */
 }
+
+.mina-blurred {
+    filter: blur(8px);
+    transition: filter 0.3s ease;
+}

@@ -26,6 +26,8 @@ export interface MinaSettings {
     showDailyThoughts: boolean;
     showDailyPinned: boolean;
     focusModeOrder: string[];
+    grundfosModeOrder: string[];
+    blurredNotes: string[];
 }
 
 export interface ReplyEntry {
