@@ -60,11 +60,13 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **"AND" Logic:** Supports multi-token search; notes only appear if they contain all typed words (e.g., "Grundfos invoice").
      - **Instant Filtering:** Results update in real-time as you type.
      - **Mode-Specific:** Automatically scoped to the current view (e.g., searching in Focus Mode only searches pinned notes).
+     - **Mobile Optimization:** On mobile, the search bar is hidden by default to save space and can be toggled via the FAB menu (**Show/Hide Search**).
      - **Persistent Query:** The search query remains active as you switch between different tabs and modes.
    - **Desktop Optimization:** 
      - Standalone windows hide native tab headers and include a dedicated **drag handle** at the top.
      - **Seamless Transitions:** Robust handling of mode switching.
    - **Mobile Optimization:**
+     - **Dynamic Headers:** The topmost center title follows the format **"MINA - {mode}"** and updates reactively as you switch contexts.
      - **Opens as Main Tab:** MINA opens as a full workspace tab.
      - **Context Picker via `#` Trigger:** Typing `#` opens a suggest modal for contexts.
      - **File Attachment Button (`📎`):** Triggers file upload.

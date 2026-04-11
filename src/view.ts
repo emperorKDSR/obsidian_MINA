@@ -66,6 +66,7 @@ export class MinaView extends ItemView {
     showCaptureInThoughts: boolean = false;
     showThoughtsFilter: boolean = false;
     searchQuery: string = '';
+    showSearch: boolean = !Platform.isMobile;
 
     reviewTasksContainer: HTMLElement;
     reviewThoughtsContainer: HTMLElement;
@@ -492,6 +493,18 @@ export class MinaView extends ItemView {
                         this.plugin.activateView('mina-ai', true);
                     })
             );
+
+            if (Platform.isMobile) {
+                menu.addItem((item: MenuItem) =>
+                    item
+                        .setTitle(this.showSearch ? 'Hide Search' : 'Show Search')
+                        .setIcon('search')
+                        .onClick(() => {
+                            this.showSearch = !this.showSearch;
+                            this.renderView();
+                        })
+                );
+            }
 
             menu.showAtMouseEvent(e);
         });
@@ -2676,7 +2689,7 @@ export class MinaView extends ItemView {
     }
 
     renderSearchInput(container: HTMLElement, updateFn: () => void) {
-        const searchContainer = container.createEl('div', { attr: { style: 'padding: 0 12px 10px 12px; flex-shrink: 0;' } });
+        const searchContainer = container.createEl('div', { attr: { style: `padding: 0 12px 10px 12px; flex-shrink: 0; display: ${this.showSearch ? 'block' : 'none'};` } });
         const input = searchContainer.createEl('input', { 
             type: 'text', 
             attr: { 
