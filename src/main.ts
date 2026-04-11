@@ -1,5 +1,5 @@
 import { Plugin, TFile, Notice, WorkspaceLeaf, Platform, moment, addIcon } from 'obsidian';
-import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG, GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG } from './constants';
+import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG, GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG, MEMENTO_ICON_ID, MEMENTO_ICON_SVG } from './constants';
 import { MinaSettings, ThoughtEntry, TaskEntry, ReplyEntry } from './types';
 import { isTablet, toAsciiDigits } from './utils';
 import { MinaView } from './view';
@@ -52,6 +52,7 @@ export default class MinaPlugin extends Plugin {
 		addIcon(TIMELINE_ICON_ID, TIMELINE_ICON_SVG);
 		addIcon(FOCUS_ICON_ID, FOCUS_ICON_SVG);
 		addIcon(GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG);
+		addIcon(MEMENTO_ICON_ID, MEMENTO_ICON_SVG);
 
 		this.addRibbonIcon(KATANA_ICON_ID, 'MINA', () => {
 			this.activateView();
@@ -79,6 +80,10 @@ export default class MinaPlugin extends Plugin {
 
 		this.addRibbonIcon(GRUNDFOS_ICON_ID, 'Grundfos Mode', () => {
 			this.activateView('grundfos', true);
+		});
+
+		this.addRibbonIcon(MEMENTO_ICON_ID, 'Memento Mori', () => {
+			this.activateView('memento-mori', true);
 		});
 
 		this.addCommand({
@@ -132,6 +137,15 @@ export default class MinaPlugin extends Plugin {
 			icon: GRUNDFOS_ICON_ID,
 			callback: () => {
 				this.activateView('grundfos', true);
+			}
+		});
+
+		this.addCommand({
+			id: 'open-mina-memento-mori',
+			name: 'Memento Mori',
+			icon: MEMENTO_ICON_ID,
+			callback: () => {
+				this.activateView('memento-mori', true);
 			}
 		});
 
@@ -350,6 +364,8 @@ export default class MinaPlugin extends Plugin {
             if (loadedData.journalModeOrder !== undefined) this.settings.journalModeOrder = [...loadedData.journalModeOrder];
             if (loadedData.blurredNotes !== undefined) this.settings.blurredNotes = [...loadedData.blurredNotes];
             if (loadedData.isCompactView !== undefined) this.settings.isCompactView = loadedData.isCompactView;
+            if (loadedData.birthDate !== undefined) this.settings.birthDate = loadedData.birthDate;
+            if (loadedData.lifeExpectancy !== undefined) this.settings.lifeExpectancy = loadedData.lifeExpectancy;
             this.settingsInitialized = true;
         }
 

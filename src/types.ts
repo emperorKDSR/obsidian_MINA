@@ -30,6 +30,8 @@ export interface MinaSettings {
     journalModeOrder: string[];
     blurredNotes: string[];
     isCompactView: boolean;
+    birthDate: string;
+    lifeExpectancy: number;
 }
 
 export interface ReplyEntry {

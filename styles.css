@@ -63,3 +63,40 @@
     color: var(--text-accent-hover);
     border-bottom-style: solid;
 }
+
+/* Memento Mori Styles */
+.mina-memento-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mina-memento-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 2px;
+    align-items: center;
+}
+
+.mina-memento-box {
+    width: 1.2%; /* Roughly 52 boxes in a row */
+    aspect-ratio: 1 / 1;
+    border-radius: 1px;
+    flex-shrink: 0;
+    min-width: 4px;
+}
+
+.memento-past {
+    background-color: var(--text-muted);
+    opacity: 0.6;
+}
+
+.memento-current {
+    background-color: var(--interactive-accent);
+    box-shadow: 0 0 5px var(--interactive-accent);
+}
+
+.memento-future {
+    border: 1px solid var(--background-modifier-border);
+}

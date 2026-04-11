@@ -38,6 +38,11 @@ The "MINA V2" plugin has been developed with the following features and implemen
        - **Context-Specific:** Displays notes with the "Grundfos" context/tag.
        - **Smart FAB Capture:** To maintain maximum focus, the inline capture area is removed. Any capture initiated via the FAB (thoughts, tasks, or voice memos) is automatically tagged with the "Grundfos" context.
        - **Persistent Reordering:** Supports drag-and-drop reordering.
+     - **Memento Mori:** A dedicated command and ribbon icon (**Hourglass**) opens a life visualization grid.
+       - **Life Visualization:** Displays a grid of 90 years (rows) by 52 weeks (boxes).
+       - **Visual Progress:** Color-coded boxes represent past (consumed), current (highlighted), and future (remaining) weeks.
+       - **Life Stats:** Displays real-time calculations: Age, total weeks lived, and % of life consumed.
+       - **Fixed Layout:** One year per row across all devices (Desktop, Mobile, Tablet).
      - **Timeline View:** A chronological list of thoughts and tasks. Uses a custom **Clock** icon.
      - **Floating Action Button (FAB):** A movable circular button with the alien avatar icon. Positioned in the **bottom-right corner** on desktop.
    - **Modern Card-Based Layout:** Thoughts and tasks are displayed in responsive "cards" with rounded corners.

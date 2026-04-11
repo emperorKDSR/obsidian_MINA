@@ -65,6 +65,11 @@ export const GRUNDFOS_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <path d="M12 5H6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </g>`;
 
+export const MEMENTO_ICON_ID = "mina-memento-icon";
+export const MEMENTO_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
+    <path d="M5 2h14M5 22h14M5 2l7 8 7-8M5 22l7-8 7 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>`;
+
 export const DEFAULT_SETTINGS: MinaSettings = {
     captureFolder: '000 Bin',
 	captureFilePath: 'mina_v2.md',
@@ -94,5 +99,7 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     grundfosModeOrder: [],
     journalModeOrder: [],
     blurredNotes: [],
-    isCompactView: false
+    isCompactView: false,
+    birthDate: '1987-04-25',
+    lifeExpectancy: 90
 }
