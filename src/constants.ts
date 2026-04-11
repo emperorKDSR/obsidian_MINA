@@ -92,6 +92,7 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     showDailyPinned: true,
     focusModeOrder: [],
     grundfosModeOrder: [],
+    journalModeOrder: [],
     blurredNotes: [],
     isCompactView: false
 }

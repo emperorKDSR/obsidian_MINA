@@ -347,6 +347,7 @@ export default class MinaPlugin extends Plugin {
             if (loadedData.showDailyPinned !== undefined) this.settings.showDailyPinned = loadedData.showDailyPinned;
             if (loadedData.focusModeOrder !== undefined) this.settings.focusModeOrder = [...loadedData.focusModeOrder];
             if (loadedData.grundfosModeOrder !== undefined) this.settings.grundfosModeOrder = [...loadedData.grundfosModeOrder];
+            if (loadedData.journalModeOrder !== undefined) this.settings.journalModeOrder = [...loadedData.journalModeOrder];
             if (loadedData.blurredNotes !== undefined) this.settings.blurredNotes = [...loadedData.blurredNotes];
             if (loadedData.isCompactView !== undefined) this.settings.isCompactView = loadedData.isCompactView;
             this.settingsInitialized = true;

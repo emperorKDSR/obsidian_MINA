@@ -1814,30 +1814,109 @@ export class MinaView extends ItemView {
 
     renderJournalMode(container: HTMLElement) {
         this.renderSearchInput(container, () => this.updateJournalList());
-        this.reviewThoughtsContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 5px 5px 200px 5px;' } });
+        const innerContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; padding: 15px 15px 200px 15px; -webkit-overflow-scrolling: touch;' } });
+        this.reviewThoughtsContainer = innerContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
         this.updateJournalList();
     }
 
-    async updateJournalList(appendMore = false) {
+    async updateJournalList() {
         if (!this.reviewThoughtsContainer) return;
-        if (!appendMore) {
-            this.thoughtsOffset = 0; this.reviewThoughtsContainer.empty(); this._parsedRoots = [];
-            let roots: ThoughtEntry[] = Array.from(this.plugin.thoughtIndex.values());
-            roots = roots.filter(e => e.context.includes('journal'));
-            if (this.searchQuery) {
-                roots = roots.filter(e => this.matchesSearch(this.searchQuery, [e.body, e.title]));
-            }
-            roots.sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate);
-            this._parsedRoots = roots;
-            if (roots.length === 0) { this.reviewThoughtsContainer.createEl('p', { text: this.searchQuery ? 'No matching entries found.' : 'No journal entries found.', attr: { style: 'color: var(--text-muted);' } }); return; }
-            this.thoughtsRowContainer = this.reviewThoughtsContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
+        this.reviewThoughtsContainer.empty();
+        
+        let entries = Array.from(this.plugin.thoughtIndex.values()).filter(e => e.context.includes('journal'));
+        if (this.searchQuery) {
+            entries = entries.filter(e => this.matchesSearch(this.searchQuery, [e.body, e.title]));
         }
-        if (!this.thoughtsRowContainer) return;
-        this.reviewThoughtsContainer.querySelector('.mina-load-more')?.remove();
-        const PAGE_SIZE = 20; const page = this._parsedRoots.slice(this.thoughtsOffset, this.thoughtsOffset + PAGE_SIZE);
-        for (const entry of page) await this.renderThoughtRow(entry, this.thoughtsRowContainer!, entry.filePath, 0, true, true);
-        this.thoughtsOffset += page.length;
-        if (this.thoughtsOffset < this._parsedRoots.length) { const loadMoreBtn = this.reviewThoughtsContainer.createEl('button', { text: `Load more (${this._parsedRoots.length - this.thoughtsOffset} remaining)`, cls: 'mina-load-more', attr: { style: 'width: 100%; padding: 8px; margin-top: 6px; border-radius: 6px; border: 1px dashed var(--background-modifier-border); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 0.85em;' } }); loadMoreBtn.addEventListener('click', () => this.updateJournalList(true)); }
+        const order = this.plugin.settings.journalModeOrder || [];
+        
+        entries.sort((a, b) => {
+            const idxA = order.indexOf(a.filePath);
+            const idxB = order.indexOf(b.filePath);
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
+            return b.lastThreadUpdate - a.lastThreadUpdate;
+        });
+
+        if (entries.length === 0) {
+            this.reviewThoughtsContainer.createEl('p', { text: this.searchQuery ? 'No matching entries found.' : 'No journal entries found.', attr: { style: 'color: var(--text-muted); text-align: center; margin-top: 20px;' } });
+            return;
+        }
+
+        let draggedEl: HTMLElement | null = null;
+
+        for (const entry of entries) {
+            const dragWrapper = this.reviewThoughtsContainer.createEl('div', { 
+                attr: { 
+                    draggable: 'true',
+                    'data-filepath': entry.filePath,
+                    style: 'cursor: grab; transition: transform 0.2s, opacity 0.2s;'
+                } 
+            });
+
+            dragWrapper.addEventListener('dragstart', (e) => {
+                draggedEl = dragWrapper;
+                dragWrapper.style.opacity = '0.5';
+                if (e.dataTransfer) {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', entry.filePath);
+                }
+            });
+
+            dragWrapper.addEventListener('dragend', () => {
+                dragWrapper.style.opacity = '1';
+                this.reviewThoughtsContainer?.querySelectorAll('div').forEach(el => (el as HTMLElement).style.borderTop = '');
+            });
+
+            dragWrapper.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+                const rect = dragWrapper.getBoundingClientRect();
+                const midpoint = rect.top + rect.height / 2;
+                if (e.clientY < midpoint) {
+                    dragWrapper.style.borderTop = '2px solid var(--interactive-accent)';
+                    dragWrapper.style.borderBottom = '';
+                } else {
+                    dragWrapper.style.borderTop = '';
+                    dragWrapper.style.borderBottom = '2px solid var(--interactive-accent)';
+                }
+            });
+
+            dragWrapper.addEventListener('dragleave', () => {
+                dragWrapper.style.borderTop = '';
+                dragWrapper.style.borderBottom = '';
+            });
+
+            dragWrapper.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                dragWrapper.style.borderTop = '';
+                dragWrapper.style.borderBottom = '';
+                if (draggedEl && draggedEl !== dragWrapper) {
+                    const rect = dragWrapper.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+                    if (e.clientY < midpoint) {
+                        this.reviewThoughtsContainer?.insertBefore(draggedEl, dragWrapper);
+                    } else {
+                        this.reviewThoughtsContainer?.insertBefore(draggedEl, dragWrapper.nextSibling);
+                    }
+                    await this.saveJournalOrder();
+                }
+            });
+
+            const isBlurred = this.plugin.settings.blurredNotes.includes(entry.filePath);
+            await this.renderThoughtRow(entry, dragWrapper, entry.filePath, 0, true, true, isBlurred);
+        }
+    }
+
+    async saveJournalOrder() {
+        if (!this.reviewThoughtsContainer) return;
+        const newOrder: string[] = [];
+        this.reviewThoughtsContainer.querySelectorAll('[data-filepath]').forEach(el => {
+            const path = el.getAttribute('data-filepath');
+            if (path) newOrder.push(path);
+        });
+        this.plugin.settings.journalModeOrder = newOrder;
+        await this.plugin.saveSettings();
     }
 
     renderReviewTasksMode(container: HTMLElement) {
@@ -1879,14 +1958,14 @@ export class MinaView extends ItemView {
         filterBarEl = filterBar;
         const statusSel = filterBar.createEl('select', { attr: { style: 'font-size: 0.85em; padding: 2px 4px; text-align: center; text-align-last: center;' }});
         [['all', 'All Status'], ['pending', 'Pending'], ['completed', 'Completed']].forEach(([val, label]) => { const opt = statusSel.createEl('option', { value: val, text: label }); if (this.tasksFilterStatus === val) opt.selected = true; });
-        statusSel.addEventListener('change', (e) => { this.tasksFilterStatus = (e.target as HTMLSelectElement).value as any; this.updateReviewTasksList(); });
+        statusSel.addEventListener('change', (e) => { this.tasksFilterStatus = (e.target as HTMLSelectElement).value as any; this.refreshCurrentList(); });
         const contextPills = filterBar.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 4px; align-items: center;' } });
         const renderTaskContextPills = () => {
             contextPills.empty();
             this.plugin.settings.contexts.forEach(ctx => {
                 const active = this.tasksFilterContext.includes(ctx);
                 const pill = contextPills.createEl('span', { text: `#${ctx}`, attr: { style: `cursor: pointer; font-size: 0.8em; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--interactive-accent); background: ${active ? 'var(--interactive-accent)' : 'transparent'}; color: ${active ? 'var(--text-on-accent)' : 'var(--interactive-accent)'}; transition: 0.15s;` } });
-                pill.addEventListener('click', () => { if (active) this.tasksFilterContext = this.tasksFilterContext.filter(c => c !== ctx); else this.tasksFilterContext = [...this.tasksFilterContext, ctx]; renderTaskContextPills(); this.updateReviewTasksList(); });
+                pill.addEventListener('click', () => { if (active) this.tasksFilterContext = this.tasksFilterContext.filter(c => c !== ctx); else this.tasksFilterContext = [...this.tasksFilterContext, ctx]; renderTaskContextPills(); this.refreshCurrentList(); });
             });
         };
         renderTaskContextPills();
@@ -1899,16 +1978,16 @@ export class MinaView extends ItemView {
         customDateContainer.createSpan({ text: 'to', attr: { style: 'font-size: 0.85em; color: var(--text-muted); padding: 0 2px;' } });
         const customDateEndInput = customDateContainer.createEl('input', { type: 'date', attr: { style: 'font-size: 0.85em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;' } });
         if (this.tasksFilterDateEnd) customDateEndInput.value = this.tasksFilterDateEnd;
-        dateSel.addEventListener('change', (e) => { const val = (e.target as HTMLSelectElement).value; this.tasksFilterDate = val; if (val === 'custom') { customDateContainer.style.display = 'flex'; this.tasksFilterDateStart = customDateStartInput.value || moment().format('YYYY-MM-DD'); this.tasksFilterDateEnd = customDateEndInput.value || moment().format('YYYY-MM-DD'); } else customDateContainer.style.display = 'none'; this.updateReviewTasksList(); });
-        customDateStartInput.addEventListener('change', () => { this.tasksFilterDateStart = customDateStartInput.value; this.updateReviewTasksList(); });
-        customDateEndInput.addEventListener('change', () => { this.tasksFilterDateEnd = customDateEndInput.value; this.updateReviewTasksList(); });
+        dateSel.addEventListener('change', (e) => { const val = (e.target as HTMLSelectElement).value; this.tasksFilterDate = val; if (val === 'custom') { customDateContainer.style.display = 'flex'; this.tasksFilterDateStart = customDateStartInput.value || moment().format('YYYY-MM-DD'); this.tasksFilterDateEnd = customDateEndInput.value || moment().format('YYYY-MM-DD'); } else customDateContainer.style.display = 'none'; this.refreshCurrentList(); });
+        customDateStartInput.addEventListener('change', () => { this.tasksFilterDateStart = customDateStartInput.value; this.refreshCurrentList(); });
+        customDateEndInput.addEventListener('change', () => { this.tasksFilterDateEnd = customDateEndInput.value; this.refreshCurrentList(); });
         
         this.renderSearchInput(filterBar, () => this.updateReviewTasksList());
 
         const captureContainer = container.createEl('div', { attr: { style: `flex-shrink: 0; display: ${this.showCaptureInTasks ? 'block' : 'none'};` } });
         this.renderCaptureMode(captureContainer, false, true);
         this.reviewTasksContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 5px 5px 200px 5px;' } });
-        this.updateReviewTasksList();
+        this.refreshCurrentList();
     }
 
     renderReviewThoughtsMode(container: HTMLElement) {
@@ -1932,7 +2011,7 @@ export class MinaView extends ItemView {
             historyCb.checked = this.showPreviousThoughts;
             const historySlider = historyToggleLabel.createEl('span', { attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${this.showPreviousThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 16px;` } });
             const historyKnob = historyToggleLabel.createEl('span', { attr: { style: `position: absolute; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${this.showPreviousThoughts ? 'translateX(14px)' : 'translateX(0)'};` } });
-            historyCb.addEventListener('change', (e) => { this.showPreviousThoughts = (e.target as HTMLInputElement).checked; historySlider.style.backgroundColor = this.showPreviousThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'; historyKnob.style.transform = this.showPreviousThoughts ? 'translateX(14px)' : 'translateX(0)'; this.updateReviewThoughtsList(); });
+            historyCb.addEventListener('change', (e) => { this.showPreviousThoughts = (e.target as HTMLInputElement).checked; historySlider.style.backgroundColor = this.showPreviousThoughts ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'; historyKnob.style.transform = this.showPreviousThoughts ? 'translateX(14px)' : 'translateX(0)'; this.refreshCurrentList(); });
             const captureToggleContainer = toggleGroup.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); cursor: pointer;' } });
             captureToggleContainer.createSpan({ text: 'Capture' });
             const captureToggleLabel = captureToggleContainer.createEl('label', { attr: { style: 'position: relative; display: inline-block; width: 30px; height: 16px; cursor: pointer;' } });
@@ -1948,7 +2027,7 @@ export class MinaView extends ItemView {
             todoCb.checked = this.thoughtsFilterTodo;
             const todoSlider = todoToggleLabel.createEl('span', { attr: { style: `position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${this.thoughtsFilterTodo ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition: .3s; border-radius: 16px;` } });
             const todoKnob = todoToggleLabel.createEl('span', { attr: { style: `position: absolute; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text-on-accent, white); transition: .3s; border-radius: 50%; transform: ${this.thoughtsFilterTodo ? 'translateX(14px)' : 'translateX(0)'};` } });
-            todoCb.addEventListener('change', (e) => { this.thoughtsFilterTodo = (e.target as HTMLInputElement).checked; todoSlider.style.backgroundColor = this.thoughtsFilterTodo ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'; todoKnob.style.transform = this.thoughtsFilterTodo ? 'translateX(14px)' : 'translateX(0)'; this.updateReviewThoughtsList(); });
+            todoCb.addEventListener('change', (e) => { this.thoughtsFilterTodo = (e.target as HTMLInputElement).checked; todoSlider.style.backgroundColor = this.thoughtsFilterTodo ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'; todoKnob.style.transform = this.thoughtsFilterTodo ? 'translateX(14px)' : 'translateX(0)'; this.refreshCurrentList(); });
         };
         renderToggles(headerSection);
         const filterBar = headerSection.createEl('div', { attr: { style: 'display: none; flex-wrap: wrap; gap: 10px; align-items: center;' } });
@@ -1959,7 +2038,7 @@ export class MinaView extends ItemView {
             this.plugin.settings.contexts.forEach(ctx => {
                 const active = this.thoughtsFilterContext.includes(ctx);
                 const pill = contextPillsTh.createEl('span', { text: `#${ctx}`, attr: { style: `cursor: pointer; font-size: 0.8em; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--interactive-accent); background: ${active ? 'var(--interactive-accent)' : 'transparent'}; color: ${active ? 'var(--text-on-accent)' : 'var(--interactive-accent)'}; transition: 0.15s;` } });
-                pill.addEventListener('click', () => { if (active) this.thoughtsFilterContext = this.thoughtsFilterContext.filter(c => c !== ctx); else this.thoughtsFilterContext = [...this.thoughtsFilterContext, ctx]; renderThoughtContextPills(); this.updateReviewThoughtsList(); });
+                pill.addEventListener('click', () => { if (active) this.thoughtsFilterContext = this.thoughtsFilterContext.filter(c => c !== ctx); else this.thoughtsFilterContext = [...this.thoughtsFilterContext, ctx]; renderThoughtContextPills(); this.refreshCurrentList(); });
             });
         };
         renderThoughtContextPills();
@@ -1972,16 +2051,16 @@ export class MinaView extends ItemView {
         customDateContainer.createSpan({ text: 'to', attr: { style: 'font-size: 0.85em; color: var(--text-muted); padding: 0 2px;' } });
         const customDateEndInput = customDateContainer.createEl('input', { type: 'date', attr: { style: 'font-size: 0.85em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;' } });
         if (this.thoughtsFilterDateEnd) customDateEndInput.value = this.thoughtsFilterDateEnd;
-        dateSel.addEventListener('change', (e) => { const val = (e.target as HTMLSelectElement).value; this.thoughtsFilterDate = val; if (val === 'custom') { customDateContainer.style.display = 'flex'; this.thoughtsFilterDateStart = customDateStartInput.value || moment().format('YYYY-MM-DD'); this.thoughtsFilterDateEnd = customDateEndInput.value || moment().format('YYYY-MM-DD'); } else customDateContainer.style.display = 'none'; this.updateReviewThoughtsList(); });
-        customDateStartInput.addEventListener('change', () => { this.thoughtsFilterDateStart = customDateStartInput.value; this.updateReviewThoughtsList(); });
-        customDateEndInput.addEventListener('change', () => { this.thoughtsFilterDateEnd = customDateEndInput.value; this.updateReviewThoughtsList(); });
+        dateSel.addEventListener('change', (e) => { const val = (e.target as HTMLSelectElement).value; this.thoughtsFilterDate = val; if (val === 'custom') { customDateContainer.style.display = 'flex'; this.thoughtsFilterDateStart = customDateStartInput.value || moment().format('YYYY-MM-DD'); this.thoughtsFilterDateEnd = customDateEndInput.value || moment().format('YYYY-MM-DD'); } else customDateContainer.style.display = 'none'; this.refreshCurrentList(); });
+        customDateStartInput.addEventListener('change', () => { this.thoughtsFilterDateStart = customDateStartInput.value; this.refreshCurrentList(); });
+        customDateEndInput.addEventListener('change', () => { this.thoughtsFilterDateEnd = customDateEndInput.value; this.refreshCurrentList(); });
         
         this.renderSearchInput(filterBar, () => this.updateReviewThoughtsList());
 
         captureContainer = container.createEl('div', { attr: { style: `flex-shrink: 0; display: ${this.showCaptureInThoughts ? 'block' : 'none'};` } });
         this.renderCaptureMode(captureContainer, true);
         this.reviewThoughtsContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 5px 5px 200px 5px;' } });
-        this.updateReviewThoughtsList();
+        this.refreshCurrentList();
     }
 
     async updateReviewTasksList(appendMore = false) {
@@ -2063,7 +2142,7 @@ export class MinaView extends ItemView {
         const cb = toggleContainer.createEl('input', { type: 'checkbox', attr: { style: 'opacity:0; width:0; height:0; position:absolute;' } }) as HTMLInputElement; cb.checked = isDone;
         const slider = toggleContainer.createEl('span', { attr: { style: `position:absolute; top:0; left:0; right:0; bottom:0; background-color:${isDone ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; transition:.3s; border-radius:20px;` } });
         const knob = toggleContainer.createEl('span', { attr: { style: `position:absolute; height:14px; width:14px; left:3px; bottom:3px; background-color:var(--text-on-accent,white); transition:.3s; border-radius:50%; transform:${isDone ? 'translateX(16px)' : 'translateX(0)'};` } });
-        cb.addEventListener('change', async () => { const checked = cb.checked; slider.style.backgroundColor = checked ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'; knob.style.transform = checked ? 'translateX(16px)' : 'translateX(0)'; row.style.opacity = checked ? '0.5' : '1'; await this.plugin.toggleTaskStatus(entry.filePath, checked); this.updateReviewTasksList(); });
+        cb.addEventListener('change', async () => { const checked = cb.checked; slider.style.backgroundColor = checked ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'; knob.style.transform = checked ? 'translateX(16px)' : 'translateX(0)'; row.style.opacity = checked ? '0.5' : '1'; await this.plugin.toggleTaskStatus(entry.filePath, checked); this.refreshCurrentList(); });
         const content = topRow.createEl('div', { attr: { style: 'flex:1; min-width:0;' } });
         const textEl = content.createEl('div', { cls: (this.plugin.settings.isCompactView ? 'mina-card-compact' : ''), attr: { style: `word-break:break-word; font-size:0.95em; line-height:1.4; ${isDone ? 'text-decoration:line-through; opacity:0.7;' : ''}` } });
         await MarkdownRenderer.render(this.plugin.app, entry.body || entry.title, textEl, entry.filePath, this);
@@ -2104,10 +2183,10 @@ export class MinaView extends ItemView {
             new EditEntryModal(this.plugin.app, this.plugin, entry.body, entry.context.map(c => `#${c}`).join(' '), entry.due || null, true, async (newText, newCtxStr, newDue) => {
                 const ctxArr = newCtxStr ? newCtxStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : [];
                 await this.plugin.editTaskBody(entry.filePath, newText.replace(/<br>/g, '\n'), ctxArr, newDue || undefined);
-                this.updateReviewTasksList();
+                this.refreshCurrentList();
             }).open();
         });
-        delBtn.addEventListener('click', () => { new ConfirmModal(this.plugin.app, 'Move this task to trash?', async () => { await this.plugin.deleteTaskFile(entry.filePath); this.updateReviewTasksList(); }).open(); });
+        delBtn.addEventListener('click', () => { new ConfirmModal(this.plugin.app, 'Move this task to trash?', async () => { await this.plugin.deleteTaskFile(entry.filePath); this.refreshCurrentList(); }).open(); });
         
         if (!hideMetadata && !isTaskMode) {
             const metaRow = row.createEl('div', { attr: { style: 'display:flex; justify-content:space-between; align-items:center; margin-top:5px; flex-wrap:wrap; gap:4px;' } });
@@ -2132,7 +2211,7 @@ export class MinaView extends ItemView {
         
         if (level === 0 && entry.children.length > 0) {
             const collapseBtn = iconSection.createEl('div', { text: isCollapsed ? '▶' : '▼', attr: { style: 'cursor: pointer; font-size: 0.7em; opacity: 0.5; transition: 0.2s;' } });
-            collapseBtn.addEventListener('click', () => { if (isCollapsed) this.collapsedThreads.delete(entry.filePath); else this.collapsedThreads.add(entry.filePath); this.updateReviewThoughtsList(); });
+            collapseBtn.addEventListener('click', () => { if (isCollapsed) this.collapsedThreads.delete(entry.filePath); else this.collapsedThreads.add(entry.filePath); this.refreshCurrentList(); });
         }
         
         if (level === 0 && !hideAvatar) {
@@ -2202,7 +2281,7 @@ export class MinaView extends ItemView {
             if (this.activeTab === 'grundfos') this.updateGrundfosList();
             else if (this.activeTab === 'focus') this.updateFocusList();
             else if (this.activeTab === 'journal') this.updateJournalList();
-            else if (this.activeTab === 'review-thoughts') this.updateReviewThoughtsList();
+            else if (this.activeTab === 'review-thoughts') this.refreshCurrentList();
             else this.renderView();
         });
 
@@ -2211,11 +2290,11 @@ export class MinaView extends ItemView {
         const editBtn = actionsDiv.createSpan({ text: '✏️', attr: { style: 'cursor: pointer; font-size: 0.8em;' } });
         const convertBtn = actionsDiv.createSpan({ text: '📋', attr: { style: 'cursor: pointer; font-size: 0.8em;', title: 'Convert to task' } });
         const deleteBtn = actionsDiv.createSpan({ text: '🗑️', attr: { style: 'cursor: pointer; font-size: 0.8em;' } });
-        deleteBtn.addEventListener('click', async () => { new ConfirmModal(this.plugin.app, 'Move this thought to trash?', async () => { await this.plugin.deleteThoughtFile(entry.filePath); this.updateReviewThoughtsList(); }).open(); });
+        deleteBtn.addEventListener('click', async () => { new ConfirmModal(this.plugin.app, 'Move this thought to trash?', async () => { await this.plugin.deleteThoughtFile(entry.filePath); this.refreshCurrentList(); }).open(); });
         replyBtn.addEventListener('click', () => { this.replyToId = entry.filePath; this.replyToText = entry.body.length > 50 ? entry.body.substring(0, 50) + '...' : entry.body; this.showCaptureInThoughts = true; this.renderView(); setTimeout(() => { const ta = this.containerEl.querySelector('textarea'); if (ta) (ta as HTMLTextAreaElement).focus(); }, 100); });
-        const startEdit = () => { new EditEntryModal(this.plugin.app, this.plugin, entry.body, entry.context.map(c => `#${c}`).join(' '), null, false, async (newText, newContextStr) => { const newContexts = newContextStr ? newContextStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : []; await this.plugin.editThoughtBody(entry.filePath, newText.replace(/<br>/g, '\n'), newContexts); this.updateReviewThoughtsList(); }).open(); };
+        const startEdit = () => { new EditEntryModal(this.plugin.app, this.plugin, entry.body, entry.context.map(c => `#${c}`).join(' '), null, false, async (newText, newContextStr) => { const newContexts = newContextStr ? newContextStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : []; await this.plugin.editThoughtBody(entry.filePath, newText.replace(/<br>/g, '\n'), newContexts); this.refreshCurrentList(); }).open(); };
         renderTarget.addEventListener('dblclick', startEdit); editBtn.addEventListener('click', startEdit);
-        convertBtn.addEventListener('click', () => { new ConvertToTaskModal(this.plugin.app, entry.body, entry.context, async (dueDate) => { await this.plugin.createTaskFile(entry.body.replace(/<br>/g, '\n'), entry.context, dueDate || undefined); const updatedContexts = [...new Set([...entry.context, 'converted_to_tasks'])]; await this.plugin.editThoughtBody(entry.filePath, entry.body.replace(/<br>/g, '\n'), updatedContexts); new Notice('✅ Thought converted to task!'); this.updateReviewThoughtsList(); }).open(); });
+        convertBtn.addEventListener('click', () => { new ConvertToTaskModal(this.plugin.app, entry.body, entry.context, async (dueDate) => { await this.plugin.createTaskFile(entry.body.replace(/<br>/g, '\n'), entry.context, dueDate || undefined); const updatedContexts = [...new Set([...entry.context, 'converted_to_tasks'])]; await this.plugin.editThoughtBody(entry.filePath, entry.body.replace(/<br>/g, '\n'), updatedContexts); new Notice('✅ Thought converted to task!'); this.refreshCurrentList(); }).open(); });
         
         if (!hideMetadata && entry.context.length > 0) { 
             const ctxRow = renderTarget.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px;' } }); for (const ctx of entry.context) ctxRow.createEl('span', { text: `#${ctx}`, attr: { style: 'font-size: 0.75em; color: var(--text-accent); font-weight: 500; background-color: var(--background-secondary-alt); padding: 2px 6px; border-radius: 4px;' } }); 
@@ -2240,8 +2319,8 @@ export class MinaView extends ItemView {
         cardWrapper.addEventListener('mouseenter', () => actionsDiv.style.opacity = '1'); cardWrapper.addEventListener('mouseleave', () => actionsDiv.style.opacity = '0');
         const editBtn = actionsDiv.createSpan({ text: '✏️', attr: { style: 'cursor: pointer; font-size: 0.8em;' } });
         const deleteBtn = actionsDiv.createSpan({ text: '🗑️', attr: { style: 'cursor: pointer; font-size: 0.8em;' } });
-        deleteBtn.addEventListener('click', async () => { new ConfirmModal(this.plugin.app, 'Delete this reply?', async () => { await this.plugin.deleteReply(parent.filePath, reply.anchor); this.updateReviewThoughtsList(); }).open(); });
-        const startReplyEdit = () => { new EditEntryModal(this.plugin.app, this.plugin, reply.text, '', null, false, async (newText) => { await this.plugin.editReply(parent.filePath, reply.anchor, newText.replace(/<br>/g, '\n')); this.updateReviewThoughtsList(); }).open(); };
+        deleteBtn.addEventListener('click', async () => { new ConfirmModal(this.plugin.app, 'Delete this reply?', async () => { await this.plugin.deleteReply(parent.filePath, reply.anchor); this.refreshCurrentList(); }).open(); });
+        const startReplyEdit = () => { new EditEntryModal(this.plugin.app, this.plugin, reply.text, '', null, false, async (newText) => { await this.plugin.editReply(parent.filePath, reply.anchor, newText.replace(/<br>/g, '\n')); this.refreshCurrentList(); }).open(); };
         renderTarget.addEventListener('dblclick', startReplyEdit); editBtn.addEventListener('click', startReplyEdit);
     }
 
@@ -2521,6 +2600,15 @@ export class MinaView extends ItemView {
             const isBlurred = this.plugin.settings.blurredNotes.includes(entry.filePath);
             await this.renderThoughtRow(entry, dragWrapper, entry.filePath, 0, true, true, isBlurred);
         }
+    }
+
+    refreshCurrentList() {
+        if (this.activeTab === 'grundfos') this.updateGrundfosList();
+        else if (this.activeTab === 'focus') this.updateFocusList();
+        else if (this.activeTab === 'journal') this.updateJournalList();
+        else if (this.activeTab === 'review-thoughts') this.updateReviewThoughtsList();
+        else if (this.activeTab === 'review-tasks') this.updateReviewTasksList();
+        else this.renderView();
     }
 
     async saveGrundfosOrder() {

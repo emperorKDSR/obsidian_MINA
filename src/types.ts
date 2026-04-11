@@ -27,6 +27,7 @@ export interface MinaSettings {
     showDailyPinned: boolean;
     focusModeOrder: string[];
     grundfosModeOrder: string[];
+    journalModeOrder: string[];
     blurredNotes: string[];
     isCompactView: boolean;
 }
