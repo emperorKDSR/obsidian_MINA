@@ -76,8 +76,12 @@ The "MINA V2" plugin has been developed with the following features and implemen
        - **Persistent Reordering:** Supports drag-and-drop to reorder pinned notes. The custom order is persisted across app reloads.
      - **Pump:** Opens Grundfos Mode.
        - **Context-Specific:** Displays notes with the "Grundfos" context/tag.
-       - **Sensitivity Blur:** Includes a note-by-note toggle to blur/unblur note content for privacy.
-       - **Persistent Privacy:** Individual blur states and custom reordering are persisted across app reloads.
+       - **Persistent Reordering:** Supports drag-and-drop reordering of Grundfos-related notes.
+   - **Privacy & Confidentiality:**
+     - **Universal Blur:** Note-by-note sensitivity blurring is available across all modes.
+     - **Manual Toggle:** Each thought card includes an 👁️/👁️‍🗨️ toggle in the hover action menu to obscure sensitive content.
+     - **Strict Privacy:** Blurred notes remain fully obscured until manually unblurred (no hover-to-peek).
+     - **Persistent State:** Individual blur preferences are saved to plugin settings and persisted across app reloads.
    - **Desktop Optimization:** 
      - Standalone windows (Full Mode, Daily Mode, Timeline, AI Mode) hide native tab headers and include a dedicated **drag handle** at the top.
      - **Seamless Transitions:** Robust handling of mode switching by identifying and reusing existing windows or sidebar leaves.
