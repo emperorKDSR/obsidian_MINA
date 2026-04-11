@@ -35,7 +35,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
        - **Persistent Reordering:** Supports drag-and-drop to reorder pinned notes.
      - **Grundfos Mode:** A dedicated command and ribbon icon (**Pump**) opens Grundfos Mode.
        - **Context-Specific:** Displays notes with the "Grundfos" context/tag.
-       - **Sensitivity Blur:** Note-by-note toggle to blur sensitive content.
+       - **Auto-Tagging:** Any new thought or task created while in this mode is automatically tagged with the "Grundfos" context.
        - **Persistent Reordering:** Supports drag-and-drop reordering.
      - **Timeline View:** A chronological list of thoughts and tasks. Uses a custom **Clock** icon.
      - **Floating Action Button (FAB):** A movable circular button with the alien avatar icon. Positioned in the **bottom-right corner** on desktop.

@@ -1734,7 +1734,7 @@ export class MinaView extends ItemView {
         } else this.isTask = false;
         const submitAction = async () => {
             if (this.content.trim().length > 0) {
-                const contextsToSave = this.activeTab === 'journal' ? ['journal'] : this.selectedContexts;
+                const contextsToSave = this.activeTab === 'journal' ? ['journal'] : (this.activeTab === 'grundfos' ? ['Grundfos'] : this.selectedContexts);
                 if (this.isTask) await this.plugin.createTaskFile(this.content.trim(), contextsToSave, this.dueDate || undefined);
                 else if (this.replyToId) { const replied = await this.plugin.appendReplyToFile(this.replyToId, this.content.trim()); if (replied) new Notice('Reply added!'); }
                 else await this.plugin.createThoughtFile(this.content.trim(), contextsToSave);
@@ -2345,6 +2345,8 @@ export class MinaView extends ItemView {
     }
 
     renderGrundfosMode(container: HTMLElement) {
+        const captureContainer = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: block; margin-top: 10px; margin-bottom: 10px;' } });
+        this.renderCaptureMode(captureContainer, true, false);
         const innerContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; padding: 15px 15px 200px 15px; -webkit-overflow-scrolling: touch;' } });
         this.grundfosRowContainer = innerContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
         this.updateGrundfosList();
