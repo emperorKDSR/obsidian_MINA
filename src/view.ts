@@ -623,7 +623,7 @@ export class MinaView extends ItemView {
     timelineEndDate: moment.Moment;
 
     fabEl: HTMLElement | null = null;
-    fabPos = { right: 30, bottom: 100 };
+    fabPos = Platform.isDesktop ? { right: 20, bottom: 20 } : { right: 30, bottom: 100 };
 
     async renderTimelineMode(container: HTMLElement) {
         const wrap = container.createEl('div', { 
