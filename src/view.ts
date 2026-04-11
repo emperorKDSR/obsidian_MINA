@@ -19,7 +19,7 @@ export class MinaView extends ItemView {
     content: string;
     isTask: boolean;
     dueDate: string; // YYYY-MM-DD
-    activeTab: 'daily' | 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' | 'dues' | 'vo' | 'timeline' = 'daily';
+    activeTab: 'daily' | 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' | 'dues' | 'vo' | 'timeline' | 'journal' = 'daily';
     isDedicated: boolean = false;
     timelineSelectedDate: string = moment().format('YYYY-MM-DD');
 
@@ -276,6 +276,7 @@ export class MinaView extends ItemView {
 
         if (this.activeTab === 'review-tasks') this.renderReviewTasksMode(container);
         else if (this.activeTab === 'mina-ai') this.renderMinaMode(container);
+        else if (this.activeTab === 'journal') this.renderJournalMode(container);
         else if (this.activeTab === 'dues') this.renderDuesMode(container);
         else if (this.activeTab === 'settings') this.renderSettingsMode(container);
         else if (this.activeTab === 'vo') this.renderVoiceMode(container);
@@ -397,7 +398,10 @@ export class MinaView extends ItemView {
                     .setTitle('Add voice memo')
                     .setIcon('microphone')
                     .onClick(() => {
-                        new VoiceMemoModal(this.plugin.app, this.plugin, () => {
+                        new VoiceMemoModal(this.plugin.app, this.plugin, async (file: TFile) => {
+                            if (this.activeTab === 'journal') {
+                                await this.plugin.createThoughtFile(`Voice memo: [[${file.path}]]`, ['journal']);
+                            }
                             this.renderView();
                         }).open();
                     })
@@ -1724,9 +1728,10 @@ export class MinaView extends ItemView {
         } else this.isTask = false;
         const submitAction = async () => {
             if (this.content.trim().length > 0) {
-                if (this.isTask) await this.plugin.createTaskFile(this.content.trim(), this.selectedContexts, this.dueDate || undefined);
+                const contextsToSave = this.activeTab === 'journal' ? ['journal'] : this.selectedContexts;
+                if (this.isTask) await this.plugin.createTaskFile(this.content.trim(), contextsToSave, this.dueDate || undefined);
                 else if (this.replyToId) { const replied = await this.plugin.appendReplyToFile(this.replyToId, this.content.trim()); if (replied) new Notice('Reply added!'); }
-                else await this.plugin.createThoughtFile(this.content.trim(), this.selectedContexts);
+                else await this.plugin.createThoughtFile(this.content.trim(), contextsToSave);
                 this.content = ''; textArea.value = ''; this.replyToId = null; this.replyToText = null;
                 if (Platform.isMobile && !isTablet()) { this.selectedContexts = []; this.plugin.settings.selectedContexts = []; await this.plugin.saveSettings(); }
                 this.renderView();
@@ -1734,6 +1739,32 @@ export class MinaView extends ItemView {
         };
         submitBtn.addEventListener('click', submitAction);
         textArea.addEventListener('keydown', async (e) => { if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); await submitAction(); } });
+    }
+
+    renderJournalMode(container: HTMLElement) {
+        const captureContainer = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: block; margin-top: 10px; margin-bottom: 10px;' } });
+        this.renderCaptureMode(captureContainer, true, false);
+        this.reviewThoughtsContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 5px 5px 200px 5px;' } });
+        this.updateJournalList();
+    }
+
+    async updateJournalList(appendMore = false) {
+        if (!this.reviewThoughtsContainer) return;
+        if (!appendMore) {
+            this.thoughtsOffset = 0; this.reviewThoughtsContainer.empty(); this._parsedRoots = [];
+            let roots: ThoughtEntry[] = Array.from(this.plugin.thoughtIndex.values());
+            roots = roots.filter(e => e.context.includes('journal'));
+            roots.sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate);
+            this._parsedRoots = roots;
+            if (roots.length === 0) { this.reviewThoughtsContainer.createEl('p', { text: 'No journal entries found.', attr: { style: 'color: var(--text-muted);' } }); return; }
+            this.thoughtsRowContainer = this.reviewThoughtsContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
+        }
+        if (!this.thoughtsRowContainer) return;
+        this.reviewThoughtsContainer.querySelector('.mina-load-more')?.remove();
+        const PAGE_SIZE = 20; const page = this._parsedRoots.slice(this.thoughtsOffset, this.thoughtsOffset + PAGE_SIZE);
+        for (const entry of page) await this.renderThoughtRow(entry, this.thoughtsRowContainer!, entry.filePath, 0, true, true);
+        this.thoughtsOffset += page.length;
+        if (this.thoughtsOffset < this._parsedRoots.length) { const loadMoreBtn = this.reviewThoughtsContainer.createEl('button', { text: `Load more (${this._parsedRoots.length - this.thoughtsOffset} remaining)`, cls: 'mina-load-more', attr: { style: 'width: 100%; padding: 8px; margin-top: 6px; border-radius: 6px; border: 1px dashed var(--background-modifier-border); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 0.85em;' } }); loadMoreBtn.addEventListener('click', () => this.updateJournalList(true)); }
     }
 
     renderReviewTasksMode(container: HTMLElement) {

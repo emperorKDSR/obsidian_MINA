@@ -9,9 +9,9 @@ export class VoiceMemoModal extends Modal {
     isRecording: boolean = false;
     recordingStartTime: number = 0;
     recordingTimerInterval: any = null;
-    onSave?: () => void;
+    onSave?: (file: TFile) => void;
 
-    constructor(app: App, plugin: MinaPlugin, onSave?: () => void) {
+    constructor(app: App, plugin: MinaPlugin, onSave?: (file: TFile) => void) {
         super(app);
         this.plugin = plugin;
         this.onSave = onSave;
@@ -134,13 +134,13 @@ export class VoiceMemoModal extends Modal {
                 }
                 
                 const filename = `voice-${moment().format('YYYYMMDD-HHmmss')}.${ext}`;
-                await this.app.vault.createBinary(`${folderPath}/${filename}`, arrayBuffer);
+                const file = await this.app.vault.createBinary(`${folderPath}/${filename}`, arrayBuffer);
                 
                 new Notice(`Voice note saved: ${filename}`);
                 this.isRecording = false;
                 stream.getTracks().forEach(track => track.stop());
                 
-                if (this.onSave) this.onSave();
+                if (this.onSave) this.onSave(file);
             };
 
             this.mediaRecorder.start();

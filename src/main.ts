@@ -1,5 +1,5 @@
 import { Plugin, TFile, Notice, WorkspaceLeaf, Platform, moment, addIcon } from 'obsidian';
-import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS } from './constants';
+import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG } from './constants';
 import { MinaSettings, ThoughtEntry, TaskEntry, ReplyEntry } from './types';
 import { isTablet, toAsciiDigits } from './utils';
 import { MinaView } from './view';
@@ -46,9 +46,14 @@ export default class MinaPlugin extends Plugin {
         );
 
 		addIcon(KATANA_ICON_ID, KATANA_ICON_SVG);
+		addIcon(JOURNAL_ICON_ID, JOURNAL_ICON_SVG);
 
 		this.addRibbonIcon(KATANA_ICON_ID, 'Full Mode', () => {
 			this.activateView();
+		});
+
+		this.addRibbonIcon(JOURNAL_ICON_ID, 'Journal Mode', () => {
+			this.activateView('journal', true);
 		});
 
 		this.addCommand({
@@ -57,6 +62,15 @@ export default class MinaPlugin extends Plugin {
 			icon: KATANA_ICON_ID,
 			callback: () => {
 				this.activateView('daily');
+			}
+		});
+
+		this.addCommand({
+			id: 'open-mina-journal-mode',
+			name: 'Journal Mode',
+			icon: JOURNAL_ICON_ID,
+			callback: () => {
+				this.activateView('journal', true);
 			}
 		});
 
