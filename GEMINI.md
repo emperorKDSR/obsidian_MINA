@@ -70,6 +70,10 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Sun:** Opens Daily Mode.
      - **Robot:** Opens AI Mode.
      - **Clock:** Opens Timeline Mode.
+     - **Target:** Opens Focus Mode.
+       - **Pinned-Only:** Displays strictly only notes that are pinned (`pinned: true`).
+       - **High-Focus UI:** Hides the header, close button, and capture area to maintain focus on existing pinned content.
+       - **Persistent Reordering:** Supports drag-and-drop to reorder pinned notes. The custom order is persisted across app reloads.
    - **Desktop Optimization:** 
      - Standalone windows (Full Mode, Daily Mode, Timeline, AI Mode) hide native tab headers and include a dedicated **drag handle** at the top.
      - **Seamless Transitions:** Robust handling of mode switching by identifying and reusing existing windows or sidebar leaves.

@@ -50,6 +50,13 @@ export const TIMELINE_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <path d="M12 6v6l4 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </g>`;
 
+export const FOCUS_ICON_ID = "mina-focus-icon";
+export const FOCUS_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
+    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+    <circle cx="12" cy="12" r="3" fill="currentColor"/>
+    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+</g>`;
+
 export const DEFAULT_SETTINGS: MinaSettings = {
     captureFolder: '000 Bin',
 	captureFilePath: 'mina_v2.md',
@@ -74,5 +81,6 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     showDailyTasks: true,
     showDailyDues: true,
     showDailyThoughts: true,
-    showDailyPinned: true
+    showDailyPinned: true,
+    focusModeOrder: []
 }

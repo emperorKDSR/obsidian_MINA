@@ -19,7 +19,7 @@ export class MinaView extends ItemView {
     content: string;
     isTask: boolean;
     dueDate: string; // YYYY-MM-DD
-    activeTab: 'daily' | 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' | 'dues' | 'vo' | 'timeline' | 'journal' = 'daily';
+    activeTab: 'daily' | 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' | 'dues' | 'vo' | 'timeline' | 'journal' | 'focus' = 'daily';
     isDedicated: boolean = false;
     timelineSelectedDate: string = moment().format('YYYY-MM-DD');
 
@@ -90,8 +90,10 @@ export class MinaView extends ItemView {
     private _parsedRoots: ThoughtEntry[] = [];
     private tasksOffset   = 0;
     private thoughtsOffset = 0;
+    private focusOffset = 0;
     private tasksRowContainer: HTMLElement | null = null;
     private thoughtsRowContainer: HTMLElement | null = null;
+    private focusRowContainer: HTMLElement | null = null;
 
     constructor(leaf: WorkspaceLeaf, plugin: MinaPlugin) {
         super(leaf);
@@ -278,6 +280,7 @@ export class MinaView extends ItemView {
         else if (this.activeTab === 'mina-ai') this.renderMinaMode(container);
         else if (this.activeTab === 'journal') this.renderJournalMode(container);
         else if (this.activeTab === 'dues') this.renderDuesMode(container);
+        else if (this.activeTab === 'focus') this.renderFocusMode(container);
         else if (this.activeTab === 'settings') this.renderSettingsMode(container);
         else if (this.activeTab === 'vo') this.renderVoiceMode(container);
         else if (this.activeTab === 'daily') this.renderDailyMode(container);
@@ -2171,5 +2174,107 @@ export class MinaView extends ItemView {
         const data = await response.json(); const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!text) throw new Error("Could not extract transcription.");
         return text.trim();
+    }
+
+    renderFocusMode(container: HTMLElement) {
+        const innerContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; padding: 15px 15px 200px 15px; -webkit-overflow-scrolling: touch;' } });
+        this.focusRowContainer = innerContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
+        this.updateFocusList();
+    }
+
+    async updateFocusList() {
+        if (!this.focusRowContainer) return;
+        this.focusRowContainer.empty();
+        
+        let pinned = Array.from(this.plugin.thoughtIndex.values()).filter(e => e.pinned);
+        const order = this.plugin.settings.focusModeOrder || [];
+        
+        pinned.sort((a, b) => {
+            const idxA = order.indexOf(a.filePath);
+            const idxB = order.indexOf(b.filePath);
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
+            return b.lastThreadUpdate - a.lastThreadUpdate;
+        });
+
+        if (pinned.length === 0) {
+            this.focusRowContainer.createEl('p', { text: 'No pinned thoughts.', attr: { style: 'color: var(--text-muted); text-align: center; margin-top: 20px;' } });
+            return;
+        }
+
+        let draggedEl: HTMLElement | null = null;
+
+        for (const entry of pinned) {
+            const dragWrapper = this.focusRowContainer.createEl('div', { 
+                attr: { 
+                    draggable: 'true',
+                    'data-filepath': entry.filePath,
+                    style: 'cursor: grab; transition: transform 0.2s, opacity 0.2s;'
+                } 
+            });
+
+            dragWrapper.addEventListener('dragstart', (e) => {
+                draggedEl = dragWrapper;
+                dragWrapper.style.opacity = '0.5';
+                if (e.dataTransfer) {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', entry.filePath);
+                }
+            });
+
+            dragWrapper.addEventListener('dragend', () => {
+                dragWrapper.style.opacity = '1';
+                this.focusRowContainer?.querySelectorAll('div').forEach(el => (el as HTMLElement).style.borderTop = '');
+            });
+
+            dragWrapper.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+                const rect = dragWrapper.getBoundingClientRect();
+                const midpoint = rect.top + rect.height / 2;
+                if (e.clientY < midpoint) {
+                    dragWrapper.style.borderTop = '2px solid var(--interactive-accent)';
+                    dragWrapper.style.borderBottom = '';
+                } else {
+                    dragWrapper.style.borderTop = '';
+                    dragWrapper.style.borderBottom = '2px solid var(--interactive-accent)';
+                }
+            });
+
+            dragWrapper.addEventListener('dragleave', () => {
+                dragWrapper.style.borderTop = '';
+                dragWrapper.style.borderBottom = '';
+            });
+
+            dragWrapper.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                dragWrapper.style.borderTop = '';
+                dragWrapper.style.borderBottom = '';
+                if (draggedEl && draggedEl !== dragWrapper) {
+                    const rect = dragWrapper.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+                    if (e.clientY < midpoint) {
+                        this.focusRowContainer?.insertBefore(draggedEl, dragWrapper);
+                    } else {
+                        this.focusRowContainer?.insertBefore(draggedEl, dragWrapper.nextSibling);
+                    }
+                    await this.saveFocusOrder();
+                }
+            });
+
+            await this.renderThoughtRow(entry, dragWrapper, entry.filePath, 0, true, true);
+        }
+    }
+
+    async saveFocusOrder() {
+        if (!this.focusRowContainer) return;
+        const newOrder: string[] = [];
+        this.focusRowContainer.querySelectorAll('[data-filepath]').forEach(el => {
+            const path = el.getAttribute('data-filepath');
+            if (path) newOrder.push(path);
+        });
+        this.plugin.settings.focusModeOrder = newOrder;
+        await this.plugin.saveSettings();
     }
 }

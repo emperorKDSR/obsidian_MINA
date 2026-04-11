@@ -25,6 +25,7 @@ export interface MinaSettings {
     showDailyDues: boolean;
     showDailyThoughts: boolean;
     showDailyPinned: boolean;
+    focusModeOrder: string[];
 }
 
 export interface ReplyEntry {

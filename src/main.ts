@@ -1,5 +1,5 @@
 import { Plugin, TFile, Notice, WorkspaceLeaf, Platform, moment, addIcon } from 'obsidian';
-import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG } from './constants';
+import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG } from './constants';
 import { MinaSettings, ThoughtEntry, TaskEntry, ReplyEntry } from './types';
 import { isTablet, toAsciiDigits } from './utils';
 import { MinaView } from './view';
@@ -50,6 +50,7 @@ export default class MinaPlugin extends Plugin {
 		addIcon(DAILY_ICON_ID, DAILY_ICON_SVG);
 		addIcon(AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG);
 		addIcon(TIMELINE_ICON_ID, TIMELINE_ICON_SVG);
+		addIcon(FOCUS_ICON_ID, FOCUS_ICON_SVG);
 
 		this.addRibbonIcon(KATANA_ICON_ID, 'Full Mode', () => {
 			this.activateView();
@@ -69,6 +70,10 @@ export default class MinaPlugin extends Plugin {
 
 		this.addRibbonIcon(TIMELINE_ICON_ID, 'Timeline Mode', () => {
 			this.activateView('timeline', true);
+		});
+
+		this.addRibbonIcon(FOCUS_ICON_ID, 'Focus Mode', () => {
+			this.activateView('focus', true);
 		});
 
 		this.addCommand({
@@ -104,6 +109,15 @@ export default class MinaPlugin extends Plugin {
 			icon: TIMELINE_ICON_ID,
 			callback: () => {
 				this.activateView('timeline', true);
+			}
+		});
+
+		this.addCommand({
+			id: 'open-mina-focus-mode',
+			name: 'Focus Mode',
+			icon: FOCUS_ICON_ID,
+			callback: () => {
+				this.activateView('focus', true);
 			}
 		});
 
