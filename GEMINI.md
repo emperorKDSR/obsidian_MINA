@@ -50,6 +50,11 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Universal Blur:** Note-by-note sensitivity blurring available across all modes via 👁️/👁️‍🗨️ toggle.
      - **Strict Privacy:** Blurred notes remain fully obscured (no hover-to-peek).
      - **Persistent State:** Individual blur preferences and reordering are persisted across app reloads.
+   - **Contextual Search:** A powerful search system integrated into every mode.
+     - **"AND" Logic:** Supports multi-token search; notes only appear if they contain all typed words (e.g., "Grundfos invoice").
+     - **Instant Filtering:** Results update in real-time as you type.
+     - **Mode-Specific:** Automatically scoped to the current view (e.g., searching in Focus Mode only searches pinned notes).
+     - **Persistent Query:** The search query remains active as you switch between different tabs and modes.
    - **Desktop Optimization:** 
      - Standalone windows hide native tab headers and include a dedicated **drag handle** at the top.
      - **Seamless Transitions:** Robust handling of mode switching.

@@ -65,6 +65,7 @@ export class MinaView extends ItemView {
     showPreviousThoughts: boolean = true;
     showCaptureInThoughts: boolean = false;
     showThoughtsFilter: boolean = false;
+    searchQuery: string = '';
 
     reviewTasksContainer: HTMLElement;
     reviewThoughtsContainer: HTMLElement;
@@ -496,6 +497,8 @@ export class MinaView extends ItemView {
         renderToggle('Pi', 'showDailyPinned');
         renderToggle('Th', 'showDailyThoughts');
 
+        this.renderSearchInput(wrap, () => this.renderView());
+
         if (this.plugin.settings.showDailyChecklist) {
             const section1 = this.renderDailySection(wrap, "TODAY'S CHECKLIST", 'checklist');
             this.updateDailyThoughtTodos(section1);
@@ -528,7 +531,7 @@ export class MinaView extends ItemView {
         const pfFolder = (this.plugin.settings.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/');
         const today = moment().startOf('day');
         
-        const dues: DueEntry[] = [];
+        let dues: DueEntry[] = [];
         for (const file of vault.getMarkdownFiles()) {
             if (!file.path.startsWith(pfFolder + '/') && file.path !== pfFolder) continue;
             const fm = metadataCache.getFileCache(file)?.frontmatter;
@@ -551,8 +554,12 @@ export class MinaView extends ItemView {
             }
         }
 
+        if (this.searchQuery) {
+            dues = dues.filter(e => this.matchesSearch(this.searchQuery, [e.title]));
+        }
+
         if (dues.length === 0) {
-            container.createEl('p', { text: 'No pending dues.', attr: { style: 'color: var(--text-muted); font-size: 0.8em; text-align: center; margin: 5px 0;' } });
+            container.createEl('p', { text: this.searchQuery ? 'No matching dues.' : 'No pending dues.', attr: { style: 'color: var(--text-muted); font-size: 0.8em; text-align: center; margin: 5px 0;' } });
             return;
         }
 
@@ -589,12 +596,17 @@ export class MinaView extends ItemView {
     async updateDailyThoughts(container: HTMLElement) {
         container.empty();
         const today = moment().format('YYYY-MM-DD');
-        const thoughts = Array.from(this.plugin.thoughtIndex.values())
-            .filter(e => e.allDates && e.allDates.includes(today))
-            .sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate);
+        let thoughts = Array.from(this.plugin.thoughtIndex.values())
+            .filter(e => e.allDates && e.allDates.includes(today));
+
+        if (this.searchQuery) {
+            thoughts = thoughts.filter(e => this.matchesSearch(this.searchQuery, [e.body, e.title]));
+        }
+
+        thoughts.sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate);
 
         if (thoughts.length === 0) {
-            container.createEl('p', { text: 'No thoughts captured today.', attr: { style: 'color: var(--text-muted); font-size: 0.8em; text-align: center; margin: 5px 0;' } });
+            container.createEl('p', { text: this.searchQuery ? 'No matching thoughts.' : 'No thoughts captured today.', attr: { style: 'color: var(--text-muted); font-size: 0.8em; text-align: center; margin: 5px 0;' } });
             return;
         }
 
@@ -606,12 +618,17 @@ export class MinaView extends ItemView {
 
     async updatePinnedThoughts(container: HTMLElement) {
         container.empty();
-        const thoughts = Array.from(this.plugin.thoughtIndex.values())
-            .filter(e => e.pinned)
-            .sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate);
+        let thoughts = Array.from(this.plugin.thoughtIndex.values())
+            .filter(e => e.pinned);
+
+        if (this.searchQuery) {
+            thoughts = thoughts.filter(e => this.matchesSearch(this.searchQuery, [e.body, e.title]));
+        }
+
+        thoughts.sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate);
 
         if (thoughts.length === 0) {
-            container.createEl('p', { text: 'No pinned thoughts.', attr: { style: 'color: var(--text-muted); font-size: 0.8em; text-align: center; margin: 5px 0;' } });
+            container.createEl('p', { text: this.searchQuery ? 'No matching pinned thoughts.' : 'No pinned thoughts.', attr: { style: 'color: var(--text-muted); font-size: 0.8em; text-align: center; margin: 5px 0;' } });
             return;
         }
 
@@ -636,6 +653,24 @@ export class MinaView extends ItemView {
             attr: { 
                 style: 'display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--background-primary);' 
             } 
+        });
+
+        this.renderSearchInput(wrap, () => {
+            this.timelineScrollBody.empty();
+            this.timelineCarousel.empty();
+            this.timelineDateElements.clear();
+            this.timelineDaySections.clear();
+            const today = moment();
+            this.timelineStartDate = today.clone().subtract(10, 'days');
+            this.timelineEndDate = today.clone().add(10, 'days');
+            for (let m = this.timelineStartDate.clone(); m.isSameOrBefore(this.timelineEndDate); m.add(1, 'days')) {
+                this.addTimelineDay(m.format('YYYY-MM-DD'), 'append');
+            }
+            setTimeout(() => {
+                const todayStr = today.format('YYYY-MM-DD');
+                this.timelineDaySections.get(todayStr)?.scrollIntoView({ block: 'start' });
+                this.updateCarouselSelection(todayStr);
+            }, 100);
         });
 
         // Header with Date Carousel
@@ -867,6 +902,7 @@ export class MinaView extends ItemView {
 
         for (const entry of thoughts) {
             const renderTodo = (text: string, sourceFilePath: string, isChild: boolean = false, anchor?: string) => {
+                if (this.searchQuery && !text.toLowerCase().includes(this.searchQuery)) return;
                 foundAny = true;
                 const row = todoList.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px; padding: 2px 0; width: 100%; min-width: 0;' } });
                 
@@ -931,19 +967,24 @@ export class MinaView extends ItemView {
         }
 
         if (!foundAny) {
-            container.createEl('p', { text: 'No open to-dos.', attr: { style: 'color: var(--text-muted); font-size: 0.8em; text-align: center; margin: 5px 0;' } });
+            container.createEl('p', { text: this.searchQuery ? 'No matching to-dos.' : 'No open to-dos.', attr: { style: 'color: var(--text-muted); font-size: 0.8em; text-align: center; margin: 5px 0;' } });
         }
     }
 
     async updateDailyTasks(container: HTMLElement) {
         container.empty();
         const today = moment().format('YYYY-MM-DD');
-        const tasks = Array.from(this.plugin.taskIndex.values())
-            .filter(t => t.status === 'open' && (t.due && t.due <= today))
-            .sort((a, b) => (a.due || '').localeCompare(b.due || ''));
+        let tasks = Array.from(this.plugin.taskIndex.values())
+            .filter(t => t.status === 'open' && (t.due && t.due <= today));
+
+        if (this.searchQuery) {
+            tasks = tasks.filter(t => this.matchesSearch(this.searchQuery, [t.body, t.title]));
+        }
+
+        tasks.sort((a, b) => (a.due || '').localeCompare(b.due || ''));
 
         if (tasks.length === 0) {
-            container.createEl('p', { text: 'No pending tasks.', attr: { style: 'color: var(--text-muted); font-size: 0.8em; text-align: center; margin: 5px 0;' } });
+            container.createEl('p', { text: this.searchQuery ? 'No matching tasks.' : 'No pending tasks.', attr: { style: 'color: var(--text-muted); font-size: 0.8em; text-align: center; margin: 5px 0;' } });
             return;
         }
 
@@ -1750,6 +1791,7 @@ export class MinaView extends ItemView {
     renderJournalMode(container: HTMLElement) {
         const captureContainer = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: block; margin-top: 10px; margin-bottom: 10px;' } });
         this.renderCaptureMode(captureContainer, true, false);
+        this.renderSearchInput(container, () => this.updateJournalList());
         this.reviewThoughtsContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 5px 5px 200px 5px;' } });
         this.updateJournalList();
     }
@@ -1760,9 +1802,12 @@ export class MinaView extends ItemView {
             this.thoughtsOffset = 0; this.reviewThoughtsContainer.empty(); this._parsedRoots = [];
             let roots: ThoughtEntry[] = Array.from(this.plugin.thoughtIndex.values());
             roots = roots.filter(e => e.context.includes('journal'));
+            if (this.searchQuery) {
+                roots = roots.filter(e => this.matchesSearch(this.searchQuery, [e.body, e.title]));
+            }
             roots.sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate);
             this._parsedRoots = roots;
-            if (roots.length === 0) { this.reviewThoughtsContainer.createEl('p', { text: 'No journal entries found.', attr: { style: 'color: var(--text-muted);' } }); return; }
+            if (roots.length === 0) { this.reviewThoughtsContainer.createEl('p', { text: this.searchQuery ? 'No matching entries found.' : 'No journal entries found.', attr: { style: 'color: var(--text-muted);' } }); return; }
             this.thoughtsRowContainer = this.reviewThoughtsContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
         }
         if (!this.thoughtsRowContainer) return;
@@ -1835,6 +1880,9 @@ export class MinaView extends ItemView {
         dateSel.addEventListener('change', (e) => { const val = (e.target as HTMLSelectElement).value; this.tasksFilterDate = val; if (val === 'custom') { customDateContainer.style.display = 'flex'; this.tasksFilterDateStart = customDateStartInput.value || moment().format('YYYY-MM-DD'); this.tasksFilterDateEnd = customDateEndInput.value || moment().format('YYYY-MM-DD'); } else customDateContainer.style.display = 'none'; this.updateReviewTasksList(); });
         customDateStartInput.addEventListener('change', () => { this.tasksFilterDateStart = customDateStartInput.value; this.updateReviewTasksList(); });
         customDateEndInput.addEventListener('change', () => { this.tasksFilterDateEnd = customDateEndInput.value; this.updateReviewTasksList(); });
+        
+        this.renderSearchInput(filterBar, () => this.updateReviewTasksList());
+
         const captureContainer = container.createEl('div', { attr: { style: `flex-shrink: 0; display: ${this.showCaptureInTasks ? 'block' : 'none'};` } });
         this.renderCaptureMode(captureContainer, false, true);
         this.reviewTasksContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 5px 5px 200px 5px;' } });
@@ -1905,6 +1953,9 @@ export class MinaView extends ItemView {
         dateSel.addEventListener('change', (e) => { const val = (e.target as HTMLSelectElement).value; this.thoughtsFilterDate = val; if (val === 'custom') { customDateContainer.style.display = 'flex'; this.thoughtsFilterDateStart = customDateStartInput.value || moment().format('YYYY-MM-DD'); this.thoughtsFilterDateEnd = customDateEndInput.value || moment().format('YYYY-MM-DD'); } else customDateContainer.style.display = 'none'; this.updateReviewThoughtsList(); });
         customDateStartInput.addEventListener('change', () => { this.thoughtsFilterDateStart = customDateStartInput.value; this.updateReviewThoughtsList(); });
         customDateEndInput.addEventListener('change', () => { this.thoughtsFilterDateEnd = customDateEndInput.value; this.updateReviewThoughtsList(); });
+        
+        this.renderSearchInput(filterBar, () => this.updateReviewThoughtsList());
+
         captureContainer = container.createEl('div', { attr: { style: `flex-shrink: 0; display: ${this.showCaptureInThoughts ? 'block' : 'none'};` } });
         this.renderCaptureMode(captureContainer, true);
         this.reviewThoughtsContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 5px 5px 200px 5px;' } });
@@ -1915,6 +1966,9 @@ export class MinaView extends ItemView {
         if (!this.reviewTasksContainer) return;
         if (!appendMore) { this.tasksOffset = 0; this.reviewTasksContainer.empty(); this.tasksRowContainer = null; }
         let tasks: TaskEntry[] = Array.from(this.plugin.taskIndex.values());
+        if (this.searchQuery) {
+            tasks = tasks.filter(e => this.matchesSearch(this.searchQuery, [e.body, e.title]));
+        }
         if (this.tasksFilterStatus === 'pending') tasks = tasks.filter(e => e.status === 'open'); else if (this.tasksFilterStatus === 'completed') tasks = tasks.filter(e => e.status === 'done');
         if (this.tasksFilterContext.length > 0) tasks = tasks.filter(e => this.tasksFilterContext.every(ctx => e.context.includes(ctx)));
         const today = moment().locale('en').format('YYYY-MM-DD');
@@ -1940,6 +1994,9 @@ export class MinaView extends ItemView {
         if (!appendMore) {
             this.thoughtsOffset = 0; this.reviewThoughtsContainer.empty(); this._parsedRoots = [];
             let roots: ThoughtEntry[] = Array.from(this.plugin.thoughtIndex.values());
+            if (this.searchQuery) {
+                roots = roots.filter(e => this.matchesSearch(this.searchQuery, [e.body, e.title]));
+            }
             if (this.thoughtsFilterContext.length > 0) roots = roots.filter(e => this.thoughtsFilterContext.every(ctx => e.context.includes(ctx)));
             if (!this.showPreviousThoughts) { const today = moment().locale('en').format('YYYY-MM-DD'); roots = roots.filter(e => e.day === today); }
             if (this.thoughtsFilterDate === 'today') { const today = moment().locale('en').format('YYYY-MM-DD'); roots = roots.filter(e => e.day === today); }
@@ -2243,6 +2300,7 @@ export class MinaView extends ItemView {
     }
 
     renderFocusMode(container: HTMLElement) {
+        this.renderSearchInput(container, () => this.updateFocusList());
         const innerContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; padding: 15px 15px 200px 15px; -webkit-overflow-scrolling: touch;' } });
         this.focusRowContainer = innerContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
         this.updateFocusList();
@@ -2253,6 +2311,9 @@ export class MinaView extends ItemView {
         this.focusRowContainer.empty();
         
         let pinned = Array.from(this.plugin.thoughtIndex.values()).filter(e => e.pinned);
+        if (this.searchQuery) {
+            pinned = pinned.filter(e => this.matchesSearch(this.searchQuery, [e.body, e.title]));
+        }
         const order = this.plugin.settings.focusModeOrder || [];
         
         pinned.sort((a, b) => {
@@ -2347,6 +2408,7 @@ export class MinaView extends ItemView {
     renderGrundfosMode(container: HTMLElement) {
         const captureContainer = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: block; margin-top: 10px; margin-bottom: 10px;' } });
         this.renderCaptureMode(captureContainer, true, false);
+        this.renderSearchInput(container, () => this.updateGrundfosList());
         const innerContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; padding: 15px 15px 200px 15px; -webkit-overflow-scrolling: touch;' } });
         this.grundfosRowContainer = innerContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
         this.updateGrundfosList();
@@ -2357,6 +2419,9 @@ export class MinaView extends ItemView {
         this.grundfosRowContainer.empty();
         
         let entries = Array.from(this.plugin.thoughtIndex.values()).filter(e => e.context.includes('Grundfos'));
+        if (this.searchQuery) {
+            entries = entries.filter(e => this.matchesSearch(this.searchQuery, [e.body, e.title]));
+        }
         const order = this.plugin.settings.grundfosModeOrder || [];
         
         entries.sort((a, b) => {
@@ -2447,5 +2512,28 @@ export class MinaView extends ItemView {
         });
         this.plugin.settings.grundfosModeOrder = newOrder;
         await this.plugin.saveSettings();
+    }
+
+    matchesSearch(query: string, fields: string[]): boolean {
+        if (!query) return true;
+        const tokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+        const combined = fields.map(f => (f || '').toLowerCase()).join(' ');
+        return tokens.every(token => combined.includes(token));
+    }
+
+    renderSearchInput(container: HTMLElement, updateFn: () => void) {
+        const searchContainer = container.createEl('div', { attr: { style: 'padding: 0 12px 10px 12px; flex-shrink: 0;' } });
+        const input = searchContainer.createEl('input', { 
+            type: 'text', 
+            attr: { 
+                placeholder: 'Search notes...', 
+                style: 'width: 100%; font-size: 0.85em; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal);' 
+            } 
+        });
+        input.value = this.searchQuery;
+        input.addEventListener('input', () => {
+            this.searchQuery = input.value.toLowerCase();
+            updateFn();
+        });
     }
 }
