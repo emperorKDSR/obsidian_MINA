@@ -27,7 +27,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **AI Mode:** A dedicated command "AI Mode" opens the AI Chat in a high-focus view. Uses a custom **Robot** icon.
      - **Journal Mode:** A dedicated command and ribbon icon (**Pen**) opens the Journal in a high-focus view. 
        - **Auto-Tagging:** All entries captured in this mode (text, images, documents) are strictly tagged with the `#journal` context.
-       - **Smart FAB Capture:** Recording a voice memo or adding thoughts/tasks via the FAB while in Journal Mode automatically creates entries tagged `#journal`.
+       - **Smart FAB Capture:** To maintain maximum focus, the inline capture area is removed. Any capture initiated via the FAB (thoughts, tasks, or voice memos) is automatically tagged with the `#journal` context.
        - **Streamlined UI:** Hides header, close button, avatars, and context tags.
      - **Focus Mode:** A dedicated command and ribbon icon (**Target**) opens the Focus Mode.
        - **Pinned-Only:** Displays strictly only notes that are pinned (`pinned: true`).

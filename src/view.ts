@@ -112,11 +112,28 @@ export class MinaView extends ItemView {
 
     getViewType() { return VIEW_TYPE_MINA; }
     getDisplayText() { 
-        if (this.activeTab === 'timeline') return "Timeline";
-        if (this.activeTab === 'mina-ai' && this.isDedicated) return "AI Chat";
-        return this.isDedicated ? "Daily Focus" : "Full Mode"; 
+        const title = this.getModeTitle();
+        if (Platform.isMobile) return `MINA - ${title}`;
+        return title;
     }
     getIcon() { return KATANA_ICON_ID; }
+
+    getModeTitle(): string {
+        switch (this.activeTab) {
+            case 'daily': return "Daily";
+            case 'review-thoughts': return "Thoughts";
+            case 'review-tasks': return "Tasks";
+            case 'mina-ai': return "AI Chat";
+            case 'dues': return "Dues";
+            case 'vo': return "Voice";
+            case 'settings': return "Settings";
+            case 'timeline': return "Timeline";
+            case 'journal': return "Journal";
+            case 'focus': return "Focus";
+            case 'grundfos': return "Grundfos";
+            default: return "Dashboard";
+        }
+    }
 
     getState() {
         return { activeTab: this.activeTab, isDedicated: this.isDedicated };
@@ -127,6 +144,7 @@ export class MinaView extends ItemView {
             if (state.activeTab) this.activeTab = state.activeTab;
             if (state.isDedicated !== undefined) this.isDedicated = state.isDedicated;
             this.renderView();
+            (this.leaf as any).updateHeader();
         }
         await super.setState(state, result);
     }
@@ -246,7 +264,7 @@ export class MinaView extends ItemView {
                 this.leaf.detach();
             });
             leftHeader.createEl('h3', { 
-                text: 'Full Mode',
+                text: this.getModeTitle(),
                 attr: { style: 'margin: 0; font-size: 1.1em; color: var(--text-accent);' } 
             });
         }
@@ -261,7 +279,7 @@ export class MinaView extends ItemView {
                     text: label,
                     attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${hasPopout ? 'border-top-right-radius: 0; border-bottom-right-radius: 0;' : ''} ${this.activeTab === id ? 'background-color: var(--interactive-accent); color: var(--text-on-accent); border-color: var(--interactive-accent);' : ''}` }
                 });
-                btn.addEventListener('click', () => { this.activeTab = id as any; this.renderView(); });
+                btn.addEventListener('click', () => { this.activeTab = id as any; this.renderView(); (this.leaf as any).updateHeader(); });
                 if (hasPopout) {
                     const detachBtn = btnWrap.createEl('button', {
                         text: '⧉',
@@ -1171,7 +1189,7 @@ export class MinaView extends ItemView {
             });
             const leftHeader = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px;' } });
             leftHeader.createEl('h3', { 
-                text: 'AI Chat',
+                text: this.getModeTitle(),
                 attr: { style: 'margin: 0; font-size: 1.1em; color: var(--text-accent);' } 
             });
         }
@@ -1795,8 +1813,6 @@ export class MinaView extends ItemView {
     }
 
     renderJournalMode(container: HTMLElement) {
-        const captureContainer = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: block; margin-top: 10px; margin-bottom: 10px;' } });
-        this.renderCaptureMode(captureContainer, true, false);
         this.renderSearchInput(container, () => this.updateJournalList());
         this.reviewThoughtsContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 5px 5px 200px 5px;' } });
         this.updateJournalList();
@@ -1833,7 +1849,7 @@ export class MinaView extends ItemView {
             });
             const leftHeader = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px;' } });
             leftHeader.createEl('h3', { 
-                text: 'Task Mode',
+                text: this.getModeTitle(),
                 attr: { style: 'margin: 0; font-size: 1.1em; color: var(--text-accent);' } 
             });
         }

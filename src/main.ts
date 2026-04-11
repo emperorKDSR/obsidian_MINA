@@ -53,7 +53,7 @@ export default class MinaPlugin extends Plugin {
 		addIcon(FOCUS_ICON_ID, FOCUS_ICON_SVG);
 		addIcon(GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG);
 
-		this.addRibbonIcon(KATANA_ICON_ID, 'Full Mode', () => {
+		this.addRibbonIcon(KATANA_ICON_ID, 'MINA', () => {
 			this.activateView();
 		});
 
@@ -83,7 +83,7 @@ export default class MinaPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'open-mina-full-mode',
-			name: 'Full Mode',
+			name: 'Dashboard',
 			icon: KATANA_ICON_ID,
 			callback: () => {
 				this.activateView('daily');
