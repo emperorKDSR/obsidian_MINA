@@ -1986,10 +1986,26 @@ export class MinaView extends ItemView {
         const knob = toggleContainer.createEl('span', { attr: { style: `position:absolute; height:14px; width:14px; left:3px; bottom:3px; background-color:var(--text-on-accent,white); transition:.3s; border-radius:50%; transform:${isDone ? 'translateX(16px)' : 'translateX(0)'};` } });
         cb.addEventListener('change', async () => { const checked = cb.checked; slider.style.backgroundColor = checked ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'; knob.style.transform = checked ? 'translateX(16px)' : 'translateX(0)'; row.style.opacity = checked ? '0.5' : '1'; await this.plugin.toggleTaskStatus(entry.filePath, checked); this.updateReviewTasksList(); });
         const content = topRow.createEl('div', { attr: { style: 'flex:1; min-width:0;' } });
-        const textEl = content.createEl('div', { attr: { style: `word-break:break-word; font-size:0.95em; line-height:1.4; ${isDone ? 'text-decoration:line-through; opacity:0.7;' : ''}` } });
+        const textEl = content.createEl('div', { cls: (this.plugin.settings.isCompactView ? 'mina-card-compact' : ''), attr: { style: `word-break:break-word; font-size:0.95em; line-height:1.4; ${isDone ? 'text-decoration:line-through; opacity:0.7;' : ''}` } });
         await MarkdownRenderer.render(this.plugin.app, entry.body || entry.title, textEl, entry.filePath, this);
         this.hookInternalLinks(textEl, entry.filePath); this.hookImageZoom(textEl);
         const firstP = textEl.querySelector('p'); if (firstP) { firstP.style.marginTop = '0'; firstP.style.marginBottom = '0'; }
+
+        if (this.plugin.settings.isCompactView) {
+            const toggle = content.createEl('div', { text: 'Show more', cls: 'mina-expand-toggle' });
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (textEl.classList.contains('mina-card-compact')) {
+                    textEl.classList.remove('mina-card-compact');
+                    textEl.classList.add('mina-card-expanded');
+                    toggle.setText('Show less');
+                } else {
+                    textEl.classList.add('mina-card-compact');
+                    textEl.classList.remove('mina-card-expanded');
+                    toggle.setText('Show more');
+                }
+            });
+        }
 
         const isTaskMode = this.activeTab === 'review-tasks' && this.isDedicated;
         if (isTaskMode && entry.due) {
@@ -2051,11 +2067,35 @@ export class MinaView extends ItemView {
         const cardWrapper = mainContentRow.createEl('div', { attr: { style: 'position: relative; flex-grow: 1; min-width: 0;' } });
         
         const isBlurred = blur ?? this.plugin.settings.blurredNotes.includes(entry.filePath);
-        const renderTarget = cardWrapper.createEl('div', { cls: 'mina-card' + (isBlurred ? ' mina-blurred' : ''), attr: { style: 'cursor: text; font-size: 0.95em; line-height: 1.4; color: var(--text-normal); word-break: break-word;' } });
+        const cardClasses = ['mina-card'];
+        if (isBlurred) cardClasses.push('mina-blurred');
+        if (this.plugin.settings.isCompactView) cardClasses.push('mina-card-compact');
+        
+        const renderTarget = cardWrapper.createEl('div', { 
+            cls: cardClasses.join(' '), 
+            attr: { style: 'cursor: text; font-size: 0.95em; line-height: 1.4; color: var(--text-normal); word-break: break-word;' } 
+        });
         renderTarget.createEl('span', { text: `${entry.day} ${entry.created.split(' ')[1] || ''}`, attr: { style: 'float: right; font-size: 0.65em; color: var(--text-muted); opacity: 0.7; margin-left: 8px;' } });
         await MarkdownRenderer.render(this.plugin.app, entry.body, renderTarget, filePath, this);
         this.hookInternalLinks(renderTarget, filePath); this.hookImageZoom(renderTarget); this.hookCheckboxes(renderTarget, entry);
         const firstP = renderTarget.querySelector('p'); if (firstP) { firstP.style.marginTop = '0'; firstP.style.marginBottom = '0'; }
+
+        if (this.plugin.settings.isCompactView) {
+            const toggle = cardWrapper.createEl('div', { text: 'Show more', cls: 'mina-expand-toggle' });
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (renderTarget.classList.contains('mina-card-compact')) {
+                    renderTarget.classList.remove('mina-card-compact');
+                    renderTarget.classList.add('mina-card-expanded');
+                    toggle.setText('Show less');
+                } else {
+                    renderTarget.classList.add('mina-card-compact');
+                    renderTarget.classList.remove('mina-card-expanded');
+                    toggle.setText('Show more');
+                }
+            });
+        }
+
         const actionsDiv = cardWrapper.createEl('div', { attr: { style: 'position: absolute; top: 2px; right: 4px; display: flex; gap: 6px; align-items: center; opacity: 0; transition: opacity 0.15s; background: var(--background-secondary); border-radius: 4px; padding: 1px 4px;' } });
         cardWrapper.addEventListener('mouseenter', () => actionsDiv.style.opacity = '1'); cardWrapper.addEventListener('mouseleave', () => actionsDiv.style.opacity = '0');
         

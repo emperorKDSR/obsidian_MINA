@@ -28,6 +28,7 @@ export interface MinaSettings {
     focusModeOrder: string[];
     grundfosModeOrder: string[];
     blurredNotes: string[];
+    isCompactView: boolean;
 }
 
 export interface ReplyEntry {

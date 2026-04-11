@@ -16,3 +16,50 @@
     filter: blur(8px);
     transition: filter 0.3s ease;
 }
+
+/* Compact View Styles */
+.mina-card-compact {
+    max-height: 80px !important; /* Force a height limit */
+    overflow: hidden !important;
+    position: relative;
+    display: block !important;
+}
+
+/* Add a fade-out effect at the bottom of compact cards */
+.mina-card-compact::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    background: linear-gradient(to bottom, transparent, var(--background-secondary));
+    pointer-events: none;
+}
+
+.theme-dark .mina-card-compact::after {
+    background: linear-gradient(to bottom, transparent, #2a2a2a); /* Matching dark card bg approximately */
+}
+
+/* When expanded, remove the height limit and fade effect */
+.mina-card-expanded {
+    max-height: none !important;
+}
+
+.mina-card-expanded::after {
+    display: none;
+}
+
+.mina-expand-toggle {
+    font-size: 0.75em;
+    color: var(--text-accent);
+    cursor: pointer;
+    margin-top: 4px;
+    display: inline-block;
+    border-bottom: 1px dashed var(--text-accent);
+}
+
+.mina-expand-toggle:hover {
+    color: var(--text-accent-hover);
+    border-bottom-style: solid;
+}

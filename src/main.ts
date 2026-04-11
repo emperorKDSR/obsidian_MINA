@@ -153,6 +153,36 @@ export default class MinaPlugin extends Plugin {
 			}
 		});
 
+		this.addCommand({
+			id: 'enable-compact-view',
+			name: 'Enable Compact View',
+			callback: async () => {
+				this.settings.isCompactView = true;
+				await this.saveSettings();
+				new Notice('Compact View enabled');
+                const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MINA);
+                for (const leaf of leaves) {
+                    const view = leaf.view as MinaView;
+                    if (view && typeof view.renderView === 'function') view.renderView();
+                }
+			}
+		});
+
+		this.addCommand({
+			id: 'disable-compact-view',
+			name: 'Enable Full View',
+			callback: async () => {
+				this.settings.isCompactView = false;
+				await this.saveSettings();
+				new Notice('Full View enabled');
+                const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MINA);
+                for (const leaf of leaves) {
+                    const view = leaf.view as MinaView;
+                    if (view && typeof view.renderView === 'function') view.renderView();
+                }
+			}
+		});
+
 		this.addSettingTab(new MinaSettingTab(this.app, this));
 	}
 
@@ -318,6 +348,7 @@ export default class MinaPlugin extends Plugin {
             if (loadedData.focusModeOrder !== undefined) this.settings.focusModeOrder = [...loadedData.focusModeOrder];
             if (loadedData.grundfosModeOrder !== undefined) this.settings.grundfosModeOrder = [...loadedData.grundfosModeOrder];
             if (loadedData.blurredNotes !== undefined) this.settings.blurredNotes = [...loadedData.blurredNotes];
+            if (loadedData.isCompactView !== undefined) this.settings.isCompactView = loadedData.isCompactView;
             this.settingsInitialized = true;
         }
 
