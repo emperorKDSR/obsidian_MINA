@@ -76,7 +76,10 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - **Modification Tracking:** Every entry tracks its **Modified Date** and **Modified Time**.
    - **Advanced Thread Sorting:** History is sorted by the latest activity with bubble-up logic.
    - **Interactive Filters:** Status, dynamic Context tags, and Date presets.
-   - **Advanced Editing:** Double-click or use `✏️` to open a Modal for editing.
+   - **Advanced Editing:** 
+     - Double-click or use `✏️` to open a Modal for full text and context editing.
+     - **Attachment Support:** Insert pictures, files, and clipboard images directly into the edit modal via the 📎 button, drag-and-drop, or pasting.
+     - **Full Context Management:** Edit modal shows all contexts (plugin settings + entry's own). Click to toggle on/off. Type a new context in the input and press Enter or tap Done/Go on mobile keyboard. A `+` button is also available. New contexts are saved to plugin settings immediately.
    - **Convert Thought to Task:** `📋` button converts thoughts to tasks.
    - **Image Zoom Lightbox:** Clicking any image opens a full-screen overlay.
    - **Inline Checklists:** Type `+ item` to auto-convert to `- [ ] item`.

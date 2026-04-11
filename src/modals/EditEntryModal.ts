@@ -98,9 +98,78 @@ export class EditEntryModal extends Modal {
         };
         // ---------------------
 
-        const textArea = contentEl.createEl('textarea', {
+        const handleModalFiles = async (files: FileList) => {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (!file || file.size === 0) continue;
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const extension = file.name && file.name.includes('.') ? file.name.split('.').pop() : (file.type.split('/')[1] || 'png');
+                    // @ts-ignore
+                    const baseName = (file.name && file.name.includes('.')) ? file.name.substring(0, file.name.lastIndexOf('.')) : `Pasted image ${moment().format('YYYYMMDDHHmmss')}`;
+                    const fileName = `${baseName}.${extension}`;
+                    const attachmentPath = await this.plugin.app.fileManager.getAvailablePathForAttachment(fileName);
+                    const newFile = await this.plugin.app.vault.createBinary(attachmentPath, arrayBuffer);
+                    const isImgExt = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg', 'webp'].includes(extension?.toLowerCase() || '');
+                    const markdownLink = isImgExt ? `![[${newFile.name}]]` : `[[${newFile.name}]]`;
+                    
+                    const startPos = textArea.selectionStart;
+                    const endPos = textArea.selectionEnd;
+                    textArea.value = textArea.value.substring(0, startPos) + markdownLink + textArea.value.substring(endPos);
+                    textArea.selectionStart = textArea.selectionEnd = startPos + markdownLink.length;
+                    new Notice(`Attached ${newFile.name}`);
+                } catch (err) { new Notice('Failed to save attachment.'); }
+            }
+        };
+
+        const textAreaWrapper = contentEl.createEl('div', { attr: { style: 'position: relative;' } });
+        const textArea = textAreaWrapper.createEl('textarea', {
             text: this.initialText,
             attr: { style: 'width: 100%; min-height: 120px; font-family: var(--font-text); margin-bottom: 10px; padding: 8px; resize: vertical; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal);' }
+        });
+
+        const fileInput = textAreaWrapper.createEl('input', { 
+            attr: { 
+                type: 'file', 
+                multiple: '', 
+                style: 'display:none;', 
+                accept: 'image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,*' 
+            } 
+        }) as HTMLInputElement;
+
+        const attachBtn = textAreaWrapper.createEl('button', { 
+            attr: { 
+                title: 'Attach image or file', 
+                style: 'position:absolute; bottom:16px; right:10px; background:transparent; border:none; color:var(--text-muted); opacity:0.5; padding:2px 4px; cursor:pointer; font-size:1.1em; line-height:1; transition:opacity 0.15s; z-index:1' 
+            } 
+        });
+        attachBtn.textContent = '📎';
+        attachBtn.addEventListener('mouseenter', () => attachBtn.style.opacity = '1');
+        attachBtn.addEventListener('mouseleave', () => attachBtn.style.opacity = '0.5');
+        attachBtn.addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
+
+        fileInput.addEventListener('change', async () => { 
+            if (fileInput.files && fileInput.files.length > 0) { 
+                await handleModalFiles(fileInput.files); 
+                fileInput.value = ''; 
+            } 
+        });
+
+        textArea.addEventListener('paste', async (e: ClipboardEvent) => {
+            if (e.clipboardData && e.clipboardData.files.length > 0) {
+                e.preventDefault();
+                e.stopPropagation();
+                await handleModalFiles(e.clipboardData.files);
+            }
+        });
+
+        textArea.addEventListener('dragover', (e) => { e.stopPropagation(); e.preventDefault(); });
+        textArea.addEventListener('drop', async (e: DragEvent) => {
+            if (e.dataTransfer && e.dataTransfer.files.length > 0) { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                await handleModalFiles(e.dataTransfer.files); 
+            }
         });
 
         let currentTextValue = this.initialText;
@@ -174,52 +243,6 @@ export class EditEntryModal extends Modal {
             }
 
             currentTextValue = target.value;
-        });
-
-        const handleModalFiles = async (files: FileList) => {
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                if (!file || file.size === 0) continue;
-                const isImage = file.type.startsWith('image/');
-                const hasValidName = file.name && file.name !== 'image.png' && file.name.trim().length > 0;
-                if (isImage || hasValidName) {
-                    try {
-                        const arrayBuffer = await file.arrayBuffer();
-                        const extension = file.name && file.name.includes('.') ? file.name.split('.').pop() : (file.type.split('/')[1] || 'png');
-                        // @ts-ignore
-                        const baseName = (file.name && file.name.includes('.')) ? file.name.substring(0, file.name.lastIndexOf('.')) : `Pasted image ${moment().format('YYYYMMDDHHmmss')}`;
-                        const fileName = `${baseName}.${extension}`;
-                        const attachmentPath = await this.plugin.app.fileManager.getAvailablePathForAttachment(fileName);
-                        const newFile = await this.plugin.app.vault.createBinary(attachmentPath, arrayBuffer);
-                        const isImgExt = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg', 'webp'].includes(extension?.toLowerCase() || '');
-                        const markdownLink = isImgExt ? `![[${newFile.name}]]` : `[[${newFile.name}]]`;
-                        
-                        const startPos = textArea.selectionStart;
-                        const endPos = textArea.selectionEnd;
-                        textArea.value = textArea.value.substring(0, startPos) + markdownLink + textArea.value.substring(endPos);
-                        currentTextValue = textArea.value;
-                        textArea.selectionStart = textArea.selectionEnd = startPos + markdownLink.length;
-                        new Notice(`Attached ${newFile.name}`);
-                    } catch (err) { new Notice('Failed to save attachment.'); }
-                }
-            }
-        };
-
-        textArea.addEventListener('paste', async (e: ClipboardEvent) => {
-            e.stopPropagation();
-            if (e.clipboardData && e.clipboardData.files.length > 0) {
-                let hasImage = false;
-                for (let i = 0; i < e.clipboardData.items.length; i++) {
-                    if (e.clipboardData.items[i].type.startsWith('image/')) { hasImage = true; break; }
-                }
-                if (hasImage) { e.preventDefault(); await handleModalFiles(e.clipboardData.files); }
-            }
-        });
-
-        textArea.addEventListener('dragover', (e) => { e.stopPropagation(); e.preventDefault(); });
-        textArea.addEventListener('drop', async (e: DragEvent) => {
-            e.stopPropagation();
-            if (e.dataTransfer && e.dataTransfer.files.length > 0) { e.preventDefault(); await handleModalFiles(e.dataTransfer.files); }
         });
 
         const metadataContainer = contentEl.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-top: 15px;' } });
