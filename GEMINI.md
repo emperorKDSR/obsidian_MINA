@@ -64,7 +64,12 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - **Contemporary Controls:**
      - **Toggle Switches:** Pill-shaped toggle switches for task status, History, and Capture visibility.
      - **Alien Avatar:** Root thoughts are marked with a circular alien head SVG icon using the theme's accent color (currentColor).
-     - **Alien Ribbon Icon:** The Obsidian sidebar ribbon uses the same alien SVG as the plugin icon.
+     - **Multiple Ribbon Entry Points:** Dedicated sidebar icons for quick access to specific modes:
+     - **Alien:** Opens Full Mode.
+     - **Pen:** Opens Journal Mode.
+     - **Sun & Moon:** Opens Daily Mode.
+     - **Sparkle/Bot:** Opens AI Mode.
+     - **Clock:** Opens Timeline Mode.
    - **Desktop Optimization:** 
      - Standalone windows (Full Mode, Daily Mode, Timeline, AI Mode) hide native tab headers and include a dedicated **drag handle** at the top.
      - **Seamless Transitions:** Robust handling of mode switching by identifying and reusing existing windows or sidebar leaves.

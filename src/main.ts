@@ -1,5 +1,5 @@
 import { Plugin, TFile, Notice, WorkspaceLeaf, Platform, moment, addIcon } from 'obsidian';
-import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG } from './constants';
+import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG } from './constants';
 import { MinaSettings, ThoughtEntry, TaskEntry, ReplyEntry } from './types';
 import { isTablet, toAsciiDigits } from './utils';
 import { MinaView } from './view';
@@ -47,13 +47,28 @@ export default class MinaPlugin extends Plugin {
 
 		addIcon(KATANA_ICON_ID, KATANA_ICON_SVG);
 		addIcon(JOURNAL_ICON_ID, JOURNAL_ICON_SVG);
+		addIcon(DAILY_ICON_ID, DAILY_ICON_SVG);
+		addIcon(AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG);
+		addIcon(TIMELINE_ICON_ID, TIMELINE_ICON_SVG);
 
 		this.addRibbonIcon(KATANA_ICON_ID, 'Full Mode', () => {
 			this.activateView();
 		});
 
+		this.addRibbonIcon(DAILY_ICON_ID, 'Daily Mode', () => {
+			this.activateView('daily', true);
+		});
+
 		this.addRibbonIcon(JOURNAL_ICON_ID, 'Journal Mode', () => {
 			this.activateView('journal', true);
+		});
+
+		this.addRibbonIcon(AI_CHAT_ICON_ID, 'AI Mode', () => {
+			this.activateView('mina-ai', true);
+		});
+
+		this.addRibbonIcon(TIMELINE_ICON_ID, 'Timeline Mode', () => {
+			this.activateView('timeline', true);
 		});
 
 		this.addCommand({
@@ -77,7 +92,7 @@ export default class MinaPlugin extends Plugin {
 		this.addCommand({
 			id: 'open-mina-daily-mode',
 			name: 'Daily Mode',
-			icon: KATANA_ICON_ID,
+			icon: DAILY_ICON_ID,
 			callback: () => {
 				this.activateView('daily', true);
 			}
@@ -86,7 +101,7 @@ export default class MinaPlugin extends Plugin {
 		this.addCommand({
 			id: 'open-mina-timeline',
 			name: 'Timeline Mode',
-			icon: KATANA_ICON_ID,
+			icon: TIMELINE_ICON_ID,
 			callback: () => {
 				this.activateView('timeline', true);
 			}
@@ -104,7 +119,7 @@ export default class MinaPlugin extends Plugin {
 		this.addCommand({
 			id: 'open-mina-ai-mode',
 			name: 'AI Mode',
-			icon: KATANA_ICON_ID,
+			icon: AI_CHAT_ICON_ID,
 			callback: () => {
 				this.activateView('mina-ai', true);
 			}
