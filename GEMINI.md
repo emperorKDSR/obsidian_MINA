@@ -67,7 +67,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Multiple Ribbon Entry Points:** Dedicated sidebar icons for quick access to specific modes:
      - **Alien:** Opens Full Mode.
      - **Pen:** Opens Journal Mode.
-     - **Sun & Moon:** Opens Daily Mode.
+     - **Sun:** Opens Daily Mode.
      - **Sparkle/Bot:** Opens AI Mode.
      - **Clock:** Opens Timeline Mode.
    - **Desktop Optimization:** 
