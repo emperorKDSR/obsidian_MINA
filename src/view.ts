@@ -369,7 +369,9 @@ export class MinaView extends ItemView {
                             null, 
                             false, 
                             async (newText, newContextStr) => {
-                                const ctxArr = newContextStr ? newContextStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : [];
+                                let ctxArr = newContextStr ? newContextStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : [];
+                                if (this.activeTab === 'journal' && !ctxArr.includes('journal')) ctxArr.push('journal');
+                                if (this.activeTab === 'grundfos' && !ctxArr.includes('Grundfos')) ctxArr.push('Grundfos');
                                 await this.plugin.createThoughtFile(newText.replace(/<br>/g, '\n'), ctxArr);
                                 this.renderView();
                             },
@@ -391,7 +393,9 @@ export class MinaView extends ItemView {
                             moment().format('YYYY-MM-DD'), 
                             true, 
                             async (newText, newContextStr, newDue) => {
-                                const ctxArr = newContextStr ? newContextStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : [];
+                                let ctxArr = newContextStr ? newContextStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : [];
+                                if (this.activeTab === 'journal' && !ctxArr.includes('journal')) ctxArr.push('journal');
+                                if (this.activeTab === 'grundfos' && !ctxArr.includes('Grundfos')) ctxArr.push('Grundfos');
                                 await this.plugin.createTaskFile(newText.replace(/<br>/g, '\n'), ctxArr, newDue || undefined);
                                 this.renderView();
                             },
@@ -408,6 +412,8 @@ export class MinaView extends ItemView {
                         new VoiceMemoModal(this.plugin.app, this.plugin, async (file: TFile) => {
                             if (this.activeTab === 'journal') {
                                 await this.plugin.createThoughtFile(`Voice memo: [[${file.path}]]`, ['journal']);
+                            } else if (this.activeTab === 'grundfos') {
+                                await this.plugin.createThoughtFile(`Voice memo: [[${file.path}]]`, ['Grundfos']);
                             }
                             this.renderView();
                         }).open();
@@ -2406,8 +2412,6 @@ export class MinaView extends ItemView {
     }
 
     renderGrundfosMode(container: HTMLElement) {
-        const captureContainer = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: block; margin-top: 10px; margin-bottom: 10px;' } });
-        this.renderCaptureMode(captureContainer, true, false);
         this.renderSearchInput(container, () => this.updateGrundfosList());
         const innerContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; padding: 15px 15px 200px 15px; -webkit-overflow-scrolling: touch;' } });
         this.grundfosRowContainer = innerContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
