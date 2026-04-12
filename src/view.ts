@@ -19,7 +19,7 @@ export class MinaView extends ItemView {
     content: string;
     isTask: boolean;
     dueDate: string; // YYYY-MM-DD
-    activeTab: 'daily' | 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' | 'dues' | 'vo' | 'timeline' | 'journal' | 'focus' | 'grundfos' | 'memento-mori' = 'daily';
+    activeTab: 'daily' | 'review-tasks' | 'review-thoughts' | 'mina-ai' | 'settings' | 'dues' | 'vo' | 'timeline' | 'journal' | 'focus' | 'grundfos' | 'memento-mori' | string = 'daily';
     isDedicated: boolean = false;
     timelineSelectedDate: string = moment().format('YYYY-MM-DD');
 
@@ -177,7 +177,11 @@ export class MinaView extends ItemView {
             case 'journal': return "Journal";
             case 'focus': return "Focus";
             case 'grundfos': return "Grundfos";
-            default: return "Dashboard";
+            case 'memento-mori': return "Memento Mori";
+            default: {
+                const custom = this.plugin.settings.customModes.find(m => m.id === this.activeTab);
+                return custom ? custom.name : "Dashboard";
+            }
         }
     }
 
@@ -345,18 +349,177 @@ export class MinaView extends ItemView {
 
         if (this.activeTab === 'review-tasks') this.renderReviewTasksMode(container);
         else if (this.activeTab === 'mina-ai') this.renderMinaMode(container);
-        else if (this.activeTab === 'journal') this.renderJournalMode(container);
+        else if (this.activeTab === 'journal') this.renderContextMode(container, 'journal');
         else if (this.activeTab === 'dues') this.renderDuesMode(container);
         else if (this.activeTab === 'focus') this.renderFocusMode(container);
-        else if (this.activeTab === 'grundfos') this.renderGrundfosMode(container);
+        else if (this.activeTab === 'grundfos') this.renderContextMode(container, 'grundfos');
         else if (this.activeTab === 'memento-mori') this.renderMementoMori(container);
         else if (this.activeTab === 'settings') this.renderSettingsMode(container);
         else if (this.activeTab === 'vo') this.renderVoiceMode(container);
         else if (this.activeTab === 'daily') this.renderDailyMode(container);
         else if (this.activeTab === 'timeline') this.renderTimelineMode(container);
+        else if (this.plugin.settings.customModes.some(m => m.id === this.activeTab)) this.renderContextMode(container, this.activeTab);
         else this.renderReviewThoughtsMode(container);
 
         this.renderFAB();
+    }
+
+    renderContextMode(container: HTMLElement, modeId: string) {
+        this.renderSearchInput(container, () => this.updateContextList(modeId));
+        const innerContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; padding: 15px 15px 200px 15px; -webkit-overflow-scrolling: touch;' } });
+        const listContainer = innerContainer.createEl('div', { 
+            cls: `mina-list-${modeId}`,
+            attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } 
+        });
+        this.updateContextList(modeId, listContainer);
+    }
+
+    async updateContextList(modeId: string, listContainer?: HTMLElement) {
+        const container = listContainer || this.containerEl.querySelector(`.mina-list-${modeId}`) as HTMLElement;
+        if (!container) return;
+        container.empty();
+
+        let context = '';
+        let keywords: string[] = [];
+
+        if (modeId === 'journal') {
+            context = 'journal';
+            keywords = this.plugin.settings.journalKeywords || [];
+        } else if (modeId === 'grundfos') {
+            context = 'Grundfos';
+            keywords = this.plugin.settings.grundfosKeywords || [];
+        } else {
+            const custom = this.plugin.settings.customModes.find(m => m.id === modeId);
+            if (custom) {
+                context = custom.context;
+                keywords = custom.keywords || [];
+            }
+        }
+
+        const inclusions = keywords.filter(k => !k.startsWith('-'));
+        const exclusions = keywords.filter(k => k.startsWith('-')).map(k => k.substring(1).toLowerCase());
+
+        let entries = Array.from(this.plugin.thoughtIndex.values()).filter(e => {
+            const bodyLower = e.body.toLowerCase();
+            const titleLower = e.title.toLowerCase();
+            
+            // 1. Check exclusions first (Exclusion is absolute)
+            const isExcluded = exclusions.some(k => bodyLower.includes(k) || titleLower.includes(k));
+            if (isExcluded) return false;
+
+            // 2. Check context and inclusions
+            const hasContext = context ? e.context.includes(context) : true; // If no context, search all
+            const hasInclusion = inclusions.some(k => bodyLower.includes(k.toLowerCase()) || titleLower.includes(k.toLowerCase()));
+            
+            // If context is specified, entry must have context OR an inclusion keyword
+            if (context) return hasContext || hasInclusion;
+            
+            // If no context is specified, and no inclusions, show everything (that's not excluded)
+            if (inclusions.length === 0) return true;
+            
+            // If no context but inclusions specified, must match at least one inclusion
+            return hasInclusion;
+        });
+
+        if (this.searchQuery) {
+            entries = entries.filter(e => this.matchesSearch(this.searchQuery, [e.body, e.title]));
+        }
+
+        const order = modeId === 'journal' ? this.plugin.settings.journalModeOrder : 
+                      modeId === 'grundfos' ? this.plugin.settings.grundfosModeOrder :
+                      (this.plugin.settings.customModeOrders[modeId] || []);
+        
+        entries.sort((a, b) => {
+            const idxA = order.indexOf(a.filePath);
+            const idxB = order.indexOf(b.filePath);
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
+            return b.lastThreadUpdate - a.lastThreadUpdate;
+        });
+
+        if (entries.length === 0) {
+            container.createEl('p', { text: 'No matching entries found.', attr: { style: 'color: var(--text-muted); text-align: center; margin-top: 20px;' } });
+            return;
+        }
+
+        let draggedEl: HTMLElement | null = null;
+
+        for (const entry of entries) {
+            const dragWrapper = container.createEl('div', { 
+                attr: { 
+                    draggable: 'true',
+                    'data-filepath': entry.filePath,
+                    style: 'cursor: grab; transition: transform 0.2s, opacity 0.2s;'
+                } 
+            });
+
+            dragWrapper.addEventListener('dragstart', (e) => {
+                draggedEl = dragWrapper;
+                dragWrapper.style.opacity = '0.5';
+                if (e.dataTransfer) {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', entry.filePath);
+                }
+            });
+
+            dragWrapper.addEventListener('dragend', () => {
+                dragWrapper.style.opacity = '1';
+                container.querySelectorAll('div').forEach(el => (el as HTMLElement).style.borderTop = '');
+            });
+
+            dragWrapper.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+                const rect = dragWrapper.getBoundingClientRect();
+                const midpoint = rect.top + rect.height / 2;
+                if (e.clientY < midpoint) {
+                    dragWrapper.style.borderTop = '2px solid var(--interactive-accent)';
+                    dragWrapper.style.borderBottom = '';
+                } else {
+                    dragWrapper.style.borderTop = '';
+                    dragWrapper.style.borderBottom = '2px solid var(--interactive-accent)';
+                }
+            });
+
+            dragWrapper.addEventListener('dragleave', () => {
+                dragWrapper.style.borderTop = '';
+                dragWrapper.style.borderBottom = '';
+            });
+
+            dragWrapper.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                dragWrapper.style.borderTop = '';
+                dragWrapper.style.borderBottom = '';
+                if (draggedEl && draggedEl !== dragWrapper) {
+                    const rect = dragWrapper.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+                    if (e.clientY < midpoint) {
+                        container.insertBefore(draggedEl, dragWrapper);
+                    } else {
+                        container.insertBefore(draggedEl, dragWrapper.nextSibling);
+                    }
+                    await this.saveCustomOrder(modeId, container);
+                }
+            });
+
+            const isBlurred = this.plugin.settings.blurredNotes.includes(entry.filePath);
+            await this.renderThoughtRow(entry, dragWrapper, entry.filePath, 0, true, true, isBlurred);
+        }
+    }
+
+    async saveCustomOrder(modeId: string, container: HTMLElement) {
+        const newOrder: string[] = [];
+        container.querySelectorAll('[data-filepath]').forEach(el => {
+            const path = el.getAttribute('data-filepath');
+            if (path) newOrder.push(path);
+        });
+
+        if (modeId === 'journal') this.plugin.settings.journalModeOrder = newOrder;
+        else if (modeId === 'grundfos') this.plugin.settings.grundfosModeOrder = newOrder;
+        else this.plugin.settings.customModeOrders[modeId] = newOrder;
+
+        await this.plugin.saveSettings();
     }
 
     renderFAB() {
@@ -437,6 +600,8 @@ export class MinaView extends ItemView {
                                 let ctxArr = newContextStr ? newContextStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : [];
                                 if (this.activeTab === 'journal' && !ctxArr.includes('journal')) ctxArr.push('journal');
                                 if (this.activeTab === 'grundfos' && !ctxArr.includes('Grundfos')) ctxArr.push('Grundfos');
+                                const custom = this.plugin.settings.customModes.find(m => m.id === this.activeTab);
+                                if (custom && !ctxArr.includes(custom.context)) ctxArr.push(custom.context);
                                 await this.plugin.createThoughtFile(newText.replace(/<br>/g, '\n'), ctxArr);
                                 this.renderView();
                             },
@@ -461,6 +626,8 @@ export class MinaView extends ItemView {
                                 let ctxArr = newContextStr ? newContextStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : [];
                                 if (this.activeTab === 'journal' && !ctxArr.includes('journal')) ctxArr.push('journal');
                                 if (this.activeTab === 'grundfos' && !ctxArr.includes('Grundfos')) ctxArr.push('Grundfos');
+                                const custom = this.plugin.settings.customModes.find(m => m.id === this.activeTab);
+                                if (custom && !ctxArr.includes(custom.context)) ctxArr.push(custom.context);
                                 await this.plugin.createTaskFile(newText.replace(/<br>/g, '\n'), ctxArr, newDue || undefined);
                                 this.renderView();
                             },
@@ -479,6 +646,9 @@ export class MinaView extends ItemView {
                                 await this.plugin.createThoughtFile(`Voice memo: [[${file.path}]]`, ['journal']);
                             } else if (this.activeTab === 'grundfos') {
                                 await this.plugin.createThoughtFile(`Voice memo: [[${file.path}]]`, ['Grundfos']);
+                            } else {
+                                const custom = this.plugin.settings.customModes.find(m => m.id === this.activeTab);
+                                if (custom) await this.plugin.createThoughtFile(`Voice memo: [[${file.path}]]`, [custom.context]);
                             }
                             this.renderView();
                         }).open();
@@ -1871,113 +2041,6 @@ export class MinaView extends ItemView {
         textArea.addEventListener('keydown', async (e) => { if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); await submitAction(); } });
     }
 
-    renderJournalMode(container: HTMLElement) {
-        this.renderSearchInput(container, () => this.updateJournalList());
-        const innerContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; padding: 15px 15px 200px 15px; -webkit-overflow-scrolling: touch;' } });
-        this.reviewThoughtsContainer = innerContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
-        this.updateJournalList();
-    }
-
-    async updateJournalList() {
-        if (!this.reviewThoughtsContainer) return;
-        this.reviewThoughtsContainer.empty();
-        
-        let entries = Array.from(this.plugin.thoughtIndex.values()).filter(e => e.context.includes('journal'));
-        if (this.searchQuery) {
-            entries = entries.filter(e => this.matchesSearch(this.searchQuery, [e.body, e.title]));
-        }
-        const order = this.plugin.settings.journalModeOrder || [];
-        
-        entries.sort((a, b) => {
-            const idxA = order.indexOf(a.filePath);
-            const idxB = order.indexOf(b.filePath);
-            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-            if (idxA !== -1) return -1;
-            if (idxB !== -1) return 1;
-            return b.lastThreadUpdate - a.lastThreadUpdate;
-        });
-
-        if (entries.length === 0) {
-            this.reviewThoughtsContainer.createEl('p', { text: this.searchQuery ? 'No matching entries found.' : 'No journal entries found.', attr: { style: 'color: var(--text-muted); text-align: center; margin-top: 20px;' } });
-            return;
-        }
-
-        let draggedEl: HTMLElement | null = null;
-
-        for (const entry of entries) {
-            const dragWrapper = this.reviewThoughtsContainer.createEl('div', { 
-                attr: { 
-                    draggable: 'true',
-                    'data-filepath': entry.filePath,
-                    style: 'cursor: grab; transition: transform 0.2s, opacity 0.2s;'
-                } 
-            });
-
-            dragWrapper.addEventListener('dragstart', (e) => {
-                draggedEl = dragWrapper;
-                dragWrapper.style.opacity = '0.5';
-                if (e.dataTransfer) {
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('text/plain', entry.filePath);
-                }
-            });
-
-            dragWrapper.addEventListener('dragend', () => {
-                dragWrapper.style.opacity = '1';
-                this.reviewThoughtsContainer?.querySelectorAll('div').forEach(el => (el as HTMLElement).style.borderTop = '');
-            });
-
-            dragWrapper.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-                const rect = dragWrapper.getBoundingClientRect();
-                const midpoint = rect.top + rect.height / 2;
-                if (e.clientY < midpoint) {
-                    dragWrapper.style.borderTop = '2px solid var(--interactive-accent)';
-                    dragWrapper.style.borderBottom = '';
-                } else {
-                    dragWrapper.style.borderTop = '';
-                    dragWrapper.style.borderBottom = '2px solid var(--interactive-accent)';
-                }
-            });
-
-            dragWrapper.addEventListener('dragleave', () => {
-                dragWrapper.style.borderTop = '';
-                dragWrapper.style.borderBottom = '';
-            });
-
-            dragWrapper.addEventListener('drop', async (e) => {
-                e.preventDefault();
-                dragWrapper.style.borderTop = '';
-                dragWrapper.style.borderBottom = '';
-                if (draggedEl && draggedEl !== dragWrapper) {
-                    const rect = dragWrapper.getBoundingClientRect();
-                    const midpoint = rect.top + rect.height / 2;
-                    if (e.clientY < midpoint) {
-                        this.reviewThoughtsContainer?.insertBefore(draggedEl, dragWrapper);
-                    } else {
-                        this.reviewThoughtsContainer?.insertBefore(draggedEl, dragWrapper.nextSibling);
-                    }
-                    await this.saveJournalOrder();
-                }
-            });
-
-            const isBlurred = this.plugin.settings.blurredNotes.includes(entry.filePath);
-            await this.renderThoughtRow(entry, dragWrapper, entry.filePath, 0, true, true, isBlurred);
-        }
-    }
-
-    async saveJournalOrder() {
-        if (!this.reviewThoughtsContainer) return;
-        const newOrder: string[] = [];
-        this.reviewThoughtsContainer.querySelectorAll('[data-filepath]').forEach(el => {
-            const path = el.getAttribute('data-filepath');
-            if (path) newOrder.push(path);
-        });
-        this.plugin.settings.journalModeOrder = newOrder;
-        await this.plugin.saveSettings();
-    }
-
     renderReviewTasksMode(container: HTMLElement) {
         if (this.isDedicated) {
             const header = container.createEl('div', { 
@@ -2337,11 +2400,7 @@ export class MinaView extends ItemView {
                 this.plugin.settings.blurredNotes.push(entry.filePath);
             }
             await this.plugin.saveSettings();
-            if (this.activeTab === 'grundfos') this.updateGrundfosList();
-            else if (this.activeTab === 'focus') this.updateFocusList();
-            else if (this.activeTab === 'journal') this.updateJournalList();
-            else if (this.activeTab === 'review-thoughts') this.refreshCurrentList();
-            else this.renderView();
+            this.refreshCurrentList();
         });
 
         const openBtn = actionsDiv.createSpan({ text: '🔗', attr: { style: 'cursor: pointer; font-size: 0.8em;', title: 'Open file' } }); openBtn.addEventListener('click', () => { this.plugin.app.workspace.openLinkText(entry.filePath, '', 'window'); });
@@ -2565,120 +2624,14 @@ export class MinaView extends ItemView {
         await this.plugin.saveSettings();
     }
 
-    renderGrundfosMode(container: HTMLElement) {
-        this.renderSearchInput(container, () => this.updateGrundfosList());
-        const innerContainer = container.createEl('div', { attr: { style: 'flex-grow: 1; min-height: 0; overflow-y: auto; padding: 15px 15px 200px 15px; -webkit-overflow-scrolling: touch;' } });
-        this.grundfosRowContainer = innerContainer.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
-        this.updateGrundfosList();
-    }
-
-    async updateGrundfosList() {
-        if (!this.grundfosRowContainer) return;
-        this.grundfosRowContainer.empty();
-        
-        let entries = Array.from(this.plugin.thoughtIndex.values()).filter(e => e.context.includes('Grundfos'));
-        if (this.searchQuery) {
-            entries = entries.filter(e => this.matchesSearch(this.searchQuery, [e.body, e.title]));
-        }
-        const order = this.plugin.settings.grundfosModeOrder || [];
-        
-        entries.sort((a, b) => {
-            const idxA = order.indexOf(a.filePath);
-            const idxB = order.indexOf(b.filePath);
-            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-            if (idxA !== -1) return -1;
-            if (idxB !== -1) return 1;
-            return b.lastThreadUpdate - a.lastThreadUpdate;
-        });
-
-        if (entries.length === 0) {
-            this.grundfosRowContainer.createEl('p', { text: 'No Grundfos notes found.', attr: { style: 'color: var(--text-muted); text-align: center; margin-top: 20px;' } });
-            return;
-        }
-
-        let draggedEl: HTMLElement | null = null;
-
-        for (const entry of entries) {
-            const dragWrapper = this.grundfosRowContainer.createEl('div', { 
-                attr: { 
-                    draggable: 'true',
-                    'data-filepath': entry.filePath,
-                    style: 'cursor: grab; transition: transform 0.2s, opacity 0.2s;'
-                } 
-            });
-
-            dragWrapper.addEventListener('dragstart', (e) => {
-                draggedEl = dragWrapper;
-                dragWrapper.style.opacity = '0.5';
-                if (e.dataTransfer) {
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('text/plain', entry.filePath);
-                }
-            });
-
-            dragWrapper.addEventListener('dragend', () => {
-                dragWrapper.style.opacity = '1';
-                this.focusRowContainer?.querySelectorAll('div').forEach(el => (el as HTMLElement).style.borderTop = '');
-            });
-
-            dragWrapper.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-                const rect = dragWrapper.getBoundingClientRect();
-                const midpoint = rect.top + rect.height / 2;
-                if (e.clientY < midpoint) {
-                    dragWrapper.style.borderTop = '2px solid var(--interactive-accent)';
-                    dragWrapper.style.borderBottom = '';
-                } else {
-                    dragWrapper.style.borderTop = '';
-                    dragWrapper.style.borderBottom = '2px solid var(--interactive-accent)';
-                }
-            });
-
-            dragWrapper.addEventListener('dragleave', () => {
-                dragWrapper.style.borderTop = '';
-                dragWrapper.style.borderBottom = '';
-            });
-
-            dragWrapper.addEventListener('drop', async (e) => {
-                e.preventDefault();
-                dragWrapper.style.borderTop = '';
-                dragWrapper.style.borderBottom = '';
-                if (draggedEl && draggedEl !== dragWrapper) {
-                    const rect = dragWrapper.getBoundingClientRect();
-                    const midpoint = rect.top + rect.height / 2;
-                    if (e.clientY < midpoint) {
-                        this.grundfosRowContainer?.insertBefore(draggedEl, dragWrapper);
-                    } else {
-                        this.grundfosRowContainer?.insertBefore(draggedEl, dragWrapper.nextSibling);
-                    }
-                    await this.saveGrundfosOrder();
-                }
-            });
-
-            const isBlurred = this.plugin.settings.blurredNotes.includes(entry.filePath);
-            await this.renderThoughtRow(entry, dragWrapper, entry.filePath, 0, true, true, isBlurred);
-        }
-    }
-
     refreshCurrentList() {
-        if (this.activeTab === 'grundfos') this.updateGrundfosList();
+        if (this.activeTab === 'grundfos' || this.activeTab === 'journal' || this.plugin.settings.customModes.some(m => m.id === this.activeTab)) {
+            this.updateContextList(this.activeTab);
+        }
         else if (this.activeTab === 'focus') this.updateFocusList();
-        else if (this.activeTab === 'journal') this.updateJournalList();
         else if (this.activeTab === 'review-thoughts') this.updateReviewThoughtsList();
         else if (this.activeTab === 'review-tasks') this.updateReviewTasksList();
         else this.renderView();
-    }
-
-    async saveGrundfosOrder() {
-        if (!this.grundfosRowContainer) return;
-        const newOrder: string[] = [];
-        this.grundfosRowContainer.querySelectorAll('[data-filepath]').forEach(el => {
-            const path = el.getAttribute('data-filepath');
-            if (path) newOrder.push(path);
-        });
-        this.plugin.settings.grundfosModeOrder = newOrder;
-        await this.plugin.saveSettings();
     }
 
     matchesSearch(query: string, fields: string[]): boolean {

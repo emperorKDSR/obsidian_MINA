@@ -44,6 +44,10 @@ The "MINA V2" plugin has been developed with the following features and implemen
        - **Life Stats:** Displays real-time calculations: Age, total weeks lived, and % of life consumed.
        - **Fixed Layout:** One year per row across all devices (Desktop, Mobile, Tablet).
      - **Timeline View:** A chronological list of thoughts and tasks. Uses a custom **Clock** icon.
+     - **Custom Modes:** Users can build their own high-focus modes directly in the settings.
+       - **Dynamic Configuration:** Define Name, Context (dropdown), Keywords (including exclusion support), and Icon (dropdown).
+       - **Smart Filtering:** Modes can filter by a primary context tag and/or multiple keywords (supports `[[Note Links]]` and `-exclude` logic).
+       - **Full Feature Set:** Custom modes automatically inherit persistent reordering, smart FAB capture, contextual search, and universal blur.
      - **Floating Action Button (FAB):** A movable circular button with the alien avatar icon. Positioned in the **bottom-right corner** on desktop.
    - **Modern Card-Based Layout:** Thoughts and tasks are displayed in responsive "cards" with rounded corners.
    - **Compact View Mode:** A toggleable layout optimized for scanning many entries.
@@ -76,6 +80,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - **Capture Folders:** Configure storage paths for thoughts, tasks, and attachments.
    - **Date/Time Formats:** Customizable moment.js formats.
    - **Gemini AI Settings:** Securely store API key, model selection, and max tokens.
+   - **Custom Mode Management:** Create, edit, and delete user-defined high-focus modes with a dedicated UI, including context dropdowns and keyword filtering.
    - **Memento Mori:** Configure Birth Date and Life Expectancy for life visualization.
    - **Transcription:** Set target language for voice note processing.
 

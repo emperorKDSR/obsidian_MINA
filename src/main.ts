@@ -149,6 +149,8 @@ export default class MinaPlugin extends Plugin {
 			}
 		});
 
+        this.registerCustomModes();
+
 		this.addCommand({
 			id: 'open-mina-task-mode',
 			name: 'Task Mode',
@@ -312,6 +314,23 @@ export default class MinaPlugin extends Plugin {
         }
     }
 
+    registerCustomModes() {
+        for (const mode of this.settings.customModes) {
+            this.addRibbonIcon(mode.icon || 'pencil', mode.name, () => {
+                this.activateView(mode.id, true);
+            });
+
+            this.addCommand({
+                id: `open-mina-mode-${mode.id}`,
+                name: mode.name,
+                icon: mode.icon || 'pencil',
+                callback: () => {
+                    this.activateView(mode.id, true);
+                }
+            });
+        }
+    }
+
 	async loadSettings() {
 		const loadedData = await this.loadData();
         this.settings = Object.assign({}, DEFAULT_SETTINGS);
@@ -362,10 +381,14 @@ export default class MinaPlugin extends Plugin {
             if (loadedData.focusModeOrder !== undefined) this.settings.focusModeOrder = [...loadedData.focusModeOrder];
             if (loadedData.grundfosModeOrder !== undefined) this.settings.grundfosModeOrder = [...loadedData.grundfosModeOrder];
             if (loadedData.journalModeOrder !== undefined) this.settings.journalModeOrder = [...loadedData.journalModeOrder];
+            if (loadedData.grundfosKeywords !== undefined) this.settings.grundfosKeywords = [...loadedData.grundfosKeywords];
+            if (loadedData.journalKeywords !== undefined) this.settings.journalKeywords = [...loadedData.journalKeywords];
             if (loadedData.blurredNotes !== undefined) this.settings.blurredNotes = [...loadedData.blurredNotes];
             if (loadedData.isCompactView !== undefined) this.settings.isCompactView = loadedData.isCompactView;
             if (loadedData.birthDate !== undefined) this.settings.birthDate = loadedData.birthDate;
             if (loadedData.lifeExpectancy !== undefined) this.settings.lifeExpectancy = loadedData.lifeExpectancy;
+            if (loadedData.customModes !== undefined) this.settings.customModes = [...loadedData.customModes];
+            if (loadedData.customModeOrders !== undefined) this.settings.customModeOrders = { ...loadedData.customModeOrders };
             this.settingsInitialized = true;
         }
 

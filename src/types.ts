@@ -28,10 +28,22 @@ export interface MinaSettings {
     focusModeOrder: string[];
     grundfosModeOrder: string[];
     journalModeOrder: string[];
+    grundfosKeywords: string[];
+    journalKeywords: string[];
     blurredNotes: string[];
     isCompactView: boolean;
     birthDate: string;
     lifeExpectancy: number;
+    customModes: CustomMode[];
+    customModeOrders: Record<string, string[]>;
+}
+
+export interface CustomMode {
+    id: string;
+    name: string;
+    context: string;
+    keywords: string[];
+    icon: string;
 }
 
 export interface ReplyEntry {

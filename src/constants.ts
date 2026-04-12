@@ -98,8 +98,12 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     focusModeOrder: [],
     grundfosModeOrder: [],
     journalModeOrder: [],
+    grundfosKeywords: [],
+    journalKeywords: [],
     blurredNotes: [],
     isCompactView: false,
     birthDate: '1987-04-25',
-    lifeExpectancy: 90
+    lifeExpectancy: 90,
+    customModes: [],
+    customModeOrders: {}
 }
