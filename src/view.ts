@@ -123,6 +123,11 @@ export class MinaView extends ItemView {
         const { birthDate, lifeExpectancy } = this.plugin.settings;
         const birth = moment(birthDate);
         const today = moment();
+        const death = birth.clone().add(lifeExpectancy, 'years');
+        const startYear = birth.year();
+        const endYear = death.year();
+        const numRows = endYear - startYear + 1;
+        
         const totalWeeks = lifeExpectancy * 52;
         const weeksLived = today.diff(birth, 'weeks');
         const percentage = ((weeksLived / totalWeeks) * 100).toFixed(1);
@@ -131,34 +136,43 @@ export class MinaView extends ItemView {
             attr: { style: 'display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--background-primary);' } 
         });
 
+        // Header
         const header = wrap.createEl('div', { 
-            attr: { style: 'padding: 15px; border-bottom: 1px solid var(--background-modifier-border); background: var(--background-primary-alt); flex-shrink: 0;' } 
+            attr: { style: 'padding: 10px 15px; border-bottom: 1px solid var(--background-modifier-border); background: var(--background-primary-alt); flex-shrink: 0;' } 
         });
         
         const stats = header.createEl('div', { 
-            attr: { style: 'display: flex; gap: 20px; font-size: 0.85em; color: var(--text-muted);' } 
+            attr: { style: 'display: flex; justify-content: space-between; font-size: 0.85em; color: var(--text-muted);' } 
         });
         stats.createDiv({ text: `Age: ${today.diff(birth, 'years', true).toFixed(1)}` });
         stats.createDiv({ text: `Weeks Lived: ${weeksLived.toLocaleString()}` });
         stats.createDiv({ text: `${percentage}% Consumed` });
 
+        // Grid
         const gridContainer = wrap.createEl('div', { 
             cls: 'mina-memento-grid',
-            attr: { style: 'flex-grow: 1; overflow-y: auto; padding: 15px; -webkit-overflow-scrolling: touch;' } 
+            attr: { style: 'flex-grow: 1; display: flex; flex-direction: column; padding: 5px; min-height: 0; gap: 1px; overflow: hidden;' } 
         });
 
-        for (let y = 0; y < lifeExpectancy; y++) {
+        for (let y = 0; y < numRows; y++) {
+            const currentYear = startYear + y;
             const yearRow = gridContainer.createEl('div', { cls: 'mina-memento-row' });
 
             for (let w = 0; w < 52; w++) {
-                const currentWeekIndex = y * 52 + w;
+                const weekStart = moment().year(currentYear).dayOfYear(1).add(w, 'weeks');
+                
                 let statusClass = 'memento-future';
-                if (currentWeekIndex < weeksLived) statusClass = 'memento-past';
-                else if (currentWeekIndex === weeksLived) statusClass = 'memento-current';
+                if (weekStart.isBefore(today, 'week')) statusClass = 'memento-past';
+                if (weekStart.isSame(today, 'week')) statusClass = 'memento-current';
+                
+                // Hide if outside life span
+                if (weekStart.isBefore(birth, 'week') || weekStart.isAfter(death, 'week')) {
+                    statusClass = 'memento-none';
+                }
 
                 yearRow.createEl('div', { 
                     cls: `mina-memento-box ${statusClass}`,
-                    attr: { title: `Age ${y}, Week ${w + 1}` }
+                    attr: { title: `${currentYear}, Week ${w + 1}` }
                 });
             }
         }

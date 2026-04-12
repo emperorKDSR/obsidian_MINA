@@ -68,35 +68,46 @@
 .mina-memento-grid {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 1px;
 }
 
 .mina-memento-row {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-    gap: 2px;
-    align-items: center;
+    gap: 1px;
+    flex: 1;
+    min-height: 0;
 }
 
 .mina-memento-box {
-    width: 1.2%; /* Roughly 52 boxes in a row */
-    aspect-ratio: 1 / 1;
-    border-radius: 1px;
-    flex-shrink: 0;
-    min-width: 4px;
+    flex: 1;
+    height: 100%;
+    border-radius: 0px;
+    min-width: 0;
+    box-sizing: border-box;
+    border: 0.5px solid transparent; /* Identical border for all boxes */
 }
 
 .memento-past {
     background-color: var(--text-muted);
-    opacity: 0.6;
+    opacity: 0.4;
+    border-color: transparent;
 }
 
 .memento-current {
     background-color: var(--interactive-accent);
-    box-shadow: 0 0 5px var(--interactive-accent);
+    box-shadow: 0 0 3px var(--interactive-accent);
+    border-color: var(--interactive-accent);
 }
 
 .memento-future {
-    border: 1px solid var(--background-modifier-border);
+    background-color: #004d00; /* Dark green */
+    border-color: rgba(0, 255, 0, 0.1);
+}
+
+.memento-none {
+    background-color: transparent;
+    border-color: transparent;
+    pointer-events: none;
 }
