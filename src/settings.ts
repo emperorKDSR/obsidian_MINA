@@ -47,5 +47,24 @@ export class MinaSettingTab extends PluginSettingTab {
                 await this.plugin.saveSettings();
             });
         });
+
+        containerEl.createEl('h3', { text: 'Memento Mori' });
+        new Setting(containerEl).setName('Birth Date').setDesc('Your birth date for Memento Mori visualization.').addText(text => {
+            text.setPlaceholder('YYYY-MM-DD').setValue(this.plugin.settings.birthDate).onChange(async (value) => {
+                this.plugin.settings.birthDate = value;
+                await this.plugin.saveSettings();
+                this.plugin.notifyViewRefresh();
+            });
+            text.inputEl.type = 'date';
+        });
+        new Setting(containerEl).setName('Life Expectancy').setDesc('Expected years of life.').addText(text => {
+            text.setPlaceholder('90').setValue(String(this.plugin.settings.lifeExpectancy)).onChange(async (value) => {
+                const val = parseInt(value) || 90;
+                this.plugin.settings.lifeExpectancy = val;
+                await this.plugin.saveSettings();
+                this.plugin.notifyViewRefresh();
+            });
+            text.inputEl.type = 'number';
+        });
 	}
 }

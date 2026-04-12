@@ -72,6 +72,13 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **File Attachment Button (`📎`):** Triggers file upload.
    - **Scroll Padding:** All main scrollable tab areas have `padding-bottom: 200px`.
 
+4. **Settings Tab (Inline)**
+   - **Capture Folders:** Configure storage paths for thoughts, tasks, and attachments.
+   - **Date/Time Formats:** Customizable moment.js formats.
+   - **Gemini AI Settings:** Securely store API key, model selection, and max tokens.
+   - **Memento Mori:** Configure Birth Date and Life Expectancy for life visualization.
+   - **Transcription:** Set target language for voice note processing.
+
 2. **Review & Management**
    - **Modification Tracking:** Every entry tracks its **Modified Date** and **Modified Time**.
    - **Advanced Thread Sorting:** History is sorted by the latest activity with bubble-up logic.
