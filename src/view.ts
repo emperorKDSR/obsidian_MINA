@@ -2280,21 +2280,31 @@ export class MinaView extends ItemView {
         const knob = toggleContainer.createEl('span', { attr: { style: `position:absolute; height:14px; width:14px; left:3px; bottom:3px; background-color:var(--text-on-accent,white); transition:.3s; border-radius:50%; transform:${isDone ? 'translateX(16px)' : 'translateX(0)'};` } });
         cb.addEventListener('change', async () => { const checked = cb.checked; slider.style.backgroundColor = checked ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'; knob.style.transform = checked ? 'translateX(16px)' : 'translateX(0)'; row.style.opacity = checked ? '0.5' : '1'; await this.plugin.toggleTaskStatus(entry.filePath, checked); this.refreshCurrentList(); });
         const content = topRow.createEl('div', { attr: { style: 'flex:1; min-width:0;' } });
-        const textEl = content.createEl('div', { cls: (this.plugin.settings.isCompactView ? 'mina-card-compact' : ''), attr: { style: `word-break:break-word; font-size:0.95em; line-height:1.4; ${isDone ? 'text-decoration:line-through; opacity:0.7;' : ''}` } });
+        const lineCount = (entry.body || entry.title).split('\n').length;
+        const isAutoCompact = !this.plugin.settings.isCompactView && lineCount > 10;
+        
+        const textClasses = [];
+        if (this.plugin.settings.isCompactView) textClasses.push('mina-card-compact');
+        else if (isAutoCompact) textClasses.push('mina-card-auto-compact');
+
+        const textEl = content.createEl('div', { cls: textClasses.join(' '), attr: { style: `word-break:break-word; font-size:0.95em; line-height:1.4; ${isDone ? 'text-decoration:line-through; opacity:0.7;' : ''}` } });
         await MarkdownRenderer.render(this.plugin.app, entry.body || entry.title, textEl, entry.filePath, this);
         this.hookInternalLinks(textEl, entry.filePath); this.hookImageZoom(textEl);
         const firstP = textEl.querySelector('p'); if (firstP) { firstP.style.marginTop = '0'; firstP.style.marginBottom = '0'; }
 
-        if (this.plugin.settings.isCompactView) {
+        if (this.plugin.settings.isCompactView || isAutoCompact) {
             const toggle = content.createEl('div', { text: 'Show more', cls: 'mina-expand-toggle' });
             toggle.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (textEl.classList.contains('mina-card-compact')) {
+                const isCurrentlyCompact = textEl.classList.contains('mina-card-compact') || textEl.classList.contains('mina-card-auto-compact');
+                if (isCurrentlyCompact) {
                     textEl.classList.remove('mina-card-compact');
+                    textEl.classList.remove('mina-card-auto-compact');
                     textEl.classList.add('mina-card-expanded');
                     toggle.setText('Show less');
                 } else {
-                    textEl.classList.add('mina-card-compact');
+                    if (this.plugin.settings.isCompactView) textEl.classList.add('mina-card-compact');
+                    else textEl.classList.add('mina-card-auto-compact');
                     textEl.classList.remove('mina-card-expanded');
                     toggle.setText('Show more');
                 }
@@ -2361,9 +2371,13 @@ export class MinaView extends ItemView {
         const cardWrapper = mainContentRow.createEl('div', { attr: { style: 'position: relative; flex-grow: 1; min-width: 0;' } });
         
         const isBlurred = blur ?? this.plugin.settings.blurredNotes.includes(entry.filePath);
+        const lineCount = entry.body.split('\n').length;
+        const isAutoCompact = !this.plugin.settings.isCompactView && lineCount > 10;
+        
         const cardClasses = ['mina-card'];
         if (isBlurred) cardClasses.push('mina-blurred');
         if (this.plugin.settings.isCompactView) cardClasses.push('mina-card-compact');
+        else if (isAutoCompact) cardClasses.push('mina-card-auto-compact');
         
         const renderTarget = cardWrapper.createEl('div', { 
             cls: cardClasses.join(' '), 
@@ -2374,16 +2388,19 @@ export class MinaView extends ItemView {
         this.hookInternalLinks(renderTarget, filePath); this.hookImageZoom(renderTarget); this.hookCheckboxes(renderTarget, entry);
         const firstP = renderTarget.querySelector('p'); if (firstP) { firstP.style.marginTop = '0'; firstP.style.marginBottom = '0'; }
 
-        if (this.plugin.settings.isCompactView) {
+        if (this.plugin.settings.isCompactView || isAutoCompact) {
             const toggle = cardWrapper.createEl('div', { text: 'Show more', cls: 'mina-expand-toggle' });
             toggle.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (renderTarget.classList.contains('mina-card-compact')) {
+                const isCurrentlyCompact = renderTarget.classList.contains('mina-card-compact') || renderTarget.classList.contains('mina-card-auto-compact');
+                if (isCurrentlyCompact) {
                     renderTarget.classList.remove('mina-card-compact');
+                    renderTarget.classList.remove('mina-card-auto-compact');
                     renderTarget.classList.add('mina-card-expanded');
                     toggle.setText('Show less');
                 } else {
-                    renderTarget.classList.add('mina-card-compact');
+                    if (this.plugin.settings.isCompactView) renderTarget.classList.add('mina-card-compact');
+                    else renderTarget.classList.add('mina-card-auto-compact');
                     renderTarget.classList.remove('mina-card-expanded');
                     toggle.setText('Show more');
                 }

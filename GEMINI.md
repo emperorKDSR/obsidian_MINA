@@ -53,6 +53,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - **Modern Card-Based Layout:** Thoughts and tasks are displayed in responsive "cards" with rounded corners.
    - **Compact View Mode:** A toggleable layout optimized for scanning many entries.
      - **Line Clamping:** Cards are height-restricted to approximately 4 lines of text.
+     - **Auto-Compact:** Notes and tasks exceeding 10 lines are automatically truncated to maintain a clean view.
      - **Visual Feedback:** Includes a subtle fade-out effect at the bottom of compact cards to indicate truncated content.
      - **Inline Expansion:** Each card features a "Show more/less" toggle to expand content instantly.
      - **Global Commands:** `Enable Compact View` and `Enable Full View` to switch layouts globally.
