@@ -70,6 +70,12 @@ export const MEMENTO_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <path d="M5 2h14M5 22h14M5 2l7 8 7-8M5 22l7-8 7 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </g>`;
 
+export const TASK_ICON_ID = "mina-task-icon";
+export const TASK_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
+    <polyline points="9 11 12 14 22 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>`;
+
 export const DEFAULT_SETTINGS: MinaSettings = {
     captureFolder: '000 Bin',
 	captureFilePath: 'mina_v2.md',
