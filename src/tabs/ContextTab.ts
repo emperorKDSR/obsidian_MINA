@@ -32,8 +32,6 @@ export class ContextTab extends BaseTab {
             entries = entries.filter(e => e.context.includes('journal'));
         } else if (modeId === 'grundfos') {
             entries = entries.filter(e => e.context.includes('Grundfos'));
-        } else if (modeId === 'pf') {
-            entries = entries.filter(e => e.context.includes('PF'));
         } else if (customMode) {
             if (customMode.context && customMode.context !== 'All') {
                 entries = entries.filter(e => e.context.includes(customMode.context));
@@ -51,7 +49,7 @@ export class ContextTab extends BaseTab {
             entries = entries.filter(e => this.view.matchesSearch(this.view.searchQuery, [e.body, e.title]));
         }
 
-        const order = modeId === 'journal' ? this.view.plugin.settings.journalModeOrder : (modeId === 'grundfos' ? this.view.plugin.settings.grundfosModeOrder : (modeId === 'pf' ? this.view.plugin.settings.pfModeOrder : (this.view.plugin.settings.customModeOrders[modeId] || [])));
+        const order = modeId === 'journal' ? this.view.plugin.settings.journalModeOrder : (modeId === 'grundfos' ? this.view.plugin.settings.grundfosModeOrder : (this.view.plugin.settings.customModeOrders[modeId] || []));
         entries.sort((a, b) => {
             const idxA = order.indexOf(a.filePath); const idxB = order.indexOf(b.filePath);
             if (idxA !== -1 && idxB !== -1) return idxA - idxB;
@@ -88,7 +86,6 @@ export class ContextTab extends BaseTab {
     
             if (modeId === 'journal') this.view.plugin.settings.journalModeOrder = newOrder;
             else if (modeId === 'grundfos') this.view.plugin.settings.grundfosModeOrder = newOrder;
-            else if (modeId === 'pf') this.view.plugin.settings.pfModeOrder = newOrder;
             else this.view.plugin.settings.customModeOrders[modeId] = newOrder;
     
             await this.view.plugin.saveSettings();

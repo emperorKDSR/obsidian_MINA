@@ -53,12 +53,8 @@ export default class MinaPlugin extends Plugin {
 		addIcon(FOCUS_ICON_ID, FOCUS_ICON_SVG);
 		addIcon(GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG);
 		addIcon(MEMENTO_ICON_ID, MEMENTO_ICON_SVG);
-		addIcon(TASK_ICON_ID, TASK_ICON_SVG);
 		addIcon(PF_ICON_ID, PF_ICON_SVG);
-
-		this.addRibbonIcon(KATANA_ICON_ID, 'MINA', () => {
-			this.activateView();
-		});
+		addIcon(SETTINGS_ICON_ID, SETTINGS_ICON_SVG);
 
 		this.addRibbonIcon(DAILY_ICON_ID, 'Daily Mode', () => {
 			this.activateView('daily', true);
@@ -98,15 +94,6 @@ export default class MinaPlugin extends Plugin {
 
 		this.addRibbonIcon(MEMENTO_ICON_ID, 'Memento Mori', () => {
 			this.activateView('memento-mori', true);
-		});
-
-		this.addCommand({
-			id: 'open-mina-full-mode',
-			name: 'Dashboard',
-			icon: KATANA_ICON_ID,
-			callback: () => {
-				this.activateView('daily');
-			}
 		});
 
 		this.addCommand({

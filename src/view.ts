@@ -189,7 +189,19 @@ export class MinaView extends ItemView {
             dragHandle.createEl('div', { attr: { style: 'width: 40px; height: 4px; background-color: var(--background-modifier-border); border-radius: 4px;' }});
         }
 
-        const isWindow = !Platform.isMobile && this.containerEl.closest('.mod-window') !== null;
+        const windowParent = this.containerEl.closest('.mod-window');
+        const isWindow = !Platform.isMobile && windowParent !== null;
+        if (isWindow) {
+            windowParent.addClass('mina-dedicated-window');
+            const tabContainer = this.containerEl.closest('.workspace-tabs');
+            if (tabContainer) {
+                const tabHeader = tabContainer.querySelector('.workspace-tab-header-container');
+                if (tabHeader) (tabHeader as HTMLElement).style.display = 'none';
+            }
+            const viewHeader = this.containerEl.querySelector('.view-header');
+            if (viewHeader) (viewHeader as HTMLElement).style.display = 'none';
+        }
+
         if (isWindow && !this.isDedicated && this.activeTab !== 'timeline') {
             const header = container.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; padding: 10px 12px; border-bottom: 1px solid var(--background-modifier-border); background: var(--background-primary-alt);' } });
             const leftHeader = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px;' } });
@@ -198,26 +210,11 @@ export class MinaView extends ItemView {
             leftHeader.createEl('h3', { text: this.getModeTitle(), attr: { style: 'margin: 0; font-size: 1.1em; color: var(--text-accent);' } });
         }
 
-        if (!this.isDedicated && this.activeTab !== 'timeline') {
-            const nav = container.createEl('div', { attr: { style: 'display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 10px; flex-shrink: 0;' } });
-            const addTab = (id: string, label: string) => {
-                const btnWrap = nav.createEl('div', { attr: { style: 'flex: 1; display: flex; align-items: stretch; gap: 0;' } });
-                const hasPopout = !Platform.isMobile && id !== 'settings';
-                const btn = btnWrap.createEl('button', { text: label, attr: { style: `flex: 1; font-size: 0.85em; padding: 5px 2px; ${hasPopout ? 'border-top-right-radius: 0; border-bottom-right-radius: 0;' : ''} ${this.activeTab === id ? 'background-color: var(--interactive-accent); color: var(--text-on-accent); border-color: var(--interactive-accent);' : ''}` } });
-                btn.addEventListener('click', () => { this.activeTab = id; this.renderView(); (this.leaf as any).updateHeader(); });
-                if (hasPopout) {
-                    const detachBtn = btnWrap.createEl('button', { text: '⧉', attr: { title: 'Pop out tab', style: `padding: 5px 4px; font-size: 0.7em; border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 1px solid var(--background-modifier-border); ${this.activeTab === id ? 'background-color: var(--interactive-accent); color: var(--text-on-accent); border-color: var(--interactive-accent);' : ''}` } });
-                    detachBtn.addEventListener('click', (e) => { e.stopPropagation(); this.detachTab(id); });
-                }
-            };
-            addTab('review-thoughts', 'Th'); addTab('review-tasks', 'Ta'); addTab('mina-ai', 'Ai'); addTab('dues', 'Du'); addTab('vo', 'Vo'); addTab('settings', 'Se');
-        }
-
         if (this.activeTab === 'daily') import('./tabs/DailyTab').then(({ DailyTab }) => new DailyTab(this).render(container));
         else if (this.activeTab === 'review-tasks') import('./tabs/TasksTab').then(({ TasksTab }) => new TasksTab(this).render(container));
         else if (this.activeTab === 'review-thoughts') import('./tabs/ThoughtsTab').then(({ ThoughtsTab }) => new ThoughtsTab(this).render(container));
         else if (this.activeTab === 'mina-ai') import('./tabs/AiTab').then(({ AiTab }) => new AiTab(this).render(container));
-        else if (this.activeTab === 'dues') import('./tabs/DuesTab').then(({ DuesTab }) => new DuesTab(this).render(container));
+        else if (this.activeTab === 'dues' || this.activeTab === 'pf') import('./tabs/DuesTab').then(({ DuesTab }) => new DuesTab(this).render(container));
         else if (this.activeTab === 'settings') import('./tabs/SettingsTab').then(({ SettingsTab }) => new SettingsTab(this).render(container));
         else if (this.activeTab === 'vo') import('./tabs/VoiceTab').then(({ VoiceTab }) => new VoiceTab(this).render(container));
         else if (this.activeTab === 'timeline') import('./tabs/TimelineTab').then(({ TimelineTab }) => new TimelineTab(this).render(container));

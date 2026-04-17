@@ -118,3 +118,16 @@
     border-color: transparent;
     pointer-events: none;
 }
+
+/* Force-hide native Obsidian UI in dedicated MINA windows */
+.mina-dedicated-window .workspace-tab-header-container {
+    display: none !important;
+}
+
+.mina-dedicated-window .view-header {
+    display: none !important;
+}
+
+.mina-dedicated-window .workspace-tabs {
+    padding-top: 0 !important;
+}
