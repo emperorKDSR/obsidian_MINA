@@ -76,6 +76,12 @@ export const TASK_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </g>`;
 
+export const PF_ICON_ID = "mina-pf-icon";
+export const PF_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
+    <line x1="12" y1="1" x2="12" y2="23" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>`;
+
 export const DEFAULT_SETTINGS: MinaSettings = {
     captureFolder: '000 Bin',
 	captureFilePath: 'mina_v2.md',
@@ -104,6 +110,7 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     focusModeOrder: [],
     grundfosModeOrder: [],
     journalModeOrder: [],
+    pfModeOrder: [],
     grundfosKeywords: [],
     journalKeywords: [],
     blurredNotes: [],

@@ -28,6 +28,7 @@ export interface MinaSettings {
     focusModeOrder: string[];
     grundfosModeOrder: string[];
     journalModeOrder: string[];
+    pfModeOrder: string[];
     grundfosKeywords: string[];
     journalKeywords: string[];
     blurredNotes: string[];

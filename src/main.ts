@@ -1,5 +1,5 @@
 import { Plugin, TFile, Notice, WorkspaceLeaf, Platform, moment, addIcon } from 'obsidian';
-import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG, GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG, MEMENTO_ICON_ID, MEMENTO_ICON_SVG, TASK_ICON_ID, TASK_ICON_SVG } from './constants';
+import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG, GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG, MEMENTO_ICON_ID, MEMENTO_ICON_SVG, TASK_ICON_ID, TASK_ICON_SVG, PF_ICON_ID, PF_ICON_SVG } from './constants';
 import { MinaSettings, ThoughtEntry, TaskEntry, ReplyEntry } from './types';
 import { isTablet, toAsciiDigits } from './utils';
 import { MinaView } from './view';
@@ -54,6 +54,7 @@ export default class MinaPlugin extends Plugin {
 		addIcon(GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG);
 		addIcon(MEMENTO_ICON_ID, MEMENTO_ICON_SVG);
 		addIcon(TASK_ICON_ID, TASK_ICON_SVG);
+		addIcon(PF_ICON_ID, PF_ICON_SVG);
 
 		this.addRibbonIcon(KATANA_ICON_ID, 'MINA', () => {
 			this.activateView();
@@ -69,6 +70,10 @@ export default class MinaPlugin extends Plugin {
 
 		this.addRibbonIcon(TASK_ICON_ID, 'Task Mode', () => {
 			this.activateView('review-tasks', true);
+		});
+
+		this.addRibbonIcon(PF_ICON_ID, 'Personal Finance', () => {
+			this.activateView('pf', true);
 		});
 
 		this.addRibbonIcon(AI_CHAT_ICON_ID, 'AI Mode', () => {
@@ -151,6 +156,15 @@ export default class MinaPlugin extends Plugin {
 			icon: MEMENTO_ICON_ID,
 			callback: () => {
 				this.activateView('memento-mori', true);
+			}
+		});
+
+		this.addCommand({
+			id: 'open-mina-pf-mode',
+			name: 'Personal Finance Mode',
+			icon: PF_ICON_ID,
+			callback: () => {
+				this.activateView('pf', true);
 			}
 		});
 
@@ -386,6 +400,7 @@ export default class MinaPlugin extends Plugin {
             if (loadedData.focusModeOrder !== undefined) this.settings.focusModeOrder = [...loadedData.focusModeOrder];
             if (loadedData.grundfosModeOrder !== undefined) this.settings.grundfosModeOrder = [...loadedData.grundfosModeOrder];
             if (loadedData.journalModeOrder !== undefined) this.settings.journalModeOrder = [...loadedData.journalModeOrder];
+            if (loadedData.pfModeOrder !== undefined) this.settings.pfModeOrder = [...loadedData.pfModeOrder];
             if (loadedData.grundfosKeywords !== undefined) this.settings.grundfosKeywords = [...loadedData.grundfosKeywords];
             if (loadedData.journalKeywords !== undefined) this.settings.journalKeywords = [...loadedData.journalKeywords];
             if (loadedData.blurredNotes !== undefined) this.settings.blurredNotes = [...loadedData.blurredNotes];

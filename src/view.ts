@@ -109,6 +109,7 @@ export class MinaView extends ItemView {
             case 'journal': return "Journal";
             case 'focus': return "Focus";
             case 'grundfos': return "Grundfos";
+            case 'pf': return "Personal Finance";
             case 'memento-mori': return "Memento Mori";
             default: {
                 const custom = this.plugin.settings.customModes.find(m => m.id === this.activeTab);
