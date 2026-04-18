@@ -100,6 +100,17 @@ export class FolderSettingsModal extends Modal {
                     await this.plugin.saveSettings();
                 }));
 
+        new Setting(body)
+            .setName('Habits Folder')
+            .setDesc('Where daily habit completion files are stored.')
+            .addText(text => text
+                .setPlaceholder('000 Bin/MINA V2 Habits')
+                .setValue(this.plugin.settings.habitsFolder)
+                .onChange(async (value) => {
+                    this.plugin.settings.habitsFolder = value;
+                    await this.plugin.saveSettings();
+                }));
+
         // 3. Footer
         const footer = contentEl.createEl('div', {
             attr: { style: 'padding: 16px 20px; background: var(--background-secondary-alt); border-top: 1px solid var(--background-modifier-border-faint); display: flex; justify-content: flex-end;' }

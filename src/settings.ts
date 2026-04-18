@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import MinaPlugin from './main';
 import { FolderSettingsModal } from './modals/FolderSettingsModal';
+import { HabitConfigModal } from './modals/HabitConfigModal';
 
 export class MinaSettingTab extends PluginSettingTab {
 	plugin: MinaPlugin;
@@ -11,11 +12,20 @@ export class MinaSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Folder Configuration')
-            .setDesc('Configure the storage locations for tasks, thoughts, finance, and voice notes.')
+            .setDesc('Configure the storage locations for tasks, thoughts, finance, and habits.')
             .addButton(btn => btn
                 .setButtonText('Open Folder Config')
                 .onClick(() => {
                     new FolderSettingsModal(this.app, this.plugin).open();
+                }));
+
+        new Setting(containerEl)
+            .setName('Habit Configuration')
+            .setDesc('Define and manage your daily habits.')
+            .addButton(btn => btn
+                .setButtonText('Open Habit Config')
+                .onClick(() => {
+                    new HabitConfigModal(this.app, this.plugin).open();
                 }));
 
         new Setting(containerEl).setName('Date format').addText(text => text.setPlaceholder('YYYY-MM-DD').setValue(this.plugin.settings.dateFormat).onChange(async (value) => { this.plugin.settings.dateFormat = value; await this.plugin.saveSettings(); }));

@@ -38,6 +38,15 @@ export interface MinaSettings {
     lifeExpectancy: number;
     customModes: CustomMode[];
     customModeOrders: Record<string, string[]>;
+    habitsFolder: string;
+    habits: Habit[];
+    weeklyGoals: string[];
+}
+
+export interface Habit {
+    id: string;
+    name: string;
+    icon: string; // e.g. "💧", "🧘"
 }
 
 export interface CustomMode {
@@ -67,6 +76,7 @@ export interface ThoughtEntry {
     children: ReplyEntry[];    // parsed from ## sections in body
     lastThreadUpdate: number;  // ms timestamp for sorting
     pinned?: boolean;          // true if the thought is pinned
+    project?: string;          // associated project name
 }
 
 export interface TaskEntry {
@@ -81,6 +91,7 @@ export interface TaskEntry {
     body: string;
     lastUpdate: number;    // ms timestamp of modified for sorting
     children: ReplyEntry[]; // Support comments/replies on tasks
+    project?: string;       // associated project name
 }
 
 export interface DueEntry { 

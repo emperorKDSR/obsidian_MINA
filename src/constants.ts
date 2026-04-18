@@ -145,5 +145,8 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     birthDate: '',
     lifeExpectancy: 90,
     customModes: [],
-    customModeOrders: {}
+    customModeOrders: {},
+    habitsFolder: '000 Bin/MINA V2 Habits',
+    habits: [],
+    weeklyGoals: []
 }

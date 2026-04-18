@@ -13,6 +13,7 @@ export class DailyTab extends BaseTab {
     pinnedContainer: HTMLElement | null = null;
     thoughtsContainer: HTMLElement | null = null;
     summaryContainer: HTMLElement | null = null;
+    habitContainer: HTMLElement | null = null;
 
     constructor(view: MinaView) { super(view); }
 
@@ -55,6 +56,21 @@ export class DailyTab extends BaseTab {
             attr: { style: 'font-size: 0.85em; color: var(--text-muted); font-weight: 500; margin-top: 2px;' }
         });
 
+        // Weekly Focus Bar
+        const goals = s.weeklyGoals || [];
+        const activeGoals = goals.filter(g => g.trim().length > 0);
+        if (activeGoals.length > 0) {
+            const focusBar = header.createEl('div', {
+                attr: { style: 'display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;' }
+            });
+            activeGoals.slice(0, 3).forEach(goal => {
+                const tag = focusBar.createEl('span', {
+                    text: `🎯 ${goal}`,
+                    attr: { style: 'font-size: 0.65em; font-weight: 700; color: var(--text-accent); background: rgba(var(--interactive-accent-rgb), 0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid var(--background-modifier-border-faint);' }
+                });
+            });
+        }
+
         const toggleRow = header.createEl('div', {
             attr: { style: 'display: none; gap: 4px; padding: 3px; background: var(--background-secondary-alt); border-radius: 8px; width: fit-content; border: 1px solid var(--background-modifier-border-faint); margin-top: 4px;' }
         });
@@ -90,6 +106,11 @@ export class DailyTab extends BaseTab {
         renderPillToggle('PF', 'showDailyDues');
         renderPillToggle('PI', 'showDailyPinned');
         renderPillToggle('TH', 'showDailyThoughts');
+
+        this.habitContainer = header.createEl('div', {
+            attr: { style: 'display: flex; gap: 10px; padding: 8px 0; overflow-x: auto; scrollbar-width: none;' }
+        });
+        this.updateHabitLab(this.habitContainer);
 
         const actionRow = header.createEl('div', {
             attr: { style: 'display: flex; gap: 8px; margin-top: 4px;' }
@@ -160,7 +181,44 @@ export class DailyTab extends BaseTab {
         } else this.thoughtsContainer = null;
     }
 
+    async updateHabitLab(container: HTMLElement) {
+        container.empty();
+        const habits = this.view.plugin.settings.habits || [];
+        if (habits.length === 0) return;
+
+        const today = moment().format('YYYY-MM-DD');
+        const completedIds = await this.view.plugin.getHabitStatus(today);
+
+        habits.forEach(habit => {
+            const isCompleted = completedIds.includes(habit.id);
+            const item = container.createEl('div', {
+                attr: { 
+                    title: habit.name,
+                    style: `display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s; min-width: 40px;` 
+                }
+            });
+
+            const dot = item.createEl('div', {
+                attr: { 
+                    style: `width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1em;
+                    background: ${isCompleted ? 'var(--interactive-accent)' : 'var(--background-secondary-alt)'}; 
+                    border: 2px solid ${isCompleted ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'};
+                    box-shadow: ${isCompleted ? '0 0 12px var(--interactive-accent)' : 'none'};
+                    color: ${isCompleted ? 'var(--text-on-accent)' : 'var(--text-muted)'};
+                    transition: all 0.2s;`
+                }
+            });
+            dot.createSpan({ text: habit.icon || '●' });
+
+            item.addEventListener('click', async () => {
+                await this.view.plugin.toggleHabit(today, habit.id);
+                this.updateHabitLab(container);
+            });
+        });
+    }
+
     refreshAllVisibleSections() {
+        if (this.habitContainer) this.updateHabitLab(this.habitContainer);
         if (this.checklistContainer) this.updateDailyThoughtTodos(this.checklistContainer);
         if (this.tasksContainer) this.updateDailyTasks(this.tasksContainer);
         if (this.duesContainer) this.updateDailyDues(this.duesContainer);
@@ -365,7 +423,7 @@ export class DailyTab extends BaseTab {
         const today = moment().format('YYYY-MM-DD');
         const tasks = Array.from(this.view.plugin.taskIndex.values()).filter(t => t.status === 'open' && (t.due && t.due <= today));
         tasks.sort((a, b) => (a.due || '').localeCompare(b.due || ''));
-        if (tasks.length === 0) { container.createEl('p', { text: 'No pending tasks.', attr: { style: 'color: var(--text-muted); font-size: 0.9em; text-align: center; margin: 0; opacity: 0.6;' } }); return; }
+        if (tasks.length === 0) { container.createEl('p', { text: 'No pending tasks.', attr: { style: 'color: var(--text-muted); font-size: 0.85em; text-align: center; margin: 0; opacity: 0.6;' } }); return; }
         const list = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px;' } });
         for (const task of tasks) await this.renderTaskRow(task, list, true);
     }

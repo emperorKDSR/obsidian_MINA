@@ -12,85 +12,45 @@ When capturing thoughts and tasks,  you must datetimestamp it so it will be easi
 
 All new captures need to be appended in the beginning of the file.
 
-## Current Implementation
+## Current Implementation: MINA V2 Personal OS
 
-The "MINA V2" plugin has been developed with the following features and implementations:
+MINA V2 has evolved from a simple capture tool into a holistic **Personal Operating System (Life-OS)** built on four foundational pillars: **Organization**, **Process**, **Reflection**, and **Synergy**.
 
-1. **User Interface (UI) & Aesthetics**
-   - **Dedicated Modes (High Focus):** The plugin has moved away from a monolithic "Full Mode" dashboard to a set of dedicated, high-focus modes accessible via ribbon icons and commands.
-     - **Daily Mode (Sun):** A minimalist dashboard with persistent foldable sections and ultra-compact navigation pills (**SU**, **CL**, **TA**, **PF**, **PI**, **TH**).
-       - **Config Mode Toggle:** Includes a discrete "Config" button next to the title to show/hide the navigation pills, decluttering the header.
-       - **Quick Action Buttons:** Added high-visibility "Add Note" (✍️) and "Add Task" (✅) buttons for instant capture directly from the dashboard.
-       - **Intelligent Summary (SU):** AI-powered digest of today's activities and priority suggestions. Now uses **Manual Generation** to respect Gemini API rate limits on the free tier.
-       - **Flicker-Free Interaction:** Uses targeted re-rendering to update specific section containers without refreshing the entire view.
-     - **Timeline Mode (Clock):** A modern chronological view with a **Thread Aesthetic**.
-       - **Vertical Thread:** A continuous subtle line connecting all entries through the day.
-       - **Stitch Dots:** Every thought and task is "pinned" to the thread with a small indicator dot.
-     - **Journal Mode (Pen):** A high-end minimalist logbook experience with sticky date headers, a modern action row (Add Note/Task), and a discrete search toggle.
-     - **Task Mode (Check-square):** Redesigned with an ultra-minimalist, high-focus interface for task management.
-       - **Compact Action Bar:** Features integrated **+ (Add Task)**, **Search**, and **Filters** icons in the header row for maximum space efficiency.
-       - **Threaded Task Comments:** Supports modern, modal-based commenting. Comments are hidden from the main view to keep the dashboard high-focus.
-       - **View Comments Modal:** A dedicated review modal shows all task discussions sorted latest-first, with integrated edit and delete actions.
-       - **Modern Filters:** High-density filter system for Status (Pending, Done, All) and Timeframes (Today, Focus, Week, Inbox, Custom).
-       - **Clean Task List:** Consistent card-based layout with "Load More" pagination for deep task archives.
-     - **Personal Finance Mode (Dollar):** A modern, high-density interface for managing recurring payments and dues.
-       - **Compact Card Design:** Optimized for data density with minimalist typography and reduced padding.
-       - **Unified Header:** Features a discrete "+ Add" button and high-visibility filter pills (Active, Recurring).
-       - **Dynamic Status Tags:** Instant visual feedback for Overdue, Due Today, and Upcoming payments.
-       - **Integrated Action Row:** Streamlined date picker and "Pay" buttons built directly into each card for efficient recording.
-     - **Voice Note Mode (Microphone):** A high-end interface for recording and managing voice notes.
-       - **Modern Recorder:** A sleek, glowing recording interface with real-time timer and high-contrast visuals.
-       - **AI Transcription:** One-tap AI-powered transcription that automatically saves your voice notes as structured thoughts in your vault.
-     - **AI Mode (Robot):** Redesigned interactive chat with a modern, floating input area, refined message bubbles, and high-visibility grounding chips.
-       - **Modern Input:** Auto-expanding input area with integrated "Attach" and "Save" shortcuts.
-       - **AI Configuration:** Includes a dedicated "Config" button that opens a modern modal to manage your Gemini API Key, Model selection, and Token limits, removing clutter from the main settings tab.
-       - **Grounded History:** Session-wide grounding with a dedicated scrollable chip bar for notes and web-search toggling.
-     - **Focus Mode (Target):** Displays strictly only pinned notes (`pinned: true`) with persistent reordering.
-     - **Grundfos Mode (Pump):** High-focus view for entries tagged with "Grundfos", redesigned with a modern header, action buttons, and integrated search.
-     - **Custom Modes:** Any custom-defined modes now inherit the modern "ContextTab" design with dedicated headers and quick-capture buttons.
-     - **Memento Mori (Hourglass):** A sophisticated life-visualization tool.
-       - **Hourglass Aesthetic:** A minimalist SVG hourglass where the top bulb represents your "Life to Live" (high contrast) and the bottom bulb represents your "Life Lived" (dimmed).
-       - **Precision Masking:** Uses SVG masks to show exact percentage-based sand levels for both bulbs.
-       - **Zero-Scroll Layout:** The entire life-grid (90+ years) dynamically scales to fit your screen perfectly, showing all blocks in one view on both desktop and mobile.
-       - **Pop-up Configuration:** Integrated "Configure" button that opens a dedicated modal to update Birth Date and Life Expectancy.
-       - **Full Refresh:** Includes a "Full Refresh" capability to synchronize settings and reload the entire plugin interface.
-     - **Settings Mode (Gear):** Opens plugin configuration in a dedicated window.
-       - **Folder Configuration:** A dedicated "Folder Config" button consolidates storage path settings (Tasks, Thoughts, Finance, New Notes, Voice Memos, AI Chat) into a modern pop-up modal, decluttering the main settings view.
-   - **Modern Card Design (Global):**
-     - **Minimalist Action Toolbar:** Hover-activated toolbar with sleek line icons (Edit, Delete, Pin, Blur, Reply, Convert).
-     - **Refined Expansion Toggle:** A minimalist centered chevron with a subtle gradient fade for long notes.
-   - **Minimalist Input Modal:**
-     - **Clean Slate Look:** Removed all headers and titles to focus entirely on writing.
-     - **Natural Language Dates:** Trigger date conversion directly in the modal via the `@` prefix (e.g., `@today` -> `[[2026-04-18]]`).
-     - **Smart Suggestions:** Supports `[[` for file suggestions and `#` for context/tag selection.
-     - **Context Chips:** Manage tags as interactive pills; click to remove, `+` to add.
-     - **Mobile Visibility Fix:** Adjusted top padding to ensure the first letter is never cut off on mobile devices.
-   - **Borderless Experience:** 
-     - Dedicated windows are truly borderless with native headers force-hidden via CSS.
-     - Includes a custom **drag handle** at the top for window movement.
-     - **Minimalist Mobile UI:** On mobile devices, the display title is simplified to "M.I.N.A." for a cleaner interface.
-   - **Global Image Zoom:** Window-aware zooming that stays within the same tab or popout window.
-   - **Pure Content Focus:** Removed the global FAB (Floating Action Button) to declutter the interface across all modes.
+### 1. The Pillar of Process: Habit Lab
+- **Minimalist Tracking**: A horizontal row of "Stitch Dots" on the Daily Focus dashboard.
+- **Visual Feedback**: Habits use a subtle "glow" effect when completed, following the Timeline Mode aesthetic.
+- **Data Integrity**: Completion status is stored in daily Markdown files with YAML frontmatter, ensuring 100% interoperability with other plugins.
+- **Configuration**: A dedicated **Habit Config** modal allows for rapid definition of habits and custom icons.
 
-2. **Review & Management**
-   - **Modification Tracking:** Every entry tracks its **Modified Date** and **Modified Time**.
-   - **Advanced Thread Sorting:** History is sorted by the latest activity with bubble-up logic.
-   - **Advanced Editing:** Double-click or `✏️` to open the minimalist modal for full text, context, and attachment management.
-   - **Convert Thought to Task:** `📋` icon in the toolbar converts thoughts to tasks instantly.
-   - **Transcription:** High-quality voice note transcription via Gemini AI with target language support.
+### 2. The Pillar of Organization: Projects Mode
+- **Objective-Based Review**: Group all tasks and thoughts by project name via the `project:` YAML key.
+- **Project Dashboard**: A grid-based view of all active projects in the vault.
+- **Project Focus**: Dedicated dashboards for each project, featuring pending tasks, project-specific notes, and instant capture buttons that pre-fill project metadata.
 
-3. **Functionality & Data Integrity**
-   - **Git Tracking:** Entire codebase is fully tracked with Git.
-   - **Hybrid Storage:** Markdown tables for captured logs and individual Markdown files with YAML frontmatter for thoughts/tasks.
-   - **Automatic Context Discovery:** Scans logs on load to extract unique tags automatically.
-   - **Modern Stack:** Upgraded to TypeScript 6.0 and esbuild 0.28 for improved build performance and type safety.
+### 3. The Pillar of Reflection: Weekly Review
+- **Inbox Clearing**: Automatically scans for tasks and thoughts that lack a due date or project, facilitating rapid organization.
+- **The Rearview**: Provides a 7-day activity summary (Notes created, Tasks completed).
+- **The Horizon**: A dedicated interface to set **3 Weekly Focus** goals.
+- **Dashboard Integration**: Current weekly goals are displayed at the top of the Daily Focus mode as constant reminders.
 
-4. **Modular Architecture**
-   - The codebase has been refactored for maintainability and performance:
-     - **`src/main.ts`**: Plugin entry point and orchestrator.
-     - **`src/view.ts`**: Lean view manager that lazily loads tab components and provides shared AI services.
-     - **`src/tabs/`**: Contains specialized components (`DailyTab`, `TasksTab`, `AiTab`, `JournalTab`, etc.) inheriting from `BaseTab`.
-     - **`src/tabs/BaseTab.ts`**: Centralizes shared UI rendering logic and interaction hooks.
+### 4. The Pillar of Synergy: Voice Note Synergy
+- **Advanced Routing**: Transcribed voice notes can be instantly routed as a **Thought**, a **Task**, or linked to a **Project**.
+- **Context Preservation**: Routing a voice note to a project automatically updates the frontmatter and associates it with the project's dashboard.
+
+### Core UI & Aesthetics
+- **Dedicated Modes (High Focus):** Daily (Sun), Projects (Folder), Weekly Review (Calendar-Check), Timeline (Clock), Journal (Pen), Task (Check-square), Finance (Dollar), AI (Robot), Voice (Microphone), Focus (Target), Memento Mori (Hourglass), and Settings (Gear).
+- **Config Mode Toggle:** Discrete "Config" buttons allow for toggling navigation pills and metadata bars to maintain a clean slate.
+- **Modern Input Modal:** Clean Slate writing experience with natural language dates (`@today`), smart suggestions (`[[`, `#`), and attachment support.
+- **Minimalist Mobile UI:** simplified display title "M.I.N.A." for a distraction-free mobile experience.
+- **Borderless & Drag-Capable:** Truly borderless windows with custom drag handles for desktop power users.
+
+### Security, Performance & Release Mandates
+The plugin is governed by strict, always-running mandates:
+- **Lead Engineer**: Enforces modular architecture, type safety, and technical design documents for all features.
+- **Optimization**: Zero-bloat policy, targeted re-renders, and high-efficiency vault indexing.
+- **UX Auditor**: Protects the modern, minimalist aesthetic and unified design theme.
+- **Security Auditor**: Continuous vulnerability scanning and rigorous secret protection (no hardcoded keys).
+- **Release Manager**: Strict documentation requirements and explicit user approval for all commits, merges, and pushes.
 
 ## Build & Deploy
 

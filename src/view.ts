@@ -102,6 +102,8 @@ export class MinaView extends ItemView {
             case 'review-tasks': return "Tasks";
             case 'mina-ai': return "AI Chat";
             case 'dues': return "Dues";
+            case 'projects': return "Projects";
+            case 'review': return "Weekly Review";
             case 'voice-note': return "Voice Notes";
             case 'settings': return "Settings";
             case 'timeline': return "Timeline";
@@ -214,6 +216,8 @@ export class MinaView extends ItemView {
         else if (this.activeTab === 'review-thoughts') import('./tabs/ThoughtsTab').then(({ ThoughtsTab }) => new ThoughtsTab(this).render(container));
         else if (this.activeTab === 'mina-ai') import('./tabs/AiTab').then(({ AiTab }) => new AiTab(this).render(container));
         else if (this.activeTab === 'dues' || this.activeTab === 'pf') import('./tabs/DuesTab').then(({ DuesTab }) => new DuesTab(this).render(container));
+        else if (this.activeTab === 'projects') import('./tabs/ProjectsTab').then(({ ProjectsTab }) => new ProjectsTab(this).render(container));
+        else if (this.activeTab === 'review') import('./tabs/ReviewTab').then(({ ReviewTab }) => new ReviewTab(this).render(container));
         else if (this.activeTab === 'settings') import('./tabs/SettingsTab').then(({ SettingsTab }) => new SettingsTab(this).render(container));
         else if (this.activeTab === 'voice-note') import('./tabs/VoiceTab').then(({ VoiceTab }) => new VoiceTab(this).render(container));
         else if (this.activeTab === 'timeline') import('./tabs/TimelineTab').then(({ TimelineTab }) => new TimelineTab(this).render(container));
@@ -310,6 +314,19 @@ export class MinaView extends ItemView {
     updateReviewTasksList() {
         if (this.activeTab === 'review-tasks') {
             import('./tabs/TasksTab').then(({ TasksTab }) => new TasksTab(this).updateReviewTasksList());
+        }
+    }
+    updateHabitLab() {
+        if (this.activeTab === 'daily') {
+            import('./tabs/DailyTab').then(({ DailyTab }) => {
+                const habitContainer = this.containerEl.querySelector('.mina-habit-container') as HTMLElement;
+                if (habitContainer) new DailyTab(this).updateHabitLab(habitContainer);
+            });
+        }
+    }
+    updateProjectDashboard() {
+        if (this.activeTab === 'projects') {
+            import('./tabs/ProjectsTab').then(({ ProjectsTab }) => new ProjectsTab(this).render(this.containerEl.querySelector('.mina-view-content') as HTMLElement));
         }
     }
     updateContextList(modeId: string) {

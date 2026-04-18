@@ -5,6 +5,12 @@ import { isTablet, toAsciiDigits } from './utils';
 import { MinaView } from './view';
 import { MinaSettingTab } from './settings';
 
+export const PROJECT_ICON_ID = "mina-project-icon";
+export const PROJECT_ICON_SVG = `<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+export const REVIEW_ICON_ID = "mina-review-icon";
+export const REVIEW_ICON_SVG = `<g transform="translate(10,10) scale(3.5)"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16" y1="2" x2="16" y2="6" fill="none" stroke="currentColor" stroke-width="2"/><line x1="8" y1="2" x2="8" y2="6" fill="none" stroke="currentColor" stroke-width="2"/><line x1="3" y1="10" x2="21" y2="10" fill="none" stroke="currentColor" stroke-width="2"/><polyline points="9 16 11 18 15 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+
 export default class MinaPlugin extends Plugin {
 	settings: MinaSettings;
     settingsInitialized: boolean = false;
@@ -55,10 +61,20 @@ export default class MinaPlugin extends Plugin {
 		addIcon(MEMENTO_ICON_ID, MEMENTO_ICON_SVG);
 		addIcon(PF_ICON_ID, PF_ICON_SVG);
 		addIcon(VOICE_ICON_ID, VOICE_ICON_SVG);
+		addIcon(PROJECT_ICON_ID, PROJECT_ICON_SVG);
+		addIcon(REVIEW_ICON_ID, REVIEW_ICON_SVG);
 		addIcon(SETTINGS_ICON_ID, SETTINGS_ICON_SVG);
 
 		this.addRibbonIcon(DAILY_ICON_ID, 'Daily Mode', () => {
 			this.activateView('daily', true);
+		});
+
+		this.addRibbonIcon(REVIEW_ICON_ID, 'Weekly Review', () => {
+			this.activateView('review', true);
+		});
+
+		this.addRibbonIcon(PROJECT_ICON_ID, 'Projects Mode', () => {
+			this.activateView('projects', true);
 		});
 
 		this.addRibbonIcon(VOICE_ICON_ID, 'Voice Note Mode', () => {
@@ -161,6 +177,24 @@ export default class MinaPlugin extends Plugin {
 			icon: VOICE_ICON_ID,
 			callback: () => {
 				this.activateView('voice-note', true);
+			}
+		});
+
+		this.addCommand({
+			id: 'open-mina-projects-mode',
+			name: 'Projects Mode',
+			icon: PROJECT_ICON_ID,
+			callback: () => {
+				this.activateView('projects', true);
+			}
+		});
+
+		this.addCommand({
+			id: 'open-mina-weekly-review',
+			name: 'Weekly Review',
+			icon: REVIEW_ICON_ID,
+			callback: () => {
+				this.activateView('review', true);
 			}
 		});
 
@@ -402,6 +436,7 @@ export default class MinaPlugin extends Plugin {
             if (loadedData.tasksFolder !== undefined) this.settings.tasksFolder = loadedData.tasksFolder;
             if (loadedData.pfFolder !== undefined) this.settings.pfFolder = loadedData.pfFolder;
             if (loadedData.voiceMemoFolder !== undefined) this.settings.voiceMemoFolder = loadedData.voiceMemoFolder;
+            if (loadedData.habitsFolder !== undefined) this.settings.habitsFolder = loadedData.habitsFolder;
             if (loadedData.transcriptionLanguage !== undefined) this.settings.transcriptionLanguage = loadedData.transcriptionLanguage;
             if (loadedData.maxOutputTokens !== undefined) this.settings.maxOutputTokens = loadedData.maxOutputTokens;
             if (loadedData.dailySectionStates !== undefined) this.settings.dailySectionStates = { ...loadedData.dailySectionStates };
@@ -422,6 +457,8 @@ export default class MinaPlugin extends Plugin {
             if (loadedData.isCompactView !== undefined) this.settings.isCompactView = loadedData.isCompactView;
             if (loadedData.birthDate !== undefined) this.settings.birthDate = loadedData.birthDate;
             if (loadedData.lifeExpectancy !== undefined) this.settings.lifeExpectancy = loadedData.lifeExpectancy;
+            if (loadedData.habits !== undefined) this.settings.habits = [...loadedData.habits];
+            if (loadedData.weeklyGoals !== undefined) this.settings.weeklyGoals = [...loadedData.weeklyGoals];
             if (loadedData.customModes !== undefined) this.settings.customModes = [...loadedData.customModes];
             if (loadedData.customModeOrders !== undefined) this.settings.customModeOrders = { ...loadedData.customModeOrders };
             this.settingsInitialized = true;
@@ -788,6 +825,7 @@ export default class MinaPlugin extends Plugin {
         if (area !== 'MINA') return null;
         const context = getList('context');
         const pinned  = get('pinned') === 'true';
+        const project = get('project');
 
         const replyRegex = /^## \[\[[\d-]+\]\] [\d:]+ \^(reply-\d+)/gm;
         const children: ReplyEntry[] = [];
@@ -821,7 +859,7 @@ export default class MinaPlugin extends Plugin {
         while ((dMatch = dateLinkRegex.exec(content)) !== null) { if (!allDates.includes(dMatch[1])) allDates.push(dMatch[1]); }
         if (day && !allDates.includes(day)) allDates.push(day);
 
-        return { filePath, title, created, modified, day, allDates, context, body: bodyText, children, lastThreadUpdate: Math.max(modMs, lastChild), pinned };
+        return { filePath, title, created, modified, day, allDates, context, body: bodyText, children, lastThreadUpdate: Math.max(modMs, lastChild), pinned, project };
     }
 
     notifyViewRefresh(): void {
@@ -834,12 +872,16 @@ export default class MinaPlugin extends Plugin {
                 
                 const isHandledByTargetedUpdate = (view.activeTab === 'review-thoughts' && typeof view.updateReviewThoughtsList === 'function') ||
                                                   (view.activeTab === 'focus' && typeof view.updateFocusList === 'function') ||
+                                                  (view.activeTab === 'daily' && typeof view.updateHabitLab === 'function') ||
+                                                  (view.activeTab === 'projects' && typeof view.updateProjectDashboard === 'function') ||
                                                   (['journal', 'grundfos'].includes(view.activeTab) && typeof view.updateContextList === 'function') ||
                                                   (this.settings.customModes.some(m => m.id === view.activeTab) && typeof view.updateContextList === 'function');
 
                 if (isHandledByTargetedUpdate) {
                     if (view.activeTab === 'review-thoughts') view.updateReviewThoughtsList();
                     else if (view.activeTab === 'focus') view.updateFocusList();
+                    else if (view.activeTab === 'daily') view.updateHabitLab();
+                    else if (view.activeTab === 'projects') view.updateProjectDashboard();
                     else if (view.activeTab === 'journal') view.updateContextList('journal');
                     else if (view.activeTab === 'grundfos') view.updateContextList('grundfos');
                     else if (this.settings.customModes.some(m => m.id === view.activeTab)) view.updateContextList(view.activeTab);
@@ -896,6 +938,7 @@ export default class MinaPlugin extends Plugin {
         const status   = get('status') === 'done' ? 'done' : 'open';
         const dueRaw   = get('due').replace(/['"[\]]/g, '');
         const context  = getList('context');
+        const project  = get('project');
         
         // Parse Comments (Replies)
         const replyRegex = /^## \[\[[\d-]+\]\] [\d:]+ \^(reply-\d+)/gm;
@@ -923,7 +966,7 @@ export default class MinaPlugin extends Plugin {
         const lastChild = children.length > 0 ? Date.parse(children[children.length-1].date + 'T' + children[children.length-1].time) : 0;
         const lastUpdate = Math.max(isNaN(parsedLastUpdate) ? 0 : parsedLastUpdate, isNaN(lastChild) ? 0 : lastChild);
 
-        return { filePath, title, created, modified, day, status, due: dueRaw, context, body: mainBody, children, lastUpdate };
+        return { filePath, title, created, modified, day, status, due: dueRaw, context, body: mainBody, children, lastUpdate, project };
     }
 
     async appendCommentToTaskFile(filePath: string, text: string): Promise<boolean> {
@@ -1117,6 +1160,54 @@ export default class MinaPlugin extends Plugin {
         } catch (e) {
             new Notice(`Error saving payment: ${e.message}`);
         }
+    }
+
+    async getHabitStatus(date: string): Promise<string[]> {
+        const folder = this.settings.habitsFolder.trim() || '000 Bin/MINA V2 Habits';
+        const path = `${folder}/${date}.md`;
+        const file = this.app.vault.getAbstractFileByPath(path);
+        if (!(file instanceof TFile)) return [];
+        try {
+            const content = await this.app.vault.read(file);
+            const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
+            if (!fmMatch) return [];
+            const fmLines = fmMatch[1].split('\n');
+            const completedLine = fmLines.find(l => l.startsWith('completed:'));
+            if (!completedLine) return [];
+            const idsMatch = completedLine.match(/completed:\s*\[(.*)\]/);
+            if (!idsMatch) return [];
+            return idsMatch[1].split(',').map(id => id.trim().replace(/^['"]|['"]$/g, '')).filter(id => id);
+        } catch { return []; }
+    }
+
+    async toggleHabit(date: string, habitId: string): Promise<void> {
+        const folder = this.settings.habitsFolder.trim() || '000 Bin/MINA V2 Habits';
+        const path = `${folder}/${date}.md`;
+        let file = this.app.vault.getAbstractFileByPath(path);
+        
+        let completedIds = await this.getHabitStatus(date);
+        if (completedIds.includes(habitId)) {
+            completedIds = completedIds.filter(id => id !== habitId);
+        } else {
+            completedIds.push(habitId);
+        }
+
+        const idsYaml = completedIds.length > 0 ? `['${completedIds.join("', '")}']` : '[]';
+        const content = `---\ndate: ${date}\ncompleted: ${idsYaml}\n---\n\n# Habits for ${date}\n`;
+
+        if (file instanceof TFile) {
+            await this.app.vault.modify(file, content);
+        } else {
+            // Ensure folder exists
+            const parts = folder.split('/');
+            let pathSoFar = '';
+            for (const part of parts) {
+                pathSoFar = pathSoFar ? pathSoFar + '/' + part : part;
+                if (!this.app.vault.getAbstractFileByPath(pathSoFar)) await this.app.vault.createFolder(pathSoFar);
+            }
+            await this.app.vault.create(path, content);
+        }
+        this.notifyViewRefresh();
     }
 
     async createFile(filename: string, content: string): Promise<TFile> {

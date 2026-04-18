@@ -1,7 +1,9 @@
 import { ConfirmModal } from '../modals/ConfirmModal';
-import { moment, Platform, Notice, TFile } from 'obsidian';
+import { moment, Platform, Notice, TFile, Modal } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
+import { EditEntryModal } from '../modals/EditEntryModal';
+import { NotePickerModal } from '../modals/NotePickerModal';
 
 export class VoiceTab extends BaseTab {
     constructor(view: MinaView) { super(view); }
@@ -165,9 +167,51 @@ export class VoiceTab extends BaseTab {
             transcribe.style.opacity = '0.5';
             try {
                 const text = await this.view.transcribeAudio(file);
-                await this.view.plugin.createThoughtFile(`Transcription of [[${file.path}]]\n\n${text}`, ['transcribed', 'voice-note']);
-                new Notice('Saved as thought');
-                this.render(fullContainer);
+                
+                // Synergy Routing UI
+                transcribe.remove();
+                const routeRow = actions.createEl('div', { attr: { style: 'display: flex; gap: 8px;' } });
+                
+                const routeBtnStyle = 'background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 4px; padding: 2px 6px; font-size: 0.65em; font-weight: 700; cursor: pointer; color: var(--text-muted);';
+                
+                const saveAsNote = routeRow.createEl('button', { text: 'Note', attr: { style: routeBtnStyle + ' color: var(--text-accent);' } });
+                saveAsNote.addEventListener('click', async () => {
+                    await this.view.plugin.createThoughtFile(`Transcription of [[${file.path}]]\n\n${text}`, ['transcribed', 'voice-note']);
+                    new Notice('Saved as thought');
+                    this.render(fullContainer);
+                });
+
+                const saveAsTask = routeRow.createEl('button', { text: 'Task', attr: { style: routeBtnStyle } });
+                saveAsTask.addEventListener('click', async () => {
+                    new EditEntryModal(this.app, this.view.plugin, text, 'transcribed', moment().format('YYYY-MM-DD'), true, async (txt, ctxs, due) => {
+                        const contexts = ctxs.split('#').map(c => c.trim()).filter(c => c.length > 0);
+                        await this.view.plugin.createTaskFile(txt, contexts, due || undefined);
+                        this.render(fullContainer);
+                    }, 'New Task from Voice').open();
+                });
+
+                const saveToProject = routeRow.createEl('button', { text: 'Project', attr: { style: routeBtnStyle } });
+                saveToProject.addEventListener('click', async () => {
+                    const projects = new Set<string>();
+                    this.view.plugin.thoughtIndex.forEach(t => { if (t.project) projects.add(t.project); });
+                    this.view.plugin.taskIndex.forEach(t => { if (t.project) projects.add(t.project); });
+                    const projectList = Array.from(projects).sort();
+
+                    if (projectList.length === 0) {
+                        new Notice('No active projects found.');
+                        return;
+                    }
+
+                    // Simple picker for demo/mvp - using a native prompt or a mini modal
+                    const projectName = await this.promptProjectSelection(projectList);
+                    if (projectName) {
+                        const thought = await this.view.plugin.createThoughtFile(`Transcription of [[${file.path}]]\n\n${text}`, ['transcribed', 'voice-note']);
+                        await this.app.fileManager.processFrontMatter(thought, (fm) => { fm['project'] = projectName; });
+                        new Notice(`Added to project: ${projectName}`);
+                        this.render(fullContainer);
+                    }
+                });
+
             } catch (err) {
                 new Notice('Transcription failed');
                 transcribe.setText('Transcribe');
@@ -195,6 +239,21 @@ export class VoiceTab extends BaseTab {
                 src: this.view.app.vault.getResourcePath(file), 
                 style: 'width: 100%; height: 32px; filter: grayscale(1) opacity(0.8);' 
             }
+        });
+    }
+
+    private async promptProjectSelection(projects: string[]): Promise<string | null> {
+        return new Promise((resolve) => {
+            const modal = new Modal(this.app);
+            modal.titleEl.setText('Select Project');
+            modal.contentEl.createEl('p', { text: 'Choose a project to link this transcription to:', attr: { style: 'font-size: 0.9em; color: var(--text-muted); margin-bottom: 12px;' } });
+            const list = modal.contentEl.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px;' } });
+            projects.forEach(p => {
+                const btn = list.createEl('button', { text: p, attr: { style: 'width: 100%; text-align: left; padding: 10px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); cursor: pointer;' } });
+                btn.addEventListener('click', () => { modal.close(); resolve(p); });
+            });
+            modal.onClose = () => resolve(null);
+            modal.open();
         });
     }
 }
