@@ -53,12 +53,9 @@ export class AiSettingsModal extends Modal {
             .setDesc('Model for AI chat.')
             .addDropdown(drop => {
                 const models: Record<string, string> = {
-                    'gemini-2.5-pro':           '2.5 Pro',
-                    'gemini-2.5-flash':         '2.5 Flash',
-                    'gemini-2.5-flash-lite':    '2.5 Flash Lite',
-                    'gemini-2.5-flash-preview': '2.5 Flash Preview',
-                    'gemini-2.0-flash':         '2.0 Flash',
-                    'gemini-2.0-flash-lite':    '2.0 Flash Lite',
+                    'gemini-2.0-pro-exp-02-05': '2.0 Pro (Experimental)',
+                    'gemini-2.0-flash':         '2.0 Flash (Stable)',
+                    'gemini-2.0-flash-lite-preview-02-05': '2.0 Flash Lite (Preview)',
                     'gemini-1.5-pro':           '1.5 Pro',
                     'gemini-1.5-flash':         '1.5 Flash',
                     'gemini-1.5-flash-8b':      '1.5 Flash 8B',
@@ -66,7 +63,7 @@ export class AiSettingsModal extends Modal {
                 for (const [value, label] of Object.entries(models)) {
                     drop.addOption(value, label);
                 }
-                drop.setValue(this.plugin.settings.geminiModel || 'gemini-2.5-pro');
+                drop.setValue(this.plugin.settings.geminiModel || 'gemini-1.5-pro');
                 drop.onChange(async (value) => {
                     this.plugin.settings.geminiModel = value;
                     await this.plugin.saveSettings();

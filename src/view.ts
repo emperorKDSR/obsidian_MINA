@@ -373,7 +373,7 @@ export class MinaView extends ItemView {
                 let binary = ''; const bytes = new Uint8Array(buffer);
                 for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
                 const base64 = btoa(binary);
-                const mimeType = `image/${file.extension === 'jpg' ? 'jpeg' : file.extension}`;
+                const mimeType = `image/${file.extension === 'jpg' ? 'jpeg' : (['png', 'webp', 'gif'].includes(file.extension) ? file.extension : 'png')}`;
                 imageParts.push({ inline_data: { mime_type: mimeType, data: base64 } });
                 sources.push({ id: sourceCounter++, title: file.basename, path: file.path, type: 'image', file });
             } else {
@@ -409,28 +409,44 @@ When the user refers to "today", they mean ${moment().format('dddd, MMMM D, YYYY
         const body: any = {
             contents: contents,
             system_instruction: { parts: [{ text: systemPrompt }] },
-            generationConfig: { temperature: 0.7, maxOutputTokens: s.maxOutputTokens ?? 65536 }
+            generationConfig: { 
+                temperature: 0.7, 
+                maxOutputTokens: s.maxOutputTokens ?? 65536,
+                topP: 0.95,
+                topK: 40
+            }
         };
 
         if (webSearch) body.tools = [{ googleSearch: {} }];
 
-        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${s.geminiModel}:generateContent?key=${s.geminiApiKey}`, { 
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) 
-        });
-        
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const data = await resp.json();
-        const candidate = data?.candidates?.[0];
-        let reply = (candidate?.content?.parts ?? []).map((p: any) => p.text ?? '').join('').trim() || '(no response)';
+        const modelId = s.geminiModel || 'gemini-1.5-pro';
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${s.geminiApiKey}`;
 
-        sources.forEach(src => {
-            const citationTag = `[${src.id}]`;
-            const link = `[[${src.path}|${citationTag}]]`;
-            const regex = new RegExp(`\\\${${citationTag}}(?![^\\[]*\\]\\])`, 'g');
-            reply = reply.replace(regex, link);
-        });
+        try {
+            const resp = await fetch(url, { 
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) 
+            });
+            
+            if (resp.status === 429) throw new Error(`AI Rate limit reached (HTTP 429). Model: ${modelId}. Please check your quota in Google AI Studio.`);
+            if (resp.status === 404) throw new Error(`Model not found (HTTP 404). The ID "${modelId}" is invalid. Please open Config and select a stable model like "1.5 Pro".`);
+            if (!resp.ok) throw new Error(`AI Error (HTTP ${resp.status}). Model: ${modelId}.`);
 
-        return reply;
+            const data = await resp.json();
+            const candidate = data?.candidates?.[0];
+            let reply = (candidate?.content?.parts ?? []).map((p: any) => p.text ?? '').join('').trim() || '(no response)';
+
+            sources.forEach(src => {
+                const citationTag = `[${src.id}]`;
+                const link = `[[${src.path}|${citationTag}]]`;
+                const regex = new RegExp(`\\\${${citationTag}}(?![^\\[]*\\]\\])`, 'g');
+                reply = reply.replace(regex, link);
+            });
+
+            return reply;
+        } catch (e: any) {
+            console.error("MINA AI Fetch Error:", e);
+            throw e;
+        }
     }
 
     matchesSearch(query: string, fields: string[]): boolean {
