@@ -46,6 +46,9 @@ The interface is governed by a unified Design System:
 - **Habit Lab**: Stitch Dots tracking with YAML persistence.
 - **Projects Mode**: Objective-based grouping and dedicated project focus dashboards.
 - **Weekly Review & Compass**: Multi-layered reflection (Weekly Focus + Quarterly North Star Goals).
+- **Finance Mode**: Professional **Financial Ledger** featuring:
+    - **Segmented Control**: Sleek horizontal toggle for **Active Obligations** vs. **All History**.
+    - **Financial Pulse**: Standardized glass elevation and status-glow indicators for cashflow velocity.
 - **Synthesis Mode**: Split-pane workspace for transforming raw captures into permanent knowledge.
     - **Zero-Inbox Logic**: Synthesized thoughts are automatically flagged (`synthesized: true`) and cleared from the feed to maintain focus.
 - **AI Synergy**: Debounced auto-classification during capture and intelligent activity summaries.
