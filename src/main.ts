@@ -30,6 +30,7 @@ export default class MinaPlugin extends Plugin {
 
         this.app.workspace.onLayoutReady(async () => {
             await this.index.buildIndices();
+            this.notifyRefresh(); // ensure view re-renders with freshly-built index
             this.scanForContexts();
             
             // --- REACTIVE NERVE SYSTEM ---
@@ -215,7 +216,7 @@ export default class MinaPlugin extends Plugin {
                 const view = leaf.view as MinaView;
                 if (view && typeof view.renderView === 'function') {
                     // Don't re-render while the user is mid-toggle — let optimistic UI stand
-                    if (view._taskTogglePending > 0) continue;
+                    if (view._taskTogglePending > 0 || view._habitTogglePending > 0) continue;
                     view.renderView();
                 }
             }

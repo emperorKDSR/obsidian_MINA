@@ -66,20 +66,22 @@ export class CommandCenterTab extends BaseTab {
     // ── 2. Habit quick-bar ──────────────────────────────────────────────────
     private renderHabitQuickBar(parent: HTMLElement) {
         const habits = this.settings.habits || [];
-        if (habits.length === 0) return;
+
+        const section = parent.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px;' } });
+        const labelRow = section.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
+        labelRow.createEl('span', { text: 'HABITS', attr: { style: 'font-size: 0.65em; font-weight: 900; letter-spacing: 0.15em; color: var(--text-faint);' } });
+
+        if (habits.length === 0) {
+            section.createEl('span', { text: 'No habits configured — add them in Settings.', attr: { style: 'font-size: 0.8em; color: var(--text-faint); font-style: italic;' } });
+            return;
+        }
 
         const completedToday = new Set<string>(this.index.habitStatusIndex);
         const today = moment().format('YYYY-MM-DD');
-        const doneCount = habits.filter(h => completedToday.has(h.id)).length;
+        let doneCount = habits.filter(h => completedToday.has(h.id)).length;
 
-        const section = parent.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px;' } });
-
-        // Section label + progress
-        const labelRow = section.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
-        labelRow.createEl('span', { text: 'HABITS', attr: { style: 'font-size: 0.65em; font-weight: 900; letter-spacing: 0.15em; color: var(--text-faint);' } });
         const progressText = labelRow.createEl('span', { text: `${doneCount}/${habits.length}`, attr: { style: 'font-size: 0.72em; font-weight: 700; color: var(--interactive-accent);' } });
 
-        // Scrollable row
         const bar = section.createEl('div', { cls: 'mina-habit-quick-bar' });
 
         for (const habit of habits) {
@@ -91,9 +93,13 @@ export class CommandCenterTab extends BaseTab {
             btn.addEventListener('click', async () => {
                 const nowDone = btn.hasClass('is-done');
                 btn.toggleClass('is-done', !nowDone);
-                const newCount = nowDone ? doneCount - 1 : doneCount + 1;
-                progressText.textContent = `${Math.max(0, Math.min(habits.length, newCount))}/${habits.length}`;
+                doneCount = nowDone ? doneCount - 1 : doneCount + 1;
+                progressText.textContent = `${Math.max(0, Math.min(habits.length, doneCount))}/${habits.length}`;
+
+                // Suppress vault-event re-renders during this write
+                this.view._habitTogglePending++;
                 await this.plugin.toggleHabit(today, habit.id);
+                setTimeout(() => { this.view._habitTogglePending = Math.max(0, this.view._habitTogglePending - 1); }, 350);
             });
         }
     }
@@ -101,13 +107,17 @@ export class CommandCenterTab extends BaseTab {
     // ── 3. Task Radar ────────────────────────────────────────────────────────
     private renderTaskRadar(parent: HTMLElement) {
         const radar = this.index.radarQueue.slice(0, 6);
-        if (radar.length === 0) return;
 
         const section = parent.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 6px;' } });
         const labelRow = section.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
         labelRow.createEl('span', { text: 'RADAR', attr: { style: 'font-size: 0.65em; font-weight: 900; letter-spacing: 0.15em; color: var(--text-faint);' } });
         const seeAll = labelRow.createEl('button', { text: 'See all', attr: { style: 'background: transparent; border: none; font-size: 0.72em; font-weight: 700; color: var(--interactive-accent); cursor: pointer; padding: 0;' } });
         seeAll.addEventListener('click', () => { this.view.activeTab = 'review-tasks'; this.view.renderView(); });
+
+        if (radar.length === 0) {
+            section.createEl('div', { text: 'No urgent tasks — all clear.', attr: { style: 'font-size: 0.82em; color: var(--text-faint); font-style: italic; padding: 8px 0;' } });
+            return;
+        }
 
         const list = section.createEl('div', { attr: { style: 'display: flex; flex-direction: column; border-radius: 10px; overflow: hidden; border: 1px solid var(--background-modifier-border-faint);' } });
 
@@ -127,12 +137,10 @@ export class CommandCenterTab extends BaseTab {
                 const nextDone = !isDone;
                 cb.empty();
                 if (nextDone) {
-                    cb.addClass('is-done');
-                    const ck = cb.createEl('span'); setIcon(ck, 'check');
+                    cb.addClass('is-done'); const ck = cb.createEl('span'); setIcon(ck, 'check');
                     titleEl.style.textDecoration = 'line-through'; titleEl.style.opacity = '0.35';
                 } else {
-                    cb.removeClass('is-done');
-                    titleEl.style.textDecoration = ''; titleEl.style.opacity = '';
+                    cb.removeClass('is-done'); titleEl.style.textDecoration = ''; titleEl.style.opacity = '';
                 }
                 this.view._taskTogglePending++;
                 await this.vault.toggleTask(task.filePath, nextDone);

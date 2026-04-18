@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, moment, TFile, Platform, setIcon } from 'obsidian';
+import { ItemView, WorkspaceLeaf, moment, TFile, Platform } from 'obsidian';
 import { VIEW_TYPE_MINA, KATANA_ICON_ID } from './constants';
 import type MinaPlugin from './main';
 import { BaseTab } from './tabs/BaseTab';
@@ -34,7 +34,8 @@ export class MinaView extends ItemView {
 
     // Tasks state — persists across re-renders (viewMode survives vault events)
     tasksViewMode: string = 'open';
-    _taskTogglePending: number = 0; // > 0 = suppress vault-event re-renders
+    _taskTogglePending: number = 0;    // > 0 = suppress vault-event re-renders
+    _habitTogglePending: number = 0;   // > 0 = suppress vault-event re-renders
     
     // AI State
     chatHistory: ChatMessage[] = [];
@@ -92,18 +93,6 @@ export class MinaView extends ItemView {
         const container = this.containerEl.children[1] as HTMLElement;
         container.empty();
         container.addClass('mina-view-root');
-
-        // Header
-        const headerWrap = container.createEl('div', { cls: 'mina-header-wrap', attr: { style: 'padding: 10px 14px; border-bottom: 1px solid var(--background-modifier-border-faint); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;' } });
-        const leftHeader = headerWrap.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 10px;' } });
-        
-        if (this.isDedicated) {
-            const closeBtn = leftHeader.createEl('button', { attr: { style: 'background: transparent; border: none; padding: 0; cursor: pointer; color: var(--text-muted); display: flex; align-items: center;' } });
-            setIcon(closeBtn, 'x');
-            closeBtn.addEventListener('click', () => this.leaf.detach());
-            leftHeader.createEl('h3', { text: this.getModeTitle(), attr: { style: 'margin: 0; font-size: 1.1em; color: var(--text-accent);' } });
-        }
-
         const contentArea = container.createEl('div', { cls: 'mina-view-content', attr: { style: 'flex-grow: 1; overflow: hidden; display: flex; flex-direction: column;' } });
         this.renderTab(contentArea);
     }
