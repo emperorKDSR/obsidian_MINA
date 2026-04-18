@@ -79,6 +79,7 @@ export interface ThoughtEntry {
     lastThreadUpdate: number;  // ms timestamp for sorting
     pinned?: boolean;          // true if the thought is pinned
     project?: string;          // associated project name
+    synthesized?: boolean;     // true if the thought has been synthesized into a master note
 }
 
 export interface TaskEntry {

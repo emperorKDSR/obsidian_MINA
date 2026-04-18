@@ -37,6 +37,8 @@ The codebase is structured for maximum scalability and type safety:
 - **Projects Mode**: Objective-based grouping and dedicated project focus dashboards.
 - **Weekly Review & Compass**: Multi-layered reflection (Weekly Focus + Quarterly North Star Goals).
 - **Synthesis Mode**: Split-pane workspace for transforming raw captures into permanent knowledge.
+    - **Zero-Inbox Logic**: Synthesized thoughts are automatically flagged (`synthesized: true`) and cleared from the feed to maintain focus.
+    - **Vision Integration**: Full support for image rendering and high-performance zooming within the synthesis canvas.
 - **AI Synergy**: Debounced auto-classification during capture and intelligent activity summaries.
 
 ### Security, Performance & Release Mandates

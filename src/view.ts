@@ -35,6 +35,7 @@ export class MinaView extends ItemView {
     reviewThoughtsContainer: HTMLElement;
     thoughtsRowContainer: HTMLElement;
     focusRowContainer: HTMLElement;
+    activeMasterNote: TFile | null = null;
 
     searchQuery: string = '';
     

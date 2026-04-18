@@ -58,41 +58,59 @@ export class VaultService {
 
     async ensureFolder(folder: string) {
         const { vault } = this.app;
+        if (!folder || folder === '/' || folder === '.') return;
+        
         const parts = folder.split('/');
         let pathSoFar = '';
         for (const part of parts) {
             pathSoFar = pathSoFar ? pathSoFar + '/' + part : part;
-            if (!vault.getAbstractFileByPath(pathSoFar)) {
-                try { await vault.createFolder(pathSoFar); } catch {}
+            const exists = vault.getAbstractFileByPath(pathSoFar);
+            if (!exists) {
+                try { 
+                    await vault.createFolder(pathSoFar); 
+                } catch (e) {
+                    // Ignore errors if folder was created simultaneously by another process
+                    if (!e.message?.includes('already exists')) throw e;
+                }
             }
+        }
+    }
+
+    async createFile(folder: string, filename: string, content: string): Promise<TFile> {
+        await this.ensureFolder(folder);
+        const path = folder && folder !== '/' ? `${folder}/${filename}` : filename;
+        
+        // Handle potential duplicates
+        let finalPath = path;
+        if (this.app.vault.getAbstractFileByPath(finalPath)) {
+            const extIdx = path.lastIndexOf('.');
+            const base = extIdx !== -1 ? path.substring(0, extIdx) : path;
+            const ext = extIdx !== -1 ? path.substring(extIdx) : '';
+            finalPath = `${base} (${Date.now()})${ext}`;
+        }
+
+        try {
+            const file = await this.app.vault.create(finalPath, content);
+            return file;
+        } catch (e) {
+            new Notice(`Vault Error: ${e.message}`);
+            throw e;
         }
     }
 
     async createThoughtFile(text: string, contexts: string[], project?: string): Promise<TFile> {
         const folder = this.settings.thoughtsFolder.trim() || '000 Bin/MINA V2';
-        await this.ensureFolder(folder);
-        
         const now = new Date();
         const created = this.formatDateTime(now);
         const dayStr = this.formatDate(now);
         const title = this.extractTitle(text);
         const fm = this.buildFrontmatter(title, created, created, dayStr, contexts, false, project);
         const filename = this.generateFilename();
-        
-        try {
-            const file = await this.app.vault.create(`${folder}/${filename}`, fm + text);
-            new Notice('Thought saved!');
-            return file;
-        } catch (e) {
-            new Notice('MINA Error: ' + e.message);
-            throw e;
-        }
+        return await this.createFile(folder, filename, fm + text);
     }
 
     async createTaskFile(text: string, contexts: string[], dueDate?: string, project?: string): Promise<TFile> {
         const folder = this.settings.tasksFolder.trim() || '000 Bin/MINA V2 Tasks';
-        await this.ensureFolder(folder);
-        
         const now = new Date();
         const created = this.formatDateTime(now);
         const dayStr = this.formatDate(now);
@@ -100,15 +118,7 @@ export class VaultService {
         const due = dueDate || '';
         const fm = this.buildTaskFrontmatter(title, created, created, dayStr, 'open', due, contexts, project);
         const filename = this.generateFilename('task_');
-        
-        try {
-            const file = await this.app.vault.create(`${folder}/${filename}`, fm + text);
-            new Notice('Task saved!');
-            return file;
-        } catch (e) {
-            new Notice('MINA Error: ' + e.message);
-            throw e;
-        }
+        return await this.createFile(folder, filename, fm + text);
     }
 
     async editThought(filePath: string, newText: string, contexts: string[]): Promise<void> {
@@ -131,7 +141,6 @@ export class VaultService {
             const title = this.extractTitle(newText);
             const newFm = this.buildFrontmatter(title, created, this.formatDateTime(now), this.formatDate(now), contexts, pinned, project);
             
-            // Preserve comments/replies if any
             const bodyWithComments = content.slice(fmMatch[0].length);
             const replyIdx = bodyWithComments.indexOf('\n## [[');
             const bodyToSave = replyIdx !== -1 ? newText + bodyWithComments.slice(replyIdx) : newText;
@@ -210,12 +219,13 @@ export class VaultService {
         try {
             const now = new Date();
             const anchor = `reply-${Date.now()}`;
-            const header = `## [[${this.formatDate(now)}]] ${this.formatTime(now)} ^${anchor}`;
+            const dateStr = this.formatDate(now);
+            const timeStr = this.formatTime(now);
+            const header = `## [[${dateStr}]] ${timeStr} ^${anchor}`;
             const existing = await this.app.vault.read(file);
             const updated = existing.trimEnd() + `\n\n${header}\n${text}\n`;
             await this.app.vault.modify(file, updated);
             
-            // Update modified date in frontmatter
             const withMod = updated.replace(/^modified: .+$/m, `modified: ${this.formatDateTime(now)}`);
             if (withMod !== updated) await this.app.vault.modify(file, withMod);
             
@@ -223,50 +233,6 @@ export class VaultService {
         } catch (e) {
             new Notice('MINA Error: ' + e.message);
             return false;
-        }
-    }
-
-    async editReply(filePath: string, anchor: string, newText: string): Promise<void> {
-        const file = this.app.vault.getAbstractFileByPath(filePath);
-        if (!(file instanceof TFile)) return;
-        
-        try {
-            const content = await this.app.vault.read(file);
-            const lines = content.split('\n');
-            const idx = lines.findIndex(l => l.includes(`^${anchor}`));
-            if (idx === -1) return;
-            
-            let endIdx = lines.findIndex((l, i) => i > idx && l.startsWith('## [['));
-            if (endIdx === -1) endIdx = lines.length;
-            
-            const newLines = [...lines.slice(0, idx + 1), newText, ...lines.slice(endIdx)];
-            await this.app.vault.modify(file, newLines.join('\n'));
-        } catch (e) {
-            new Notice('MINA Error: ' + e.message);
-        }
-    }
-
-    async deleteReply(filePath: string, anchor: string): Promise<void> {
-        const file = this.app.vault.getAbstractFileByPath(filePath);
-        if (!(file instanceof TFile)) return;
-        
-        try {
-            const content = await this.app.vault.read(file);
-            const lines = content.split('\n');
-            const idx = lines.findIndex(l => l.includes(`^${anchor}`));
-            if (idx === -1) return;
-            
-            // Find start of the comment (the header line might have empty lines above it)
-            let startIdx = idx;
-            while (startIdx > 0 && lines[startIdx-1].trim() === '') startIdx--;
-            
-            let endIdx = lines.findIndex((l, i) => i > idx && l.startsWith('## [['));
-            if (endIdx === -1) endIdx = lines.length;
-            
-            const newLines = [...lines.slice(0, startIdx), ...lines.slice(endIdx)];
-            await this.app.vault.modify(file, newLines.join('\n'));
-        } catch (e) {
-            new Notice('MINA Error: ' + e.message);
         }
     }
 
@@ -279,7 +245,8 @@ export class VaultService {
             const content = await this.app.vault.read(file);
             const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
             if (!fmMatch) return [];
-            const completedLine = fmMatch[1].split('\n').find(l => l.startsWith('completed:'));
+            const fmLines = fmMatch[1].split('\n');
+            const completedLine = fmLines.find(l => l.startsWith('completed:'));
             if (!completedLine) return [];
             const idsMatch = completedLine.match(/completed:\s*\[(.*)\]/);
             return idsMatch ? idsMatch[1].split(',').map(id => id.trim().replace(/^['"]|['"]$/g, '')).filter(id => id) : [];
@@ -301,5 +268,13 @@ export class VaultService {
             await this.ensureFolder(folder);
             await this.app.vault.create(path, content);
         }
+    }
+
+    async markAsSynthesized(filePath: string): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return;
+        await this.app.fileManager.processFrontMatter(file, (fm) => {
+            fm['synthesized'] = true;
+        });
     }
 }

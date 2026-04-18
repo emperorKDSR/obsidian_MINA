@@ -1,11 +1,46 @@
-import { moment, Platform, MarkdownRenderer, TFile, Notice, Modal } from 'obsidian';
+import { moment, Platform, MarkdownRenderer, TFile, Notice, Modal, App, Setting } from 'obsidian';
 import type { MinaView } from '../view';
 import type { ThoughtEntry } from '../types';
 import { BaseTab } from "./BaseTab";
 
-export class SynthesisTab extends BaseTab {
-    activeMasterNote: TFile | null = null;
+class InsightTitleModal extends Modal {
+    result: string = '';
+    onSubmit: (result: string) => void;
 
+    constructor(app: App, onSubmit: (result: string) => void) {
+        super(app);
+        this.onSubmit = onSubmit;
+    }
+
+    onOpen() {
+        const { contentEl } = this;
+        contentEl.createEl('h2', { text: 'New Insight Note' });
+
+        new Setting(contentEl)
+            .setName('Title')
+            .addText((text) =>
+                text.onChange((value) => {
+                    this.result = value;
+                }));
+
+        new Setting(contentEl)
+            .addButton((btn) =>
+                btn
+                    .setButtonText('Create')
+                    .setCta()
+                    .onClick(() => {
+                        this.close();
+                        this.onSubmit(this.result);
+                    }));
+    }
+
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
+    }
+}
+
+export class SynthesisTab extends BaseTab {
     constructor(view: MinaView) { super(view); }
 
     render(container: HTMLElement) {
@@ -25,7 +60,7 @@ export class SynthesisTab extends BaseTab {
 
         // 1. Sidebar (Recent Raw Captures)
         const sidebar = wrap.createEl('div', {
-            attr: { style: `width: ${isMobilePhone ? '100%' : '350px'}; display: ${isMobilePhone && this.activeMasterNote ? 'none' : 'flex'}; flex-direction: column; border-right: 1px solid var(--background-modifier-border-faint);` }
+            attr: { style: `width: ${isMobilePhone ? '100%' : '350px'}; display: ${isMobilePhone && this.view.activeMasterNote ? 'none' : 'flex'}; flex-direction: column; border-right: 1px solid var(--background-modifier-border-faint);` }
         });
 
         const sideHeader = sidebar.createEl('div', {
@@ -39,7 +74,7 @@ export class SynthesisTab extends BaseTab {
         });
 
         const recentThoughts = Array.from(this.index.thoughtIndex.values())
-            .filter(t => !t.project)
+            .filter(t => !t.project && !t.synthesized) // Only show unorganized and unsynthesized thoughts
             .sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate)
             .slice(0, 30);
 
@@ -58,15 +93,15 @@ export class SynthesisTab extends BaseTab {
 
                 card.addEventListener('dragstart', (e) => {
                     if (e.dataTransfer) {
-                        e.dataTransfer.setData('text/plain', `[[${thought.filePath}|${thought.title}]]\n\n${thought.body}`);
+                        e.dataTransfer.setData('application/json', JSON.stringify({ filePath: thought.filePath, content: `[[${thought.filePath}|${thought.title}]]\n\n${thought.body}` }));
                         card.style.opacity = '0.5';
                     }
                 });
                 card.addEventListener('dragend', () => card.style.opacity = '1');
                 
                 card.addEventListener('click', () => {
-                    if (this.activeMasterNote) {
-                        this.appendToMasterNote(thought, container);
+                    if (this.view.activeMasterNote) {
+                        this.appendToMasterNote(thought);
                     } else {
                         new Notice('Select or create a Master Note first.');
                     }
@@ -76,7 +111,7 @@ export class SynthesisTab extends BaseTab {
 
         // 2. Main Canvas (Active Insight)
         const main = wrap.createEl('div', {
-            attr: { style: `flex-grow: 1; display: ${isMobilePhone && !this.activeMasterNote ? 'none' : 'flex'}; flex-direction: column; background: var(--background-primary);` }
+            attr: { style: `flex-grow: 1; display: ${isMobilePhone && !this.view.activeMasterNote ? 'none' : 'flex'}; flex-direction: column; background: var(--background-primary);` }
         });
 
         const mainHeader = main.createEl('div', {
@@ -85,12 +120,12 @@ export class SynthesisTab extends BaseTab {
 
         if (isMobilePhone) {
             const backBtn = mainHeader.createEl('button', { text: '←', attr: { style: 'background:transparent; border:none; font-size:1.2em; cursor:pointer;' } });
-            backBtn.addEventListener('click', () => { this.activeMasterNote = null; this.render(container); });
+            backBtn.addEventListener('click', () => { this.view.activeMasterNote = null; this.view.renderView(); });
         }
 
         const titleStack = mainHeader.createEl('div', { attr: { style: 'display: flex; flex-direction: column;' } });
         titleStack.createEl('h2', { 
-            text: this.activeMasterNote ? this.activeMasterNote.basename : 'Select Insight Note', 
+            text: this.view.activeMasterNote ? this.view.activeMasterNote.basename : 'Select Insight Note', 
             attr: { style: 'margin: 0; font-size: 1.1em; font-weight: 800;' } 
         });
 
@@ -99,34 +134,60 @@ export class SynthesisTab extends BaseTab {
             text: '+ New Insight',
             attr: { style: 'background: transparent; border: 1px solid var(--background-modifier-border); border-radius: 6px; font-size: 0.6em; padding: 2px 8px; color: var(--text-muted); cursor: pointer; font-weight: 700; text-transform: uppercase;' }
         });
-        newBtn.addEventListener('click', async () => {
-            const name = await this.promptForName();
-            if (name) {
-                const folder = this.settings.newNoteFolder;
-                const path = `${folder}/${name}.md`;
-                const file = await this.app.vault.create(path, `---\narea: INSIGHT\ncreated: ${moment().format('YYYY-MM-DD HH:mm:ss')}\n---\n\n# ${name}\n\n`);
-                this.activeMasterNote = file;
-                this.render(container);
-            }
+        
+        newBtn.addEventListener('click', () => {
+            new InsightTitleModal(this.app, async (name) => {
+                if (!name) return;
+                try {
+                    const folder = this.settings.newNoteFolder.trim() || '000 Bin';
+                    const filename = `${name}.md`;
+                    const fullPath = folder && folder !== '/' ? `${folder}/${filename}` : filename;
+                    
+                    const existingFile = this.app.vault.getAbstractFileByPath(fullPath);
+                    if (existingFile instanceof TFile) {
+                        this.view.activeMasterNote = existingFile;
+                        this.view.renderView();
+                        new Notice(`Using existing insight: ${existingFile.basename}`);
+                        return;
+                    }
+
+                    new Notice(`Creating insight: ${name}...`);
+                    const content = `---\narea: INSIGHT\ncreated: ${moment().format('YYYY-MM-DD HH:mm:ss')}\n---\n\n# ${name}\n\n`;
+                    const file = await this.vault.createFile(folder, filename, content);
+                    this.view.activeMasterNote = file;
+                    this.view.renderView();
+                    new Notice(`Success: ${file.basename} ready.`);
+                } catch (e) {
+                    new Notice(`Synthesis Error: ${e.message}`);
+                }
+            }).open();
         });
 
         const content = main.createEl('div', {
             attr: { style: 'flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px;' }
         });
 
-        if (this.activeMasterNote) {
-            const rawContent = await this.app.vault.read(this.activeMasterNote);
+        if (this.view.activeMasterNote) {
+            const rawContent = await this.app.vault.read(this.view.activeMasterNote);
             const renderTarget = content.createEl('div', { cls: 'mina-insight-content', attr: { style: 'line-height: 1.6; font-size: 1.05em;' } });
-            await MarkdownRenderer.render(this.app, rawContent, renderTarget, this.activeMasterNote.path, this.view);
+            await MarkdownRenderer.render(this.app, rawContent, renderTarget, this.view.activeMasterNote.path, this.view);
+            this.hookInternalLinks(renderTarget, this.view.activeMasterNote.path);
+            this.hookImageZoom(renderTarget);
             
+            // Drop Zone
             renderTarget.addEventListener('dragover', (e) => e.preventDefault());
             renderTarget.addEventListener('drop', async (e) => {
                 e.preventDefault();
-                const data = e.dataTransfer?.getData('text/plain');
-                if (data && this.activeMasterNote) {
-                    const existing = await this.app.vault.read(this.activeMasterNote);
-                    await this.app.vault.modify(this.activeMasterNote, existing.trimEnd() + '\n\n' + data);
-                    this.render(container);
+                const jsonData = e.dataTransfer?.getData('application/json');
+                if (jsonData && this.view.activeMasterNote) {
+                    const { filePath, content: appendText } = JSON.parse(jsonData);
+                    const existing = await this.app.vault.read(this.view.activeMasterNote);
+                    await this.app.vault.modify(this.view.activeMasterNote, existing.trimEnd() + '\n\n' + appendText);
+                    
+                    // Auto-Clear logic: mark as synthesized
+                    await this.vault.markAsSynthesized(filePath);
+                    
+                    this.view.renderView();
                     new Notice('Thought synthesized.');
                 }
             });
@@ -137,24 +198,16 @@ export class SynthesisTab extends BaseTab {
         }
     }
 
-    private async appendToMasterNote(thought: ThoughtEntry, container: HTMLElement) {
-        if (!this.activeMasterNote) return;
-        const existing = await this.app.vault.read(this.activeMasterNote);
+    private async appendToMasterNote(thought: ThoughtEntry) {
+        if (!this.view.activeMasterNote) return;
+        const existing = await this.app.vault.read(this.view.activeMasterNote);
         const data = `[[${thought.filePath}|${thought.title}]]\n\n${thought.body}`;
-        await this.app.vault.modify(this.activeMasterNote, existing.trimEnd() + '\n\n' + data);
+        await this.app.vault.modify(this.view.activeMasterNote, existing.trimEnd() + '\n\n' + data);
+        
+        // Auto-Clear logic: mark as synthesized
+        await this.vault.markAsSynthesized(thought.filePath);
+        
         new Notice('Thought synthesized.');
-        this.render(container);
-    }
-
-    private promptForName(): Promise<string | null> {
-        return new Promise((resolve) => {
-            const modal = new Modal(this.app);
-            modal.titleEl.setText('New Insight Note');
-            const inp = modal.contentEl.createEl('input', { type: 'text', attr: { placeholder: 'Insight Title...', style: 'width: 100%; margin-bottom: 12px;' } });
-            const btn = modal.contentEl.createEl('button', { text: 'Create', attr: { style: 'width: 100%;' } });
-            btn.addEventListener('click', () => { modal.close(); resolve(inp.value.trim()); });
-            modal.onClose = () => resolve(null);
-            modal.open();
-        });
+        this.view.renderView();
     }
 }

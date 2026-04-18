@@ -113,6 +113,7 @@ export class IndexService {
         const context = getList('context');
         const pinned  = get('pinned') === 'true';
         const project = get('project')?.replace(/^"|"$/g, '');
+        const synthesized = get('synthesized') === 'true';
 
         const children = this.parseReplies(body);
         const bodyText = children.length > 0 ? body.slice(0, body.indexOf('## [[')).trim() : body.trim();
@@ -126,7 +127,7 @@ export class IndexService {
         while ((dMatch = dateLinkRegex.exec(content)) !== null) { if (!allDates.includes(dMatch[1])) allDates.push(dMatch[1]); }
         if (day && !allDates.includes(day)) allDates.push(day);
 
-        return { filePath, title, created, modified, day, allDates, context, body: bodyText, children, lastThreadUpdate: Math.max(modMs, lastChild), pinned, project };
+        return { filePath, title, created, modified, day, allDates, context, body: bodyText, children, lastThreadUpdate: Math.max(modMs, lastChild), pinned, project, synthesized };
     }
 
     private parseTaskFile(filePath: string, content: string): TaskEntry | null {
