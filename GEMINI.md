@@ -26,12 +26,13 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Timeline Mode (Clock):** A modern chronological view with a **Thread Aesthetic**.
        - **Vertical Thread:** A continuous subtle line connecting all entries through the day.
        - **Stitch Dots:** Every thought and task is "pinned" to the thread with a small indicator dot.
-     - **Journal Mode (Pen):** A high-end minimalist logbook experience with sticky date headers and discrete search.
+     - **Journal Mode (Pen):** A high-end minimalist logbook experience with sticky date headers, a modern action row (Add Note/Task), and a discrete search toggle.
      - **Task Mode (Check-square):** A dedicated view for task management and review.
      - **Personal Finance Mode (Dollar):** Specifically manages recurring payments and dues.
      - **AI Mode (Robot):** Interactive chat with Gemini AI, supporting file grounding and numeric citations.
      - **Focus Mode (Target):** Displays strictly only pinned notes (`pinned: true`) with persistent reordering.
-     - **Grundfos Mode (Pump):** High-focus view for entries tagged with "Grundfos".
+     - **Grundfos Mode (Pump):** High-focus view for entries tagged with "Grundfos", redesigned with a modern header, action buttons, and integrated search.
+     - **Custom Modes:** Any custom-defined modes now inherit the modern "ContextTab" design with dedicated headers and quick-capture buttons.
      - **Memento Mori (Hourglass):** A sophisticated life-visualization tool.
        - **Hourglass Aesthetic:** A minimalist SVG hourglass where the top bulb represents your "Life to Live" (high contrast) and the bottom bulb represents your "Life Lived" (dimmed).
        - **Precision Masking:** Uses SVG masks to show exact percentage-based sand levels for both bulbs.

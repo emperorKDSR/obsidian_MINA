@@ -1,7 +1,6 @@
 import { moment, Platform, Notice } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
-import { ICON_PLUS } from "../constants";
 import { EditEntryModal } from "../modals/EditEntryModal";
 
 export class JournalTab extends BaseTab {
@@ -12,61 +11,83 @@ export class JournalTab extends BaseTab {
     }
 
     async renderJournalMode(container: HTMLElement) {
+        container.empty();
+        
         const wrap = container.createEl('div', {
             attr: {
-                style: 'display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--background-primary);'
+                style: 'padding: 16px 14px 200px 14px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; flex-grow: 1; min-height: 0; -webkit-overflow-scrolling: touch; background: var(--background-primary);'
             }
         });
 
-        // 1. Minimalist Header
         const header = wrap.createEl('div', {
-            attr: { style: 'padding: 20px 20px 10px 20px; display: flex; align-items: center; gap: 12px;' }
+            attr: { style: 'display: flex; flex-direction: column; gap: 12px; margin-bottom: 4px;' }
         });
 
-        header.createEl('h2', {
+        const titleStack = header.createEl('div', { attr: { style: 'display: flex; flex-direction: column;' } });
+        const titleRow = titleStack.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
+        titleRow.createEl('h2', {
             text: 'Journal',
-            attr: { style: 'margin: 0; font-size: 1.5em; font-weight: 800; letter-spacing: -0.02em; color: var(--text-normal); flex-grow: 1;' }
+            attr: { style: 'margin: 0; font-size: 1.4em; font-weight: 800; color: var(--text-normal); letter-spacing: -0.02em; line-height: 1.1;' }
         });
 
-        // Add Entry Button
-        const addBtn = this.renderActionButton(header, ICON_PLUS, 'Add Journal Entry', () => {
-            new EditEntryModal(this.view.plugin.app, this.view.plugin, '', '#journal', null, false, async (text, ctx) => {
-                const contexts = ctx.split('#').map(c => c.trim()).filter(c => c);
-                await this.view.plugin.createThoughtFile(text, contexts);
-                this.updateJournalList(listContainer);
-            }).open();
-        });
-        addBtn.style.opacity = '1';
-        addBtn.style.color = 'var(--interactive-accent)';
-
-        // Toggle search visibility
-        const searchBtn = header.createEl('button', {
+        const searchBtn = titleRow.createEl('button', {
             text: 'Search',
-            attr: { style: 'background: transparent; border: 1px solid var(--background-modifier-border); border-radius: 6px; font-size: 0.75em; padding: 4px 10px; color: var(--text-muted); cursor: pointer;' }
+            attr: { style: 'background: transparent; border: 1px solid var(--background-modifier-border); border-radius: 6px; font-size: 0.65em; padding: 2px 8px; color: var(--text-muted); cursor: pointer; font-weight: 600;' }
         });
-        
-        const searchInputWrap = wrap.createEl('div', { 
-            attr: { style: `display: ${this.view.searchQuery ? 'block' : 'none'}; transition: all 0.2s;` } 
+
+        const searchWrapper = header.createEl('div', {
+            attr: { style: 'display: none; transition: all 0.2s;' }
         });
-        this.renderSearchInput(searchInputWrap, () => this.updateJournalList(listContainer));
+        this.renderSearchInput(searchWrapper, () => this.updateJournalList(listContainer));
 
         searchBtn.addEventListener('click', () => {
-            const isHidden = searchInputWrap.style.display === 'none';
-            searchInputWrap.style.display = isHidden ? 'block' : 'none';
+            const isHidden = searchWrapper.style.display === 'none';
+            searchWrapper.style.display = isHidden ? 'block' : 'none';
+            searchBtn.style.borderColor = isHidden ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
+            searchBtn.style.color = isHidden ? 'var(--text-accent)' : 'var(--text-muted)';
             if (isHidden) {
-                const inp = searchInputWrap.querySelector('input');
-                if (inp) inp.focus();
+                const input = searchWrapper.querySelector('input');
+                if (input) input.focus();
             }
         });
 
-        // 2. Scrollable List
-        const scrollBody = wrap.createEl('div', {
-            attr: { style: 'flex-grow: 1; overflow-y: auto; padding: 10px 20px 200px 20px; -webkit-overflow-scrolling: touch;' }
+        const actionRow = header.createEl('div', {
+            attr: { style: 'display: flex; gap: 8px;' }
         });
 
-        const listContainer = scrollBody.createEl('div', {
+        const actionBtnStyle = 'flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); font-size: 0.8em; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.1s;';
+
+        const addNoteBtn = actionRow.createEl('button', {
+            attr: { style: actionBtnStyle }
+        });
+        addNoteBtn.createSpan({ text: '✍️', attr: { style: 'font-size: 1.1em;' } });
+        addNoteBtn.createSpan({ text: 'Add Note' });
+        addNoteBtn.addEventListener('click', () => {
+            new EditEntryModal(this.app, this.view.plugin, '', 'journal', null, false, async (text: string, ctxs: string) => {
+                if (!text.trim()) return;
+                const contexts = ctxs.split('#').map((c: string) => c.trim()).filter((c: string) => c.length > 0);
+                await this.view.plugin.createThoughtFile(text, contexts);
+                this.updateJournalList(listContainer);
+            }, 'New Journal Note').open();
+        });
+
+        const addTaskBtn = actionRow.createEl('button', {
+            attr: { style: actionBtnStyle }
+        });
+        addTaskBtn.createSpan({ text: '✅', attr: { style: 'font-size: 1.1em;' } });
+        addTaskBtn.createSpan({ text: 'Add Task' });
+        addTaskBtn.addEventListener('click', () => {
+            new EditEntryModal(this.app, this.view.plugin, '', 'journal', moment().format('YYYY-MM-DD'), true, async (text: string, ctxs: string, due: string | null) => {
+                if (!text.trim()) return;
+                const contexts = ctxs.split('#').map((c: string) => c.trim()).filter((c: string) => c.length > 0);
+                await this.view.plugin.createTaskFile(text, contexts, due || undefined);
+                this.updateJournalList(listContainer);
+            }, 'New Journal Task').open();
+        });
+
+        const listContainer = wrap.createEl('div', {
             cls: 'mina-journal-list',
-            attr: { style: 'display: flex; flex-direction: column; gap: 24px; width: 100%; max-width: 800px; margin: 0 auto;' }
+            attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' }
         });
 
         this.updateJournalList(listContainer);
@@ -82,7 +103,6 @@ export class JournalTab extends BaseTab {
             entries = entries.filter(e => this.view.matchesSearch(this.view.searchQuery, [e.body, e.title]));
         }
 
-        // Sort by order or by date
         const order = this.view.plugin.settings.journalModeOrder || [];
         entries.sort((a, b) => {
             const idxA = order.indexOf(a.filePath); const idxB = order.indexOf(b.filePath);
@@ -92,11 +112,10 @@ export class JournalTab extends BaseTab {
         });
 
         if (entries.length === 0) {
-            container.createEl('p', { text: 'Your journal is empty.', attr: { style: 'color: var(--text-muted); text-align: center; margin-top: 40px; font-style: italic; opacity: 0.6;' } });
+            container.createEl('p', { text: 'Your journal is empty.', attr: { style: 'color: var(--text-muted); text-align: center; margin-top: 40px; font-size: 0.9em; opacity: 0.6;' } });
             return;
         }
 
-        // Group by Date for modern flow
         let lastDate = '';
         let draggedEl: HTMLElement | null = null;
 
@@ -105,24 +124,19 @@ export class JournalTab extends BaseTab {
             
             if (entryDate !== lastDate) {
                 const dateHeader = container.createEl('div', {
-                    attr: { style: 'margin-top: 10px; margin-bottom: -8px; position: sticky; top: 0; background: var(--background-primary); z-index: 5; padding: 10px 0; border-bottom: 1px solid var(--background-modifier-border-faint);' }
+                    attr: { style: 'margin-top: 10px; margin-bottom: 2px; position: sticky; top: 0; background: var(--background-primary); z-index: 5; padding: 10px 0; border-bottom: 1px solid var(--background-modifier-border-faint);' }
                 });
                 dateHeader.createEl('span', {
                     text: entryDate,
-                    attr: { style: 'font-size: 0.8em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);' }
+                    attr: { style: 'font-size: 0.75em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);' }
                 });
                 lastDate = entryDate;
             }
 
             const dragWrapper = container.createEl('div', { 
-                attr: { 
-                    draggable: 'true', 
-                    'data-filepath': entry.filePath, 
-                    style: 'cursor: grab; position: relative;' 
-                } 
+                attr: { draggable: 'true', 'data-filepath': entry.filePath, style: 'cursor: grab; position: relative;' } 
             });
 
-            // Drag and drop logic
             dragWrapper.addEventListener('dragstart', (e) => { draggedEl = dragWrapper; dragWrapper.style.opacity = '0.5'; });
             dragWrapper.addEventListener('dragend', () => { draggedEl = null; dragWrapper.style.opacity = '1'; container.querySelectorAll('div').forEach(el => (el as HTMLElement).style.borderTop = ''); });
             dragWrapper.addEventListener('dragover', (e) => { e.preventDefault(); const rect = dragWrapper.getBoundingClientRect(); const midpoint = rect.top + rect.height / 2; if (e.clientY < midpoint) { dragWrapper.style.borderTop = '2px solid var(--interactive-accent)'; dragWrapper.style.borderBottom = ''; } else { dragWrapper.style.borderTop = ''; dragWrapper.style.borderBottom = '2px solid var(--interactive-accent)'; } });
@@ -138,7 +152,6 @@ export class JournalTab extends BaseTab {
             });
             
             const isBlurred = this.view.plugin.settings.blurredNotes.includes(entry.filePath);
-            // Hide metadata for that clean logbook look
             await this.renderThoughtRow(entry, dragWrapper, entry.filePath, 0, true, true, isBlurred);
         }
     }
@@ -153,3 +166,4 @@ export class JournalTab extends BaseTab {
         await this.view.plugin.saveSettings();
     }
 }
+
