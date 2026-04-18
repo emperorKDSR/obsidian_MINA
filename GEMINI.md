@@ -31,10 +31,11 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Focus Mode (Target):** Displays strictly only pinned notes (`pinned: true`) with persistent reordering.
      - **Grundfos Mode (Pump):** High-focus view for entries tagged with "Grundfos".
      - **Memento Mori (Hourglass):** A sophisticated life-visualization tool.
-       - **Life Remaining Aesthetic:** High-contrast visualization where future weeks are highlighted (crisp light color) and past weeks are elegantly dimmed.
+       - **Hourglass Aesthetic:** A minimalist SVG hourglass where the top bulb represents your "Life to Live" (high contrast) and the bottom bulb represents your "Life Lived" (dimmed).
+       - **Precision Masking:** Uses SVG masks to show exact percentage-based sand levels for both bulbs.
        - **Zero-Scroll Layout:** The entire life-grid (90+ years) dynamically scales to fit your screen perfectly, showing all blocks in one view on both desktop and mobile.
-       - **Inline Configuration:** Integrated "Configure" menu to update Birth Date and Life Expectancy directly within the view.
-       - **Full Refresh:** Includes a "Refresh View" button to synchronize settings and reload the entire plugin interface.
+       - **Pop-up Configuration:** Integrated "Configure" button that opens a dedicated modal to update Birth Date and Life Expectancy.
+       - **Full Refresh:** Includes a "Full Refresh" capability to synchronize settings and reload the entire plugin interface.
      - **Settings Mode (Gear):** Opens plugin configuration in a dedicated window.
    - **Modern Card Design (Global):**
      - **Minimalist Action Toolbar:** Hover-activated toolbar with sleek line icons (Edit, Delete, Pin, Blur, Reply, Convert).

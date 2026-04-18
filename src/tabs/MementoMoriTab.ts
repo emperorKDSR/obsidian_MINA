@@ -1,6 +1,7 @@
 import { moment, Platform, Notice, TFile } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
+import { MementoMoriSettingsModal } from "../modals/MementoMoriSettingsModal";
 
 export class MementoMoriTab extends BaseTab {
     constructor(view: MinaView) { super(view); }
@@ -14,13 +15,11 @@ export class MementoMoriTab extends BaseTab {
         const birth = moment(birthDate);
         const today = moment();
         const death = birth.clone().add(lifeExpectancy, 'years');
-        const startYear = birth.year();
-        const endYear = death.year();
-        const numRows = endYear - startYear + 1;
 
         const totalWeeks = lifeExpectancy * 52;
         const weeksLived = today.diff(birth, 'weeks');
-        const percentage = ((weeksLived / totalWeeks) * 100).toFixed(1);
+        const percentageLived = Math.min(100, Math.max(0, (weeksLived / totalWeeks) * 100));
+        const percentageLeft = (100 - percentageLived).toFixed(1);
 
         const wrap = container.createEl('div', {
             attr: { style: 'display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--background-primary);' }
@@ -37,7 +36,7 @@ export class MementoMoriTab extends BaseTab {
         });
 
         header.createEl('h1', {
-            text: `${percentage}%`,
+            text: `${percentageLeft}%`,
             attr: { style: 'margin: 0; font-size: 2.8em; font-weight: 900; color: var(--text-normal); letter-spacing: -0.04em; line-height: 1;' }
         });
 
@@ -46,78 +45,103 @@ export class MementoMoriTab extends BaseTab {
         });
 
         statsRow.createDiv({ text: `${today.diff(birth, 'years', true).toFixed(1)} y/o` });
-        statsRow.createDiv({ text: `${weeksLived.toLocaleString()} weeks` });
+        statsRow.createDiv({ text: `${(totalWeeks - weeksLived).toLocaleString()} weeks left` });
 
-        // 2. Inline Settings
+        // 2. Configure Button (Opens Modal)
         const settingsToggle = header.createEl('button', {
             text: 'Configure',
             attr: { style: 'margin-top: 10px; background: transparent; border: 1px solid var(--background-modifier-border); border-radius: 4px; font-size: 0.7em; padding: 2px 8px; color: var(--text-muted); cursor: pointer;' }
         });
 
-        const settingsContainer = header.createEl('div', {
-            attr: { style: 'display: none; flex-direction: column; gap: 10px; margin-top: 15px; padding: 15px; background: var(--background-secondary); border-radius: 10px; width: 100%; max-width: 300px; border: 1px solid var(--background-modifier-border-faint);' }
-        });
-
         settingsToggle.addEventListener('click', () => {
-            const isHidden = settingsContainer.style.display === 'none';
-            settingsContainer.style.display = isHidden ? 'flex' : 'none';
-            settingsToggle.setText(isHidden ? 'Hide Settings' : 'Configure');
+            new MementoMoriSettingsModal(this.view.app, this.view.plugin, () => this.view.renderView()).open();
         });
 
-        const dobRow = settingsContainer.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
-        dobRow.createSpan({ text: 'Birth Date', attr: { style: 'font-size: 0.8em; color: var(--text-muted);' } });
-        const dobInput = dobRow.createEl('input', { type: 'date', value: birthDate, attr: { style: 'font-size: 0.8em; padding: 2px 5px;' } });
+        // 3. Mobile Spacer (Reduced)
+        if (Platform.isMobile) {
+            wrap.createEl('div', { attr: { style: 'height: 10px; flex-shrink: 0;' } });
+        }
+
+        // 4. Precision Hourglass Visualization
+        const visualArea = wrap.createEl('div', {
+            attr: { style: `flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 20px; overflow: hidden; ${Platform.isMobile ? 'margin-top: -150px;' : ''}` }
+        });
+
+        const hourglassSize = Math.min(visualArea.clientWidth * 0.9, visualArea.clientHeight * 0.85, 260);
         
-        const expRow = settingsContainer.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
-        expRow.createSpan({ text: 'Expectancy', attr: { style: 'font-size: 0.8em; color: var(--text-muted);' } });
-        const expInput = expRow.createEl('input', { type: 'number', value: lifeExpectancy.toString(), attr: { style: 'font-size: 0.8em; padding: 2px 5px; width: 60px;' } });
+        const futureColor = Platform.isDesktop ? 'var(--text-normal)' : '#f0f0f0';
+        const pastColor = 'var(--text-muted)';
+        const pastOpacity = '0.12';
 
-        const refreshBtn = settingsContainer.createEl('button', {
-            text: 'Refresh View',
-            attr: { style: 'margin-top: 5px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; border-radius: 6px; font-size: 0.8em; padding: 6px 12px; font-weight: 700; cursor: pointer;' }
-        });
-
-        refreshBtn.addEventListener('click', async () => {
-            this.view.plugin.settings.birthDate = dobInput.value;
-            this.view.plugin.settings.lifeExpectancy = parseInt(expInput.value) || 90;
-            await this.view.plugin.saveSettings();
-            this.view.renderView(); // Refresh entire screen
-            new Notice('Memento Mori refreshed');
-        });
-
-        // 3. Grid
-        const gridWrapper = wrap.createEl('div', {
-            attr: { style: 'flex-grow: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; padding: 5px 10px 20px 10px; overflow: hidden;' }
-        });
-
-        const gridContainer = gridWrapper.createEl('div', {
-            cls: 'mina-memento-grid',
-            attr: { style: 'display: flex; flex-direction: column; gap: 1.5px; height: 100%; width: 100%; max-width: 800px;' }
-        });
-
-        for (let y = 0; y < numRows; y++) {
-            const currentYear = startYear + y;
-            const yearRow = gridContainer.createEl('div', { 
-                cls: 'mina-memento-row',
-                attr: { style: 'display: flex; flex-direction: row; gap: 1.5px; flex: 1; min-height: 0;' }
-            });
-
-            for (let w = 0; w < 52; w++) {
-                const weekStart = moment().year(currentYear).dayOfYear(1).add(w, 'weeks');
-                let statusClass = 'memento-future'; 
-                if (weekStart.isBefore(today, 'week')) statusClass = 'memento-past';
-                if (weekStart.isSame(today, 'week')) statusClass = 'memento-current';
-
-                if (weekStart.isBefore(birth, 'week') || weekStart.isAfter(death, 'week')) statusClass = 'memento-none';
-
-                const box = yearRow.createEl('div', {
-                    cls: `mina-memento-box ${statusClass}`,
-                    attr: { title: `${currentYear}, Week ${w + 1}` }
-                });
-                
-                if (statusClass === 'memento-past') box.style.opacity = '0.1'; // Very dimmed
-                else if (statusClass === 'memento-future') box.style.opacity = '1'; // Light/High contrast
+        const svg = visualArea.createSvg('svg', {
+            attr: {
+                viewBox: '0 0 100 160',
+                preserveAspectRatio: 'xMidYMid meet',
+                style: `width: ${hourglassSize}px; height: auto; display: block;`
             }
+        });
+
+        // Unique mask IDs for precise filling
+        const topMaskId = `mask-top-${Math.random().toString(36).substr(2, 9)}`;
+        const bottomMaskId = `mask-bottom-${Math.random().toString(36).substr(2, 9)}`;
+
+        const defs = svg.createSvg('defs');
+        const topMask = defs.createSvg('mask', { attr: { id: topMaskId } });
+        topMask.createSvg('rect', { attr: { x: '0', y: '0', width: '100', height: '160', fill: 'black' } });
+        const topFillHeight = 63 * (1 - (percentageLived / 100));
+        topMask.createSvg('rect', { attr: { x: '0', y: (78 - topFillHeight).toString(), width: '100', height: topFillHeight.toString(), fill: 'white' } });
+
+        const bottomMask = defs.createSvg('mask', { attr: { id: bottomMaskId } });
+        bottomMask.createSvg('rect', { attr: { x: '0', y: '0', width: '100', height: '160', fill: 'black' } });
+        const bottomFillHeight = 63 * (percentageLived / 100);
+        bottomMask.createSvg('rect', { attr: { x: '0', y: (145 - bottomFillHeight).toString(), width: '100', height: bottomFillHeight.toString(), fill: 'white' } });
+
+        // Symmetrical Curved Frame
+        const framePath = 'M20 10 L80 10 M20 10 L20 15 C20 45, 45 60, 45 80 C45 100, 20 115, 20 145 L20 150 M80 10 L80 15 C80 45, 55 60, 55 80 C55 100, 80 115, 80 145 L80 150 M20 150 L80 150';
+        svg.createSvg('path', {
+            attr: {
+                d: framePath,
+                fill: 'none',
+                stroke: 'var(--background-modifier-border)',
+                'stroke-width': '2',
+                'stroke-linecap': 'round'
+            }
+        });
+
+        // Top Bulb Glass & Fill
+        const topBulbPath = 'M22 15 L78 15 C78 45, 52 58, 52 78 L48 78 C48 58, 22 45, 22 15 Z';
+        svg.createSvg('path', {
+            attr: {
+                d: topBulbPath,
+                fill: futureColor,
+                mask: `url(#${topMaskId})`,
+                style: 'transition: all 1s ease-in-out;'
+            }
+        });
+
+        // Bottom Bulb Glass & Fill
+        const bottomBulbPath = 'M48 82 L52 82 C52 102, 78 115, 78 145 C78 145, 50 148, 22 145 C22 115, 48 102, 48 82 Z';
+        svg.createSvg('path', {
+            attr: {
+                d: bottomBulbPath,
+                fill: pastColor,
+                opacity: pastOpacity,
+                mask: `url(#${bottomMaskId})`,
+                style: 'transition: all 1s ease-in-out;'
+            }
+        });
+
+        // Flow Line
+        if (percentageLived < 100) {
+            svg.createSvg('line', {
+                attr: {
+                    x1: '50', y1: '78', x2: '50', y2: '82',
+                    stroke: futureColor,
+                    'stroke-width': '1.5',
+                    'stroke-dasharray': '2,3',
+                    opacity: '0.4'
+                }
+            });
         }
     }
 }
