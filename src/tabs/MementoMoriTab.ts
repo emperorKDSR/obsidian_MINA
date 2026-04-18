@@ -27,7 +27,7 @@ export class MementoMoriTab extends BaseTab {
 
         // 1. Header
         const header = wrap.createEl('div', {
-            attr: { style: 'padding: 20px 20px 10px 20px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; flex-shrink: 0;' }
+            attr: { style: 'padding: 20px 20px 10px 20px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; flex-shrink: 0; position: relative; z-index: 20;' }
         });
 
         header.createEl('span', {
@@ -50,7 +50,7 @@ export class MementoMoriTab extends BaseTab {
         // 2. Configure Button (Opens Modal)
         const settingsToggle = header.createEl('button', {
             text: 'Configure',
-            attr: { style: 'margin-top: 10px; background: transparent; border: 1px solid var(--background-modifier-border); border-radius: 4px; font-size: 0.7em; padding: 2px 8px; color: var(--text-muted); cursor: pointer;' }
+            attr: { style: 'margin-top: 10px; background: transparent; border: 1px solid var(--background-modifier-border); border-radius: 4px; font-size: 0.7em; padding: 2px 8px; color: var(--text-muted); cursor: pointer; position: relative; z-index: 21;' }
         });
 
         settingsToggle.addEventListener('click', () => {
@@ -64,7 +64,7 @@ export class MementoMoriTab extends BaseTab {
 
         // 4. Precision Hourglass Visualization
         const visualArea = wrap.createEl('div', {
-            attr: { style: `flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 20px; overflow: hidden; ${Platform.isMobile ? 'margin-top: -150px;' : ''}` }
+            attr: { style: `flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 20px; overflow: hidden; ${Platform.isMobile ? 'margin-top: -120px;' : ''}` }
         });
 
         const hourglassSize = Math.min(visualArea.clientWidth * 0.9, visualArea.clientHeight * 0.85, 260);

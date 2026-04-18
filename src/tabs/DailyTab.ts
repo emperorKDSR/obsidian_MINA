@@ -2,6 +2,7 @@ import { moment, Platform, MarkdownRenderer, TFile } from 'obsidian';
 import type { MinaView } from '../view';
 import type { MinaSettings, DueEntry } from '../types';
 import { PaymentModal } from '../modals/PaymentModal';
+import { EditEntryModal } from '../modals/EditEntryModal';
 import { BaseTab } from "./BaseTab";
 
 export class DailyTab extends BaseTab {
@@ -75,6 +76,40 @@ export class DailyTab extends BaseTab {
         renderPillToggle('PF', 'showDailyDues');
         renderPillToggle('PI', 'showDailyPinned');
         renderPillToggle('TH', 'showDailyThoughts');
+
+        const actionRow = header.createEl('div', {
+            attr: { style: 'display: flex; gap: 8px; margin-top: 4px;' }
+        });
+
+        const actionBtnStyle = 'flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); font-size: 0.8em; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.1s;';
+
+        const addNoteBtn = actionRow.createEl('button', {
+            attr: { style: actionBtnStyle }
+        });
+        addNoteBtn.createSpan({ text: '✍️', attr: { style: 'font-size: 1.1em;' } });
+        addNoteBtn.createSpan({ text: 'Add Note' });
+        addNoteBtn.addEventListener('click', () => {
+            new EditEntryModal(this.app, this.view.plugin, '', '', null, false, async (text: string, ctxs: string) => {
+                if (!text.trim()) return;
+                const contexts = ctxs.split('#').map((c: string) => c.trim()).filter((c: string) => c.length > 0);
+                await this.view.plugin.createThoughtFile(text, contexts);
+                this.renderDailyMode(container);
+            }, 'New Thought').open();
+        });
+
+        const addTaskBtn = actionRow.createEl('button', {
+            attr: { style: actionBtnStyle }
+        });
+        addTaskBtn.createSpan({ text: '✅', attr: { style: 'font-size: 1.1em;' } });
+        addTaskBtn.createSpan({ text: 'Add Task' });
+        addTaskBtn.addEventListener('click', () => {
+            new EditEntryModal(this.app, this.view.plugin, '', '', moment().format('YYYY-MM-DD'), true, async (text: string, ctxs: string, due: string | null) => {
+                if (!text.trim()) return;
+                const contexts = ctxs.split('#').map((c: string) => c.trim()).filter((c: string) => c.length > 0);
+                await this.view.plugin.createTaskFile(text, contexts, due || undefined);
+                this.renderDailyMode(container);
+            }, 'New Task').open();
+        });
 
         const contentGrid = wrap.createEl('div', {
             attr: { style: 'display: flex; flex-direction: column; gap: 14px;' }
