@@ -51,6 +51,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - **Borderless Experience:** 
      - Dedicated windows are truly borderless with native headers force-hidden via CSS.
      - Includes a custom **drag handle** at the top for window movement.
+     - **Minimalist Mobile UI:** On mobile devices, the display title is simplified to "M.I.N.A." for a cleaner interface.
    - **Global Image Zoom:** Window-aware zooming that stays within the same tab or popout window.
    - **Pure Content Focus:** Removed the global FAB (Floating Action Button) to declutter the interface across all modes.
 
