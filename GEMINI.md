@@ -24,16 +24,17 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Timeline Mode (Clock):** A modern chronological view with a **Thread Aesthetic**.
        - **Vertical Thread:** A continuous subtle line connecting all entries through the day.
        - **Stitch Dots:** Every thought and task is "pinned" to the thread with a small indicator dot.
-     - **Journal Mode (Pen):** A high-end minimalist logbook experience.
-       - **Sticky Date Headers:** Entries are grouped by date with elegant headers that stay pinned during scroll.
-       - **Discrete Search:** Toggleable search bar to maintain a clean aesthetic.
-       - **Add Entry:** Dedicated `+` button in the header for instant journaling with auto-tagging.
+     - **Journal Mode (Pen):** A high-end minimalist logbook experience with sticky date headers and discrete search.
      - **Task Mode (Check-square):** A dedicated view for task management and review.
-     - **Personal Finance Mode (Dollar):** Specifically manages recurring payments and dues (replaces old Dues tab).
+     - **Personal Finance Mode (Dollar):** Specifically manages recurring payments and dues.
      - **AI Mode (Robot):** Interactive chat with Gemini AI, supporting file grounding and numeric citations.
      - **Focus Mode (Target):** Displays strictly only pinned notes (`pinned: true`) with persistent reordering.
      - **Grundfos Mode (Pump):** High-focus view for entries tagged with "Grundfos".
-     - **Memento Mori (Hourglass):** Life visualization grid (90 years x 52 weeks) with real-time stats.
+     - **Memento Mori (Hourglass):** A sophisticated life-visualization tool.
+       - **Life Remaining Aesthetic:** High-contrast visualization where future weeks are highlighted (crisp light color) and past weeks are elegantly dimmed.
+       - **Zero-Scroll Layout:** The entire life-grid (90+ years) dynamically scales to fit your screen perfectly, showing all blocks in one view on both desktop and mobile.
+       - **Inline Configuration:** Integrated "Configure" menu to update Birth Date and Life Expectancy directly within the view.
+       - **Full Refresh:** Includes a "Refresh View" button to synchronize settings and reload the entire plugin interface.
      - **Settings Mode (Gear):** Opens plugin configuration in a dedicated window.
    - **Modern Card Design (Global):**
      - **Minimalist Action Toolbar:** Hover-activated toolbar with sleek line icons (Edit, Delete, Pin, Blur, Reply, Convert).
@@ -41,7 +42,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - **Minimalist Input Modal:**
      - **Clean Slate Look:** Removed all headers and titles to focus entirely on writing.
      - **Context Chips:** Manage tags as interactive pills; click to remove, `+` to add.
-     - **Mobile Optimization:** Full-screen layout with adjusted padding to ensure text visibility.
+     - **Mobile Visibility Fix:** Adjusted top padding to ensure the first letter is never cut off on mobile devices.
    - **Borderless Experience:** 
      - Dedicated windows are truly borderless with native headers force-hidden via CSS.
      - Includes a custom **drag handle** at the top for window movement.

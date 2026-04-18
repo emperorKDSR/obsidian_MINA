@@ -75,47 +75,57 @@
 .mina-memento-grid {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 2px;
 }
 
 .mina-memento-row {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-    gap: 1px;
+    gap: 2px;
     flex: 1;
     min-height: 0;
 }
 
 .mina-memento-box {
     flex: 1;
-    height: 100%;
-    border-radius: 0px;
+    aspect-ratio: 1/1;
+    border-radius: 50%; /* Circle look */
     min-width: 0;
     box-sizing: border-box;
-    border: 0.5px solid transparent; /* Identical border for all boxes */
+    transition: all 0.3s ease;
 }
 
 .memento-past {
     background-color: var(--text-muted);
-    opacity: 0.4;
-    border-color: transparent;
+    opacity: 0.8; /* High contrast */
 }
 
 .memento-current {
     background-color: var(--interactive-accent);
-    box-shadow: 0 0 3px var(--interactive-accent);
-    border-color: var(--interactive-accent);
+    box-shadow: 0 0 10px var(--interactive-accent);
+    transform: scale(1.4);
+    z-index: 10;
 }
 
 .memento-future {
-    background-color: #004d00; /* Dark green */
-    border-color: rgba(0, 255, 0, 0.1);
+    background-color: var(--text-accent); /* Use theme accent or light color */
+    opacity: 0.8; /* Keep it light but prominent */
+}
+
+.theme-dark .memento-future {
+    background-color: #f0f0f0; /* Crisp light grey/white for dark mode */
+    opacity: 0.7;
+}
+
+.theme-light .memento-future {
+    background-color: var(--interactive-accent); /* Vibrant accent for light mode */
+    opacity: 0.5;
 }
 
 .memento-none {
     background-color: transparent;
-    border-color: transparent;
+    opacity: 0;
     pointer-events: none;
 }
 

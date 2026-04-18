@@ -133,7 +133,7 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     journalKeywords: [],
     blurredNotes: [],
     isCompactView: false,
-    birthDate: '1987-04-25',
+    birthDate: '',
     lifeExpectancy: 90,
     customModes: [],
     customModeOrders: {}
