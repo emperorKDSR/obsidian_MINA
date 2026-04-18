@@ -287,7 +287,16 @@ export class MinaView extends ItemView {
         const audioBuffer = await this.app.vault.readBinary(file);
         const base64 = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
         const mimeType = (file.extension === 'm4a' || file.extension === 'mp4') ? 'audio/mp4' : `audio/${file.extension}`;
-        const body = { "contents": [{ "parts": [{ "text": `Transcribe audio and translate to ${transcriptionLanguage}.` }, { "inline_data": { "mime_type": mimeType, "data": base64 } }] }] };
+        const body = { 
+            "contents": [{ 
+                "parts": [{ 
+                    "text": `Transcribe this audio recording and translate the output to ${transcriptionLanguage}. 
+                    Temporal Context: The current date is ${moment().format('dddd, MMMM D, YYYY')}.` 
+                }, { 
+                    "inline_data": { "mime_type": mimeType, "data": base64 } 
+                }] 
+            }] 
+        };
         const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`, { method: 'POST', body: JSON.stringify(body) });
         const data = await resp.json(); return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "Transcription failed.";
     }
@@ -373,7 +382,11 @@ export class MinaView extends ItemView {
             }
         }
 
-        let systemPrompt = "You are MINA AI, a helpful personal assistant integrated into an Obsidian vault.\n\n";
+        let systemPrompt = `You are MINA AI, a helpful personal assistant integrated into an Obsidian vault.
+The current date and time is ${moment().format('dddd, MMMM D, YYYY HH:mm:ss')}.
+When the user refers to "today", they mean ${moment().format('dddd, MMMM D, YYYY')}.
+
+`;
         systemPrompt += "CRITICAL INSTRUCTION: When you use information from the provided sources, you MUST cite them using numeric tags like [1], [2], etc.\n";
         
         if (sources.length > 0) {

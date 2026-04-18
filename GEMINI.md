@@ -29,7 +29,10 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Journal Mode (Pen):** A high-end minimalist logbook experience with sticky date headers, a modern action row (Add Note/Task), and a discrete search toggle.
      - **Task Mode (Check-square):** A dedicated view for task management and review.
      - **Personal Finance Mode (Dollar):** Specifically manages recurring payments and dues.
-     - **AI Mode (Robot):** Interactive chat with Gemini AI, supporting file grounding and numeric citations.
+     - **AI Mode (Robot):** Redesigned interactive chat with a modern, floating input area, refined message bubbles, and high-visibility grounding chips.
+       - **Modern Input:** Auto-expanding input area with integrated "Attach" and "Save" shortcuts.
+       - **AI Configuration:** Includes a dedicated "Config" button that opens a modern modal to manage your Gemini API Key, Model selection, and Token limits, removing clutter from the main settings tab.
+       - **Grounded History:** Session-wide grounding with a dedicated scrollable chip bar for notes and web-search toggling.
      - **Focus Mode (Target):** Displays strictly only pinned notes (`pinned: true`) with persistent reordering.
      - **Grundfos Mode (Pump):** High-focus view for entries tagged with "Grundfos", redesigned with a modern header, action buttons, and integrated search.
      - **Custom Modes:** Any custom-defined modes now inherit the modern "ContextTab" design with dedicated headers and quick-capture buttons.

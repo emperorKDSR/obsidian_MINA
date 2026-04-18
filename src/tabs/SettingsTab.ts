@@ -32,31 +32,6 @@ export class SettingsTab extends BaseTab {
             field('New Note Folder', 'Folder where notes created via [[ link are saved.', row => input(row, this.view.plugin.settings.newNoteFolder, '000 Bin', 'text', async v => { this.view.plugin.settings.newNoteFolder = v; await this.view.plugin.saveSettings(); }));
             field('Voice Memo Folder', 'Folder where recorded voice notes will be stored.', row => input(row, this.view.plugin.settings.voiceMemoFolder, '000 Bin/MINA V2 Voice', 'text', async v => { this.view.plugin.settings.voiceMemoFolder = v; await this.view.plugin.saveSettings(); }));
             field('Transcription Language', 'Language for audio transcription.', row => input(row, this.view.plugin.settings.transcriptionLanguage, 'English', 'text', async v => { this.view.plugin.settings.transcriptionLanguage = v; await this.view.plugin.saveSettings(); }));
-            field('Gemini API Key', 'Google Gemini API key.', row => input(row, this.view.plugin.settings.geminiApiKey, 'AIza...', 'password', async v => { this.view.plugin.settings.geminiApiKey = v.trim(); await this.view.plugin.saveSettings(); }));
-    
-            field('Gemini Model', 'Model to use for MINA AI chat.', row => {
-                const models: [string, string][] = [
-                    ['gemini-2.5-pro',           '2.5 Pro — highest reasoning'],
-                    ['gemini-2.5-flash',         '2.5 Flash — fast (default)'],
-                    ['gemini-2.0-flash',         '2.0 Flash — stable'],
-                ];
-                const sel = row.createEl('select', { attr: { style: 'font-size: 0.85em; width: 100%;' } });
-                models.forEach(([val, label]) => {
-                    const opt = sel.createEl('option', { value: val, text: label });
-                    if (this.view.plugin.settings.geminiModel === val) opt.selected = true;
-                });
-                sel.addEventListener('change', async () => { this.view.plugin.settings.geminiModel = sel.value; await this.view.plugin.saveSettings(); });
-            });
-    
-            field('Max Output Tokens', 'Max Gemini tokens.', row => {
-                const inp = row.createEl('input', { attr: { type: 'number', min: '256', max: '65536', style: 'width: 100px;' } });
-                inp.value = String(this.view.plugin.settings.maxOutputTokens ?? 65536);
-                inp.addEventListener('change', async () => {
-                    const val = Math.min(65536, Math.max(256, parseInt(inp.value) || 65536));
-                    this.view.plugin.settings.maxOutputTokens = val;
-                    await this.view.plugin.saveSettings();
-                });
-            });
         }
     
     

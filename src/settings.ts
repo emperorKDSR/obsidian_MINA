@@ -17,37 +17,6 @@ export class MinaSettingTab extends PluginSettingTab {
         new Setting(containerEl).setName('AI Chat Folder').setDesc('Folder where AI chat sessions are automatically saved.').addText(text => text.setPlaceholder('000 Bin/MINA V2 AI Chat').setValue(this.plugin.settings.aiChatFolder).onChange(async (value) => { this.plugin.settings.aiChatFolder = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('Transcription Language').setDesc('Target language for audio transcription/translation.').addText(text => text.setPlaceholder('English').setValue(this.plugin.settings.transcriptionLanguage).onChange(async (value) => { this.plugin.settings.transcriptionLanguage = value; await this.plugin.saveSettings(); }));
 
-        new Setting(containerEl).setName('Gemini API Key').setDesc('API key for the MINA AI chat tab (Google Gemini).').addText(text => { text.setPlaceholder('AIza...').setValue(this.plugin.settings.geminiApiKey).onChange(async (value) => { this.plugin.settings.geminiApiKey = value.trim(); await this.plugin.saveSettings(); }); text.inputEl.type = 'password'; });
-        new Setting(containerEl).setName('Gemini Model').setDesc('Model to use for the MINA AI chat.').addDropdown(drop => {
-            const models: Record<string, string> = {
-                'gemini-2.5-pro':                    '2.5 Pro — highest reasoning & multimodal',
-                'gemini-2.5-flash':                  '2.5 Flash — fast, general-purpose',
-                'gemini-2.5-flash-lite':             '2.5 Flash Lite — ultra-fast, cost-efficient',
-                'gemini-2.5-flash-preview':          '2.5 Flash Preview — latest preview',
-                'gemini-2.0-flash':                  '2.0 Flash — stable, multimodal',
-                'gemini-2.0-flash-lite':             '2.0 Flash Lite — budget-friendly',
-                'gemini-1.5-pro':                    '1.5 Pro — complex reasoning, prior flagship',
-                'gemini-1.5-flash':                  '1.5 Flash — fast, previous gen',
-                'gemini-1.5-flash-8b':               '1.5 Flash 8B — high-volume, lightweight',
-            };
-            for (const [value, label] of Object.entries(models)) {
-                drop.addOption(value, label);
-            }
-            drop.setValue(this.plugin.settings.geminiModel || 'gemini-2.5-pro');
-            drop.onChange(async (value) => { this.plugin.settings.geminiModel = value; await this.plugin.saveSettings(); });
-        });
-        new Setting(containerEl).setName('Max Output Tokens').setDesc('Maximum tokens in Gemini AI responses (256–65536). Higher = longer answers. Default: 65536.').addText(text => {
-            text.setPlaceholder('65536').setValue(String(this.plugin.settings.maxOutputTokens ?? 65536));
-            text.inputEl.type = 'number';
-            text.inputEl.min = '256';
-            text.inputEl.max = '65536';
-            text.onChange(async (value) => {
-                const val = Math.min(65536, Math.max(256, parseInt(value) || 65536));
-                this.plugin.settings.maxOutputTokens = val;
-                await this.plugin.saveSettings();
-            });
-        });
-
         containerEl.createEl('h3', { text: 'Memento Mori' });
         new Setting(containerEl).setName('Birth Date').setDesc('Your birth date for Memento Mori visualization.').addText(text => {
             text.setPlaceholder('YYYY-MM-DD').setValue(this.plugin.settings.birthDate).onChange(async (value) => {
