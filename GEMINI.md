@@ -45,6 +45,9 @@ The interface is governed by a unified Design System:
 ### 5. OS Pillars & Synergy
 - **Habit Lab**: Stitch Dots tracking with YAML persistence.
 - **Projects Mode**: Objective-based grouping and dedicated project focus dashboards.
+- **Tasks Mode**: High-performance **Tactical Task Ledger** featuring:
+    - **Segmented Hub**: Horizontal toggle for **Active Tasks** vs. **Completed History**.
+    - **Tactical Cards**: Glass elevation cards with custom large checkboxes and unified metadata pills.
 - **Weekly Review & Compass**: Multi-layered reflection (Weekly Focus + Quarterly North Star Goals).
 - **Finance Mode**: Professional **Financial Ledger** featuring:
     - **Segmented Control**: Sleek horizontal toggle for **Active Obligations** vs. **All History**.
