@@ -80,6 +80,7 @@ export interface TaskEntry {
     context: string[];
     body: string;
     lastUpdate: number;    // ms timestamp of modified for sorting
+    children: ReplyEntry[]; // Support comments/replies on tasks
 }
 
 export interface DueEntry { 

@@ -27,7 +27,12 @@ The "MINA V2" plugin has been developed with the following features and implemen
        - **Vertical Thread:** A continuous subtle line connecting all entries through the day.
        - **Stitch Dots:** Every thought and task is "pinned" to the thread with a small indicator dot.
      - **Journal Mode (Pen):** A high-end minimalist logbook experience with sticky date headers, a modern action row (Add Note/Task), and a discrete search toggle.
-     - **Task Mode (Check-square):** A dedicated view for task management and review.
+     - **Task Mode (Check-square):** Redesigned with an ultra-minimalist, high-focus interface for task management.
+       - **Compact Action Bar:** Features integrated **+ (Add Task)**, **Search**, and **Filters** icons in the header row for maximum space efficiency.
+       - **Threaded Task Comments:** Supports modern, modal-based commenting. Comments are hidden from the main view to keep the dashboard high-focus.
+       - **View Comments Modal:** A dedicated review modal shows all task discussions sorted latest-first, with integrated edit and delete actions.
+       - **Modern Filters:** High-density filter system for Status (Pending, Done, All) and Timeframes (Today, Focus, Week, Inbox, Custom).
+       - **Clean Task List:** Consistent card-based layout with "Load More" pagination for deep task archives.
      - **Personal Finance Mode (Dollar):** A modern, high-density interface for managing recurring payments and dues.
        - **Compact Card Design:** Optimized for data density with minimalist typography and reduced padding.
        - **Unified Header:** Features a discrete "+ Add" button and high-visibility filter pills (Active, Recurring).

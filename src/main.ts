@@ -600,6 +600,7 @@ export default class MinaPlugin extends Plugin {
             const updated = existing.trimEnd() + `\n\n${header}\n${text}\n`;
             await vault.modify(file, updated);
             await this.updateModifiedFrontmatter(file, now);
+            this.notifyViewRefresh();
             return true;
         } catch (e) {
             new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
@@ -829,8 +830,22 @@ export default class MinaPlugin extends Plugin {
             const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MINA);
             for (const leaf of leaves) {
                 const view = leaf.view as MinaView;
-                if (view && typeof view.updateReviewThoughtsList === 'function') view.updateReviewThoughtsList();
-                if (view && typeof view.renderView === 'function') view.renderView();
+                if (!view) continue;
+                
+                const isHandledByTargetedUpdate = (view.activeTab === 'review-thoughts' && typeof view.updateReviewThoughtsList === 'function') ||
+                                                  (view.activeTab === 'focus' && typeof view.updateFocusList === 'function') ||
+                                                  (['journal', 'grundfos'].includes(view.activeTab) && typeof view.updateContextList === 'function') ||
+                                                  (this.settings.customModes.some(m => m.id === view.activeTab) && typeof view.updateContextList === 'function');
+
+                if (isHandledByTargetedUpdate) {
+                    if (view.activeTab === 'review-thoughts') view.updateReviewThoughtsList();
+                    else if (view.activeTab === 'focus') view.updateFocusList();
+                    else if (view.activeTab === 'journal') view.updateContextList('journal');
+                    else if (view.activeTab === 'grundfos') view.updateContextList('grundfos');
+                    else if (this.settings.customModes.some(m => m.id === view.activeTab)) view.updateContextList(view.activeTab);
+                } else {
+                    view.renderView();
+                }
             }
         }, 300);
     }
@@ -881,10 +896,59 @@ export default class MinaPlugin extends Plugin {
         const status   = get('status') === 'done' ? 'done' : 'open';
         const dueRaw   = get('due').replace(/['"[\]]/g, '');
         const context  = getList('context');
-        const parsedLastUpdate = Date.parse(modified ? modified.replace(' ', 'T') : '');
-        const lastUpdate = isNaN(parsedLastUpdate) ? 0 : parsedLastUpdate;
+        
+        // Parse Comments (Replies)
+        const replyRegex = /^## \[\[[\d-]+\]\] [\d:]+ \^(reply-\d+)/gm;
+        const children: ReplyEntry[] = [];
+        let mainBody = body;
+        let match;
+        const sections: { headerIdx: number; anchor: string; dateStr: string; timeStr: string }[] = [];
+        while ((match = replyRegex.exec(body)) !== null) {
+            const headerLine = body.slice(match.index, body.indexOf('\n', match.index));
+            const dateM = headerLine.match(/\[\[([\d-]+)\]\]/);
+            const timeM = headerLine.match(/\]\] ([\d:]+)/);
+            sections.push({ headerIdx: match.index, anchor: match[1], dateStr: dateM?.[1] || '', timeStr: timeM?.[1] || '' });
+        }
+        if (sections.length > 0) {
+            mainBody = body.slice(0, sections[0].headerIdx).trim();
+            for (let i = 0; i < sections.length; i++) {
+                const s = sections[i];
+                const start = body.indexOf('\n', sections[i].headerIdx) + 1;
+                const end = i + 1 < sections.length ? sections[i + 1].headerIdx : body.length;
+                children.push({ anchor: s.anchor, date: s.dateStr, time: s.timeStr, text: body.slice(start, end).trim() });
+            }
+        }
 
-        return { filePath, title, created, modified, day, status, due: dueRaw, context, body, lastUpdate };
+        const parsedLastUpdate = Date.parse(modified ? modified.replace(' ', 'T') : '');
+        const lastChild = children.length > 0 ? Date.parse(children[children.length-1].date + 'T' + children[children.length-1].time) : 0;
+        const lastUpdate = Math.max(isNaN(parsedLastUpdate) ? 0 : parsedLastUpdate, isNaN(lastChild) ? 0 : lastChild);
+
+        return { filePath, title, created, modified, day, status, due: dueRaw, context, body: mainBody, children, lastUpdate };
+    }
+
+    async appendCommentToTaskFile(filePath: string, text: string): Promise<boolean> {
+        const { vault } = this.app;
+        const file = vault.getAbstractFileByPath(filePath) as TFile;
+        if (!file) {
+            new Notice('MINA Error: task not found');
+            return false;
+        }
+        try {
+            const now = new Date();
+            const anchor = `reply-${Date.now()}`;
+            const dateStr = this.formatDate(now);
+            const timeStr = this.formatTime(now);
+            const header = `## [[${dateStr}]] ${timeStr} ^${anchor}`;
+            const existing = await vault.read(file);
+            const updated = existing.trimEnd() + `\n\n${header}\n${text}\n`;
+            await vault.modify(file, updated);
+            await this.updateModifiedFrontmatter(file, now);
+            this.notifyTaskViewRefresh();
+            return true;
+        } catch (e) {
+            new Notice('MINA Error: ' + (e instanceof Error ? e.message : String(e)));
+            return false;
+        }
     }
 
     notifyTaskViewRefresh(): void {
@@ -893,10 +957,15 @@ export default class MinaPlugin extends Plugin {
             const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MINA);
             for (const leaf of leaves) {
                 const view = leaf.view as MinaView;
-                if (view && typeof view.updateReviewTasksList === 'function') {
+                if (!view) continue;
+
+                if (view.activeTab === 'review-tasks' && typeof view.updateReviewTasksList === 'function') {
                     view.updateReviewTasksList();
+                } else if (view.activeTab === 'daily') {
+                    view.renderView();
+                } else {
+                    view.renderView();
                 }
-                if (view && typeof view.renderView === 'function') view.renderView();
             }
         }, 300);
     }

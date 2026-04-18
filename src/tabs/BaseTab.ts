@@ -1,12 +1,14 @@
 import { Platform, MarkdownRenderer, Notice, Menu, MenuItem, TFile, moment } from 'obsidian';
 import type { MinaView } from '../view';
 import type { ThoughtEntry, TaskEntry, ReplyEntry } from '../types';
-import { NINJA_AVATAR_SVG, ICON_PIN, ICON_EDIT, ICON_TRASH, ICON_REPLY, ICON_LINK, ICON_EYE, ICON_EYE_OFF, ICON_CHECKLIST } from '../constants';
+import { NINJA_AVATAR_SVG, ICON_PIN, ICON_EDIT, ICON_TRASH, ICON_REPLY, ICON_LINK, ICON_EYE, ICON_EYE_OFF, ICON_CHECKLIST, ICON_MESSAGE_SQUARE } from '../constants';
 import { FileSuggestModal } from '../modals/FileSuggestModal';
 import { ContextSuggestModal } from '../modals/ContextSuggestModal';
 import { EditEntryModal } from '../modals/EditEntryModal';
 import { ConfirmModal } from '../modals/ConfirmModal';
 import { ConvertToTaskModal } from '../modals/ConvertToTaskModal';
+import { CommentModal } from '../modals/CommentModal';
+import { ViewCommentsModal } from '../modals/ViewCommentsModal';
 import { parseNaturalDate, isTablet } from '../utils';
 
 export class BaseTab {
@@ -184,9 +186,20 @@ export class BaseTab {
         const submitAction = async () => {
             if (this.view.content.trim().length > 0) {
                 const contextsToSave = this.view.activeTab === 'journal' ? ['journal'] : (this.view.activeTab === 'grundfos' ? ['Grundfos'] : this.view.selectedContexts);
-                if (this.view.isTask) await this.view.plugin.createTaskFile(this.view.content.trim(), contextsToSave, this.view.dueDate || undefined);
-                else if (this.view.replyToId) { const replied = await this.view.plugin.appendReplyToFile(this.view.replyToId, this.view.content.trim()); if (replied) new Notice('Reply added!'); }
-                else await this.view.plugin.createThoughtFile(this.view.content.trim(), contextsToSave);
+                if (this.view.isTask) {
+                    await this.view.plugin.createTaskFile(this.view.content.trim(), contextsToSave, this.view.dueDate || undefined);
+                } else if (this.view.replyToId) {
+                    const isTask = this.view.plugin.taskIndex.has(this.view.replyToId);
+                    let replied = false;
+                    if (isTask) {
+                        replied = await this.view.plugin.appendCommentToTaskFile(this.view.replyToId, this.view.content.trim());
+                    } else {
+                        replied = await this.view.plugin.appendReplyToFile(this.view.replyToId, this.view.content.trim());
+                    }
+                    if (replied) new Notice('Reply added!');
+                } else {
+                    await this.view.plugin.createThoughtFile(this.view.content.trim(), contextsToSave);
+                }
                 this.view.content = ''; textArea.value = ''; this.view.replyToId = null; this.view.replyToText = null;
                 if (Platform.isMobile && !isTablet()) { this.view.selectedContexts = []; this.view.plugin.settings.selectedContexts = []; await this.view.plugin.saveSettings(); }
                 this.view.renderView();
@@ -310,6 +323,22 @@ export class BaseTab {
             }).open();
         });
 
+        this.renderActionButton(actions, ICON_REPLY, 'Comment', () => { 
+            new CommentModal(this.app, this.view.plugin, entry.filePath, entry.body || entry.title, async (text) => {
+                const success = await this.view.plugin.appendCommentToTaskFile(entry.filePath, text);
+                if (success) {
+                    new Notice('Comment added');
+                    this.refreshCurrentList();
+                }
+            }).open();
+        });
+
+        if (entry.children && entry.children.length > 0) {
+            this.renderActionButton(actions, ICON_MESSAGE_SQUARE, `View Comments (${entry.children.length})`, () => {
+                new ViewCommentsModal(this.app, this.view.plugin, entry, () => this.refreshCurrentList()).open();
+            });
+        }
+
         this.renderActionButton(actions, ICON_TRASH, 'Delete', () => {
             new ConfirmModal(this.view.plugin.app, 'Move this task to trash?', async () => { await this.view.plugin.deleteTaskFile(entry.filePath); this.refreshCurrentList(); }).open();
         });
@@ -324,6 +353,40 @@ export class BaseTab {
             const ctxRight = metaRow.createEl('div', { attr: { style: 'display:flex; flex-wrap:wrap; gap:4px;' } });
             for (const ctx of entry.context) ctxRight.createEl('span', { text: `#${ctx}`, attr: { style: 'font-size:0.75em; color:var(--text-accent); background:var(--background-secondary-alt); padding:1px 6px; border-radius:4px; font-weight:500;' } });
         }
+    }
+
+    async renderTaskCommentRow(reply: ReplyEntry, parent: TaskEntry, container: HTMLElement) {
+        const indentStep = (Platform.isMobile && !isTablet()) ? 12 : 24;
+        const itemEl = container.createEl('div', { attr: { style: `margin-bottom: 4px; display: flex; align-items: flex-start; margin-left: ${indentStep}px; border-left: 2px solid var(--background-modifier-border); padding-left: 10px; opacity: 0.9;` } });
+        const contentDiv = itemEl.createEl('div', { attr: { style: 'flex-grow: 1; display: flex; flex-direction: column; min-width: 0; position: relative;' } });
+        
+        const renderTarget = contentDiv.createEl('div', { 
+            cls: 'mina-card', 
+            attr: { style: 'cursor: text; font-size: 0.9em; line-height: 1.4; color: var(--text-normal); word-break: break-word; background: var(--background-secondary-alt); border-radius: 8px; padding: 8px 10px; border: 1px solid var(--background-modifier-border-faint);' } 
+        });
+        
+        renderTarget.createEl('span', { text: `${reply.date} ${reply.time}`, attr: { style: 'float: right; font-size: 0.6em; color: var(--text-muted); opacity: 0.6; margin-left: 10px;' } });
+        await MarkdownRenderer.render(this.view.plugin.app, reply.text, renderTarget, parent.filePath, this.view);
+        this.hookInternalLinks(renderTarget, parent.filePath); this.hookImageZoom(renderTarget);
+        const firstP = renderTarget.querySelector('p'); if (firstP) { firstP.style.marginTop = '0'; firstP.style.marginBottom = '0'; }
+        
+        const actions = contentDiv.createEl('div', { 
+            attr: { 
+                style: 'position:absolute; top:4px; right:4px; display:flex; gap:2px; padding:2px; background:var(--background-primary); border-radius:6px; border:1px solid var(--background-modifier-border); opacity:0; transition:opacity 0.2s; z-index:10;' 
+            } 
+        });
+        contentDiv.addEventListener('mouseenter', () => actions.style.opacity = '1');
+        contentDiv.addEventListener('mouseleave', () => actions.style.opacity = '0');
+
+        this.renderActionButton(actions, ICON_EDIT, 'Edit', () => {
+            new EditEntryModal(this.view.plugin.app, this.view.plugin, reply.text, '', null, false, async (newText) => {
+                await this.view.plugin.editReply(parent.filePath, reply.anchor, newText.replace(/<br>/g, '\n'));
+                this.refreshCurrentList();
+            }).open();
+        });
+        this.renderActionButton(actions, ICON_TRASH, 'Delete', () => {
+            new ConfirmModal(this.view.plugin.app, 'Delete this comment?', async () => { await this.view.plugin.deleteReply(parent.filePath, reply.anchor); this.refreshCurrentList(); }).open();
+        });
     }
 
     async renderThoughtRow(entry: ThoughtEntry, container: HTMLElement, filePath: string, level: number = 0, hideAvatar: boolean = false, hideMetadata: boolean = false, blur?: boolean) {
@@ -389,10 +452,13 @@ export class BaseTab {
 
         this.renderActionButton(actions, ICON_LINK, 'Open File', () => this.view.plugin.app.workspace.openLinkText(entry.filePath, '', 'window'));
         this.renderActionButton(actions, ICON_REPLY, 'Reply', () => { 
-            this.view.replyToId = entry.filePath; 
-            this.view.replyToText = entry.body.length > 50 ? entry.body.substring(0, 50) + '...' : entry.body; 
-            this.view.showCaptureInThoughts = true; this.view.renderView(); 
-            setTimeout(() => { const ta = this.view.containerEl.querySelector('textarea'); if (ta) (ta as HTMLTextAreaElement).focus(); }, 100); 
+            new CommentModal(this.app, this.view.plugin, entry.filePath, entry.body, async (text) => {
+                const success = await this.view.plugin.appendReplyToFile(entry.filePath, text);
+                if (success) {
+                    new Notice('Reply added');
+                    this.refreshCurrentList();
+                }
+            }).open();
         });
         this.renderActionButton(actions, ICON_EDIT, 'Edit', () => {
             new EditEntryModal(this.view.plugin.app, this.view.plugin, entry.body, entry.context.map(c => `#${c}`).join(' '), null, false, async (newText, newContextStr) => {
