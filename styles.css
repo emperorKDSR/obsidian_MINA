@@ -342,8 +342,102 @@
 }
 
 /* ═══════════════════════════════════════════════════
-   TASKS TAB — Modern Minimalist Design System
+   COMMAND CENTER — Capture + Habits
    ═══════════════════════════════════════════════════ */
+
+/* Capture bar */
+.mina-capture-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--background-secondary-alt);
+    border: 1px solid var(--background-modifier-border-faint);
+    border-radius: 14px;
+    padding: 14px 18px;
+    cursor: text;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-shadow: var(--mina-shadow);
+}
+.mina-capture-bar:hover {
+    border-color: var(--interactive-accent);
+    box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.10);
+}
+.mina-capture-icon {
+    color: var(--interactive-accent);
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+.mina-capture-placeholder {
+    color: var(--text-faint);
+    font-size: 1em;
+    font-weight: 500;
+}
+
+/* Habit quick-bar */
+.mina-habit-quick-bar {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 2px 0 4px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.mina-habit-quick-bar::-webkit-scrollbar { display: none; }
+
+.mina-habit-quick-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 12px;
+    border: 1.5px solid var(--background-modifier-border-faint);
+    border-radius: 12px;
+    background: var(--background-secondary-alt);
+    cursor: pointer;
+    min-width: 58px;
+    flex-shrink: 0;
+    transition: all 0.18s ease;
+}
+.mina-habit-quick-btn:hover {
+    border-color: var(--interactive-accent);
+    background: rgba(var(--interactive-accent-rgb), 0.06);
+}
+.mina-habit-quick-btn.is-done {
+    background: rgba(var(--interactive-accent-rgb), 0.10);
+    border-color: var(--interactive-accent);
+}
+.mina-habit-quick-icon {
+    font-size: 1.2em;
+    line-height: 1;
+}
+.mina-habit-quick-label {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: var(--text-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 54px;
+    text-align: center;
+}
+.mina-habit-quick-btn.is-done .mina-habit-quick-label {
+    color: var(--interactive-accent);
+}
+
+/* Hub inline task radar row */
+.mina-hub-task-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    background: var(--background-primary);
+    border-bottom: 1px solid var(--background-modifier-border-faint);
+    transition: background 0.12s;
+}
+.mina-hub-task-row:last-child { border-bottom: none; }
+.mina-hub-task-row:hover { background: var(--background-secondary-alt); }
+.mina-hub-task-row.is-done { opacity: 0.4; }
 
 /* Header */
 .mina-tasks-header {

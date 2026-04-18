@@ -18,135 +18,221 @@ export class CommandCenterTab extends BaseTab {
         else container.removeClass('is-zen-mode');
 
         const wrap = container.createEl('div', {
-            attr: { style: 'padding: var(--mina-spacing); display: flex; flex-direction: column; gap: 24px; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; background: var(--background-primary); max-width: 900px; margin: 0 auto;' }
+            attr: { style: 'padding: var(--mina-spacing); display: flex; flex-direction: column; gap: 20px; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; background: var(--background-primary); max-width: 900px; margin: 0 auto; padding-bottom: 140px;' }
         });
 
         this.renderHeader(wrap);
-        this.renderTacticalStack(wrap);
+        this.renderCaptureBar(wrap);
+        this.renderHabitQuickBar(wrap);
+        this.renderTaskRadar(wrap);
+        this.renderDailyRoutine(wrap);
+        this.renderIntelligence(wrap);
         this.renderNavigationFooter(wrap);
     }
 
     private renderHeader(parent: HTMLElement) {
-        const headerRow = parent.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: -16px;' } });
+        const headerRow = parent.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: flex-start;' } });
         const topRow = headerRow.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 4px;' } });
         const hour = new Date().getHours();
-        const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
-        
-        topRow.createEl('h1', { text: `${greeting}, Emperor!`, attr: { style: 'margin: 0; font-size: 2em; font-weight: 900; color: var(--text-normal); letter-spacing: -0.04em;' } });
-
+        const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+        topRow.createEl('h1', { text: `${greeting}, Emperor.`, attr: { style: 'margin: 0; font-size: 1.8em; font-weight: 900; color: var(--text-normal); letter-spacing: -0.04em; line-height: 1.1;' } });
         const vision = this.settings.northStarGoals?.[0];
-        if (vision) topRow.createEl('p', { text: `Objective: ${vision}`, attr: { style: 'margin: 0; font-size: 0.9em; color: var(--text-muted); font-weight: 600; font-style: italic; opacity: 0.8;' } });
+        if (vision) topRow.createEl('p', { text: vision, attr: { style: 'margin: 4px 0 0; font-size: 0.85em; color: var(--text-muted); font-weight: 500; font-style: italic;' } });
 
         const zenToggle = headerRow.createEl('button', {
-            attr: { 
+            attr: {
                 title: this.view.isZenMode ? 'Exit Zen' : 'Enter Zen',
-                style: `background: ${this.view.isZenMode ? 'var(--interactive-accent)' : 'var(--background-secondary-alt)'}; color: ${this.view.isZenMode ? 'var(--text-on-accent)' : 'var(--text-muted)'}; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: var(--mina-shadow);` 
+                style: `background: ${this.view.isZenMode ? 'var(--interactive-accent)' : 'var(--background-secondary-alt)'}; color: ${this.view.isZenMode ? 'var(--text-on-accent)' : 'var(--text-muted)'}; border: none; border-radius: 50%; width: 38px; height: 38px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;`
             }
         });
         setIcon(zenToggle, 'lucide-target');
         zenToggle.addEventListener('click', () => { this.view.isZenMode = !this.view.isZenMode; this.render(this.parentContainer); });
     }
 
-    private renderTacticalStack(parent: HTMLElement) {
-        const stack = parent.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px;' } });
-
-        // 1. Global Capture
-        const cap = stack.createEl('div', { attr: { style: 'background: var(--background-secondary-alt); border-radius: 20px; padding: 16px 20px; border: 1px solid var(--background-modifier-border-faint); cursor: text; transition: all 0.2s; box-shadow: var(--mina-shadow); display: flex; align-items: center; gap: 12px;' } });
-        const capIcon = cap.createDiv(); setIcon(capIcon, 'lucide-plus-circle'); capIcon.style.color = 'var(--interactive-accent)';
-        cap.createEl('span', { text: "Focus your intent...", attr: { style: 'color: var(--text-faint); font-size: 1.1em; font-weight: 500;' } });
+    // ── 1. Capture bar ──────────────────────────────────────────────────────
+    private renderCaptureBar(parent: HTMLElement) {
+        const cap = parent.createEl('div', { cls: 'mina-capture-bar' });
+        const capIcon = cap.createDiv({ cls: 'mina-capture-icon' });
+        setIcon(capIcon, 'lucide-plus');
+        cap.createEl('span', { text: "What's on your mind…", cls: 'mina-capture-placeholder' });
         cap.addEventListener('click', () => {
             new EditEntryModal(this.app, this.plugin, '', '', null, false, async (text, ctxs) => {
                 if (!text.trim()) return;
                 await this.vault.createThoughtFile(text, parseContextString(ctxs));
-            }, 'Global Capture').open();
+            }, 'Capture').open();
         });
-
-        // 2. Intelligence
-        const intel = stack.createEl('div', { cls: 'mina-card', attr: { style: 'padding: 20px; display: flex; flex-direction: column; gap: 14px; border-width: 1.5px;' } });
-        const intelHeader = intel.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
-        const intelTitle = intelHeader.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px;' } });
-        const iIcon = intelTitle.createDiv(); setIcon(iIcon, 'lucide-sparkles'); iIcon.style.color = 'var(--interactive-accent)';
-        intelTitle.createSpan({ text: 'INTELLIGENCE', attr: { style: 'font-size: 0.6em; font-weight: 900; color: var(--interactive-accent); letter-spacing: 0.15em;' } });
-        const analyzeBtn = intelHeader.createEl('button', { text: 'ANALYZE', attr: { style: 'background: var(--interactive-accent); color: var(--text-on-accent); border: none; border-radius: 8px; font-size: 0.65em; padding: 4px 12px; cursor: pointer; font-weight: 700; box-shadow: 0 4px 10px rgba(var(--interactive-accent-rgb), 0.2);' } });
-        
-        const summaryPlaceholder = intel.createEl('div', { text: 'Strategic briefing pending analysis.', attr: { style: 'font-size: 0.9em; color: var(--text-muted); font-style: italic; line-height: 1.6; opacity: 0.8;' } });
-        
-        analyzeBtn.addEventListener('click', async () => {
-            summaryPlaceholder.empty();
-            const loading = summaryPlaceholder.createEl('div', { text: 'Synthesizing Personal OS...', attr: { style: 'display: flex; align-items: center; gap: 8px;' } });
-            const spin = loading.createDiv(); setIcon(spin, 'lucide-loader-2'); spin.style.animation = 'spin 1s linear infinite';
-            try {
-                // life-ai-ground: Build real context from live indices instead of empty placeholder
-                const idx = this.index;
-                const today = moment().startOf('day');
-                const openTasks = Array.from(idx.taskIndex.values()).filter(t => t.status === 'open');
-                const overdueTasks = openTasks.filter(t => t.due && moment(t.due, 'YYYY-MM-DD', true).isValid() && moment(t.due, 'YYYY-MM-DD').isBefore(today, 'day'));
-                const unprocessedThoughts = Array.from(idx.thoughtIndex.values()).filter(t => !t.synthesized);
-                const completedHabits = idx.habitStatusIndex.length;
-                const totalHabits = this.settings.habits?.length || 0;
-
-                const contextBlock = [
-                    `## Personal OS Status — ${moment().format('dddd, MMMM D, YYYY')}`,
-                    `**Open Tasks:** ${openTasks.length} (${overdueTasks.length} overdue)`,
-                    `**Habits Today:** ${completedHabits}/${totalHabits} completed`,
-                    `**Unprocessed Thoughts:** ${unprocessedThoughts.length}`,
-                    `**Total Financial Obligations:** $${(idx.totalDues || 0).toFixed(2)}`,
-                    (this.settings.weeklyGoals?.length ? `**Weekly Goals:** ${this.settings.weeklyGoals.join(', ')}` : ''),
-                    (this.settings.northStarGoals?.length ? `**North Star:** ${this.settings.northStarGoals[0]}` : ''),
-                    (overdueTasks.length > 0 ? `**Overdue Tasks:** ${overdueTasks.slice(0, 5).map(t => t.title).join(', ')}` : ''),
-                ].filter(Boolean).join('\n');
-
-                const summary = await this.ai.callGemini(
-                    `${contextBlock}\n\nGive me a sharp strategic briefing: what needs my attention right now? What's on track? What's at risk? Be direct, no fluff.`,
-                    [], false, [], idx.thoughtIndex
-                );
-                loading.remove();
-                summaryPlaceholder.setText(summary);
-                summaryPlaceholder.style.fontStyle = 'normal';
-                summaryPlaceholder.style.opacity = '1';
-            } catch (e: any) { loading.setText('Intelligence offline: ' + e.message); }
-        });
-
-        this.renderExecutionUnit(stack);
     }
 
-    private renderExecutionUnit(parent: HTMLElement) {
-        const unit = parent.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 16px;' } });
+    // ── 2. Habit quick-bar ──────────────────────────────────────────────────
+    private renderHabitQuickBar(parent: HTMLElement) {
+        const habits = this.settings.habits || [];
+        if (habits.length === 0) return;
 
-        // DAILY ROUTINE (Checklist from Index)
-        if (this.index.checklistIndex.length > 0) {
-            unit.createEl('h3', { text: 'DAILY ROUTINE', attr: { style: 'margin: 0; font-size: 0.7em; font-weight: 900; letter-spacing: 0.2em; color: var(--text-faint);' } });
-            const list = unit.createDiv({ attr: { style: 'display: flex; flex-direction: column; gap: 6px;' } });
-            this.index.checklistIndex.forEach(item => {
-                this.renderTacticalRow(list, item.text, item.done, async () => {
-                    item.done = !item.done;
-                    this.render(this.parentContainer);
-                    const file = this.app.vault.getAbstractFileByPath(`${this.settings.captureFolder}/${this.settings.captureFilePath}`) as TFile;
-                    if (file) {
-                        const content = await this.app.vault.read(file);
-                        const updated = content.replace(item.line, item.line.replace(item.done ? '- [ ]' : '- [x]', item.done ? '- [x]' : '- [ ]'));
-                        await this.app.vault.modify(file, updated);
-                    }
-                });
+        const completedToday = new Set<string>(this.index.habitStatusIndex);
+        const today = moment().format('YYYY-MM-DD');
+        const doneCount = habits.filter(h => completedToday.has(h.id)).length;
+
+        const section = parent.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px;' } });
+
+        // Section label + progress
+        const labelRow = section.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
+        labelRow.createEl('span', { text: 'HABITS', attr: { style: 'font-size: 0.65em; font-weight: 900; letter-spacing: 0.15em; color: var(--text-faint);' } });
+        const progressText = labelRow.createEl('span', { text: `${doneCount}/${habits.length}`, attr: { style: 'font-size: 0.72em; font-weight: 700; color: var(--interactive-accent);' } });
+
+        // Scrollable row
+        const bar = section.createEl('div', { cls: 'mina-habit-quick-bar' });
+
+        for (const habit of habits) {
+            const done = completedToday.has(habit.id);
+            const btn = bar.createEl('button', { cls: `mina-habit-quick-btn${done ? ' is-done' : ''}`, attr: { title: habit.name } });
+            btn.createEl('span', { text: habit.icon || '●', cls: 'mina-habit-quick-icon' });
+            btn.createEl('span', { text: habit.name.substring(0, 9), cls: 'mina-habit-quick-label' });
+
+            btn.addEventListener('click', async () => {
+                const nowDone = btn.hasClass('is-done');
+                btn.toggleClass('is-done', !nowDone);
+                const newCount = nowDone ? doneCount - 1 : doneCount + 1;
+                progressText.textContent = `${Math.max(0, Math.min(habits.length, newCount))}/${habits.length}`;
+                await this.plugin.toggleHabit(today, habit.id);
             });
         }
     }
 
-    private renderTacticalRow(parent: HTMLElement, text: string, done: boolean, onToggle: () => void, meta?: string) {
+    // ── 3. Task Radar ────────────────────────────────────────────────────────
+    private renderTaskRadar(parent: HTMLElement) {
+        const radar = this.index.radarQueue.slice(0, 6);
+        if (radar.length === 0) return;
+
+        const section = parent.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 6px;' } });
+        const labelRow = section.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
+        labelRow.createEl('span', { text: 'RADAR', attr: { style: 'font-size: 0.65em; font-weight: 900; letter-spacing: 0.15em; color: var(--text-faint);' } });
+        const seeAll = labelRow.createEl('button', { text: 'See all', attr: { style: 'background: transparent; border: none; font-size: 0.72em; font-weight: 700; color: var(--interactive-accent); cursor: pointer; padding: 0;' } });
+        seeAll.addEventListener('click', () => { this.view.activeTab = 'review-tasks'; this.view.renderView(); });
+
+        const list = section.createEl('div', { attr: { style: 'display: flex; flex-direction: column; border-radius: 10px; overflow: hidden; border: 1px solid var(--background-modifier-border-faint);' } });
+
+        for (const task of radar) {
+            const isDone = task.status === 'done';
+            const dueM = task.due ? moment(task.due, 'YYYY-MM-DD') : null;
+            const isOverdue = !isDone && dueM?.isValid() && dueM.isBefore(moment(), 'day');
+            const isToday = !isDone && dueM?.isValid() && dueM.isSame(moment(), 'day');
+
+            const row = list.createEl('div', { cls: `mina-hub-task-row${isDone ? ' is-done' : ''}` });
+
+            const cb = row.createEl('div', { cls: `mina-task-cb${isDone ? ' is-done' : ''}` });
+            if (isDone) { const ck = cb.createEl('span'); setIcon(ck, 'check'); }
+
+            cb.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const nextDone = !isDone;
+                cb.empty();
+                if (nextDone) {
+                    cb.addClass('is-done');
+                    const ck = cb.createEl('span'); setIcon(ck, 'check');
+                    titleEl.style.textDecoration = 'line-through'; titleEl.style.opacity = '0.35';
+                } else {
+                    cb.removeClass('is-done');
+                    titleEl.style.textDecoration = ''; titleEl.style.opacity = '';
+                }
+                this.view._taskTogglePending++;
+                await this.vault.toggleTask(task.filePath, nextDone);
+                const h = row.offsetHeight;
+                row.style.overflow = 'hidden'; row.style.maxHeight = h + 'px';
+                row.style.transition = 'max-height 0.28s ease, opacity 0.2s ease, padding 0.28s ease';
+                await new Promise(r => setTimeout(r, 160));
+                row.style.maxHeight = '0'; row.style.opacity = '0'; row.style.padding = '0';
+                setTimeout(() => { row.remove(); this.view._taskTogglePending = Math.max(0, this.view._taskTogglePending - 1); }, 300);
+            });
+
+            const titleEl = row.createEl('span', {
+                text: task.title,
+                attr: { style: `flex: 1; font-size: 0.88em; font-weight: 600; color: var(--text-normal); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ${isDone ? 'text-decoration: line-through; opacity: 0.35;' : ''}` }
+            });
+
+            if (dueM?.isValid()) {
+                const chipText = isToday ? 'Today' : dueM.format('MMM D');
+                row.createEl('span', {
+                    text: chipText,
+                    attr: { style: `font-size: 0.66em; font-weight: 700; padding: 1px 6px; border-radius: 4px; flex-shrink: 0; background: ${isOverdue ? 'rgba(239,68,68,0.10)' : 'rgba(var(--interactive-accent-rgb),0.10)'}; color: ${isOverdue ? 'var(--text-error)' : 'var(--interactive-accent)'};` }
+                });
+            }
+        }
+    }
+
+    // ── 4. Daily Routine ─────────────────────────────────────────────────────
+    private renderDailyRoutine(parent: HTMLElement) {
+        if (this.index.checklistIndex.length === 0) return;
+
+        const section = parent.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 6px;' } });
+        section.createEl('span', { text: 'DAILY ROUTINE', attr: { style: 'font-size: 0.65em; font-weight: 900; letter-spacing: 0.15em; color: var(--text-faint);' } });
+        const list = section.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 4px;' } });
+
+        this.index.checklistIndex.forEach(item => {
+            this.renderTacticalRow(list, item.text, item.done, async () => {
+                item.done = !item.done;
+                this.render(this.parentContainer);
+                const file = this.app.vault.getAbstractFileByPath(`${this.settings.captureFolder}/${this.settings.captureFilePath}`) as TFile;
+                if (file) {
+                    const content = await this.app.vault.read(file);
+                    const updated = content.replace(item.line, item.line.replace(item.done ? '- [ ]' : '- [x]', item.done ? '- [x]' : '- [ ]'));
+                    await this.app.vault.modify(file, updated);
+                }
+            });
+        });
+    }
+
+    // ── 5. Intelligence ──────────────────────────────────────────────────────
+    private renderIntelligence(parent: HTMLElement) {
+        const intel = parent.createEl('div', { cls: 'mina-card', attr: { style: 'padding: 16px 20px; display: flex; flex-direction: column; gap: 12px;' } });
+        const intelHeader = intel.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
+        const intelTitle = intelHeader.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 7px;' } });
+        const iIcon = intelTitle.createDiv(); setIcon(iIcon, 'lucide-sparkles'); iIcon.style.color = 'var(--interactive-accent)'; iIcon.style.width = '14px';
+        intelTitle.createSpan({ text: 'INTELLIGENCE', attr: { style: 'font-size: 0.6em; font-weight: 900; color: var(--interactive-accent); letter-spacing: 0.15em;' } });
+        const analyzeBtn = intelHeader.createEl('button', { text: 'Analyze', attr: { style: 'background: var(--interactive-accent); color: var(--text-on-accent); border: none; border-radius: 6px; font-size: 0.68em; padding: 4px 12px; cursor: pointer; font-weight: 700;' } });
+
+        const body = intel.createEl('div', { text: 'Strategic briefing pending analysis.', attr: { style: 'font-size: 0.88em; color: var(--text-muted); font-style: italic; line-height: 1.6;' } });
+
+        analyzeBtn.addEventListener('click', async () => {
+            body.empty();
+            const loading = body.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 0.88em;' } });
+            loading.createSpan({ text: 'Synthesizing…' });
+            const spin = loading.createDiv(); setIcon(spin, 'lucide-loader-2'); spin.style.animation = 'spin 1s linear infinite';
+            try {
+                const idx = this.index;
+                const today = moment().startOf('day');
+                const openTasks = Array.from(idx.taskIndex.values()).filter(t => t.status === 'open');
+                const overdueTasks = openTasks.filter(t => t.due && moment(t.due, 'YYYY-MM-DD').isValid() && moment(t.due, 'YYYY-MM-DD').isBefore(today, 'day'));
+                const completedHabits = idx.habitStatusIndex.length;
+                const totalHabits = this.settings.habits?.length || 0;
+                const contextBlock = [
+                    `## Status — ${moment().format('dddd, MMMM D, YYYY')}`,
+                    `**Open Tasks:** ${openTasks.length} (${overdueTasks.length} overdue)`,
+                    `**Habits:** ${completedHabits}/${totalHabits}`,
+                    `**Unprocessed Thoughts:** ${Array.from(idx.thoughtIndex.values()).filter(t => !t.synthesized).length}`,
+                    `**Financial Obligations:** $${(idx.totalDues || 0).toFixed(2)}`,
+                    this.settings.northStarGoals?.[0] ? `**North Star:** ${this.settings.northStarGoals[0]}` : '',
+                    overdueTasks.length ? `**Overdue:** ${overdueTasks.slice(0, 5).map(t => t.title).join(', ')}` : '',
+                ].filter(Boolean).join('\n');
+                const summary = await this.ai.callGemini(`${contextBlock}\n\nSharp strategic briefing: what needs attention now? What's at risk? Be direct.`, [], false, [], idx.thoughtIndex);
+                loading.remove(); body.setText(summary); body.style.fontStyle = 'normal'; body.style.color = 'var(--text-normal)';
+            } catch (e: any) { loading.setText('Intelligence offline: ' + e.message); }
+        });
+    }
+
+    private renderTacticalRow(parent: HTMLElement, text: string, done: boolean, onToggle: () => void) {
         const row = parent.createEl('div', { cls: 'mina-tactical-row' + (done ? ' is-done' : ''), attr: { style: 'cursor: default;' } });
         const cbWrap = row.createDiv({ attr: { style: 'padding: 4px; cursor: pointer;' } });
         const cb = cbWrap.createDiv({ cls: 'mina-tactical-checkbox' });
         if (done) setIcon(cb, 'lucide-check');
         cbWrap.addEventListener('click', (e) => { e.stopPropagation(); onToggle(); });
-        const label = row.createEl('span', { text, cls: 'mina-tactical-text', attr: { style: `${done ? 'text-decoration: line-through;' : ''}` } });
-        if (meta) row.createEl('span', { text: meta, attr: { style: 'font-size: 0.65em; font-weight: 800; color: var(--text-muted); margin-left: auto; white-space: nowrap; opacity: 0.6;' } });
+        row.createEl('span', { text, cls: 'mina-tactical-text', attr: { style: done ? 'text-decoration: line-through; opacity: 0.45;' : '' } });
     }
 
     private renderNavigationFooter(parent: HTMLElement) {
-        const nav = parent.createEl('div', { cls: 'mina-nav-container', attr: { style: 'margin-top: 20px; display: flex; flex-direction: column; gap: 24px;' } });
+        const nav = parent.createEl('div', { cls: 'mina-nav-container', attr: { style: 'display: flex; flex-direction: column; gap: 20px;' } });
         const renderCluster = (title: string, items: {label: string, icon: string, tab: string}[]) => {
             const section = nav.createEl('div', { cls: 'mina-nav-section' });
-            section.createEl('h3', { text: title, attr: { style: 'margin: 0; font-size: 0.7em; font-weight: 900; letter-spacing: 0.2em; color: var(--text-faint);' } });
+            section.createEl('h3', { text: title, attr: { style: 'margin: 0 0 8px; font-size: 0.65em; font-weight: 900; letter-spacing: 0.2em; color: var(--text-faint);' } });
             const cluster = section.createEl('div', { cls: 'mina-pillar-cluster' });
             items.forEach(i => {
                 const item = cluster.createEl('div', { cls: 'mina-pillar-item' });

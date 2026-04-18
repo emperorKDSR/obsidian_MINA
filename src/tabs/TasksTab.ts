@@ -6,11 +6,12 @@ import { ConfirmModal } from "../modals/ConfirmModal";
 import type { TaskEntry } from '../types';
 import { parseContextString } from '../utils';
 
-type TaskViewMode = 'open' | 'not-due' | 'done' | 'waiting' | 'someday';
+type TaskViewMode = 'inbox' | 'open' | 'not-due' | 'done' | 'waiting' | 'someday';
 
 const MODES: { mode: TaskViewMode; label: string }[] = [
+    { mode: 'inbox',   label: 'Inbox' },
     { mode: 'open',    label: 'Due' },
-    { mode: 'not-due', label: 'Inbox' },
+    { mode: 'not-due', label: 'No Date' },
     { mode: 'waiting', label: 'Waiting' },
     { mode: 'someday', label: 'Someday' },
     { mode: 'done',    label: 'Done' },
@@ -22,7 +23,7 @@ export class TasksTab extends BaseTab {
 
     constructor(view: MinaView) {
         super(view);
-        this.viewMode = (this.view.tasksViewMode as TaskViewMode) || 'open';
+        this.viewMode = (this.view.tasksViewMode as TaskViewMode) || 'inbox';
     }
 
     render(container: HTMLElement) {
@@ -67,6 +68,7 @@ export class TasksTab extends BaseTab {
         // ── Segmented control ──
         const allTasks = Array.from(this.index.taskIndex.values());
         const counts: Record<TaskViewMode, number> = {
+            'inbox':   allTasks.filter(t => t.status === 'open').length,
             'open':    allTasks.filter(t => t.status === 'open' && t.due && t.due.trim() !== "").length,
             'not-due': allTasks.filter(t => t.status === 'open' && (!t.due || t.due.trim() === "")).length,
             'waiting': allTasks.filter(t => t.status === 'waiting').length,
@@ -91,7 +93,18 @@ export class TasksTab extends BaseTab {
         this.listContainer.empty();
 
         let tasks = Array.from(this.index.taskIndex.values());
-        if (this.viewMode === 'open') {
+        if (this.viewMode === 'inbox') {
+            // All open tasks — due-date items first (soonest), then no-date by recency
+            tasks = tasks.filter(t => t.status === 'open');
+            tasks.sort((a, b) => {
+                const aHasDue = a.due && a.due.trim() !== '';
+                const bHasDue = b.due && b.due.trim() !== '';
+                if (aHasDue && !bHasDue) return -1;
+                if (!aHasDue && bHasDue) return 1;
+                if (aHasDue && bHasDue) return moment(a.due).valueOf() - moment(b.due).valueOf();
+                return b.lastUpdate - a.lastUpdate;
+            });
+        } else if (this.viewMode === 'open') {
             tasks = tasks.filter(t => t.status === 'open' && t.due && t.due.trim() !== "");
             tasks.sort((a, b) => moment(a.due).valueOf() - moment(b.due).valueOf());
         } else if (this.viewMode === 'not-due') {
@@ -113,14 +126,14 @@ export class TasksTab extends BaseTab {
 
         if (tasks.length === 0) {
             const emptyMsgs: Record<TaskViewMode, string> = {
-                open: 'Queue is clear ✓', 'not-due': 'Inbox empty.', waiting: 'Nothing waiting.',
-                someday: 'No someday items.', done: 'No completed tasks.'
+                inbox: 'Inbox empty. You\'re clear ✓', open: 'Queue is clear ✓', 'not-due': 'Inbox empty.',
+                waiting: 'Nothing waiting.', someday: 'No someday items.', done: 'No completed tasks.'
             };
             this.renderEmptyState(this.listContainer, emptyMsgs[this.viewMode]);
             return;
         }
 
-        // ── Group 'open' by time horizon ──
+        // ── Group 'open/due' by time horizon; inbox is flat for speed ──
         if (this.viewMode === 'open') {
             const today = moment().startOf('day');
             // Parse once per task; use non-strict to handle minor format variations
