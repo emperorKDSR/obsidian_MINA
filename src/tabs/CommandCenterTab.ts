@@ -131,7 +131,11 @@ export class CommandCenterTab extends BaseTab {
                 item.addEventListener('click', () => { this.view.activeTab = i.tab; this.view.renderView(); });
             });
         };
-        renderCluster('ACTION', [{ label: 'Tasks', icon: TASK_ICON_ID, tab: 'review-tasks' }, { label: 'Finance', icon: PF_ICON_ID, tab: 'dues' }, { label: 'Timeline', icon: TIMELINE_ICON_ID, tab: 'timeline' }]);
+        renderCluster('ACTION', [
+            { label: 'Tasks', icon: TASK_ICON_ID, tab: 'review-tasks' },
+            { label: 'Finance', icon: PF_ICON_ID, tab: 'dues' },
+            { label: 'Timeline', icon: TIMELINE_ICON_ID, tab: 'timeline' }
+        ]);
         renderCluster('MANAGEMENT', [{ label: 'Projects', icon: PROJECT_ICON_ID, tab: 'projects' }, { label: 'Synthesis', icon: SYNTHESIS_ICON_ID, tab: 'synthesis' }, { label: 'Journal', icon: JOURNAL_ICON_ID, tab: 'journal' }]);
         renderCluster('SYSTEM', [{ label: 'AI Chat', icon: AI_CHAT_ICON_ID, tab: 'mina-ai' }, { label: 'Review', icon: REVIEW_ICON_ID, tab: 'review' }, { label: 'Settings', icon: SETTINGS_ICON_ID, tab: 'settings' }]);
     }

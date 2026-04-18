@@ -144,10 +144,13 @@ export class IndexService {
         const cache = this.app.metadataCache.getFileCache(file);
         if (!cache || !cache.frontmatter) return;
         const fm = cache.frontmatter;
+        const content = await this.app.vault.read(file);
+        const body = content.replace(/^---\n[\s\S]*?\n---\n/, '').trim();
+
         this.taskIndex.set(file.path, {
             filePath: file.path,
-            title: file.basename,
-            body: '',
+            title: fm.title || file.basename,
+            body: body,
             status: fm.status || 'open',
             due: fm.due || '',
             created: fm.created || '',
