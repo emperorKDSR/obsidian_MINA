@@ -121,8 +121,7 @@ export class EditEntryModal extends Modal {
             If it clearly matches a project, return ONLY the project name. If no clear match, return "None".`;
 
             try {
-                const leaf = this.plugin.app.workspace.getLeavesOfType('mina-v2-view')[0];
-                const result = await (leaf?.view as any).callGemini(prompt, [], false, [{ role: 'user', text: prompt }]);
+                const result = await this.plugin.ai.callGemini(prompt, [], false, [{ role: 'user', text: prompt }], this.plugin.index.thoughtIndex);
                 const match = projects.find((p: string) => result?.includes(p));
                 if (match) updateAiSuggestion(match);
             } catch (e) {}
@@ -161,7 +160,7 @@ export class EditEntryModal extends Modal {
             if (val.length > lastValue.length) {
                 const cursorPosition = target.selectionStart;
                 if (cursorPosition >= 2 && val.substring(cursorPosition - 2, cursorPosition) === '[[') {
-                    new FileSuggestModal(this.plugin.app, (file) => {
+                    new FileSuggestModal(this.app, (file) => {
                         const before = val.substring(0, cursorPosition - 2);
                         const after = val.substring(cursorPosition);
                         const insertText = `[[${file.basename}]]`;
@@ -169,7 +168,7 @@ export class EditEntryModal extends Modal {
                         setTimeout(() => { target.focus(); target.setSelectionRange(before.length + insertText.length, before.length + insertText.length); }, 50);
                     }, this.plugin.settings.newNoteFolder).open();
                 } else if (cursorPosition > 0 && val.charAt(cursorPosition - 1) === '#') {
-                    new ContextSuggestModal(this.plugin.app, this.plugin.settings.contexts, async (ctx) => {
+                    new ContextSuggestModal(this.app, this.plugin.settings.contexts, async (ctx) => {
                         const before = val.substring(0, cursorPosition - 1);
                         const after = val.substring(cursorPosition);
                         target.value = before + after;
@@ -192,8 +191,8 @@ export class EditEntryModal extends Modal {
                     const extension = file.name && file.name.includes('.') ? file.name.split('.').pop() : (file.type.split('/')[1] || 'png');
                     const baseName = (file.name && file.name.includes('.')) ? file.name.substring(0, file.name.lastIndexOf('.')) : `Pasted image ${moment().format('YYYYMMDDHHmmss')}`;
                     const fileName = `${baseName}.${extension}`;
-                    const attachmentPath = await this.plugin.app.fileManager.getAvailablePathForAttachment(fileName);
-                    const newFile = await this.plugin.app.vault.createBinary(attachmentPath, arrayBuffer);
+                    const attachmentPath = await this.app.fileManager.getAvailablePathForAttachment(fileName);
+                    const newFile = await this.app.vault.createBinary(attachmentPath, arrayBuffer);
                     const isImgExt = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg', 'webp'].includes(extension?.toLowerCase() || '');
                     const markdownLink = isImgExt ? `![[${newFile.name}]]` : `[[${newFile.name}]]`;
                     const startPos = textArea.selectionStart; const endPos = textArea.selectionEnd;

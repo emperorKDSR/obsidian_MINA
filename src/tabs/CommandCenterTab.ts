@@ -30,7 +30,7 @@ export class CommandCenterTab extends BaseTab {
             attr: { style: 'margin: 0; font-size: 1.8em; font-weight: 900; color: var(--text-normal); letter-spacing: -0.04em;' }
         });
 
-        const vision = this.view.plugin.settings.northStarGoals?.[0];
+        const vision = this.settings.northStarGoals?.[0];
         if (vision) {
             topRow.createEl('p', {
                 text: `Focus: ${vision}`,
@@ -44,11 +44,10 @@ export class CommandCenterTab extends BaseTab {
         });
         captureCard.createEl('span', { text: "What's on your mind? (Shift+Enter to add)", attr: { style: 'color: var(--text-faint); font-size: 1.1em; font-weight: 500;' } });
         captureCard.addEventListener('click', () => {
-            new EditEntryModal(this.app, this.view.plugin, '', '', null, false, async (text, ctxs, _, project) => {
+            new EditEntryModal(this.app, this.plugin, '', '', null, false, async (text, ctxs, _, project) => {
                 if (!text.trim()) return;
                 const contexts = ctxs.split('#').map(c => c.trim()).filter(c => c.length > 0);
-                const file = await this.view.plugin.createThoughtFile(text, contexts);
-                if (project) await this.app.fileManager.processFrontMatter(file, (fm) => { fm['project'] = project; });
+                await this.vault.createThoughtFile(text, contexts, project || undefined);
                 this.renderCommandCenter(container);
             }, 'Global Capture').open();
         });
@@ -67,7 +66,6 @@ export class CommandCenterTab extends BaseTab {
             card.addEventListener('click', () => { this.view.activeTab = tabId; this.view.renderView(); });
         };
 
-        // Pillar Groups
         const renderPillarHeader = (text: string) => {
             wrap.createEl('h3', { text, attr: { style: 'margin: 0 -4px; font-size: 0.7em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-faint);' } });
         };
@@ -108,8 +106,8 @@ export class CommandCenterTab extends BaseTab {
         const dotsContainer = habitsCard.createDiv({ attr: { style: 'display: flex; gap: 8px;' } });
         
         const todayStr = moment().format('YYYY-MM-DD');
-        const completedHabits = await this.view.plugin.getHabitStatus(todayStr);
-        this.view.plugin.settings.habits.forEach(h => {
+        const completedHabits = await this.vault.getHabitStatus(todayStr);
+        this.settings.habits.forEach(h => {
             const isDone = completedHabits.includes(h.id);
             dotsContainer.createDiv({
                 attr: { 
@@ -120,14 +118,13 @@ export class CommandCenterTab extends BaseTab {
         });
 
         // Cashflow Snapshot
-        const income = this.view.plugin.settings.monthlyIncome || 0;
+        const income = this.settings.monthlyIncome || 0;
         if (income > 0) {
             const financeCard = snapshots.createEl('div', {
                 attr: { style: 'background: var(--background-secondary-alt); border-radius: 16px; padding: 16px; border: 1px solid var(--background-modifier-border-faint);' }
             });
             financeCard.createEl('div', { text: 'MONTHLY BURN RATE', attr: { style: 'font-size: 0.6em; font-weight: 900; letter-spacing: 0.1em; color: var(--text-faint); margin-bottom: 10px;' } });
             
-            // Calculate Total Dues (Reusing DuesTab logic at high level)
             const totalDues = await this.calculateTotalDues();
             const percent = Math.min(100, (totalDues / income) * 100);
             
@@ -141,12 +138,11 @@ export class CommandCenterTab extends BaseTab {
     }
 
     private async calculateTotalDues(): Promise<number> {
-        const { metadataCache, vault } = this.view.plugin.app;
-        const pfFolder = (this.view.plugin.settings.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/');
+        const pfFolder = (this.settings.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/');
         let total = 0;
-        for (const file of vault.getMarkdownFiles()) {
+        for (const file of this.app.vault.getMarkdownFiles()) {
             if (file.path.startsWith(pfFolder + '/')) {
-                const fm = metadataCache.getFileCache(file)?.frontmatter;
+                const fm = this.app.metadataCache.getFileCache(file)?.frontmatter;
                 const active = fm?.['active_status'];
                 if (active === true || active === 'true' || active === 'True') {
                     const amount = parseFloat(file.basename.match(/[\d.]+/)?.[0] || '0');

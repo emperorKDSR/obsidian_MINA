@@ -1,4 +1,4 @@
-import { moment, Platform, Notice, TFile } from 'obsidian';
+import { moment, Platform, TFile } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { DueEntry } from "../types";
@@ -40,17 +40,16 @@ export class DuesTab extends BaseTab {
             attr: { style: 'background: transparent; border: 1px solid var(--background-modifier-border); border-radius: 6px; font-size: 0.65em; padding: 2px 8px; color: var(--text-muted); cursor: pointer; font-weight: 600;' }
         });
         addBtn.addEventListener('click', () => { 
-            new NewDueModal(this.view.plugin.app, this.view.plugin.settings.pfFolder, () => this.renderDuesMode(container)).open(); 
+            new NewDueModal(this.app, this.settings.pfFolder, () => this.renderDuesMode(container)).open(); 
         });
 
-        // 2. Cashflow Dashboard (New)
+        // 2. Cashflow Dashboard
         const entries = this.buildEntries();
         const totalDues = entries.filter(e => e.isActive).reduce((acc, e) => {
-            // Very simple parser for demo - expects number in title or somewhere
             const amount = parseFloat(e.title.match(/[\d.]+/)?.[0] || '0');
-            return acc + amount;
+            return isNaN(amount) ? acc : acc + amount;
         }, 0);
-        const income = this.view.plugin.settings.monthlyIncome || 0;
+        const income = this.settings.monthlyIncome || 0;
         const remaining = income - totalDues;
 
         const cashflow = header.createEl('div', {
@@ -61,9 +60,9 @@ export class DuesTab extends BaseTab {
         const leftStats = statsRow.createEl('div', { attr: { style: 'display: flex; gap: 12px;' } });
         
         const miniStat = (parent: HTMLElement, label: string, val: string, color?: string) => {
-            const wrap = parent.createEl('div', { attr: { style: 'display: flex; flex-direction: column;' } });
-            wrap.createSpan({ text: label, attr: { style: 'font-size: 0.55em; font-weight: 800; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.05em;' } });
-            wrap.createSpan({ text: val, attr: { style: `font-size: 0.9em; font-weight: 700; color: ${color || 'var(--text-normal)'};` } });
+            const statWrap = parent.createEl('div', { attr: { style: 'display: flex; flex-direction: column;' } });
+            statWrap.createSpan({ text: label, attr: { style: 'font-size: 0.55em; font-weight: 800; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.05em;' } });
+            statWrap.createSpan({ text: val, attr: { style: `font-size: 0.9em; font-weight: 700; color: ${color || 'var(--text-normal)'};` } });
         };
 
         miniStat(leftStats, 'Income', income.toLocaleString());
@@ -78,127 +77,27 @@ export class DuesTab extends BaseTab {
             attr: { style: `width: ${percent}%; height: 100%; background: ${percent > 90 ? 'var(--text-error)' : 'var(--interactive-accent)'}; transition: width 0.3s;` }
         });
 
-        // 3. Filter Row (Mini Pills)
-        const filterRow = header.createEl('div', {
-            attr: { style: 'display: flex; gap: 4px; padding: 2px; background: var(--background-secondary-alt); border-radius: 6px; width: fit-content; border: 1px solid var(--background-modifier-border-faint);' }
-        });
-
-        let recurringOnly = false; 
-        let activeOnly = true;
-
-        const renderFilterPill = (label: string, isActive: boolean, onClick: () => void) => {
-            const pill = filterRow.createEl('button', {
-                text: label,
-                attr: { 
-                    style: `padding: 2px 8px; border-radius: 4px; border: none; font-size: 0.65em; font-weight: 700; cursor: pointer; transition: all 0.1s; 
-                    background: ${isActive ? 'var(--interactive-accent)' : 'transparent'}; 
-                    color: ${isActive ? 'var(--text-on-accent)' : 'var(--text-muted)'};` 
-                }
-            });
-            pill.addEventListener('click', onClick);
-        };
-
-        const updateFilters = () => {
-            filterRow.empty();
-            renderFilterPill('ACTIVE', activeOnly, () => { activeOnly = !activeOnly; updateFilters(); renderList(); });
-            renderFilterPill('RECURRING', recurringOnly, () => { recurringOnly = !recurringOnly; updateFilters(); renderList(); });
-        };
-        updateFilters();
-
-        // 4. Content List (Compact Table-like Cards)
-        const listContainer = wrap.createEl('div', {
-            attr: { style: 'display: flex; flex-direction: column; gap: 8px; width: 100%;' }
-        });
-
-        const renderList = () => {
-            listContainer.empty();
-            const filteredEntries = this.buildEntries().filter(e => (!recurringOnly || e.hasRecurring) && (!activeOnly || e.isActive));
+        // 3. List
+        const listContainer = wrap.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px;' } });
+        entries.forEach(entry => {
+            const card = listContainer.createEl('div', { attr: { style: 'padding: 12px; border-radius: 8px; background: var(--background-secondary-alt); border: 1px solid var(--background-modifier-border-faint); display: flex; justify-content: space-between; align-items: center;' } });
+            const info = card.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 2px;' } });
+            info.createEl('div', { text: entry.title, attr: { style: 'font-size: 0.9em; font-weight: 700;' } });
+            info.createEl('div', { text: `Due: ${entry.dueDate}`, attr: { style: 'font-size: 0.75em; color: var(--text-muted);' } });
             
-            if (filteredEntries.length === 0) { 
-                listContainer.createEl('p', { 
-                    text: 'No matching entries.', 
-                    attr: { style: 'color: var(--text-muted); text-align: center; margin-top: 24px; font-size: 0.8em; opacity: 0.5;' } 
-                }); 
-                return; 
+            if (entry.hasRecurring) {
+                const payBtn = card.createEl('button', { text: 'Pay', attr: { style: 'background: var(--interactive-accent); color: var(--text-on-accent); border: none; padding: 4px 12px; border-radius: 6px; font-size: 0.75em; cursor: pointer;' } });
+                payBtn.addEventListener('click', () => {
+                    const file = this.app.vault.getAbstractFileByPath(entry.path);
+                    if (file instanceof TFile) new PaymentModal(this.app, file, entry.dueDate, () => this.renderDuesMode(container)).open();
+                });
             }
-
-            const today = moment().startOf('day');
-
-            filteredEntries.forEach(entry => {
-                const card = listContainer.createEl('div', {
-                    attr: { style: 'display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; background: var(--background-secondary-alt); border-radius: 8px; border: 1px solid var(--background-modifier-border-faint);' }
-                });
-
-                const topRow = card.createEl('div', {
-                    attr: { style: 'display: flex; align-items: center; justify-content: space-between;' }
-                });
-
-                const titleLink = topRow.createEl('a', {
-                    text: entry.title,
-                    attr: { style: 'font-size: 0.88em; font-weight: 700; color: var(--text-normal); text-decoration: none; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%;' }
-                });
-                titleLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.view.plugin.app.workspace.openLinkText(entry.title, entry.path, Platform.isMobile ? 'tab' : 'window');
-                });
-
-                if (entry.dueMoment?.isValid()) {
-                    const isOverdue = entry.dueMoment.isBefore(today);
-                    const isToday = entry.dueMoment.isSame(today, 'day');
-                    const statusText = isOverdue ? 'OVERDUE' : isToday ? 'TODAY' : 'UPCOMING';
-                    const statusColor = isOverdue ? 'var(--text-error)' : isToday ? 'var(--interactive-accent)' : 'var(--text-muted)';
-                    
-                    topRow.createSpan({
-                        text: statusText,
-                        attr: { style: `font-size: 0.55em; font-weight: 900; color: ${statusColor}; letter-spacing: 0.05em; background: ${isOverdue ? 'rgba(var(--error-rgb), 0.08)' : 'rgba(var(--background-modifier-border-rgb), 0.1)'}; padding: 1px 5px; border-radius: 3px;` }
-                    });
-                }
-
-                const metaRow = card.createEl('div', {
-                    attr: { style: 'display: flex; gap: 12px; align-items: center;' }
-                });
-
-                const miniMeta = (label: string, val: string, isError = false) => {
-                    const wrap = metaRow.createEl('div', { attr: { style: 'display: flex; align-items: baseline; gap: 4px;' } });
-                    wrap.createSpan({ text: label + ':', attr: { style: 'font-size: 0.65em; font-weight: 600; color: var(--text-faint); text-transform: uppercase;' } });
-                    wrap.createSpan({ text: val || '—', attr: { style: `font-size: 0.75em; font-weight: 600; color: ${isError ? 'var(--text-error)' : 'var(--text-muted)'};` } });
-                };
-
-                const isOverdue = entry.dueMoment?.isValid() && entry.dueMoment.isBefore(today);
-                miniMeta('Due', entry.dueDate, !!isOverdue);
-                miniMeta('Paid', entry.lastPayment);
-
-                if (entry.hasRecurring) {
-                    const actionRow = card.createEl('div', {
-                        attr: { style: 'display: flex; align-items: center; gap: 8px; margin-top: 2px; padding-top: 6px; border-top: 1px solid var(--background-modifier-border-faint);' }
-                    });
-
-                    const dateInput = actionRow.createEl('input', {
-                        type: 'date',
-                        attr: { style: 'flex: 1; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 4px; font-size: 0.7em; padding: 2px 6px; color: var(--text-normal); height: 24px;' }
-                    });
-                    dateInput.value = moment().format('YYYY-MM-DD');
-
-                    const payBtn = actionRow.createEl('button', {
-                        text: 'Pay',
-                        attr: { style: 'background: var(--interactive-accent); color: var(--text-on-accent); border: none; border-radius: 4px; font-size: 0.7em; font-weight: 700; padding: 0 10px; height: 24px; cursor: pointer;' }
-                    });
-
-                    payBtn.addEventListener('click', () => {
-                        const fileObj = this.view.app.vault.getAbstractFileByPath(entry.path) as TFile;
-                        if (!fileObj) { new Notice('Note file not found.'); return; }
-                        new PaymentModal(this.view.plugin.app, fileObj, entry.dueDate, () => this.renderDuesMode(container), dateInput.value).open();
-                    });
-                }
-            });
-        };
-
-        renderList();
+        });
     }
 
     private buildEntries(): DueEntry[] {
-        const { metadataCache, vault } = this.view.plugin.app;
-        const pfFolder = (this.view.plugin.settings.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/');
+        const { metadataCache, vault } = this.app;
+        const pfFolder = (this.settings.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/');
         const all: DueEntry[] = [];
         for (const file of vault.getMarkdownFiles()) {
             if (!file.path.startsWith(pfFolder + '/') && file.path !== pfFolder) continue;
@@ -211,12 +110,6 @@ export class DuesTab extends BaseTab {
             const isActive = activeStatus === true || activeStatus === 'true' || activeStatus === 'True';
             all.push({ title: file.basename, path: file.path, dueDate, lastPayment, dueMoment, hasRecurring, isActive });
         }
-        all.sort((a, b) => {
-            if (!a.dueMoment?.isValid() && !b.dueMoment?.isValid()) return a.title.localeCompare(b.title);
-            if (!a.dueMoment?.isValid()) return 1;
-            if (!b.dueMoment?.isValid()) return -1;
-            return a.dueMoment.valueOf() - b.dueMoment.valueOf();
-        });
-        return all;
+        return all.sort((a, b) => (a.dueMoment?.valueOf() || 0) - (b.dueMoment?.valueOf() || 0));
     }
 }

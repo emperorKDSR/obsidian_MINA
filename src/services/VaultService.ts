@@ -1,0 +1,305 @@
+import { App, TFile, Notice, moment } from 'obsidian';
+import type { MinaSettings, ThoughtEntry, TaskEntry, ReplyEntry } from '../types';
+
+export class VaultService {
+    app: App;
+    settings: MinaSettings;
+
+    constructor(app: App, settings: MinaSettings) {
+        this.app = app;
+        this.settings = settings;
+    }
+
+    updateSettings(settings: MinaSettings) {
+        this.settings = settings;
+    }
+
+    private extractTitle(text: string): string {
+        const firstLine = text.split('\n').find(l => l.trim()) || text;
+        return firstLine.replace(/[#*_`\[\]]/g, '').trim().substring(0, 60);
+    }
+
+    private formatDateTime(d: Date): string {
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    private formatDate(d: Date): string {
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    }
+
+    private formatTime(d: Date): string {
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    private buildFrontmatter(title: string, created: string, modified: string, dayStr: string, contexts: string[], pinned: boolean = false, project?: string): string {
+        const contextYaml = contexts.length > 0 ? contexts.map(c => `  - ${c}`).join('\n') : '  []';
+        const projectLine = project ? `project: "${project.replace(/"/g, "'")}"\n` : '';
+        return `---\ntitle: "${title.replace(/"/g, "'")}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA\ncontext:\n${contextYaml}\ntags:\n${contextYaml}\npinned: ${pinned}\n${projectLine}---\n`;
+    }
+
+    private buildTaskFrontmatter(title: string, created: string, modified: string, dayStr: string, status: string, due: string, contexts: string[], project?: string): string {
+        const contextYaml = contexts.length > 0 ? contexts.map(c => `  - ${c}`).join('\n') : '  []';
+        const dueYaml = due ? `"[[${due}]]"` : '""';
+        const projectLine = project ? `project: "${project.replace(/"/g, "'")}"\n` : '';
+        return `---\ntitle: "${title.replace(/"/g, "'")}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA_TASKS\nstatus: ${status}\ndue: ${dueYaml}\ncontext:\n${contextYaml}\ntags:\n${contextYaml}\n${projectLine}---\n`;
+    }
+
+    private generateFilename(prefix: string = ''): string {
+        const now = new Date();
+        const pad = (n: number, len = 2) => n.toString().padStart(len, '0');
+        const date = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
+        const time = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}${pad(now.getMilliseconds(), 3)}`;
+        const rand = Math.random().toString(36).substring(2, 5);
+        return `${prefix}${date}_${time}_${rand}.md`;
+    }
+
+    async ensureFolder(folder: string) {
+        const { vault } = this.app;
+        const parts = folder.split('/');
+        let pathSoFar = '';
+        for (const part of parts) {
+            pathSoFar = pathSoFar ? pathSoFar + '/' + part : part;
+            if (!vault.getAbstractFileByPath(pathSoFar)) {
+                try { await vault.createFolder(pathSoFar); } catch {}
+            }
+        }
+    }
+
+    async createThoughtFile(text: string, contexts: string[], project?: string): Promise<TFile> {
+        const folder = this.settings.thoughtsFolder.trim() || '000 Bin/MINA V2';
+        await this.ensureFolder(folder);
+        
+        const now = new Date();
+        const created = this.formatDateTime(now);
+        const dayStr = this.formatDate(now);
+        const title = this.extractTitle(text);
+        const fm = this.buildFrontmatter(title, created, created, dayStr, contexts, false, project);
+        const filename = this.generateFilename();
+        
+        try {
+            const file = await this.app.vault.create(`${folder}/${filename}`, fm + text);
+            new Notice('Thought saved!');
+            return file;
+        } catch (e) {
+            new Notice('MINA Error: ' + e.message);
+            throw e;
+        }
+    }
+
+    async createTaskFile(text: string, contexts: string[], dueDate?: string, project?: string): Promise<TFile> {
+        const folder = this.settings.tasksFolder.trim() || '000 Bin/MINA V2 Tasks';
+        await this.ensureFolder(folder);
+        
+        const now = new Date();
+        const created = this.formatDateTime(now);
+        const dayStr = this.formatDate(now);
+        const title = this.extractTitle(text);
+        const due = dueDate || '';
+        const fm = this.buildTaskFrontmatter(title, created, created, dayStr, 'open', due, contexts, project);
+        const filename = this.generateFilename('task_');
+        
+        try {
+            const file = await this.app.vault.create(`${folder}/${filename}`, fm + text);
+            new Notice('Task saved!');
+            return file;
+        } catch (e) {
+            new Notice('MINA Error: ' + e.message);
+            throw e;
+        }
+    }
+
+    async editThought(filePath: string, newText: string, contexts: string[]): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return;
+        
+        try {
+            const content = await this.app.vault.read(file);
+            const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
+            if (!fmMatch) return;
+            
+            const oldFm = fmMatch[1];
+            const get = (key: string) => { const m = oldFm.match(new RegExp(`^${key}: (.+)$`, 'm')); return m ? m[1].trim() : ''; };
+            
+            const created = get('created') || this.formatDateTime(new Date());
+            const pinned = get('pinned') === 'true';
+            const project = get('project')?.replace(/^"|"$/g, '');
+            
+            const now = new Date();
+            const title = this.extractTitle(newText);
+            const newFm = this.buildFrontmatter(title, created, this.formatDateTime(now), this.formatDate(now), contexts, pinned, project);
+            
+            // Preserve comments/replies if any
+            const bodyWithComments = content.slice(fmMatch[0].length);
+            const replyIdx = bodyWithComments.indexOf('\n## [[');
+            const bodyToSave = replyIdx !== -1 ? newText + bodyWithComments.slice(replyIdx) : newText;
+            
+            await this.app.vault.modify(file, newFm + bodyToSave);
+        } catch (e) {
+            new Notice('MINA Error: ' + e.message);
+        }
+    }
+
+    async editTask(filePath: string, newText: string, contexts: string[], dueDate?: string): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return;
+        
+        try {
+            const content = await this.app.vault.read(file);
+            const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
+            if (!fmMatch) return;
+            
+            const oldFm = fmMatch[1];
+            const get = (key: string) => { const m = oldFm.match(new RegExp(`^${key}: (.+)$`, 'm')); return m ? m[1].trim() : ''; };
+            
+            const created = get('created') || this.formatDateTime(new Date());
+            const status = get('status') || 'open';
+            const project = get('project')?.replace(/^"|"$/g, '');
+            const due = dueDate ?? (oldFm.match(/^due: "?\[?\[?([\d-]*)\]?\]?"?$/m)?.[1] || '');
+            
+            const now = new Date();
+            const title = this.extractTitle(newText);
+            const newFm = this.buildTaskFrontmatter(title, created, this.formatDateTime(now), this.formatDate(now), status, due, contexts, project);
+            
+            await this.app.vault.modify(file, newFm + newText + '\n');
+        } catch (e) {
+            new Notice('MINA Error: ' + e.message);
+        }
+    }
+
+    async toggleTask(filePath: string, done: boolean): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return;
+        
+        try {
+            const content = await this.app.vault.read(file);
+            const newStatus = done ? 'done' : 'open';
+            let updated = content.replace(/^status: (open|done)$/m, `status: ${newStatus}`);
+            if (updated === content) updated = content.replace(/^(---\n[\s\S]*?)\n---/m, `$1\nstatus: ${newStatus}\n---`);
+            
+            const final = updated.replace(/^modified: .+$/m, `modified: ${this.formatDateTime(new Date())}`);
+            await this.app.vault.modify(file, final);
+        } catch (e) {
+            new Notice('MINA Error: ' + e.message);
+        }
+    }
+
+    async deleteFile(filePath: string, type: 'thoughts' | 'tasks'): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return;
+        
+        const folder = type === 'thoughts' ? this.settings.thoughtsFolder : this.settings.tasksFolder;
+        const trashFolder = (folder.trim() || '000 Bin/MINA V2') + '/trash';
+        await this.ensureFolder(trashFolder);
+        
+        try {
+            const trashPath = `${trashFolder}/${file.basename}_${Date.now()}.md`;
+            await this.app.vault.rename(file, trashPath);
+            new Notice('Moved to trash.');
+        } catch (e) {
+            new Notice('MINA Error: ' + e.message);
+        }
+    }
+
+    async appendComment(filePath: string, text: string): Promise<boolean> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return false;
+        
+        try {
+            const now = new Date();
+            const anchor = `reply-${Date.now()}`;
+            const header = `## [[${this.formatDate(now)}]] ${this.formatTime(now)} ^${anchor}`;
+            const existing = await this.app.vault.read(file);
+            const updated = existing.trimEnd() + `\n\n${header}\n${text}\n`;
+            await this.app.vault.modify(file, updated);
+            
+            // Update modified date in frontmatter
+            const withMod = updated.replace(/^modified: .+$/m, `modified: ${this.formatDateTime(now)}`);
+            if (withMod !== updated) await this.app.vault.modify(file, withMod);
+            
+            return true;
+        } catch (e) {
+            new Notice('MINA Error: ' + e.message);
+            return false;
+        }
+    }
+
+    async editReply(filePath: string, anchor: string, newText: string): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return;
+        
+        try {
+            const content = await this.app.vault.read(file);
+            const lines = content.split('\n');
+            const idx = lines.findIndex(l => l.includes(`^${anchor}`));
+            if (idx === -1) return;
+            
+            let endIdx = lines.findIndex((l, i) => i > idx && l.startsWith('## [['));
+            if (endIdx === -1) endIdx = lines.length;
+            
+            const newLines = [...lines.slice(0, idx + 1), newText, ...lines.slice(endIdx)];
+            await this.app.vault.modify(file, newLines.join('\n'));
+        } catch (e) {
+            new Notice('MINA Error: ' + e.message);
+        }
+    }
+
+    async deleteReply(filePath: string, anchor: string): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return;
+        
+        try {
+            const content = await this.app.vault.read(file);
+            const lines = content.split('\n');
+            const idx = lines.findIndex(l => l.includes(`^${anchor}`));
+            if (idx === -1) return;
+            
+            // Find start of the comment (the header line might have empty lines above it)
+            let startIdx = idx;
+            while (startIdx > 0 && lines[startIdx-1].trim() === '') startIdx--;
+            
+            let endIdx = lines.findIndex((l, i) => i > idx && l.startsWith('## [['));
+            if (endIdx === -1) endIdx = lines.length;
+            
+            const newLines = [...lines.slice(0, startIdx), ...lines.slice(endIdx)];
+            await this.app.vault.modify(file, newLines.join('\n'));
+        } catch (e) {
+            new Notice('MINA Error: ' + e.message);
+        }
+    }
+
+    async getHabitStatus(date: string): Promise<string[]> {
+        const folder = this.settings.habitsFolder.trim() || '000 Bin/MINA V2 Habits';
+        const path = `${folder}/${date}.md`;
+        const file = this.app.vault.getAbstractFileByPath(path);
+        if (!(file instanceof TFile)) return [];
+        try {
+            const content = await this.app.vault.read(file);
+            const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
+            if (!fmMatch) return [];
+            const completedLine = fmMatch[1].split('\n').find(l => l.startsWith('completed:'));
+            if (!completedLine) return [];
+            const idsMatch = completedLine.match(/completed:\s*\[(.*)\]/);
+            return idsMatch ? idsMatch[1].split(',').map(id => id.trim().replace(/^['"]|['"]$/g, '')).filter(id => id) : [];
+        } catch { return []; }
+    }
+
+    async toggleHabit(date: string, habitId: string): Promise<void> {
+        const folder = this.settings.habitsFolder.trim() || '000 Bin/MINA V2 Habits';
+        const path = `${folder}/${date}.md`;
+        let completedIds = await this.getHabitStatus(date);
+        completedIds = completedIds.includes(habitId) ? completedIds.filter(id => id !== habitId) : [...completedIds, habitId];
+
+        const idsYaml = completedIds.length > 0 ? `['${completedIds.join("', '")}']` : '[]';
+        const content = `---\ndate: ${date}\ncompleted: ${idsYaml}\n---\n\n# Habits for ${date}\n`;
+
+        const file = this.app.vault.getAbstractFileByPath(path);
+        if (file instanceof TFile) await this.app.vault.modify(file, content);
+        else {
+            await this.ensureFolder(folder);
+            await this.app.vault.create(path, content);
+        }
+    }
+}

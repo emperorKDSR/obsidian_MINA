@@ -38,8 +38,8 @@ export class SynthesisTab extends BaseTab {
             attr: { style: 'flex-grow: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch;' }
         });
 
-        const recentThoughts = Array.from(this.view.plugin.thoughtIndex.values())
-            .filter(t => !t.project) // Focus on unorganized items
+        const recentThoughts = Array.from(this.index.thoughtIndex.values())
+            .filter(t => !t.project)
             .sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate)
             .slice(0, 30);
 
@@ -64,7 +64,6 @@ export class SynthesisTab extends BaseTab {
                 });
                 card.addEventListener('dragend', () => card.style.opacity = '1');
                 
-                // Clicking selects it for mobile/manual synthesis
                 card.addEventListener('click', () => {
                     if (this.activeMasterNote) {
                         this.appendToMasterNote(thought, container);
@@ -103,9 +102,9 @@ export class SynthesisTab extends BaseTab {
         newBtn.addEventListener('click', async () => {
             const name = await this.promptForName();
             if (name) {
-                const folder = this.view.plugin.settings.newNoteFolder;
+                const folder = this.settings.newNoteFolder;
                 const path = `${folder}/${name}.md`;
-                const file = await this.view.app.vault.create(path, `---\narea: INSIGHT\ncreated: ${moment().format('YYYY-MM-DD HH:mm:ss')}\n---\n\n# ${name}\n\n`);
+                const file = await this.app.vault.create(path, `---\narea: INSIGHT\ncreated: ${moment().format('YYYY-MM-DD HH:mm:ss')}\n---\n\n# ${name}\n\n`);
                 this.activeMasterNote = file;
                 this.render(container);
             }
@@ -116,18 +115,17 @@ export class SynthesisTab extends BaseTab {
         });
 
         if (this.activeMasterNote) {
-            const rawContent = await this.view.app.vault.read(this.activeMasterNote);
+            const rawContent = await this.app.vault.read(this.activeMasterNote);
             const renderTarget = content.createEl('div', { cls: 'mina-insight-content', attr: { style: 'line-height: 1.6; font-size: 1.05em;' } });
-            await MarkdownRenderer.render(this.view.plugin.app, rawContent, renderTarget, this.activeMasterNote.path, this.view);
+            await MarkdownRenderer.render(this.app, rawContent, renderTarget, this.activeMasterNote.path, this.view);
             
-            // Drop Zone
             renderTarget.addEventListener('dragover', (e) => e.preventDefault());
             renderTarget.addEventListener('drop', async (e) => {
                 e.preventDefault();
                 const data = e.dataTransfer?.getData('text/plain');
                 if (data && this.activeMasterNote) {
-                    const existing = await this.view.app.vault.read(this.activeMasterNote);
-                    await this.view.app.vault.modify(this.activeMasterNote, existing.trimEnd() + '\n\n' + data);
+                    const existing = await this.app.vault.read(this.activeMasterNote);
+                    await this.app.vault.modify(this.activeMasterNote, existing.trimEnd() + '\n\n' + data);
                     this.render(container);
                     new Notice('Thought synthesized.');
                 }
@@ -141,9 +139,9 @@ export class SynthesisTab extends BaseTab {
 
     private async appendToMasterNote(thought: ThoughtEntry, container: HTMLElement) {
         if (!this.activeMasterNote) return;
-        const existing = await this.view.app.vault.read(this.activeMasterNote);
+        const existing = await this.app.vault.read(this.activeMasterNote);
         const data = `[[${thought.filePath}|${thought.title}]]\n\n${thought.body}`;
-        await this.view.app.vault.modify(this.activeMasterNote, existing.trimEnd() + '\n\n' + data);
+        await this.app.vault.modify(this.activeMasterNote, existing.trimEnd() + '\n\n' + data);
         new Notice('Thought synthesized.');
         this.render(container);
     }

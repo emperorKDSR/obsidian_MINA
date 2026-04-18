@@ -12,46 +12,41 @@ When capturing thoughts and tasks,  you must datetimestamp it so it will be easi
 
 All new captures need to be appended in the beginning of the file.
 
-## Current Implementation: MINA V2 Personal OS
+## Best-in-Class Architecture: MINA V2 Personal OS
 
-MINA V2 has evolved from a simple capture tool into a holistic **Personal Operating System (Life-OS)** built on four foundational pillars: **Organization**, **Process**, **Reflection**, and **Synergy**.
+MINA V2 has transitioned into a professional-grade **Personal Operating System** built on a decoupled, service-oriented architecture.
 
-### 1. The Pillar of Process: Habit Lab
-- **Minimalist Tracking**: A horizontal row of "Stitch Dots" on the Daily Focus dashboard.
-- **Visual Feedback**: Habits use a subtle "glow" effect when completed, following the Timeline Mode aesthetic.
-- **Data Integrity**: Completion status is stored in daily Markdown files with YAML frontmatter, ensuring 100% interoperability with other plugins.
-- **Configuration**: A dedicated **Habit Config** modal allows for rapid definition of habits and custom icons.
+### 1. The Core Architecture (Service-Oriented)
+The codebase is structured for maximum scalability and type safety:
+- **`AiService`**: Centralized intelligence layer. Handles Gemini model routing, transcription, and prompt engineering with robust fallbacks and error handling.
+- **`VaultService`**: Sole authority for file I/O. Enforces the **Unified Data Model**, managing the creation, modification, and deletion of all capture files.
+- **`IndexService`**: A high-performance metadata provider. Maintains real-time in-memory indices of all thoughts and tasks for instantaneous UI updates without vault-wide re-scans.
 
-### 2. The Pillar of Organization: Projects Mode
-- **Objective-Based Review**: Group all tasks and thoughts by project name via the `project:` YAML key.
-- **Project Dashboard**: A grid-based view of all active projects in the vault.
-- **Project Focus**: Dedicated dashboards for each project, featuring pending tasks, project-specific notes, and instant capture buttons that pre-fill project metadata.
+### 2. Unified Data Model (Markdown YAML)
+- **Retirement of Tables**: Legacy table-based storage has been retired in favor of pure **Markdown files with YAML frontmatter**.
+- **First-Class Citizens**: Every thought and task is an individual file, ensuring perfect interoperability with Obsidian's core features (Graph, Search, Backlinks).
+- **Auto-Migration**: A built-in bridge automatically migrates legacy table rows into the new file model upon plugin startup.
 
-### 3. The Pillar of Reflection: Weekly Review
-- **Inbox Clearing**: Automatically scans for tasks and thoughts that lack a due date or project, facilitating rapid organization.
-- **The Rearview**: Provides a 7-day activity summary (Notes created, Tasks completed).
-- **The Horizon**: A dedicated interface to set **3 Weekly Focus** goals.
-- **Dashboard Integration**: Current weekly goals are displayed at the top of the Daily Focus mode as constant reminders.
+### 3. Navigation: The Hub & Spoke Model
+- **Command Center**: A premium central hub serving as the "Heart" of the OS. Features dynamic snapshots of Habits, Cashflow, and a Global Capture field.
+- **Guided Workflow**: Specialized modes (Daily, Projects, AI, etc.) act as "Spokes" connected to the Hub.
+- **The Home Circuit**: A persistent **🏠 Home** icon in every mode ensures seamless transit back to the Command Center.
 
-### 4. The Pillar of Synergy: Voice Note Synergy
-- **Advanced Routing**: Transcribed voice notes can be instantly routed as a **Thought**, a **Task**, or linked to a **Project**.
-- **Context Preservation**: Routing a voice note to a project automatically updates the frontmatter and associates it with the project's dashboard.
-
-### Core UI & Aesthetics
-- **Dedicated Modes (High Focus):** Daily (Sun), Projects (Folder), Weekly Review (Calendar-Check), Timeline (Clock), Journal (Pen), Task (Check-square), Finance (Dollar), AI (Robot), Voice (Microphone), Focus (Target), Memento Mori (Hourglass), and Settings (Gear).
-- **Config Mode Toggle:** Discrete "Config" buttons allow for toggling navigation pills and metadata bars to maintain a clean slate.
-- **Modern Input Modal:** Clean Slate writing experience with natural language dates (`@today`), smart suggestions (`[[`, `#`), and attachment support.
-- **Minimalist Mobile UI:** simplified display title "M.I.N.A." for a distraction-free mobile experience.
-- **Borderless & Drag-Capable:** Truly borderless windows with custom drag handles for desktop power users.
+### 4. OS Pillars & Synergy
+- **Habit Lab**: Stitch Dots tracking with YAML persistence.
+- **Projects Mode**: Objective-based grouping and dedicated project focus dashboards.
+- **Weekly Review & Compass**: Multi-layered reflection (Weekly Focus + Quarterly North Star Goals).
+- **Synthesis Mode**: Split-pane workspace for transforming raw captures into permanent knowledge.
+- **AI Synergy**: Debounced auto-classification during capture and intelligent activity summaries.
 
 ### Security, Performance & Release Mandates
 The plugin is governed by strict, always-running mandates:
-- **Lead Engineer**: Enforces modular architecture, type safety, and technical design documents for all features.
-- **AI Architect**: Ensures robust configuration, model fallbacks, error resilience, and prompt engineering excellence.
-- **Optimization**: Zero-bloat policy, targeted re-renders, and high-efficiency vault indexing.
-- **UX Auditor**: Protects the modern, minimalist aesthetic and unified design theme.
-- **Security Auditor**: Continuous vulnerability scanning and rigorous secret protection (no hardcoded keys).
-- **Release Manager**: Strict documentation requirements and explicit user approval for all commits, merges, and pushes.
+- **Lead Engineer**: Enforces modular architecture, type safety, and SOLID design principles.
+- **AI Architect**: Ensures robust configuration, model fallbacks, and prompt engineering excellence.
+- **Optimization**: Minimal memory footprint via lazy-loading (dynamic imports) and efficient indexing.
+- **UX Auditor**: Protects the "Premium Minimalist" aesthetic and unified design language.
+- **Security Auditor**: Rigorous secret protection and sanitization of all rendered content.
+- **Release Manager**: Strict documentation integrity and explicit user approval for all production actions.
 
 ## Build & Deploy
 

@@ -1,9 +1,8 @@
-import { ItemView, WorkspaceLeaf, Platform, moment, Notice, TFile, ViewStateResult, App, Menu, MenuItem } from 'obsidian';
-import MinaPlugin from './main';
-import { VIEW_TYPE_MINA, KATANA_ICON_ID, NINJA_AVATAR_SVG } from './constants';
-import { ThoughtEntry, TaskEntry, ReplyEntry, DueEntry, MinaSettings } from './types';
+import { ItemView, WorkspaceLeaf, moment, TFile, Platform, setIcon } from 'obsidian';
+import { VIEW_TYPE_MINA, KATANA_ICON_ID } from './constants';
+import type MinaPlugin from './main';
 import { BaseTab } from './tabs/BaseTab';
-import { EditEntryModal } from './modals/EditEntryModal';
+import type { ThoughtEntry, TaskEntry } from './types';
 
 export class MinaView extends ItemView {
     plugin: MinaPlugin;
@@ -12,84 +11,56 @@ export class MinaView extends ItemView {
     dueDate: string = moment().format('YYYY-MM-DD');
     activeTab: string = 'home';
     isDedicated: boolean = false;
+    
+    // UI State
     timelineSelectedDate: string = moment().format('YYYY-MM-DD');
-    // Timeline State
     timelineScrollBody: HTMLElement;
     timelineCarousel: HTMLElement;
+    timelineStartDate: any;
+    timelineEndDate: any;
     timelineDateElements: Map<string, HTMLElement> = new Map();
     timelineDaySections: Map<string, HTMLElement> = new Map();
-    timelineStartDate: moment.Moment;
-    timelineEndDate: moment.Moment;
-
-
-    // Voice Recording State
-    mediaRecorder: MediaRecorder | null = null;
-    audioChunks: Blob[] = [];
-    isRecording: boolean = false;
-    recordingStartTime: number = 0;
-    recordingTimerInterval: any = null;
-    playbackAudio: HTMLAudioElement | null = null;
-    currentObjectUrl: string | null = null;
-
-    // AI Chat State
-    chatHistory: { role: 'user' | 'assistant'; text: string; sources?: string[] }[] = [];
-    chatContainer: HTMLElement;
-    groundedNotes: TFile[] = [];
-    groundedNotesBar: HTMLElement | null = null;
-    webSearchEnabled: boolean = false;
-    currentChatFile: string | null = null;
     
-    // Tasks Review Filters
-    tasksFilterStatus: 'all' | 'pending' | 'completed' = 'pending';
-    tasksFilterContext: string[] = [];
-    tasksFilterDate: string = 'today+overdue';
-    tasksFilterDateStart: string = '';
-    tasksFilterDateEnd: string = '';
-    showPreviousTasks: boolean = true;
-    showCaptureInTasks: boolean = false;
-    showTasksFilter: boolean = false;
-
-    // Threads State
+    selectedContexts: string[] = [];
     collapsedThreads: Set<string> = new Set();
-    collapsedThreadsSeeded: boolean = false;
-    replyToId: string | null = null;
-    replyToText: string | null = null;
-
-    // Thoughts Review Filters
-    thoughtsFilterContext: string[] = [];
-    thoughtsFilterDate: string = 'last-5-days';
+    thoughtsFilterTodo: boolean = false;
+    thoughtsFilterDate: string = 'today';
     thoughtsFilterDateStart: string = '';
     thoughtsFilterDateEnd: string = '';
-    thoughtsFilterTodo: boolean = false;
+    thoughtsFilterContext: string[] = [];
     showPreviousThoughts: boolean = true;
-    showCaptureInThoughts: boolean = false;
-    showThoughtsFilter: boolean = false;
-    searchQuery: string = '';
-    showSearch: boolean = !Platform.isMobile;
-
-    reviewTasksContainer: HTMLElement;
+    showCaptureInThoughts: boolean = true;
+    thoughtsOffset: number = 0;
+    _parsedRoots: ThoughtEntry[] = [];
     reviewThoughtsContainer: HTMLElement;
-    focusRowContainer: HTMLElement | null = null;
-    selectedContexts: string[];
+    thoughtsRowContainer: HTMLElement;
+    focusRowContainer: HTMLElement;
+
+    searchQuery: string = '';
+    
+    // AI State
+    chatHistory: any[] = [];
+    isAiLoading: boolean = false;
+    webSearchEnabled: boolean = false;
+    groundedFiles: TFile[] = [];
+    groundedNotes: TFile[] = []; // Used by AiTab
+    groundedNotesBar: HTMLElement;
+    chatContainer: HTMLElement;
+    currentChatFile: string | null = null;
+
+    // Voice State
+    isRecording: boolean = false;
 
     private _baseTabDelegate: BaseTab;
-
-    // Pagination/Offset state for tabs
-    tasksOffset = 0;
-    thoughtsOffset = 0;
-    _parsedRoots: ThoughtEntry[] = [];
-    tasksRowContainer: HTMLElement | null = null;
-    thoughtsRowContainer: HTMLElement | null = null;
 
     constructor(leaf: WorkspaceLeaf, plugin: MinaPlugin) {
         super(leaf);
         this.plugin = plugin;
-        this.selectedContexts = Array.isArray(this.plugin.settings.selectedContexts) ? [...this.plugin.settings.selectedContexts] : [];
-        this._baseTabDelegate = new BaseTab(this);
+        this._baseTabDelegate = new (class extends BaseTab { render() {} })(this);
     }
 
-    getViewType() { return VIEW_TYPE_MINA; }
-    getDisplayText() { 
+    getViewType(): string { return VIEW_TYPE_MINA; }
+    getDisplayText(): string {
         if (Platform.isMobile) return `M.I.N.A.`;
         return this.getModeTitle();
     }
@@ -112,364 +83,63 @@ export class MinaView extends ItemView {
             case 'timeline': return "Timeline";
             case 'journal': return "Journal";
             case 'focus': return "Focus";
-            case 'grundfos': return "Grundfos";
-            case 'pf': return "Personal Finance";
             case 'memento-mori': return "Memento Mori";
-            default: {
-                const custom = this.plugin.settings.customModes.find(m => m.id === this.activeTab);
-                return custom ? custom.name : "Dashboard";
-            }
+            default: return "MINA";
         }
     }
 
-    getState() { return { activeTab: this.activeTab, isDedicated: this.isDedicated }; }
-    async setState(state: any, result: ViewStateResult): Promise<void> {
-        if (state) {
-            if (state.activeTab) this.activeTab = state.activeTab;
-            if (state.isDedicated !== undefined) this.isDedicated = state.isDedicated;
-            this.renderView();
-            (this.leaf as any).updateHeader();
-        }
-        await super.setState(state, result);
-    }
-
-    async detachTab(tabId: string) {
-        const leaf = this.app.workspace.getLeaf('window');
-        await leaf.setViewState({
-            type: VIEW_TYPE_MINA,
-            active: true,
-            state: { activeTab: tabId, isDedicated: true }
-        });
-    }
-
-    async onOpen() {
-        this.renderView();
-        if (Platform.isMobile && window.visualViewport) {
-            const vv = window.visualViewport;
-            const syncViewport = () => {
-                const container = this.containerEl.children[1] as HTMLElement;
-                if (!container) return;
-                container.style.position = 'fixed';
-                container.style.top    = `${vv.offsetTop}px`;
-                container.style.left   = `${vv.offsetLeft}px`;
-                container.style.width  = `${vv.width}px`;
-                container.style.height = `${vv.height}px`;
-                container.style.maxHeight = `${vv.height}px`;
-            };
-            syncViewport();
-            vv.addEventListener('resize', syncViewport);
-            vv.addEventListener('scroll', syncViewport);
-            (this as any)._vvMainCleanup = () => {
-                vv.removeEventListener('resize', syncViewport);
-                vv.removeEventListener('scroll', syncViewport);
-            };
-        }
-    }
-
-    async onClose() { (this as any)._vvMainCleanup?.(); }
+    async onOpen() { this.renderView(); }
 
     renderView() {
         const container = this.containerEl.children[1] as HTMLElement;
         container.empty();
+        container.addClass('mina-view-root');
+
+        // Header
+        const headerWrap = container.createEl('div', { cls: 'mina-header-wrap', attr: { style: 'padding: 10px 14px; border-bottom: 1px solid var(--background-modifier-border-faint); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;' } });
+        const leftHeader = headerWrap.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 10px;' } });
         
-        if (Platform.isMobile) {
-            const vv = window.visualViewport;
-            const vvh = vv ? vv.height : window.innerHeight;
-            container.style.position = 'fixed';
-            container.style.top = `${vv ? vv.offsetTop : 0}px`;
-            container.style.left = `${vv ? vv.offsetLeft : 0}px`;
-            container.style.width = `${vv ? vv.width : window.innerWidth}px`;
-            container.style.height = `${vvh}px`;
-            container.style.maxHeight = `${vvh}px`;
-            container.style.display = 'flex';
-            container.style.flexDirection = 'column';
-            container.style.overflow = 'hidden';
-        } else {
-            container.style.display = 'flex';
-            container.style.flexDirection = 'column';
-            container.style.height = '100%';
-            container.style.overflow = 'hidden';
-            const dragHandle = container.createEl('div', { attr: { style: 'height: 14px; width: 100%; -webkit-app-region: drag; flex-shrink: 0; display: flex; justify-content: center; align-items: center; margin-bottom: 8px; cursor: grab;' } });
-            dragHandle.createEl('div', { attr: { style: 'width: 40px; height: 4px; background-color: var(--background-modifier-border); border-radius: 4px;' }});
-        }
-
-        const windowParent = this.containerEl.closest('.mod-window');
-        const isWindow = !Platform.isMobile && windowParent !== null;
-        if (isWindow) {
-            windowParent.addClass('mina-dedicated-window');
-            const tabContainer = this.containerEl.closest('.workspace-tabs');
-            if (tabContainer) {
-                const tabHeader = tabContainer.querySelector('.workspace-tab-header-container');
-                if (tabHeader) (tabHeader as HTMLElement).style.display = 'none';
-            }
-            const viewHeader = this.containerEl.querySelector('.view-header');
-            if (viewHeader) (viewHeader as HTMLElement).style.display = 'none';
-        }
-
-        if (isWindow && !this.isDedicated && this.activeTab !== 'timeline') {
-            const header = container.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; padding: 10px 12px; border-bottom: 1px solid var(--background-modifier-border); background: var(--background-primary-alt);' } });
-            const leftHeader = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px;' } });
-            const closeBtn = leftHeader.createEl('button', { text: '✕', attr: { style: 'padding: 4px 8px; border-radius: 4px; background: transparent; color: var(--text-muted); font-size: 1.2em; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;' } });
-            closeBtn.addEventListener('click', () => { this.leaf.detach(); });
+        if (this.isDedicated) {
+            const closeBtn = leftHeader.createEl('button', { attr: { style: 'background: transparent; border: none; padding: 0; cursor: pointer; color: var(--text-muted); display: flex; align-items: center;' } });
+            setIcon(closeBtn, 'x');
+            closeBtn.addEventListener('click', () => this.leaf.detach());
             leftHeader.createEl('h3', { text: this.getModeTitle(), attr: { style: 'margin: 0; font-size: 1.1em; color: var(--text-accent);' } });
         }
 
-        if (this.activeTab === 'home') import('./tabs/CommandCenterTab').then(({ CommandCenterTab }) => new CommandCenterTab(this).render(container));
-        else if (this.activeTab === 'daily') import('./tabs/DailyTab').then(({ DailyTab }) => new DailyTab(this).render(container));
-        else if (this.activeTab === 'review-tasks') import('./tabs/TasksTab').then(({ TasksTab }) => new TasksTab(this).render(container));
-        else if (this.activeTab === 'review-thoughts') import('./tabs/ThoughtsTab').then(({ ThoughtsTab }) => new ThoughtsTab(this).render(container));
-        else if (this.activeTab === 'mina-ai') import('./tabs/AiTab').then(({ AiTab }) => new AiTab(this).render(container));
-        else if (this.activeTab === 'dues' || this.activeTab === 'pf') import('./tabs/DuesTab').then(({ DuesTab }) => new DuesTab(this).render(container));
-        else if (this.activeTab === 'projects') import('./tabs/ProjectsTab').then(({ ProjectsTab }) => new ProjectsTab(this).render(container));
-        else if (this.activeTab === 'synthesis') import('./tabs/SynthesisTab').then(({ SynthesisTab }) => new SynthesisTab(this).render(container));
-        else if (this.activeTab === 'compass') import('./tabs/CompassTab').then(({ CompassTab }) => new CompassTab(this).render(container));
-        else if (this.activeTab === 'review') import('./tabs/ReviewTab').then(({ ReviewTab }) => new ReviewTab(this).render(container));
-        else if (this.activeTab === 'settings') import('./tabs/SettingsTab').then(({ SettingsTab }) => new SettingsTab(this).render(container));
-        else if (this.activeTab === 'voice-note') import('./tabs/VoiceTab').then(({ VoiceTab }) => new VoiceTab(this).render(container));
-        else if (this.activeTab === 'timeline') import('./tabs/TimelineTab').then(({ TimelineTab }) => new TimelineTab(this).render(container));
-        else if (this.activeTab === 'focus') import('./tabs/FocusTab').then(({ FocusTab }) => new FocusTab(this).render(container));
-        else if (this.activeTab === 'memento-mori') import('./tabs/MementoMoriTab').then(({ MementoMoriTab }) => new MementoMoriTab(this).render(container));
-        else if (this.activeTab === 'journal') import('./tabs/JournalTab').then(({ JournalTab }) => new JournalTab(this).render(container));
-        else if (this.activeTab === 'grundfos' || this.plugin.settings.customModes.some(m => m.id === this.activeTab)) {
-            import('./tabs/ContextTab').then(({ ContextTab }) => new ContextTab(this).render(container, this.activeTab));
+        const contentArea = container.createEl('div', { cls: 'mina-view-content', attr: { style: 'flex-grow: 1; overflow: hidden; display: flex; flex-direction: column;' } });
+        this.renderTab(contentArea);
+    }
+
+    private renderTab(container: HTMLElement) {
+        const tab = this.activeTab;
+        if (tab === 'home') import('./tabs/CommandCenterTab').then(({ CommandCenterTab }) => new CommandCenterTab(this).render(container));
+        else if (tab === 'daily') import('./tabs/DailyTab').then(({ DailyTab }) => new DailyTab(this).render(container));
+        else if (tab === 'review-thoughts') import('./tabs/ThoughtsTab').then(({ ThoughtsTab }) => new ThoughtsTab(this).render(container));
+        else if (tab === 'review-tasks') import('./tabs/TasksTab').then(({ TasksTab }) => new TasksTab(this).render(container));
+        else if (tab === 'mina-ai') import('./tabs/AiTab').then(({ AiTab }) => new AiTab(this).render(container));
+        else if (tab === 'dues') import('./tabs/DuesTab').then(({ DuesTab }) => new DuesTab(this).render(container));
+        else if (tab === 'projects') import('./tabs/ProjectsTab').then(({ ProjectsTab }) => new ProjectsTab(this).render(container));
+        else if (tab === 'synthesis') import('./tabs/SynthesisTab').then(({ SynthesisTab }) => new SynthesisTab(this).render(container));
+        else if (tab === 'compass') import('./tabs/CompassTab').then(({ CompassTab }) => new CompassTab(this).render(container));
+        else if (tab === 'review') import('./tabs/ReviewTab').then(({ ReviewTab }) => new ReviewTab(this).render(container));
+        else if (tab === 'voice-note') import('./tabs/VoiceTab').then(({ VoiceTab }) => new VoiceTab(this).render(container));
+        else if (tab === 'settings') import('./tabs/SettingsTab').then(({ SettingsTab }) => new SettingsTab(this).render(container));
+        else if (tab === 'timeline') import('./tabs/TimelineTab').then(({ TimelineTab }) => new TimelineTab(this).render(container));
+        else if (tab === 'focus') import('./tabs/FocusTab').then(({ FocusTab }) => new FocusTab(this).render(container));
+        else if (tab === 'memento-mori') import('./tabs/MementoMoriTab').then(({ MementoMoriTab }) => new MementoMoriTab(this).render(container));
+        else if (tab === 'journal') import('./tabs/JournalTab').then(({ JournalTab }) => new JournalTab(this).render(container));
+        else if (tab === 'grundfos' || this.plugin.settings.customModes.some(m => m.id === tab)) {
+            import('./tabs/ContextTab').then(({ ContextTab }) => new ContextTab(this).render(container, tab));
         }
     }
 
-    refreshCurrentList() { this._baseTabDelegate.refreshCurrentList(); }
-    hookInternalLinks(el: HTMLElement, sourcePath: string) { this._baseTabDelegate.hookInternalLinks(el, sourcePath); }
-    hookImageZoom(el: HTMLElement) { this._baseTabDelegate.hookImageZoom(el); }
-    hookCheckboxes(el: HTMLElement, entry: ThoughtEntry) { this._baseTabDelegate.hookCheckboxes(el, entry); }
-    renderSearchInput(container: HTMLElement, updateFn: () => void) { this._baseTabDelegate.renderSearchInput(container, updateFn); }
-    renderCaptureMode(container: HTMLElement, isThoughtsOnly = false, isTasksOnly = false) { this._baseTabDelegate.renderCaptureMode(container, isThoughtsOnly, isTasksOnly); }
-    renderTaskRow(entry: TaskEntry, container: HTMLElement, hideMetadata = false) { return this._baseTabDelegate.renderTaskRow(entry, container, hideMetadata); }
-    renderThoughtRow(entry: ThoughtEntry, container: HTMLElement, filePath: string, level = 0, hideAvatar = false, hideMetadata = false, blur?: boolean) { 
-        return this._baseTabDelegate.renderThoughtRow(entry, container, filePath, level, hideAvatar, hideMetadata, blur); 
+    // Bridge methods to Services
+    async callGemini(msg: string, files: TFile[] = [], search: boolean = false, history?: any[]) {
+        return await this.plugin.ai.callGemini(msg, files, search, history, this.plugin.index.thoughtIndex);
     }
 
-    async handleFiles(files: FileList) {
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i]; if (!file || file.size === 0) continue;
-            const arrayBuffer = await file.arrayBuffer(); const ext = file.name.split('.').pop() || 'png';
-            const attachmentPath = await this.plugin.app.fileManager.getAvailablePathForAttachment(file.name);
-            const newFile = await this.plugin.app.vault.createBinary(attachmentPath, arrayBuffer);
-            const isImg = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg', 'webp'].includes(ext.toLowerCase());
-            const link = isImg ? `![[${newFile.name}]]` : `[[${newFile.name}]]`;
-            const ta = this.containerEl.querySelector('textarea') as HTMLTextAreaElement;
-            if (ta) {
-                const start = ta.selectionStart;
-                ta.value = ta.value.substring(0, start) + link + ta.value.substring(ta.selectionEnd);
-                this.content = ta.value;
-                new Notice(`Attached ${newFile.name}`);
-            }
-        }
-    }
-
-    async startRecording(recordButton: HTMLElement, timerDisplay: HTMLElement, statusDisplay: HTMLElement) {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            let mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : (MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '');
-            let ext = mimeType === 'audio/webm' ? 'webm' : 'm4a';
-            this.mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-            this.audioChunks = []; this.isRecording = true;
-            this.mediaRecorder.ondataavailable = e => this.audioChunks.push(e.data);
-            this.mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(this.audioChunks, { type: mimeType });
-                const folder = this.plugin.settings.voiceMemoFolder;
-                if (!this.app.vault.getAbstractFileByPath(folder)) await this.app.vault.createFolder(folder);
-                const filename = `voice-${moment().format('YYYYMMDD-HHmmss')}.${ext}`;
-                await this.app.vault.createBinary(`${folder}/${filename}`, await audioBlob.arrayBuffer());
-                new Notice(`Voice note saved: ${filename}`); this.isRecording = false; stream.getTracks().forEach(t => t.stop()); this.renderView();
-            };
-            this.mediaRecorder.start(); statusDisplay.setText('Recording...'); recordButton.style.backgroundColor = '#e74c3c'; recordButton.setText('■');
-            this.recordingStartTime = Date.now();
-            this.recordingTimerInterval = setInterval(() => {
-                const elapsed = Date.now() - this.recordingStartTime;
-                const m = Math.floor(elapsed / 60000); const s = Math.floor((elapsed % 60000) / 1000);
-                timerDisplay.setText(`${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
-            }, 1000);
-        } catch (err) { new Notice('Microphone access denied.'); }
-    }
-
-    stopRecording() { if (this.mediaRecorder && this.isRecording) { this.mediaRecorder.stop(); this.isRecording = false; if (this.recordingTimerInterval) clearInterval(this.recordingTimerInterval); } }
-
-    async transcribeAudio(file: TFile): Promise<string> {
-        const { geminiApiKey, geminiModel, transcriptionLanguage } = this.plugin.settings;
-        const audioBuffer = await this.app.vault.readBinary(file);
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
-        const mimeType = (file.extension === 'm4a' || file.extension === 'mp4') ? 'audio/mp4' : `audio/${file.extension}`;
-        const body = { 
-            "contents": [{ 
-                "parts": [{ 
-                    "text": `Transcribe this audio recording and translate the output to ${transcriptionLanguage}. 
-                    Temporal Context: The current date is ${moment().format('dddd, MMMM D, YYYY')}.` 
-                }, { 
-                    "inline_data": { "mime_type": mimeType, "data": base64 } 
-                }] 
-            }] 
-        };
-        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`, { method: 'POST', body: JSON.stringify(body) });
-        const data = await resp.json(); return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "Transcription failed.";
-    }
-
-    
-    updateReviewThoughtsList() {
-        if (this.activeTab === 'review-thoughts') {
-            import('./tabs/ThoughtsTab').then(({ ThoughtsTab }) => new ThoughtsTab(this).updateReviewThoughtsList());
-        }
-    }
-    updateReviewTasksList() {
-        if (this.activeTab === 'review-tasks') {
-            import('./tabs/TasksTab').then(({ TasksTab }) => new TasksTab(this).updateReviewTasksList());
-        }
-    }
-    updateHabitLab() {
-        if (this.activeTab === 'daily') {
-            import('./tabs/DailyTab').then(({ DailyTab }) => {
-                const habitContainer = this.containerEl.querySelector('.mina-habit-container') as HTMLElement;
-                if (habitContainer) new DailyTab(this).updateHabitLab(habitContainer);
-            });
-        }
-    }
-    updateProjectDashboard() {
-        if (this.activeTab === 'projects') {
-            import('./tabs/ProjectsTab').then(({ ProjectsTab }) => new ProjectsTab(this).render(this.containerEl.querySelector('.mina-view-content') as HTMLElement));
-        }
-    }
-    updateContextList(modeId: string) {
-        if (this.activeTab === 'journal' || modeId === 'journal') {
-            import('./tabs/JournalTab').then(({ JournalTab }) => {
-                const list = this.containerEl.querySelector('.mina-journal-list') as HTMLElement;
-                if (list) new JournalTab(this).updateJournalList(list);
-            });
-        } else {
-            import('./tabs/ContextTab').then(({ ContextTab }) => new ContextTab(this).updateContextList(modeId));
-        }
-    }
-    updateFocusList() {
-        import('./tabs/FocusTab').then(({ FocusTab }) => new FocusTab(this).updateFocusList());
-    }
-    saveFocusOrder() {
-        import('./tabs/FocusTab').then(({ FocusTab }) => new FocusTab(this).saveFocusOrder());
-    }
-    getTranscriptionStatus(audioFile: TFile): Promise<boolean> {
-        const backlinks = (this.app.metadataCache as any).getBacklinksForFile(audioFile);
-        const thoughtFolder = this.plugin.settings.thoughtsFolder.trim();
-        if(!backlinks || !backlinks.data) return Promise.resolve(false);
-        for (const path in backlinks.data) if (path.startsWith(thoughtFolder)) return Promise.resolve(true);
-        return Promise.resolve(false);
-    }
-
-    parseChatSession(content: string): { role: 'user' | 'assistant'; text: string }[] {
-        const history: { role: 'user' | 'assistant'; text: string }[] = [];
-        let currentRole: 'user' | 'assistant' | null = null; let currentLines: string[] = [];
-        for (const line of content.split('\n')) {
-            if (line.startsWith('**You:** ')) {
-                if (currentRole && currentLines.length) history.push({ role: currentRole, text: currentLines.join('\n').trim() });
-                currentRole = 'user'; currentLines = [line.substring(9)];
-            } else if (line.startsWith('**MINA:** ')) {
-                if (currentRole && currentLines.length) history.push({ role: currentRole, text: currentLines.join('\n').trim() });
-                currentRole = 'assistant'; currentLines = [line.substring(10)];
-            } else if (currentRole && !line.startsWith('#')) currentLines.push(line);
-        }
-        if (currentRole && currentLines.length) history.push({ role: currentRole, text: currentLines.join('\n').trim() });
-        return history;
-    }
-
-    async callGemini(userMessage: string, groundedFiles: TFile[] = [], webSearch: boolean = false, customHistory?: any[]): Promise<string> {
-        const s = this.plugin.settings;
-        const allThoughts = (Array.from(this.plugin.thoughtIndex.values()) as ThoughtEntry[])
-            .filter(t => !t.context.includes('journal'))
-            .sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate)
-            .slice(0, 50);
-
-        interface SourceItem { id: number; title: string; path: string; type: 'thought' | 'file' | 'image'; content?: string; file?: TFile; }
-        const sources: SourceItem[] = [];
-        let sourceCounter = 1;
-
-        allThoughts.forEach(t => { sources.push({ id: sourceCounter++, title: t.title, path: t.filePath, type: 'thought', content: t.body }); });
-
-        const imageParts: any[] = [];
-        for (const file of groundedFiles) {
-            const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'heic', 'heif'].includes(file.extension.toLowerCase());
-            if (isImage) {
-                const buffer = await this.app.vault.readBinary(file);
-                let binary = ''; const bytes = new Uint8Array(buffer);
-                for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-                const base64 = btoa(binary);
-                const mimeType = `image/${file.extension === 'jpg' ? 'jpeg' : (['png', 'webp', 'gif'].includes(file.extension) ? file.extension : 'png')}`;
-                imageParts.push({ inline_data: { mime_type: mimeType, data: base64 } });
-                sources.push({ id: sourceCounter++, title: file.basename, path: file.path, type: 'image', file });
-            } else {
-                const content = await this.app.vault.read(file);
-                sources.push({ id: sourceCounter++, title: file.basename, path: file.path, type: 'file', content, file });
-            }
-        }
-
-        let systemPrompt = `You are MINA AI, a helpful personal assistant integrated into an Obsidian vault.
-The current date and time is ${moment().format('dddd, MMMM D, YYYY HH:mm:ss')}.
-When the user refers to "today", they mean ${moment().format('dddd, MMMM D, YYYY')}.
-
-`;
-        systemPrompt += "CRITICAL INSTRUCTION: When you use information from the provided sources, you MUST cite them using numeric tags like [1], [2], etc.\n";
-        
-        if (sources.length > 0) {
-            systemPrompt += "### SOURCES AVAILABLE:\n";
-            sources.forEach(src => {
-                systemPrompt += `[${src.id}] Source: ${src.title} (${src.path})\n`;
-                if (src.content) systemPrompt += `Content: ${src.content}\n`;
-                systemPrompt += `---\n`;
-            });
-        }
-
-        const historyToUse = customHistory || this.chatHistory;
-        const contents = historyToUse.map((msg: any, idx: number) => {
-            const isLastMessage = idx === historyToUse.length - 1;
-            const parts: any[] = [{ text: msg.text }];
-            if (isLastMessage && msg.role === 'user' && imageParts.length > 0) parts.push(...imageParts);
-            return { role: msg.role === 'user' ? 'user' : 'model', parts: parts };
-        });
-        
-        const body: any = {
-            contents: contents,
-            system_instruction: { parts: [{ text: systemPrompt }] },
-            generationConfig: { 
-                temperature: 0.7, 
-                maxOutputTokens: s.maxOutputTokens ?? 65536,
-                topP: 0.95,
-                topK: 40
-            }
-        };
-
-        if (webSearch) body.tools = [{ googleSearch: {} }];
-
-        const modelId = s.geminiModel || 'gemini-1.5-pro';
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${s.geminiApiKey}`;
-
-        try {
-            const resp = await fetch(url, { 
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) 
-            });
-            
-            if (resp.status === 429) throw new Error(`AI Rate limit reached (HTTP 429). Model: ${modelId}. Please check your quota in Google AI Studio.`);
-            if (resp.status === 404) throw new Error(`Model not found (HTTP 404). The ID "${modelId}" is invalid. Please open Config and select a stable model like "1.5 Pro".`);
-            if (!resp.ok) throw new Error(`AI Error (HTTP ${resp.status}). Model: ${modelId}.`);
-
-            const data = await resp.json();
-            const candidate = data?.candidates?.[0];
-            let reply = (candidate?.content?.parts ?? []).map((p: any) => p.text ?? '').join('').trim() || '(no response)';
-
-            sources.forEach(src => {
-                const citationTag = `[${src.id}]`;
-                const link = `[[${src.path}|${citationTag}]]`;
-                const regex = new RegExp(`\\\${${citationTag}}(?![^\\[]*\\]\\])`, 'g');
-                reply = reply.replace(regex, link);
-            });
-
-            return reply;
-        } catch (e: any) {
-            console.error("MINA AI Fetch Error:", e);
-            throw e;
-        }
+    async transcribeAudio(file: TFile) {
+        return await this.plugin.ai.transcribeAudio(file);
     }
 
     matchesSearch(query: string, fields: string[]): boolean {
