@@ -170,7 +170,12 @@ export class IndexService {
             title: fm.title || file.basename,
             body: body,
             status: fm.status || 'open',
-            due: fm.due || '',
+            // Normalize due: YAML may parse bare dates as JS Date objects
+            due: fm.due
+                ? (typeof fm.due === 'object'
+                    ? moment(fm.due).format('YYYY-MM-DD')
+                    : String(fm.due).trim())
+                : '',
             created: fm.created || '',
             modified: fm.modified || '',
             lastUpdate: file.stat.mtime,

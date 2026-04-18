@@ -123,9 +123,12 @@ export class TasksTab extends BaseTab {
         // ── Group 'open' by time horizon ──
         if (this.viewMode === 'open') {
             const today = moment().startOf('day');
-            const overdue = tasks.filter(t => moment(t.due).isBefore(today, 'day'));
-            const dueToday = tasks.filter(t => moment(t.due).isSame(today, 'day'));
-            const upcoming = tasks.filter(t => moment(t.due).isAfter(today, 'day'));
+            // Parse once per task; use non-strict to handle minor format variations
+            const parsed = tasks.map(t => ({ task: t, m: moment(t.due, 'YYYY-MM-DD') }));
+            const overdue  = parsed.filter(({m}) => m.isValid() && m.isBefore(today, 'day')).map(x => x.task);
+            const dueToday = parsed.filter(({m}) => m.isValid() && m.isSame(today, 'day')).map(x => x.task);
+            // Fallback: invalid moments (malformed date) treated as upcoming rather than dropped
+            const upcoming = parsed.filter(({m}) => !m.isValid() || m.isAfter(today, 'day')).map(x => x.task);
             if (overdue.length)  this.renderGroup('Overdue', overdue, true);
             if (dueToday.length) this.renderGroup('Today', dueToday, false);
             if (upcoming.length) this.renderGroup('Upcoming', upcoming, false);
