@@ -21,7 +21,11 @@ export function isTablet(): boolean {
     return Platform.isMobile && Math.min(screen.width, screen.height) >= 768;
 }
 
-/** Parse natural language date and return YYYY-MM-DD or null */
+/** Parse a context string like "#work #personal" into ["work", "personal"] */
+export function parseContextString(ctxStr: string): string[] {
+    return ctxStr.split('#').map(c => c.trim()).filter(c => c.length > 0);
+}
+
 export function parseNaturalDate(text: string): string | null {
     const results = chrono.parse(text);
     if (results && results.length > 0) {

@@ -165,5 +165,6 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     habits: [],
     weeklyGoals: [],
     monthlyIncome: 0,
-    northStarGoals: []
+    northStarGoals: [],
+    enableAutoClassification: false
 }

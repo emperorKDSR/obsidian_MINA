@@ -121,7 +121,7 @@ export class DuesTab extends BaseTab {
                     
                     payBtn.addEventListener('click', () => {
                         const file = this.app.vault.getAbstractFileByPath(entry.path);
-                        if (file instanceof TFile) new PaymentModal(this.app, file, entry.dueDate, () => this.renderDuesMode(container)).open();
+                        if (file instanceof TFile) new PaymentModal(this.app, this.plugin, file, entry.dueDate, () => this.renderDuesMode(container)).open();
                     });
                 }
             });

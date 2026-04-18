@@ -117,17 +117,21 @@ export class IndexService {
     async buildTaskIndex(): Promise<void> {
         this.taskIndex.clear();
         const files = this.app.vault.getMarkdownFiles().filter(f => this.isTaskFile(f.path));
-        for (const f of files) await this.indexTaskFile(f);
+        // arch-02: Pass skipRebuild=true — rebuildCalculatedState() called once in buildIndices()
+        for (const f of files) await this.indexTaskFile(f, true);
     }
 
     async indexThoughtFile(file: TFile) {
         const cache = this.app.metadataCache.getFileCache(file);
         if (!cache || !cache.frontmatter) return;
         const fm = cache.frontmatter;
+        // arch-01: Read actual file content for body — was incorrectly set to file.basename
+        const content = await this.app.vault.read(file);
+        const body = content.replace(/^---\n[\s\S]*?\n---\n/, '').trim();
         this.thoughtIndex.set(file.path, {
             filePath: file.path,
             title: file.basename,
-            body: file.basename,
+            body: body,
             day: fm.day || '',
             created: fm.created || '',
             modified: fm.modified || '',
@@ -140,7 +144,8 @@ export class IndexService {
         });
     }
 
-    async indexTaskFile(file: TFile) {
+    // arch-02: skipRebuild param prevents O(n²) calls during bulk index build
+    async indexTaskFile(file: TFile, skipRebuild = false) {
         const cache = this.app.metadataCache.getFileCache(file);
         if (!cache || !cache.frontmatter) return;
         const fm = cache.frontmatter;
@@ -160,7 +165,7 @@ export class IndexService {
             context: fm.contexts || [],
             children: []
         });
-        this.rebuildCalculatedState();
+        if (!skipRebuild) this.rebuildCalculatedState();
     }
 
     isThoughtFile(path: string): boolean {

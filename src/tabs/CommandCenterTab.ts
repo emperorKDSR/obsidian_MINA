@@ -3,6 +3,7 @@ import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from '../modals/EditEntryModal';
 import { DAILY_ICON_ID, TASK_ICON_ID, PF_ICON_ID, PROJECT_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, COMPASS_ICON_ID, SETTINGS_ICON_ID, VOICE_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID } from '../constants';
+import { parseContextString } from '../utils';
 
 export class CommandCenterTab extends BaseTab {
     private parentContainer: HTMLElement;
@@ -56,7 +57,7 @@ export class CommandCenterTab extends BaseTab {
         cap.addEventListener('click', () => {
             new EditEntryModal(this.app, this.plugin, '', '', null, false, async (text, ctxs) => {
                 if (!text.trim()) return;
-                await this.vault.createThoughtFile(text, ctxs.split('#').map(c => c.trim()).filter(c => c.length > 0));
+                await this.vault.createThoughtFile(text, parseContextString(ctxs));
             }, 'Global Capture').open();
         });
 
@@ -71,16 +72,39 @@ export class CommandCenterTab extends BaseTab {
         const summaryPlaceholder = intel.createEl('div', { text: 'Strategic briefing pending analysis.', attr: { style: 'font-size: 0.9em; color: var(--text-muted); font-style: italic; line-height: 1.6; opacity: 0.8;' } });
         
         analyzeBtn.addEventListener('click', async () => {
-             summaryPlaceholder.empty();
-             const loading = summaryPlaceholder.createEl('div', { text: 'Synthesizing Personal OS...', attr: { style: 'display: flex; align-items: center; gap: 8px;' } });
-             const spin = loading.createDiv(); setIcon(spin, 'lucide-loader-2'); spin.style.animation = 'spin 1s linear infinite';
-             try {
-                const summary = await this.view.callGemini(`Summarize my day based on current indices.`);
+            summaryPlaceholder.empty();
+            const loading = summaryPlaceholder.createEl('div', { text: 'Synthesizing Personal OS...', attr: { style: 'display: flex; align-items: center; gap: 8px;' } });
+            const spin = loading.createDiv(); setIcon(spin, 'lucide-loader-2'); spin.style.animation = 'spin 1s linear infinite';
+            try {
+                // life-ai-ground: Build real context from live indices instead of empty placeholder
+                const idx = this.index;
+                const today = moment().startOf('day');
+                const openTasks = Array.from(idx.taskIndex.values()).filter(t => t.status === 'open');
+                const overdueTasks = openTasks.filter(t => t.due && moment(t.due, 'YYYY-MM-DD', true).isValid() && moment(t.due, 'YYYY-MM-DD').isBefore(today, 'day'));
+                const unprocessedThoughts = Array.from(idx.thoughtIndex.values()).filter(t => !t.synthesized);
+                const completedHabits = idx.habitStatusIndex.length;
+                const totalHabits = this.settings.habits?.length || 0;
+
+                const contextBlock = [
+                    `## Personal OS Status — ${moment().format('dddd, MMMM D, YYYY')}`,
+                    `**Open Tasks:** ${openTasks.length} (${overdueTasks.length} overdue)`,
+                    `**Habits Today:** ${completedHabits}/${totalHabits} completed`,
+                    `**Unprocessed Thoughts:** ${unprocessedThoughts.length}`,
+                    `**Total Financial Obligations:** $${(idx.totalDues || 0).toFixed(2)}`,
+                    (this.settings.weeklyGoals?.length ? `**Weekly Goals:** ${this.settings.weeklyGoals.join(', ')}` : ''),
+                    (this.settings.northStarGoals?.length ? `**North Star:** ${this.settings.northStarGoals[0]}` : ''),
+                    (overdueTasks.length > 0 ? `**Overdue Tasks:** ${overdueTasks.slice(0, 5).map(t => t.title).join(', ')}` : ''),
+                ].filter(Boolean).join('\n');
+
+                const summary = await this.ai.callGemini(
+                    `${contextBlock}\n\nGive me a sharp strategic briefing: what needs my attention right now? What's on track? What's at risk? Be direct, no fluff.`,
+                    [], false, [], idx.thoughtIndex
+                );
                 loading.remove();
                 summaryPlaceholder.setText(summary);
                 summaryPlaceholder.style.fontStyle = 'normal';
                 summaryPlaceholder.style.opacity = '1';
-             } catch (e) { loading.setText('Intelligence offline.'); }
+            } catch (e: any) { loading.setText('Intelligence offline: ' + e.message); }
         });
 
         this.renderExecutionUnit(stack);

@@ -53,9 +53,21 @@
     max-height: none !important;
     mask-image: none !important;
     -webkit-mask-image: none !important;
+}
+
 /* 4. Action Row & Tactical Items */
 .mina-action-btn {
-...
+    width: 32px;
+    height: 32px;
+    border-radius: var(--mina-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    opacity: 0.7;
 }
 
 .mina-tactical-row {
@@ -103,19 +115,6 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-    width: 32px;
-    height: 32px;
-    border-radius: var(--mina-radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    opacity: 0.7;
 }
 
 .mina-action-btn:hover {

@@ -81,8 +81,14 @@ export class AiTab extends BaseTab {
                 thinking.remove();
                 this.view.chatHistory.push({ role: 'model', text: response });
                 renderHistory();
-            } catch (e) {
-                thinking.setText('Error: ' + e.message);
+            } catch (e: any) {
+                // ai-11: Remove thinking div on error — was left as permanent "Thinking..." bubble
+                thinking.remove();
+                const errDiv = chatContainer.createEl('div', {
+                    text: `⚠ ${e.message}`,
+                    attr: { style: 'color: var(--text-error); font-size: 0.85em; padding: 8px 12px; background: rgba(255,50,50,0.1); border-radius: 8px; border: 1px solid var(--text-error);' }
+                });
+                setTimeout(() => errDiv.remove(), 8000);
             } finally {
                 this.view.isAiLoading = false;
             }

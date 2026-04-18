@@ -7,7 +7,7 @@ import { ConfirmModal } from '../modals/ConfirmModal';
 import { ConvertToTaskModal } from '../modals/ConvertToTaskModal';
 import { CommentModal } from '../modals/CommentModal';
 import { ViewCommentsModal } from '../modals/ViewCommentsModal';
-import { isTablet } from '../utils';
+import { isTablet, parseContextString } from '../utils';
 
 export class BaseTab {
     view: MinaView;
@@ -122,7 +122,7 @@ export class BaseTab {
 
         this.renderActionButton(actions, ICON_EDIT, 'Edit', () => {
             new EditEntryModal(this.app, this.plugin, entry.body, entry.context.map(c => `#${c}`).join(' '), entry.due || null, true, async (newText, newCtxStr, newDue) => {
-                const ctxArr = newCtxStr ? newCtxStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : [];
+                const ctxArr = newCtxStr ? parseContextString(newCtxStr) : [];
                 await this.vault.editTask(entry.filePath, newText.replace(/<br>/g, '\n'), ctxArr, newDue || undefined);
                 this.refreshCurrentList();
             }).open();
@@ -179,7 +179,7 @@ export class BaseTab {
 
         this.renderActionButton(actions, ICON_EDIT, 'Edit', () => {
             new EditEntryModal(this.app, this.plugin, entry.body, entry.context.map(c => `#${c}`).join(' '), null, false, async (newText, newCtxStr) => {
-                const ctxArr = newCtxStr ? newCtxStr.split('#').map(c => c.trim()).filter(c => c.length > 0) : [];
+                const ctxArr = newCtxStr ? parseContextString(newCtxStr) : [];
                 await this.vault.editThought(entry.filePath, newText.replace(/<br>/g, '\n'), ctxArr);
                 this.refreshCurrentList();
             }).open();

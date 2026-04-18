@@ -1,13 +1,17 @@
 import { App, Modal, TFile, Notice, moment } from 'obsidian';
+import type MinaPlugin from '../main';
 
 export class PaymentModal extends Modal {
+    plugin: MinaPlugin;
     file: TFile;
     currentDueDate: string;
     onPaymentSaved: () => void;
     quickDate: string | null;
 
-    constructor(app: App, file: TFile, currentDueDate: string, onPaymentSaved: () => void, quickDate: string | null = null) {
+    // sec-010: Accept plugin via constructor — eliminates (app as any) runtime lookup
+    constructor(app: App, plugin: MinaPlugin, file: TFile, currentDueDate: string, onPaymentSaved: () => void, quickDate: string | null = null) {
         super(app);
+        this.plugin = plugin;
         this.file = file;
         this.currentDueDate = currentDueDate;
         this.onPaymentSaved = onPaymentSaved;
@@ -91,13 +95,12 @@ export class PaymentModal extends Modal {
 
         cancelBtn.onclick = () => this.close();
         saveBtn.onclick = async () => {
-            const plugin = (this.app as any).plugins.plugins.mina_v2;
-            if (plugin) {
-                await plugin.savePayment(this.file, pInput.value, nInput.value, textArea.value, attachedFiles);
+            try {
+                await this.plugin.vault.savePayment(this.file, pInput.value, nInput.value, textArea.value, attachedFiles);
                 this.onPaymentSaved();
                 this.close();
-            } else {
-                new Notice('MINA Error: Plugin not found');
+            } catch (e: any) {
+                new Notice('Payment save failed: ' + e.message);
             }
         };
 

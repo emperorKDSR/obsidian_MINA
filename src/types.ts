@@ -1,5 +1,10 @@
 import { TFile } from 'obsidian';
 
+export interface ChatMessage {
+    role: 'user' | 'model';
+    text: string;
+}
+
 export interface MinaSettings {
     captureFolder: string;
 	captureFilePath: string;
@@ -43,6 +48,7 @@ export interface MinaSettings {
     weeklyGoals: string[];
     monthlyIncome: number;
     northStarGoals: string[];
+    enableAutoClassification: boolean;
 }
 
 export interface Habit {

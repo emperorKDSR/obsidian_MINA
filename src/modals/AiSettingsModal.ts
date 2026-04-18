@@ -50,22 +50,35 @@ export class AiSettingsModal extends Modal {
 
         new Setting(body)
             .setName('Gemini Model')
-            .setDesc('Model for AI chat.')
+            .setDesc('Model for AI chat and transcription.')
             .addDropdown(drop => {
+                // ai-05: Updated model list — removed stale preview models, added 2.5 series
                 const models: Record<string, string> = {
-                    'gemini-2.0-pro-exp-02-05': '2.0 Pro (Experimental)',
-                    'gemini-2.0-flash':         '2.0 Flash (Stable)',
-                    'gemini-2.0-flash-lite-preview-02-05': '2.0 Flash Lite (Preview)',
-                    'gemini-1.5-pro':           '1.5 Pro',
-                    'gemini-1.5-flash':         '1.5 Flash',
-                    'gemini-1.5-flash-8b':      '1.5 Flash 8B',
+                    'gemini-2.5-flash':    '2.5 Flash (Recommended)',
+                    'gemini-2.5-pro':      '2.5 Pro',
+                    'gemini-2.0-flash':    '2.0 Flash (Stable)',
+                    'gemini-2.0-flash-lite': '2.0 Flash Lite',
+                    'gemini-1.5-pro':      '1.5 Pro',
+                    'gemini-1.5-flash':    '1.5 Flash',
+                    'gemini-1.5-flash-8b': '1.5 Flash 8B',
                 };
                 for (const [value, label] of Object.entries(models)) {
                     drop.addOption(value, label);
                 }
-                drop.setValue(this.plugin.settings.geminiModel || 'gemini-1.5-pro');
+                drop.setValue(this.plugin.settings.geminiModel || 'gemini-2.5-flash');
                 drop.onChange(async (value) => {
                     this.plugin.settings.geminiModel = value;
+                    await this.plugin.saveSettings();
+                });
+            });
+
+        new Setting(body)
+            .setName('Auto-classify notes')
+            .setDesc('Automatically suggest a project for new notes using AI. Disabled by default — opt in to enable.')
+            .addToggle(toggle => {
+                toggle.setValue(this.plugin.settings.enableAutoClassification ?? false);
+                toggle.onChange(async (value) => {
+                    this.plugin.settings.enableAutoClassification = value;
                     await this.plugin.saveSettings();
                 });
             });

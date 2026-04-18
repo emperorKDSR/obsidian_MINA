@@ -114,8 +114,9 @@ export class VoiceMemoModal extends Modal {
     }
 
     async startRecording(recordButton: HTMLElement, timerDisplay: HTMLElement, statusDisplay: HTMLElement) {
+        let stream: MediaStream | null = null;
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             let mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : (MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '');
             let ext = mimeType === 'audio/webm' ? 'webm' : 'm4a';
             
@@ -138,7 +139,7 @@ export class VoiceMemoModal extends Modal {
                 
                 new Notice(`Voice note saved: ${filename}`);
                 this.isRecording = false;
-                stream.getTracks().forEach(track => track.stop());
+                stream?.getTracks().forEach(track => track.stop());
                 
                 if (this.onSave) this.onSave(file);
             };
@@ -160,6 +161,9 @@ export class VoiceMemoModal extends Modal {
         } catch (err) {
             new Notice('Microphone access denied.');
             console.error(err);
+        } finally {
+            // sec-016: Stop mic tracks if setup failed before recording started
+            if (!this.isRecording && stream) stream.getTracks().forEach(t => t.stop());
         }
     }
 

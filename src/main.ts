@@ -127,6 +127,14 @@ export default class MinaPlugin extends Plugin {
         setTimeout(() => this.migrateLegacyTableData(), 2000);
 	}
 
+    async onunload() {
+        // leak-01: Clear pending debounce timer to prevent firing on torn-down plugin state
+        if (this._indexDebounceTimer) {
+            clearTimeout(this._indexDebounceTimer);
+            this._indexDebounceTimer = null;
+        }
+    }
+
     async migrateLegacyTableData() {
         const { vault } = this.app;
         const thoughtsPath = this.settings.captureFolder + '/' + this.settings.captureFilePath;

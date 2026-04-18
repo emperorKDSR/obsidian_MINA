@@ -2,6 +2,7 @@ import { moment, Platform } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from '../modals/EditEntryModal';
+import { parseContextString } from '../utils';
 
 export class JournalTab extends BaseTab {
     constructor(view: MinaView) { super(view); }
@@ -42,7 +43,7 @@ export class JournalTab extends BaseTab {
         addNoteBtn.addEventListener('click', () => {
             new EditEntryModal(this.app, this.plugin, '', 'journal', null, false, async (text, ctxs) => {
                 if (!text.trim()) return;
-                const contexts = ctxs.split('#').map(c => c.trim()).filter(c => c.length > 0);
+                const contexts = parseContextString(ctxs);
                 await this.vault.createThoughtFile(text, contexts);
                 this.updateJournalList(container);
             }, 'New Journal Note').open();

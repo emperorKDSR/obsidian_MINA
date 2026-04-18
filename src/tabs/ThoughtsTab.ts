@@ -3,6 +3,7 @@ import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from "../modals/EditEntryModal";
 import type { ThoughtEntry } from '../types';
+import { parseContextString } from '../utils';
 
 export class ThoughtsTab extends BaseTab {
     constructor(view: MinaView) { super(view); }
@@ -41,7 +42,7 @@ export class ThoughtsTab extends BaseTab {
         addBtn.addEventListener('click', () => {
             new EditEntryModal(this.app, this.plugin, '', '', null, false, async (text, ctxs) => {
                 if (!text.trim()) return;
-                const contexts = ctxs.split('#').map(c => c.trim()).filter(c => c.length > 0);
+                const contexts = parseContextString(ctxs);
                 await this.vault.createThoughtFile(text, contexts);
                 this.renderReviewThoughtsMode(container);
             }, 'New Thought').open();

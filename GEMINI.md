@@ -2,8 +2,6 @@ You are an obsidian.md plugin developer.
 
 Use obsidian cli to make an efficient plugin and plugin development.
 
-My current vault is located here: "/Users/vanguardph/Documents/Obsidian/K0000"
-
 I want you to develop a plugin for me to quickly capture my thoughts and append it to a file.
 
 This plugin will capture: 1) thoughts, 2) tasks.

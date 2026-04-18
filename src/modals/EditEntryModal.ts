@@ -1,6 +1,6 @@
 import { App, Modal, Platform, Notice, moment } from 'obsidian';
 import MinaPlugin from '../main';
-import { isTablet, parseNaturalDate } from '../utils';
+import { isTablet, parseNaturalDate, parseContextString } from '../utils';
 import { FileSuggestModal } from './FileSuggestModal';
 import { ContextSuggestModal } from './ContextSuggestModal';
 
@@ -31,7 +31,7 @@ export class EditEntryModal extends Modal {
         super(app);
         this.plugin = plugin;
         this.initialText = initialText.replace(/<br>/g, '\n');
-        this.initialContexts = initialContext ? initialContext.split('#').map(c => c.trim()).filter(c => c.length > 0) : [];
+        this.initialContexts = initialContext ? parseContextString(initialContext) : [];
         this.initialDueDate = initialDueDate;
         this.isTask = isTask;
         this.onSave = onSave;
@@ -154,21 +154,23 @@ export class EditEntryModal extends Modal {
             if (e.key === 'Escape') this.close();
         });
 
-        // AI Auto-Classification
-        textArea.addEventListener('input', () => {
-            if (this.classificationTimeout) clearTimeout(this.classificationTimeout);
-            this.classificationTimeout = setTimeout(async () => {
-                const text = textArea.value;
-                if (text.length < 15) return;
-                const projects = this.plugin.index.getProjects();
-                const prompt = `Classify this note into one of these projects: ${projects.join(', ')}. Note: "${text}". Return ONLY the name or "None".`;
-                try {
-                    const result = await this.plugin.ai.callGemini(prompt, [], false, [], this.plugin.index.thoughtIndex);
-                    const match = projects.find(p => result.includes(p));
-                    if (match) { this.currentProject = match; updateProjectChip(match); }
-                } catch (e) {}
-            }, 1500);
-        });
+        // sec-004: AI Auto-Classification — only runs when user has explicitly opted in
+        if (this.plugin.settings.enableAutoClassification) {
+            textArea.addEventListener('input', () => {
+                if (this.classificationTimeout) clearTimeout(this.classificationTimeout);
+                this.classificationTimeout = setTimeout(async () => {
+                    const text = textArea.value;
+                    if (text.length < 15) return;
+                    const projects = this.plugin.index.getProjects();
+                    const prompt = `Classify this note into one of these projects: ${projects.join(', ')}. Note: "${text}". Return ONLY the name or "None".`;
+                    try {
+                        const result = await this.plugin.ai.callGemini(prompt, [], false, [], this.plugin.index.thoughtIndex);
+                        const match = projects.find(p => result.includes(p));
+                        if (match) { this.currentProject = match; updateProjectChip(match); }
+                    } catch (e) {}
+                }, 1500);
+            });
+        }
     }
 
     onClose() { this.contentEl.empty(); }

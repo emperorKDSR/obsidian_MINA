@@ -52,7 +52,7 @@ export class ViewCommentsModal extends Modal {
                         const file = this.app.vault.getAbstractFileByPath(this.entry.filePath);
                         if (file instanceof TFile) {
                             const content = await this.app.vault.read(file);
-                            const updated = content.replace(reply.text, newText.replace(/<br>/g, '\n'));
+                            const updated = content.replace(reply.text, () => newText.replace(/<br>/g, '\n'));
                             await this.app.vault.modify(file, updated);
                             await this.refresh();
                         }

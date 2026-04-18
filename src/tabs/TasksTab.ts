@@ -3,6 +3,7 @@ import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from "../modals/EditEntryModal";
 import type { TaskEntry } from '../types';
+import { parseContextString } from '../utils';
 
 type TaskViewMode = 'open' | 'not-due' | 'done';
 
@@ -47,7 +48,7 @@ export class TasksTab extends BaseTab {
         addBtn.addEventListener('click', () => {
             new EditEntryModal(this.app, this.plugin, '', '', moment().format('YYYY-MM-DD'), true, async (text, ctxs, due) => {
                 if (!text.trim()) return;
-                await this.vault.createTaskFile(text, ctxs.split('#').map(c => c.trim()).filter(c => c.length > 0), due || undefined);
+                await this.vault.createTaskFile(text, parseContextString(ctxs), due || undefined);
                 this.updateTaskList();
             }, 'New Task').open();
         });
@@ -176,7 +177,7 @@ export class TasksTab extends BaseTab {
         editBtn.addEventListener('mouseleave', () => editBtn.style.opacity = '0.3');
         editBtn.addEventListener('click', () => {
             new EditEntryModal(this.app, this.plugin, task.title, task.context.join(' #'), task.due, true, async (t, c, d) => {
-                await this.vault.editTask(task.filePath, t, c.split('#').map(x => x.trim()).filter(x => x.length > 0), d || undefined);
+                await this.vault.editTask(task.filePath, t, parseContextString(c), d || undefined);
                 this.updateTaskList();
             }, 'Edit Task').open();
         });

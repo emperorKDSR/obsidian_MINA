@@ -1,11 +1,13 @@
 {
-	"name": "mina_1",
+	"name": "mina_v2",
 	"version": "1.0.0",
 	"description": "Mina: Quickly capture thoughts and tasks to a file.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
-		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
+		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"clean": "Remove-Item -Recurse -Force main.js -ErrorAction SilentlyContinue",
+		"version": "node -p \"require('./manifest.json').version\""
 	},
 	"keywords": [],
 	"author": "K",

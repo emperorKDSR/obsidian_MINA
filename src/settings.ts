@@ -28,7 +28,11 @@ export class MinaSettingTab extends PluginSettingTab {
 		new Setting(containerEl).setName('Time Format').setDesc('moment.js format for time.').addText(text => text.setPlaceholder('HH:mm').setValue(this.plugin.settings.timeFormat).onChange(async (value) => { this.plugin.settings.timeFormat = value; await this.plugin.saveSettings(); this.plugin.notifyRefresh(); }));
 
         containerEl.createEl('h3', { text: 'Intelligence (Gemini AI)' });
-		new Setting(containerEl).setName('Gemini API Key').setDesc('Your Google AI Studio API key.').addText(text => text.setPlaceholder('Enter key...').setValue(this.plugin.settings.geminiApiKey).onChange(async (value) => { this.plugin.settings.geminiApiKey = value; await this.plugin.saveSettings(); }));
+        // sec-002: API key masked as password — was plain text
+        new Setting(containerEl).setName('Gemini API Key').setDesc('Your Google AI Studio API key.').addText(text => {
+            text.setPlaceholder('AIza...').setValue(this.plugin.settings.geminiApiKey).onChange(async (value) => { this.plugin.settings.geminiApiKey = value; await this.plugin.saveSettings(); });
+            text.inputEl.type = 'password';
+        });
 		new Setting(containerEl).setName('Gemini Model').setDesc('Model ID to use (e.g. gemini-1.5-pro).').addText(text => text.setPlaceholder('gemini-1.5-pro').setValue(this.plugin.settings.geminiModel).onChange(async (value) => { this.plugin.settings.geminiModel = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('Transcription Language').setDesc('Target language for audio transcription/translation.').addText(text => text.setPlaceholder('English').setValue(this.plugin.settings.transcriptionLanguage).onChange(async (value) => { this.plugin.settings.transcriptionLanguage = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('Monthly Income').setDesc('Used for the Cashflow Dashboard in Finance Mode.').addText(text => text.setPlaceholder('0').setValue(this.plugin.settings.monthlyIncome.toString()).onChange(async (value) => { this.plugin.settings.monthlyIncome = parseFloat(value) || 0; await this.plugin.saveSettings(); }));

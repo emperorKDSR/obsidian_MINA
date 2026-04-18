@@ -2,12 +2,11 @@ import { ItemView, WorkspaceLeaf, moment, TFile, Platform, setIcon } from 'obsid
 import { VIEW_TYPE_MINA, KATANA_ICON_ID } from './constants';
 import type MinaPlugin from './main';
 import { BaseTab } from './tabs/BaseTab';
-import type { ThoughtEntry, TaskEntry } from './types';
+import type { ChatMessage } from './types';
 
 export class MinaView extends ItemView {
     plugin: MinaPlugin;
     content: string = '';
-    isTask: boolean = false;
     dueDate: string = moment().format('YYYY-MM-DD');
     activeTab: string = 'home';
     isDedicated: boolean = false;
@@ -16,11 +15,7 @@ export class MinaView extends ItemView {
     timelineSelectedDate: string = moment().format('YYYY-MM-DD');
     timelineScrollBody: HTMLElement;
     timelineCarousel: HTMLElement;
-    timelineStartDate: any;
-    timelineEndDate: any;
-    timelineDateElements: Map<string, HTMLElement> = new Map();
-    timelineDaySections: Map<string, HTMLElement> = new Map();
-    
+
     selectedContexts: string[] = [];
     collapsedThreads: Set<string> = new Set();
     thoughtsFilterTodo: boolean = false;
@@ -31,9 +26,6 @@ export class MinaView extends ItemView {
     showPreviousThoughts: boolean = true;
     showCaptureInThoughts: boolean = true;
     thoughtsOffset: number = 0;
-    _parsedRoots: ThoughtEntry[] = [];
-    reviewThoughtsContainer: HTMLElement;
-    thoughtsRowContainer: HTMLElement;
     focusRowContainer: HTMLElement;
     activeMasterNote: TFile | null = null;
     isZenMode: boolean = false;
@@ -41,11 +33,10 @@ export class MinaView extends ItemView {
     searchQuery: string = '';
     
     // AI State
-    chatHistory: any[] = [];
+    chatHistory: ChatMessage[] = [];
     isAiLoading: boolean = false;
     webSearchEnabled: boolean = false;
     groundedFiles: TFile[] = [];
-    groundedNotes: TFile[] = []; // Used by AiTab
     groundedNotesBar: HTMLElement;
     chatContainer: HTMLElement;
     currentChatFile: string | null = null;
@@ -113,24 +104,27 @@ export class MinaView extends ItemView {
     }
 
     private renderTab(container: HTMLElement) {
+        // arch-04: Error boundaries on all dynamic imports — silent failures leave blank panels
+        const loadErr = (e: any) => container.createEl('p', { text: `Failed to load tab: ${e.message}`, attr: { style: 'color: var(--text-error); padding: 20px;' } });
         const tab = this.activeTab;
-        if (tab === 'home' || tab === 'daily') import('./tabs/CommandCenterTab').then(({ CommandCenterTab }) => new CommandCenterTab(this).render(container));
-        else if (tab === 'review-thoughts') import('./tabs/ThoughtsTab').then(({ ThoughtsTab }) => new ThoughtsTab(this).render(container));
-        else if (tab === 'review-tasks') import('./tabs/TasksTab').then(({ TasksTab }) => new TasksTab(this).render(container));
-        else if (tab === 'mina-ai') import('./tabs/AiTab').then(({ AiTab }) => new AiTab(this).render(container));
-        else if (tab === 'dues') import('./tabs/DuesTab').then(({ DuesTab }) => new DuesTab(this).render(container));
-        else if (tab === 'projects') import('./tabs/ProjectsTab').then(({ ProjectsTab }) => new ProjectsTab(this).render(container));
-        else if (tab === 'synthesis') import('./tabs/SynthesisTab').then(({ SynthesisTab }) => new SynthesisTab(this).render(container));
-        else if (tab === 'compass') import('./tabs/CompassTab').then(({ CompassTab }) => new CompassTab(this).render(container));
-        else if (tab === 'review') import('./tabs/ReviewTab').then(({ ReviewTab }) => new ReviewTab(this).render(container));
-        else if (tab === 'voice-note') import('./tabs/VoiceTab').then(({ VoiceTab }) => new VoiceTab(this).render(container));
-        else if (tab === 'settings') import('./tabs/SettingsTab').then(({ SettingsTab }) => new SettingsTab(this).render(container));
-        else if (tab === 'timeline') import('./tabs/TimelineTab').then(({ TimelineTab }) => new TimelineTab(this).render(container));
-        else if (tab === 'focus') import('./tabs/FocusTab').then(({ FocusTab }) => new FocusTab(this).render(container));
-        else if (tab === 'memento-mori') import('./tabs/MementoMoriTab').then(({ MementoMoriTab }) => new MementoMoriTab(this).render(container));
-        else if (tab === 'journal') import('./tabs/JournalTab').then(({ JournalTab }) => new JournalTab(this).render(container));
+        if (tab === 'home' || tab === 'daily') import('./tabs/CommandCenterTab').then(({ CommandCenterTab }) => new CommandCenterTab(this).render(container)).catch(loadErr);
+        else if (tab === 'review-thoughts') import('./tabs/ThoughtsTab').then(({ ThoughtsTab }) => new ThoughtsTab(this).render(container)).catch(loadErr);
+        else if (tab === 'review-tasks') import('./tabs/TasksTab').then(({ TasksTab }) => new TasksTab(this).render(container)).catch(loadErr);
+        else if (tab === 'mina-ai') import('./tabs/AiTab').then(({ AiTab }) => new AiTab(this).render(container)).catch(loadErr);
+        else if (tab === 'dues') import('./tabs/DuesTab').then(({ DuesTab }) => new DuesTab(this).render(container)).catch(loadErr);
+        else if (tab === 'projects') import('./tabs/ProjectsTab').then(({ ProjectsTab }) => new ProjectsTab(this).render(container)).catch(loadErr);
+        else if (tab === 'synthesis') import('./tabs/SynthesisTab').then(({ SynthesisTab }) => new SynthesisTab(this).render(container)).catch(loadErr);
+        else if (tab === 'compass') import('./tabs/CompassTab').then(({ CompassTab }) => new CompassTab(this).render(container)).catch(loadErr);
+        else if (tab === 'review') import('./tabs/ReviewTab').then(({ ReviewTab }) => new ReviewTab(this).render(container)).catch(loadErr);
+        else if (tab === 'voice-note') import('./tabs/VoiceTab').then(({ VoiceTab }) => new VoiceTab(this).render(container)).catch(loadErr);
+        else if (tab === 'settings') import('./tabs/SettingsTab').then(({ SettingsTab }) => new SettingsTab(this).render(container)).catch(loadErr);
+        else if (tab === 'timeline') import('./tabs/TimelineTab').then(({ TimelineTab }) => new TimelineTab(this).render(container)).catch(loadErr);
+        else if (tab === 'focus') import('./tabs/FocusTab').then(({ FocusTab }) => new FocusTab(this).render(container)).catch(loadErr);
+        else if (tab === 'memento-mori') import('./tabs/MementoMoriTab').then(({ MementoMoriTab }) => new MementoMoriTab(this).render(container)).catch(loadErr);
+        else if (tab === 'journal') import('./tabs/JournalTab').then(({ JournalTab }) => new JournalTab(this).render(container)).catch(loadErr);
+        else if (tab === 'habits') import('./tabs/HabitsTab').then(({ HabitsTab }) => new HabitsTab(this).render(container)).catch(loadErr);
         else if (tab === 'grundfos' || this.plugin.settings.customModes.some(m => m.id === tab)) {
-            import('./tabs/ContextTab').then(({ ContextTab }) => new ContextTab(this).render(container, tab));
+            import('./tabs/ContextTab').then(({ ContextTab }) => new ContextTab(this).render(container, tab)).catch(loadErr);
         }
     }
 

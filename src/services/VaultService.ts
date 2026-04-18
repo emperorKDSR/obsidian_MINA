@@ -35,16 +35,32 @@ export class VaultService {
     }
 
     private buildFrontmatter(title: string, created: string, modified: string, dayStr: string, contexts: string[], pinned: boolean = false, project?: string): string {
-        const contextYaml = contexts.length > 0 ? contexts.map(c => `  - ${c}`).join('\n') : '  []';
-        const projectLine = project ? `project: "${project.replace(/"/g, "'")}"\n` : '';
-        return `---\ntitle: "${title.replace(/"/g, "'")}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA\ncontext:\n${contextYaml}\ntags:\n${contextYaml}\npinned: ${pinned}\n${projectLine}---\n`;
+        // sec-006: Sanitize title and contexts before YAML embedding to prevent injection
+        const safeTitle = this.sanitizeYamlString(title);
+        const safeContexts = contexts.map(c => this.sanitizeContext(c));
+        const contextYaml = safeContexts.length > 0 ? safeContexts.map(c => `  - ${c}`).join('\n') : '  []';
+        const projectLine = project ? `project: "${this.sanitizeYamlString(project)}"\n` : '';
+        return `---\ntitle: "${safeTitle}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA\ncontext:\n${contextYaml}\ntags:\n${contextYaml}\npinned: ${pinned}\n${projectLine}---\n`;
     }
 
     private buildTaskFrontmatter(title: string, created: string, modified: string, dayStr: string, status: string, due: string, contexts: string[], project?: string): string {
-        const contextYaml = contexts.length > 0 ? contexts.map(c => `  - ${c}`).join('\n') : '  []';
+        // sec-006: Sanitize title and contexts before YAML embedding to prevent injection
+        const safeTitle = this.sanitizeYamlString(title);
+        const safeContexts = contexts.map(c => this.sanitizeContext(c));
+        const contextYaml = safeContexts.length > 0 ? safeContexts.map(c => `  - ${c}`).join('\n') : '  []';
         const dueYaml = due ? `"[[${due}]]"` : '""';
-        const projectLine = project ? `project: "${project.replace(/"/g, "'")}"\n` : '';
-        return `---\ntitle: "${title.replace(/"/g, "'")}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA_TASKS\nstatus: ${status}\ndue: ${dueYaml}\ncontext:\n${contextYaml}\ntags:\n${contextYaml}\n${projectLine}---\n`;
+        const projectLine = project ? `project: "${this.sanitizeYamlString(project)}"\n` : '';
+        return `---\ntitle: "${safeTitle}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA_TASKS\nstatus: ${status}\ndue: ${dueYaml}\ncontext:\n${contextYaml}\ntags:\n${contextYaml}\n${projectLine}---\n`;
+    }
+
+    // sec-006: Strip characters that break YAML string values
+    private sanitizeYamlString(value: string): string {
+        return value.replace(/[\n\r]/g, ' ').replace(/"/g, "'").trim();
+    }
+
+    // sec-006: Strip characters that break YAML list items
+    private sanitizeContext(ctx: string): string {
+        return ctx.replace(/[\n\r:#"]/g, '').trim();
     }
 
     private generateFilename(prefix: string = ''): string {
@@ -99,6 +115,8 @@ export class VaultService {
     }
 
     async createThoughtFile(text: string, contexts: string[], project?: string): Promise<TFile> {
+        // arch-08: Normalize <br> → newline at service boundary
+        text = text.replace(/<br>/g, '\n');
         const folder = this.settings.thoughtsFolder.trim() || '000 Bin/MINA V2';
         const now = new Date();
         const created = this.formatDateTime(now);
@@ -110,6 +128,8 @@ export class VaultService {
     }
 
     async createTaskFile(text: string, contexts: string[], dueDate?: string, project?: string): Promise<TFile> {
+        // arch-08: Normalize <br> → newline at service boundary
+        text = text.replace(/<br>/g, '\n');
         const folder = this.settings.tasksFolder.trim() || '000 Bin/MINA V2 Tasks';
         const now = new Date();
         const created = this.formatDateTime(now);
@@ -122,6 +142,8 @@ export class VaultService {
     }
 
     async editThought(filePath: string, newText: string, contexts: string[]): Promise<void> {
+        // arch-08: Normalize <br> → newline at service boundary
+        newText = newText.replace(/<br>/g, '\n');
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return;
         
@@ -152,6 +174,8 @@ export class VaultService {
     }
 
     async editTask(filePath: string, newText: string, contexts: string[], dueDate?: string): Promise<void> {
+        // arch-08: Normalize <br> → newline at service boundary
+        newText = newText.replace(/<br>/g, '\n');
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return;
         
@@ -217,17 +241,16 @@ export class VaultService {
         if (!(file instanceof TFile)) return false;
         
         try {
+            // ob-perf-04: Combine body + modified-date update into single vault.modify call
             const now = new Date();
             const anchor = `reply-${Date.now()}`;
             const dateStr = this.formatDate(now);
             const timeStr = this.formatTime(now);
             const header = `## [[${dateStr}]] ${timeStr} ^${anchor}`;
             const existing = await this.app.vault.read(file);
-            const updated = existing.trimEnd() + `\n\n${header}\n${text}\n`;
-            await this.app.vault.modify(file, updated);
-            
-            const withMod = updated.replace(/^modified: .+$/m, `modified: ${this.formatDateTime(now)}`);
-            if (withMod !== updated) await this.app.vault.modify(file, withMod);
+            const withComment = existing.trimEnd() + `\n\n${header}\n${text}\n`;
+            const final = withComment.replace(/^modified: .+$/m, `modified: ${this.formatDateTime(now)}`);
+            await this.app.vault.modify(file, final);
             
             return true;
         } catch (e) {
@@ -276,5 +299,20 @@ export class VaultService {
         await this.app.fileManager.processFrontMatter(file, (fm) => {
             fm['synthesized'] = true;
         });
+    }
+
+    // sec-010: savePayment — was previously a missing method called via unsafe (app as any) lookup
+    async savePayment(file: TFile, paymentDate: string, nextDueDate: string, notes: string, attachedFiles: File[]): Promise<void> {
+        // Update next due date in frontmatter
+        await this.app.fileManager.processFrontMatter(file, (fm) => {
+            fm['due'] = `[[${nextDueDate}]]`;
+            fm['modified'] = this.formatDateTime(new Date());
+        });
+        // Append payment record as a log entry in the file body
+        const current = await this.app.vault.read(file);
+        const notesLine = notes.trim() ? `\n- **Notes:** ${notes.trim()}` : '';
+        const record = `\n\n## Payment: ${paymentDate}\n- **Paid On:** ${paymentDate}\n- **Next Due:** ${nextDueDate}${notesLine}\n`;
+        await this.app.vault.modify(file, current + record);
+        new Notice(`Payment recorded for ${file.basename}. Next due: ${nextDueDate}`);
     }
 }

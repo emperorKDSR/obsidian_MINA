@@ -2,6 +2,7 @@ import { moment } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from '../modals/EditEntryModal';
+import { parseContextString } from '../utils';
 
 export class ContextTab extends BaseTab {
     constructor(view: MinaView) { super(view); }
@@ -43,7 +44,7 @@ export class ContextTab extends BaseTab {
         const addBtn = actionRow.createEl('button', { text: '✍️ Note', attr: { style: actionBtnStyle } });
         addBtn.addEventListener('click', () => {
             new EditEntryModal(this.app, this.plugin, '', modeContext, null, false, async (text, ctxs) => {
-                const contexts = ctxs.split('#').map(c => c.trim()).filter(c => c.length > 0);
+                const contexts = parseContextString(ctxs);
                 await this.vault.createThoughtFile(text, contexts);
                 this.renderContextMode(container, modeId);
             }, `New ${modeTitle} Note`).open();
@@ -52,7 +53,7 @@ export class ContextTab extends BaseTab {
         const addTaskBtn = actionRow.createEl('button', { text: '✅ Task', attr: { style: actionBtnStyle } });
         addTaskBtn.addEventListener('click', () => {
             new EditEntryModal(this.app, this.plugin, '', modeContext, moment().format('YYYY-MM-DD'), true, async (text, ctxs, due) => {
-                const contexts = ctxs.split('#').map(c => c.trim()).filter(c => c.length > 0);
+                const contexts = parseContextString(ctxs);
                 await this.vault.createTaskFile(text, contexts, due || undefined);
                 this.renderContextMode(container, modeId);
             }, `New ${modeTitle} Task`).open();

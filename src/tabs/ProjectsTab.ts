@@ -2,6 +2,7 @@ import { moment, Platform, TFile } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from '../modals/EditEntryModal';
+import { parseContextString } from '../utils';
 
 export class ProjectsTab extends BaseTab {
     constructor(view: MinaView) { super(view); }
@@ -44,13 +45,21 @@ export class ProjectsTab extends BaseTab {
         if (projects.size === 0) {
             wrap.createEl('p', { text: 'No projects found. Add "project: Name" to your notes or tasks.', attr: { style: 'color: var(--text-muted); font-size: 0.9em; font-style: italic; text-align: center; margin-top: 40px;' } });
         } else {
+            // ob-perf-08: Pre-build task count map in O(N) — was O(P×N) inline filter per project card
+            const openTasksByProject = new Map<string, number>();
+            this.index.taskIndex.forEach(t => {
+                if (t.project && t.status === 'open') {
+                    openTasksByProject.set(t.project, (openTasksByProject.get(t.project) || 0) + 1);
+                }
+            });
+
             Array.from(projects).sort().forEach(projectName => {
                 const card = grid.createEl('div', {
                     attr: { style: 'background: var(--background-secondary-alt); border-radius: 12px; padding: 16px; border: 1px solid var(--background-modifier-border-faint); cursor: pointer; transition: transform 0.1s;' }
                 });
                 card.createEl('div', { text: projectName, attr: { style: 'font-weight: 800; font-size: 0.9em; color: var(--text-normal);' } });
                 
-                const count = Array.from(this.index.taskIndex.values()).filter(t => t.project === projectName && t.status === 'open').length;
+                const count = openTasksByProject.get(projectName) || 0;
                 card.createEl('div', { text: `${count} active tasks`, attr: { style: 'font-size: 0.7em; color: var(--text-muted); margin-top: 4px;' } });
 
                 card.addEventListener('click', () => this.renderProjectFocus(container, projectName));
@@ -73,7 +82,7 @@ export class ProjectsTab extends BaseTab {
             const btn = actionRow.createEl('button', { text: label, attr: { style: 'flex: 1; padding: 8px; border-radius: 8px; background: var(--background-secondary-alt); border: 1px solid var(--background-modifier-border-faint); font-weight: 600; cursor: pointer;' } });
             btn.addEventListener('click', () => {
                 new EditEntryModal(this.app, this.plugin, '', '', isTask ? moment().format('YYYY-MM-DD') : null, isTask, async (text, ctxs, due) => {
-                    const contexts = ctxs.split('#').map(c => c.trim()).filter(c => c.length > 0);
+                    const contexts = parseContextString(ctxs);
                     const file = isTask ? await this.vault.createTaskFile(text, contexts, due || undefined, projectName) : await this.vault.createThoughtFile(text, contexts, projectName);
                     this.renderProjectFocus(container, projectName);
                 }, `New ${projectName} ${isTask ? 'Task' : 'Thought'}`).open();
