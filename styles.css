@@ -77,30 +77,63 @@
     transform: scale(1.1);
 }
 
-/* 5. Pillar Grid (Hub) */
-.mina-pillar-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: var(--mina-spacing-sm);
+/* 5. Pillar Clusters (Cockpit Hub) */
+.mina-pillar-cluster {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    background: var(--background-secondary-alt);
+    padding: 6px;
+    border-radius: 16px;
+    border: 1px solid var(--background-modifier-border-faint);
+    box-shadow: var(--mina-shadow);
 }
 
-.mina-pillar-card {
-    background: var(--background-secondary);
-    border-radius: var(--mina-radius);
-    padding: var(--mina-spacing);
-    border: 1px solid var(--background-modifier-border-faint);
-    cursor: pointer;
+.mina-pillar-item {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    transition: all 0.2s ease;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 6px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
 }
 
-.mina-pillar-card:hover {
-    background: var(--background-secondary-alt);
-    transform: translateY(-4px);
+.mina-pillar-item:hover {
+    background: var(--background-primary);
+    transform: translateY(-2px);
     box-shadow: var(--mina-shadow-hover);
-    border-color: var(--interactive-accent);
+    border-color: var(--background-modifier-border);
+}
+
+.mina-pillar-icon {
+    width: 24px;
+    height: 24px;
+    opacity: 0.8;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.mina-pillar-item:hover .mina-pillar-icon {
+    transform: scale(1.1);
+    color: var(--interactive-accent);
+    opacity: 1;
+}
+
+.mina-pillar-label {
+    font-size: 0.6em;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-faint);
+    transition: color 0.2s ease;
+}
+
+.mina-pillar-item:hover .mina-pillar-label {
+    color: var(--text-normal);
 }
 
 /* 6. Dedicated Window Overrides */

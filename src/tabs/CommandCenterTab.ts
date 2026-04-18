@@ -26,7 +26,7 @@ export class CommandCenterTab extends BaseTab {
         const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
         
         topRow.createEl('h1', {
-            text: `${greeting}, M.I.N.A.`,
+            text: `${greeting}, Emperor!`,
             attr: { style: 'margin: 0; font-size: 2em; font-weight: 900; color: var(--text-normal); letter-spacing: -0.04em;' }
         });
 
@@ -60,46 +60,46 @@ export class CommandCenterTab extends BaseTab {
             new EditEntryModal(this.app, this.plugin, '', '', null, false, async (text, ctxs, _, project) => {
                 if (!text.trim()) return;
                 const contexts = ctxs.split('#').map(c => c.trim()).filter(c => c.length > 0);
-                const file = await this.vault.createThoughtFile(text, contexts, project || undefined);
+                await this.vault.createThoughtFile(text, contexts, project || undefined);
                 this.renderCommandCenter(container);
             }, 'Global Capture').open();
         });
 
-        // 3. PILLARS GRID
-        const pillarCard = (parent: HTMLElement, label: string, iconId: string, tabId: string, color: string = 'var(--text-muted)') => {
-            const card = parent.createEl('div', { cls: 'mina-pillar-card' });
-            const iconWrap = card.createDiv({ cls: 'mina-pillar-icon', attr: { style: `width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: ${color}; opacity: 0.9;` } });
+        // 3. PILLAR CLUSTERS (HORIZONTAL)
+        const renderPillarItem = (parent: HTMLElement, label: string, iconId: string, tabId: string, color: string = 'var(--text-muted)') => {
+            const item = parent.createEl('div', { cls: 'mina-pillar-item' });
+            const iconWrap = item.createDiv({ cls: 'mina-pillar-icon', attr: { style: `color: ${color};` } });
             setIcon(iconWrap, iconId);
-            card.createSpan({ text: label, attr: { style: 'font-size: 0.75em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);' } });
-            card.addEventListener('click', () => { this.view.activeTab = tabId; this.view.renderView(); });
+            item.createSpan({ text: label, cls: 'mina-pillar-label' });
+            item.addEventListener('click', () => { this.view.activeTab = tabId; this.view.renderView(); });
         };
 
-        const renderPillarGroup = (title: string, items: {label: string, icon: string, tab: string, color?: string}[]) => {
+        const renderPillarCluster = (title: string, items: {label: string, icon: string, tab: string, color?: string}[]) => {
             const group = wrap.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 14px;' } });
             group.createEl('h3', { text: title, attr: { style: 'margin: 0; font-size: 0.7em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-faint);' } });
-            const grid = group.createEl('div', { cls: 'mina-pillar-grid' });
-            items.forEach(i => pillarCard(grid, i.label, i.icon, i.tab, i.color));
+            const cluster = group.createEl('div', { cls: 'mina-pillar-cluster' });
+            items.forEach(i => renderPillarItem(cluster, i.label, i.icon, i.tab, i.color));
         };
 
-        renderPillarGroup('Action', [
+        renderPillarCluster('Action', [
             { label: 'Focus', icon: DAILY_ICON_ID, tab: 'daily', color: 'var(--interactive-accent)' },
             { label: 'Tasks', icon: TASK_ICON_ID, tab: 'review-tasks' },
             { label: 'Finance', icon: PF_ICON_ID, tab: 'dues' }
         ]);
 
-        renderPillarGroup('Organization', [
+        renderPillarCluster('Organization', [
             { label: 'Projects', icon: PROJECT_ICON_ID, tab: 'projects' },
             { label: 'Synthesis', icon: SYNTHESIS_ICON_ID, tab: 'synthesis' },
             { label: 'Journal', icon: JOURNAL_ICON_ID, tab: 'journal' }
         ]);
 
-        renderPillarGroup('Intelligence', [
+        renderPillarCluster('Intelligence', [
             { label: 'AI Chat', icon: AI_CHAT_ICON_ID, tab: 'mina-ai' },
             { label: 'Review', icon: REVIEW_ICON_ID, tab: 'review' },
             { label: 'Compass', icon: COMPASS_ICON_ID, tab: 'compass' }
         ]);
 
-        renderPillarGroup('Utility', [
+        renderPillarCluster('Utility', [
             { label: 'Voice', icon: VOICE_ICON_ID, tab: 'voice-note' },
             { label: 'Timeline', icon: TIMELINE_ICON_ID, tab: 'timeline' },
             { label: 'Settings', icon: SETTINGS_ICON_ID, tab: 'settings' }
