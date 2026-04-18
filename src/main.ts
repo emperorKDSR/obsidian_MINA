@@ -213,7 +213,11 @@ export default class MinaPlugin extends Plugin {
             const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MINA);
             for (const leaf of leaves) {
                 const view = leaf.view as MinaView;
-                if (view && typeof view.renderView === 'function') view.renderView();
+                if (view && typeof view.renderView === 'function') {
+                    // Don't re-render while the user is mid-toggle — let optimistic UI stand
+                    if (view._taskTogglePending > 0) continue;
+                    view.renderView();
+                }
             }
         }, 150);
     }

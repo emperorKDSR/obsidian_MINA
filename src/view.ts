@@ -31,6 +31,10 @@ export class MinaView extends ItemView {
     isZenMode: boolean = false;
 
     searchQuery: string = '';
+
+    // Tasks state — persists across re-renders (viewMode survives vault events)
+    tasksViewMode: string = 'open';
+    _taskTogglePending: number = 0; // > 0 = suppress vault-event re-renders
     
     // AI State
     chatHistory: ChatMessage[] = [];
