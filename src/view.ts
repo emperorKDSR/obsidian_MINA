@@ -220,11 +220,10 @@ export class MinaView extends ItemView {
         else if (this.activeTab === 'timeline') import('./tabs/TimelineTab').then(({ TimelineTab }) => new TimelineTab(this).render(container));
         else if (this.activeTab === 'focus') import('./tabs/FocusTab').then(({ FocusTab }) => new FocusTab(this).render(container));
         else if (this.activeTab === 'memento-mori') import('./tabs/MementoMoriTab').then(({ MementoMoriTab }) => new MementoMoriTab(this).render(container));
-        else if (this.activeTab === 'journal' || this.activeTab === 'grundfos' || this.plugin.settings.customModes.some(m => m.id === this.activeTab)) {
+        else if (this.activeTab === 'journal') import('./tabs/JournalTab').then(({ JournalTab }) => new JournalTab(this).render(container));
+        else if (this.activeTab === 'grundfos' || this.plugin.settings.customModes.some(m => m.id === this.activeTab)) {
             import('./tabs/ContextTab').then(({ ContextTab }) => new ContextTab(this).render(container, this.activeTab));
         }
-
-        this.renderFAB();
     }
 
     refreshCurrentList() { this._baseTabDelegate.refreshCurrentList(); }
@@ -306,7 +305,14 @@ export class MinaView extends ItemView {
         }
     }
     updateContextList(modeId: string) {
-        import('./tabs/ContextTab').then(({ ContextTab }) => new ContextTab(this).updateContextList(modeId));
+        if (this.activeTab === 'journal' || modeId === 'journal') {
+            import('./tabs/JournalTab').then(({ JournalTab }) => {
+                const list = this.containerEl.querySelector('.mina-journal-list') as HTMLElement;
+                if (list) new JournalTab(this).updateJournalList(list);
+            });
+        } else {
+            import('./tabs/ContextTab').then(({ ContextTab }) => new ContextTab(this).updateContextList(modeId));
+        }
     }
     updateFocusList() {
         import('./tabs/FocusTab').then(({ FocusTab }) => new FocusTab(this).updateFocusList());
@@ -320,22 +326,6 @@ export class MinaView extends ItemView {
         if(!backlinks || !backlinks.data) return Promise.resolve(false);
         for (const path in backlinks.data) if (path.startsWith(thoughtFolder)) return Promise.resolve(true);
         return Promise.resolve(false);
-    }
-
-    renderFAB() {
-        if (this.containerEl.querySelector('.mina-fab')) return;
-        const fabEl = this.containerEl.createEl('div', { cls: 'mina-fab', attr: { style: 'position: absolute; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background-color: var(--interactive-accent); color: var(--text-on-accent); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 100;' } });
-        const img = fabEl.createEl('img', { attr: { style: 'width: 70%; height: 70%;', src: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(NINJA_AVATAR_SVG)}` } });
-        fabEl.addEventListener('click', () => {
-            const menu = new Menu();
-            menu.addItem(item => item.setTitle('Add thought').setIcon('pencil').onClick(() => {
-                 new EditEntryModal(this.plugin.app, this.plugin, '', '', null, false, async (text, ctx) => {
-                     await this.plugin.createThoughtFile(text, ctx.split('#').map(c => c.trim()).filter(c => c));
-                     this.renderView();
-                 }).open();
-            }));
-            menu.showAtMouseEvent(new MouseEvent('click'));
-        });
     }
 
     parseChatSession(content: string): { role: 'user' | 'assistant'; text: string }[] {

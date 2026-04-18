@@ -24,8 +24,10 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Timeline Mode (Clock):** A modern chronological view with a **Thread Aesthetic**.
        - **Vertical Thread:** A continuous subtle line connecting all entries through the day.
        - **Stitch Dots:** Every thought and task is "pinned" to the thread with a small indicator dot.
-       - **Spotlight Carousel:** A redesigned date carousel at the top that highlights the selected day with focus effects.
-     - **Journal Mode (Pen):** Auto-tags captures with `#journal` and supports persistent drag-and-drop reordering.
+     - **Journal Mode (Pen):** A high-end minimalist logbook experience.
+       - **Sticky Date Headers:** Entries are grouped by date with elegant headers that stay pinned during scroll.
+       - **Discrete Search:** Toggleable search bar to maintain a clean aesthetic.
+       - **Add Entry:** Dedicated `+` button in the header for instant journaling with auto-tagging.
      - **Task Mode (Check-square):** A dedicated view for task management and review.
      - **Personal Finance Mode (Dollar):** Specifically manages recurring payments and dues (replaces old Dues tab).
      - **AI Mode (Robot):** Interactive chat with Gemini AI, supporting file grounding and numeric citations.
@@ -34,21 +36,23 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Memento Mori (Hourglass):** Life visualization grid (90 years x 52 weeks) with real-time stats.
      - **Settings Mode (Gear):** Opens plugin configuration in a dedicated window.
    - **Modern Card Design (Global):**
-     - **Minimalist Action Toolbar:** Hover-activated toolbar with sleek line icons (Edit, Delete, Pin, Blur, Reply, Convert) replacing traditional emojis.
-     - **Refined Expansion Toggle:** A minimalist centered chevron with a subtle gradient fade for auto-compacted long notes.
-     - **Consistent Experience:** Unified rendering logic ensures all cards across Daily, Tasks, Thoughts, and Timeline share the same high-end aesthetic.
+     - **Minimalist Action Toolbar:** Hover-activated toolbar with sleek line icons (Edit, Delete, Pin, Blur, Reply, Convert).
+     - **Refined Expansion Toggle:** A minimalist centered chevron with a subtle gradient fade for long notes.
+   - **Minimalist Input Modal:**
+     - **Clean Slate Look:** Removed all headers and titles to focus entirely on writing.
+     - **Context Chips:** Manage tags as interactive pills; click to remove, `+` to add.
+     - **Mobile Optimization:** Full-screen layout with adjusted padding to ensure text visibility.
    - **Borderless Experience:** 
-     - On desktop (macOS & Windows), dedicated windows are truly borderless. 
-     - Native Obsidian tab headers (`.workspace-tab-header-container`) and view headers (`.view-header`) are force-hidden via CSS and class injection.
+     - Dedicated windows are truly borderless with native headers force-hidden via CSS.
      - Includes a custom **drag handle** at the top for window movement.
-   - **Floating Action Button (FAB):** Movable circular button for quick capture across all modes.
-   - **Mobile Optimization:** Dynamic headers ("MINA - {mode}"), `#` trigger for context picking, and visual viewport syncing for reliable keyboard handling.
+   - **Global Image Zoom:** Window-aware zooming that stays within the same tab or popout window.
+   - **Pure Content Focus:** Removed the global FAB (Floating Action Button) to declutter the interface across all modes.
 
 2. **Review & Management**
    - **Modification Tracking:** Every entry tracks its **Modified Date** and **Modified Time**.
    - **Advanced Thread Sorting:** History is sorted by the latest activity with bubble-up logic.
-   - **Advanced Editing:** Double-click or `✏️` to open a Modal for full text, context, and attachment management (images, files, clipboard).
-   - **Convert Thought to Task:** `📋` button converts thoughts to tasks instantly.
+   - **Advanced Editing:** Double-click or `✏️` to open the minimalist modal for full text, context, and attachment management.
+   - **Convert Thought to Task:** `📋` icon in the toolbar converts thoughts to tasks instantly.
    - **Transcription:** High-quality voice note transcription via Gemini AI with target language support.
 
 3. **Functionality & Data Integrity**
@@ -60,9 +64,8 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - The codebase has been refactored for maintainability and performance:
      - **`src/main.ts`**: Plugin entry point and orchestrator.
      - **`src/view.ts`**: Lean view manager that lazily loads tab components and provides shared AI services.
-     - **`src/tabs/`**: Contains specialized components (`DailyTab`, `TasksTab`, `AiTab`, etc.) inheriting from a shared `BaseTab`.
+     - **`src/tabs/`**: Contains specialized components (`DailyTab`, `TasksTab`, `AiTab`, `JournalTab`, etc.) inheriting from `BaseTab`.
      - **`src/tabs/BaseTab.ts`**: Centralizes shared UI rendering logic and interaction hooks.
-     - **`src/modals/`**: Specialized modal implementations.
 
 ## Build & Deploy
 

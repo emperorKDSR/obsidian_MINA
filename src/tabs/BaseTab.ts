@@ -33,8 +33,9 @@ export class BaseTab {
             img.style.cursor = 'zoom-in';
             img.addEventListener('click', (e) => {
                 e.preventDefault(); e.stopPropagation();
-                const overlay = document.body.createEl('div', { attr: { style: 'position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.88); display:flex; align-items:center; justify-content:center; overflow:hidden; touch-action:none' } });
-                const zoomed = overlay.createEl('img', { attr: { src: img.src, style: 'max-width:90vw; max-height:90vh; object-fit:contain; border-radius:6px; box-shadow:0 8px 40px rgba(0,0,0,0.6); user-select:none; will-change:transform; transform-origin:center center; cursor:grab; transition:none' } });
+                // Attach to view container instead of document.body for popout window support
+                const overlay = this.view.containerEl.createEl('div', { attr: { style: 'position:absolute; inset:0; z-index:99999; background:rgba(0,0,0,0.88); display:flex; align-items:center; justify-content:center; overflow:hidden; touch-action:none' } });
+                const zoomed = overlay.createEl('img', { attr: { src: img.src, style: 'max-width:95%; max-height:95%; object-fit:contain; border-radius:6px; box-shadow:0 8px 40px rgba(0,0,0,0.6); user-select:none; will-change:transform; transform-origin:center center; cursor:grab; transition:none' } });
                 const hint = overlay.createEl('div', { attr: { style: 'position:absolute; bottom:16px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.55); color:#fff; font-size:0.78em; padding:4px 14px; border-radius:20px; pointer-events:none; white-space:nowrap; opacity:0.8' }, text: Platform.isMobile ? 'Pinch to zoom · drag to pan · tap outside to close' : 'Scroll to zoom · drag to pan · click outside to close · Esc' });
                 let scale = 1, tx = 0, ty = 0;
                 const applyTransform = () => { zoomed.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`; zoomed.style.cursor = scale > 1 ? 'grab' : 'zoom-in'; };
