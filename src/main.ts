@@ -29,26 +29,37 @@ export default class MinaPlugin extends Plugin {
         this.index = new IndexService(this.app, this.settings);
 
         this.app.workspace.onLayoutReady(async () => {
-            const foundContexts = await this.index.scanForContexts();
-            let newCtx = false;
-            foundContexts.forEach(c => { if (!this.settings.contexts.includes(c)) { this.settings.contexts.push(c); newCtx = true; } });
-            if (newCtx) await this.saveSettings();
-
             await this.index.buildIndices();
+            this.scanForContexts();
             
+            // --- REACTIVE NERVE SYSTEM ---
             this.registerEvent(this.app.vault.on('create', async (f) => { 
-                if (this.index.isThoughtFile(f.path)) { await this.index.indexThoughtFile(f as TFile); this.notifyRefresh(); }
-                else if (this.index.isTaskFile(f.path)) { await this.index.indexTaskFile(f as TFile); this.notifyRefresh(); }
+                if (this.index.isThoughtFile(f.path)) await this.index.indexThoughtFile(f as TFile);
+                else if (this.index.isTaskFile(f.path)) await this.index.indexTaskFile(f as TFile);
+                this.notifyRefresh(); 
             }));
+            
             this.registerEvent(this.app.vault.on('modify', async (f) => { 
-                if (this.index.isThoughtFile(f.path)) { await this.index.indexThoughtFile(f as TFile); this.notifyRefresh(); }
-                else if (this.index.isTaskFile(f.path)) { await this.index.indexTaskFile(f as TFile); this.notifyRefresh(); }
+                if (this.index.isThoughtFile(f.path)) await this.index.indexThoughtFile(f as TFile);
+                else if (this.index.isTaskFile(f.path)) await this.index.indexTaskFile(f as TFile);
+                
+                const capFolder = this.settings.captureFolder.trim() || '000 Bin/MINA V2';
+                const capFile = this.settings.captureFilePath.trim() || 'Daily Capture.md';
+                const capPath = `${capFolder}/${capFile}`;
+                const habitsFolder = (this.settings.habitsFolder || '000 Bin/MINA V2 Habits').replace(/\\/g, '/');
+
+                if (f.path === capPath) await this.index.buildChecklistIndex();
+                else if (f.path.startsWith(habitsFolder)) await this.index.refreshHabitIndex();
+
+                this.notifyRefresh();
             }));
+
             this.registerEvent(this.app.vault.on('delete', (f) => { 
                 this.index.thoughtIndex.delete(f.path); 
                 this.index.taskIndex.delete(f.path); 
                 this.notifyRefresh(); 
             }));
+            
             this.registerEvent(this.app.vault.on('rename', async (f, oldPath) => {
                 this.index.thoughtIndex.delete(oldPath);
                 this.index.taskIndex.delete(oldPath);
@@ -78,7 +89,7 @@ export default class MinaPlugin extends Plugin {
         addIcon(HOME_ICON_ID, HOME_ICON_SVG);
 
 		this.addRibbonIcon(HOME_ICON_ID, 'MINA Hub', () => { this.activateView('home', true); });
-		this.addRibbonIcon(DAILY_ICON_ID, 'Daily Mode', () => { this.activateView('daily', true); });
+		this.addRibbonIcon(DAILY_ICON_ID, 'Daily Summary', () => { this.activateView('home', true); });
 		this.addRibbonIcon(REVIEW_ICON_ID, 'Weekly Review', () => { this.activateView('review', true); });
 		this.addRibbonIcon(PROJECT_ICON_ID, 'Projects Mode', () => { this.activateView('projects', true); });
 		this.addRibbonIcon(SYNTHESIS_ICON_ID, 'Synthesis Mode', () => { this.activateView('synthesis', true); });
@@ -96,7 +107,7 @@ export default class MinaPlugin extends Plugin {
 
         this.addCommand({ id: 'open-mina-home-mode', name: 'MINA Hub', icon: HOME_ICON_ID, callback: () => { this.activateView('home', true); } });
 		this.addCommand({ id: 'open-mina-journal-mode', name: 'Journal Mode', icon: JOURNAL_ICON_ID, callback: () => { this.activateView('journal', true); } });
-		this.addCommand({ id: 'open-mina-daily-mode', name: 'Daily Mode', icon: DAILY_ICON_ID, callback: () => { this.activateView('daily', true); } });
+		this.addCommand({ id: 'open-mina-daily-mode', name: 'Daily Summary', icon: DAILY_ICON_ID, callback: () => { this.activateView('home', true); } });
 		this.addCommand({ id: 'open-mina-timeline', name: 'Timeline Mode', icon: TIMELINE_ICON_ID, callback: () => { this.activateView('timeline', true); } });
 		this.addCommand({ id: 'open-mina-focus-mode', name: 'Focus Mode', icon: FOCUS_ICON_ID, callback: () => { this.activateView('focus', true); } });
 		this.addCommand({ id: 'open-mina-grundfos-mode', name: 'Grundfos Mode', icon: GRUNDFOS_ICON_ID, callback: () => { this.activateView('grundfos', true); } });
@@ -111,40 +122,8 @@ export default class MinaPlugin extends Plugin {
 		this.addCommand({ id: 'open-mina-task-mode', name: 'Task Mode', icon: TASK_ICON_ID, callback: () => { this.activateView('review-tasks', true); } });
 		this.addCommand({ id: 'open-mina-ai-mode', name: 'AI Mode', icon: AI_CHAT_ICON_ID, callback: () => { this.activateView('mina-ai', true); } });
 
-		this.addCommand({
-			id: 'enable-compact-view',
-			name: 'Enable Compact View',
-			callback: async () => {
-				this.settings.isCompactView = true;
-				await this.saveSettings();
-				new Notice('Compact View enabled');
-                const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MINA);
-                for (const leaf of leaves) {
-                    const view = leaf.view as MinaView;
-                    if (view && typeof view.renderView === 'function') view.renderView();
-                }
-			}
-		});
-
-		this.addCommand({
-			id: 'disable-compact-view',
-			name: 'Enable Full View',
-			callback: async () => {
-				this.settings.isCompactView = false;
-				await this.saveSettings();
-				new Notice('Full View enabled');
-                const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MINA);
-                for (const leaf of leaves) {
-                    const view = leaf.view as MinaView;
-                    if (view && typeof view.renderView === 'function') view.renderView();
-                }
-			}
-		});
-
         this.registerCustomModes();
 		this.addSettingTab(new MinaSettingTab(this.app, this));
-        
-        // Phase 3: Legacy Bridge
         setTimeout(() => this.migrateLegacyTableData(), 2000);
 	}
 
@@ -152,30 +131,25 @@ export default class MinaPlugin extends Plugin {
         const { vault } = this.app;
         const thoughtsPath = this.settings.captureFolder + '/' + this.settings.captureFilePath;
         const tasksPath = this.settings.captureFolder + '/' + this.settings.tasksFilePath;
-
         const migrateFile = async (path: string, isTask: boolean) => {
             const file = vault.getAbstractFileByPath(path);
             if (!(file instanceof TFile)) return;
             const content = await vault.read(file);
             const lines = content.split('\n').filter(l => l.trim().startsWith('|') && !l.includes('---') && !l.includes('Date'));
-            
             for (const line of lines) {
                 const parts = line.split('|').map(p => p.trim());
-                if (isTask && parts.length >= 8) {
-                    const taskText = parts[7].replace(/<br>/g, '\n');
-                    const contexts = (parts[8].match(/#[^#\s|]+/g) || []).map(c => c.substring(1));
-                    const due = parts[6].replace(/\[\[|\]\]/g, '');
-                    await this.vault.createTaskFile(taskText, contexts, due);
-                } else if (!isTask && parts.length >= 8) {
-                    const thoughtText = parts[7].replace(/<br>/g, '\n');
-                    const contexts = (parts[8].match(/#[^#\s|]+/g) || []).map(c => c.substring(1));
-                    await this.vault.createThoughtFile(thoughtText, contexts);
+                if (parts.length >= 8) {
+                    const text = parts[7].replace(/<br>/g, '\n');
+                    const ctxs = (parts[8].match(/#[^#\s|]+/g) || []).map(c => c.substring(1));
+                    if (isTask) {
+                        const due = parts[6].replace(/\[\[|\]\]/g, '');
+                        await this.vault.createTaskFile(text, ctxs, due);
+                    } else await this.vault.createThoughtFile(text, ctxs);
                 }
             }
             await vault.rename(file, path + '.bak');
-            new Notice(`Migrated legacy ${isTask ? 'tasks' : 'thoughts'} to new unified file model.`);
+            new Notice(`Migrated legacy ${isTask ? 'tasks' : 'thoughts'}.`);
         };
-
         await migrateFile(thoughtsPath, false);
         await migrateFile(tasksPath, true);
     }
@@ -183,32 +157,13 @@ export default class MinaPlugin extends Plugin {
     async activateView(tabId?: string, isDedicated: boolean = false) {
         const { workspace } = this.app;
         const targetTab = tabId || (isDedicated ? 'home' : 'review-thoughts');
-
-        if (Platform.isMobile) {
-            const leaves = workspace.getLeavesOfType(VIEW_TYPE_MINA);
-            let targetLeaf: WorkspaceLeaf | null = null;
-            for (const leaf of leaves) {
-                const view = leaf.view as MinaView;
-                if (view && view.isDedicated === isDedicated && (isDedicated ? view.activeTab === targetTab : true)) { targetLeaf = leaf; break; }
-            }
-            if (!targetLeaf) targetLeaf = isTablet() ? workspace.getLeaf(false) : workspace.getLeaf('tab');
-            if (targetLeaf) {
-                await targetLeaf.setViewState({ type: VIEW_TYPE_MINA, active: true, state: { activeTab: targetTab, isDedicated } });
-                workspace.revealLeaf(targetLeaf);
-            }
-            return;
-        }
-
-        const allLeaves = workspace.getLeavesOfType(VIEW_TYPE_MINA);
+        const leaves = workspace.getLeavesOfType(VIEW_TYPE_MINA);
         let targetLeaf: WorkspaceLeaf | null = null;
-        for (const leaf of allLeaves) {
+        for (const leaf of leaves) {
             const view = leaf.view as MinaView;
-            if (view && view.isDedicated === isDedicated) {
-                if (isDedicated && view.activeTab === targetTab) { targetLeaf = leaf; break; }
-                if (!isDedicated) { targetLeaf = leaf; break; }
-            }
+            if (view && view.isDedicated === isDedicated && (isDedicated ? view.activeTab === targetTab : true)) { targetLeaf = leaf; break; }
         }
-        if (!targetLeaf) targetLeaf = workspace.getLeaf('window');
+        if (!targetLeaf) targetLeaf = Platform.isMobile ? (isTablet() ? workspace.getLeaf(false) : workspace.getLeaf('tab')) : workspace.getLeaf('window');
         if (targetLeaf) {
             await targetLeaf.setViewState({ type: VIEW_TYPE_MINA, active: true, state: { activeTab: targetTab, isDedicated } });
             workspace.revealLeaf(targetLeaf);
@@ -222,17 +177,18 @@ export default class MinaPlugin extends Plugin {
         }
     }
 
+    async scanForContexts() {
+        const foundContexts = await this.index.scanForContexts();
+        let newCtx = false;
+        foundContexts.forEach(c => { if (!this.settings.contexts.includes(c)) { this.settings.contexts.push(c); newCtx = true; } });
+        if (newCtx) await this.saveSettings();
+    }
+
 	async loadSettings() {
 		const loadedData = await this.loadData();
         this.settings = Object.assign({}, DEFAULT_SETTINGS);
-        this.settings.dailySectionStates = { ...DEFAULT_SETTINGS.dailySectionStates };
-        if (loadedData) {
-            Object.assign(this.settings, loadedData);
-            this.settingsInitialized = true;
-        } else {
-            this.settings.contexts = [];
-            this.settingsInitialized = true;
-        }
+        if (loadedData) Object.assign(this.settings, loadedData);
+        this.settingsInitialized = true;
 	}
 
 	async saveSettings() {
@@ -251,7 +207,7 @@ export default class MinaPlugin extends Plugin {
                 const view = leaf.view as MinaView;
                 if (view && typeof view.renderView === 'function') view.renderView();
             }
-        }, 300);
+        }, 150);
     }
 
     getProjects(): string[] {
@@ -259,10 +215,14 @@ export default class MinaPlugin extends Plugin {
     }
 
     async getHabitStatus(date: string): Promise<string[]> {
-        return this.vault ? await this.vault.getHabitStatus(date) : [];
+        return this.index ? this.index.habitStatusIndex : [];
     }
 
     async toggleHabit(date: string, habitId: string): Promise<void> {
-        if (this.vault) await this.vault.toggleHabit(date, habitId);
+        if (this.vault) {
+            await this.vault.toggleHabit(date, habitId);
+            await this.index.refreshHabitIndex();
+            this.notifyRefresh();
+        }
     }
 }

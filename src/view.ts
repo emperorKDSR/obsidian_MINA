@@ -36,6 +36,7 @@ export class MinaView extends ItemView {
     thoughtsRowContainer: HTMLElement;
     focusRowContainer: HTMLElement;
     activeMasterNote: TFile | null = null;
+    isZenMode: boolean = false;
 
     searchQuery: string = '';
     
@@ -113,8 +114,7 @@ export class MinaView extends ItemView {
 
     private renderTab(container: HTMLElement) {
         const tab = this.activeTab;
-        if (tab === 'home') import('./tabs/CommandCenterTab').then(({ CommandCenterTab }) => new CommandCenterTab(this).render(container));
-        else if (tab === 'daily') import('./tabs/DailyTab').then(({ DailyTab }) => new DailyTab(this).render(container));
+        if (tab === 'home' || tab === 'daily') import('./tabs/CommandCenterTab').then(({ CommandCenterTab }) => new CommandCenterTab(this).render(container));
         else if (tab === 'review-thoughts') import('./tabs/ThoughtsTab').then(({ ThoughtsTab }) => new ThoughtsTab(this).render(container));
         else if (tab === 'review-tasks') import('./tabs/TasksTab').then(({ TasksTab }) => new TasksTab(this).render(container));
         else if (tab === 'mina-ai') import('./tabs/AiTab').then(({ AiTab }) => new AiTab(this).render(container));

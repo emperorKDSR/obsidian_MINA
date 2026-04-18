@@ -1,4 +1,4 @@
-import { App, Modal, Platform, Notice, moment, Setting } from 'obsidian';
+import { App, Modal, Platform, Notice, moment } from 'obsidian';
 import MinaPlugin from '../main';
 import { isTablet, parseNaturalDate } from '../utils';
 import { FileSuggestModal } from './FileSuggestModal';
@@ -14,7 +14,6 @@ export class EditEntryModal extends Modal {
     customTitle?: string;
     stayOpen: boolean;
     
-    suggestedProject: string | null = null;
     currentProject: string | null = null;
     classificationTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -43,247 +42,133 @@ export class EditEntryModal extends Modal {
     onOpen() {
         const { contentEl, modalEl } = this;
         contentEl.empty();
-        modalEl.addClass('mina-modern-modal');
+        modalEl.addClass('mina-clean-modal');
 
-        // Style the modal wrapper
+        // Layout Constants
+        modalEl.style.width = '650px';
+        modalEl.style.maxWidth = '95vw';
+        modalEl.style.borderRadius = '20px';
         modalEl.style.padding = '0';
-        modalEl.style.borderRadius = '16px';
         modalEl.style.overflow = 'hidden';
-        modalEl.style.border = '1px solid var(--background-modifier-border)';
-        modalEl.style.boxShadow = '0 20px 40px rgba(0,0,0,0.3)';
+        modalEl.style.background = 'var(--background-primary)';
+        modalEl.style.boxShadow = '0 30px 60px rgba(0,0,0,0.4)';
+        modalEl.style.border = '1px solid var(--background-modifier-border-faint)';
 
         if (Platform.isMobile) {
-            const modalW = isTablet() ? '80vw' : '100vw';
-            modalEl.style.width = modalW;
-            modalEl.style.maxWidth = modalW;
+            modalEl.style.width = '100vw';
             modalEl.style.height = '100vh';
             modalEl.style.borderRadius = '0';
         }
 
-        // 1. Sleek Header
-        const header = contentEl.createEl('div', {
-            attr: { style: 'padding: 8px 20px; background: var(--background-secondary-alt); border-bottom: 1px solid var(--background-modifier-border-faint); cursor: move; height: 16px;' }
+        // 1. MAIN CANVAS
+        const canvas = contentEl.createEl('div', {
+            attr: { style: 'padding: 32px 32px 10px 32px; display: flex; flex-direction: column; gap: 16px;' }
         });
 
-        // --- Drag Logic ---
-        let isDragging = false; let startX: number, startY: number; let initialLeft: number, initialTop: number;
-        header.addEventListener('mousedown', (e) => {
-            isDragging = true; startX = e.clientX; startY = e.clientY; const rect = modalEl.getBoundingClientRect();
-            initialLeft = rect.left; initialTop = rect.top; modalEl.style.position = 'fixed'; modalEl.style.margin = '0';
-            modalEl.style.left = initialLeft + 'px'; modalEl.style.top = initialTop + 'px'; e.preventDefault();
-        });
-        const onMouseMove = (e: MouseEvent) => { if (isDragging) { modalEl.style.left = (initialLeft + e.clientX - startX) + 'px'; modalEl.style.top = (initialTop + e.clientY - startY) + 'px'; } };
-        const onMouseUp = () => { isDragging = false; };
-        window.addEventListener('mousemove', onMouseMove); window.addEventListener('mouseup', onMouseUp);
-        const originalOnClose = this.onClose.bind(this);
-        this.onClose = () => { window.removeEventListener('mousemove', onMouseMove); window.removeEventListener('mouseup', onMouseUp); originalOnClose(); };
-
-        // 2. Content Area
-        const body = contentEl.createEl('div', { attr: { style: 'padding: 20px;' } });
-        
-        const textAreaWrapper = body.createEl('div', { attr: { style: 'position: relative; margin-bottom: 8px;' } });
-        const textArea = textAreaWrapper.createEl('textarea', {
+        const textArea = canvas.createEl('textarea', {
             text: this.initialText,
             attr: { 
-                placeholder: 'What\'s on your mind?',
-                style: 'width: 100%; min-height: 180px; font-size: 1.1em; line-height: 1.6; font-family: var(--font-text); border: none; background: transparent; color: var(--text-normal); resize: none; padding: 10px 0 0 0; outline: none; box-shadow: none;' 
+                placeholder: this.isTask ? "Execute intent..." : "Capture thought...",
+                style: 'width: 100%; min-height: 200px; font-size: 1.25em; line-height: 1.5; font-family: var(--font-text); border: none; background: transparent; color: var(--text-normal); resize: none; outline: none; padding: 0;' 
             }
         });
         textArea.focus();
 
-        // AI Suggestion Area
-        const aiSuggestionArea = body.createEl('div', {
-            attr: { style: 'height: 24px; margin-bottom: 8px; display: flex; align-items: center;' }
+        // 2. METADATA BAR (DOCK)
+        const dock = contentEl.createEl('div', {
+            attr: { style: 'padding: 12px 32px; background: var(--background-secondary-alt); border-top: 1px solid var(--background-modifier-border-faint); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;' }
         });
 
-        const updateAiSuggestion = (project: string | null) => {
-            aiSuggestionArea.empty();
-            if (!project) return;
-            
-            const chip = aiSuggestionArea.createEl('span', {
-                text: `Link to Project: ${project}?`,
-                attr: { style: 'font-size: 0.65em; font-weight: 700; color: var(--interactive-accent); background: rgba(var(--interactive-accent-rgb), 0.1); padding: 2px 8px; border-radius: 4px; cursor: pointer; border: 1px solid var(--background-modifier-border-faint); text-transform: uppercase; letter-spacing: 0.05em;' }
-            });
-            chip.addEventListener('click', () => {
-                this.currentProject = project;
-                aiSuggestionArea.empty();
-                aiSuggestionArea.createEl('span', { text: `Linked to: ${project} ✓`, attr: { style: 'font-size: 0.65em; font-weight: 800; color: var(--text-success); text-transform: uppercase;' } });
-            });
-        };
-
-        const classifyInput = async (text: string) => {
-            if (text.length < 10) return;
-            const projects = this.plugin.getProjects();
-            if (projects.length === 0) return;
-
-            const prompt = `Classify this note into one of these existing projects: ${projects.join(', ')}. 
-            Note text: "${text}". 
-            If it clearly matches a project, return ONLY the project name. If no clear match, return "None".`;
-
-            try {
-                const result = await this.plugin.ai.callGemini(prompt, [], false, [{ role: 'user', text: prompt }], this.plugin.index.thoughtIndex);
-                const match = projects.find((p: string) => result?.includes(p));
-                if (match) updateAiSuggestion(match);
-            } catch (e) {}
-        };
-
-        let lastValue = this.initialText;
-        textArea.addEventListener('input', (e) => {
-            const target = e.target as HTMLTextAreaElement;
-            const val = target.value;
-            const pos = target.selectionStart;
-            const textBeforeCursor = val.substring(0, pos);
-
-            // Debounced AI Classification
-            if (this.classificationTimeout) clearTimeout(this.classificationTimeout);
-            this.classificationTimeout = setTimeout(() => classifyInput(val), 2000);
-
-            // Natural Language Date conversion: @date
-            const dateMatch = textBeforeCursor.match(/@([^@\n\s]+(?: [^@\n\s]+)*)([\s\n])$/);
-            if (dateMatch) {
-                const rawDate = dateMatch[1];
-                const terminator = dateMatch[2];
-                const parsed = parseNaturalDate(rawDate);
-                if (parsed) {
-                    const matchStart = dateMatch.index!;
-                    const before = val.substring(0, matchStart);
-                    const after = val.substring(pos);
-                    const insertText = `[[${parsed}]]${terminator}`;
-                    target.value = before + insertText + after;
-                    const newPos = matchStart + insertText.length;
-                    target.setSelectionRange(newPos, newPos);
-                    lastValue = target.value;
-                    return;
-                }
-            }
-
-            if (val.length > lastValue.length) {
-                const cursorPosition = target.selectionStart;
-                if (cursorPosition >= 2 && val.substring(cursorPosition - 2, cursorPosition) === '[[') {
-                    new FileSuggestModal(this.app, (file) => {
-                        const before = val.substring(0, cursorPosition - 2);
-                        const after = val.substring(cursorPosition);
-                        const insertText = `[[${file.basename}]]`;
-                        target.value = before + insertText + after;
-                        setTimeout(() => { target.focus(); target.setSelectionRange(before.length + insertText.length, before.length + insertText.length); }, 50);
-                    }, this.plugin.settings.newNoteFolder).open();
-                } else if (cursorPosition > 0 && val.charAt(cursorPosition - 1) === '#') {
-                    new ContextSuggestModal(this.app, this.plugin.settings.contexts, async (ctx) => {
-                        const before = val.substring(0, cursorPosition - 1);
-                        const after = val.substring(cursorPosition);
-                        target.value = before + after;
-                        if (!this.initialContexts.includes(ctx)) {
-                            this.initialContexts.push(ctx);
-                            renderChips();
-                        }
-                        setTimeout(() => { target.focus(); target.setSelectionRange(before.length, before.length); }, 50);
-                    }).open();
-                }
-            }
-            lastValue = val;
-        });
-
-        const handleModalFiles = async (files: FileList) => {
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i]; if (!file || file.size === 0) continue;
-                try {
-                    const arrayBuffer = await file.arrayBuffer();
-                    const extension = file.name && file.name.includes('.') ? file.name.split('.').pop() : (file.type.split('/')[1] || 'png');
-                    const baseName = (file.name && file.name.includes('.')) ? file.name.substring(0, file.name.lastIndexOf('.')) : `Pasted image ${moment().format('YYYYMMDDHHmmss')}`;
-                    const fileName = `${baseName}.${extension}`;
-                    const attachmentPath = await this.app.fileManager.getAvailablePathForAttachment(fileName);
-                    const newFile = await this.app.vault.createBinary(attachmentPath, arrayBuffer);
-                    const isImgExt = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg', 'webp'].includes(extension?.toLowerCase() || '');
-                    const markdownLink = isImgExt ? `![[${newFile.name}]]` : `[[${newFile.name}]]`;
-                    const startPos = textArea.selectionStart; const endPos = textArea.selectionEnd;
-                    textArea.value = textArea.value.substring(0, startPos) + markdownLink + textArea.value.substring(endPos);
-                    textArea.selectionStart = textArea.selectionEnd = startPos + markdownLink.length;
-                    new Notice(`Attached ${newFile.name}`);
-                } catch (err) { new Notice('Failed to save attachment.'); }
-            }
-        };
-
-        const fileInput = textAreaWrapper.createEl('input', { attr: { type: 'file', multiple: '', style: 'display:none;', accept: 'image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,*' } }) as HTMLInputElement;
-        fileInput.addEventListener('change', async () => { if (fileInput.files && fileInput.files.length > 0) { await handleModalFiles(fileInput.files); fileInput.value = ''; } });
+        const leftDock = dock.createDiv({ attr: { style: 'display: flex; align-items: center; gap: 12px; flex-grow: 1;' } });
         
-        const attachBtn = body.createEl('button', { 
-            attr: { title: 'Attach file', style: 'background: var(--background-secondary); border: 1px solid var(--background-modifier-border); border-radius: 8px; color: var(--text-muted); padding: 6px 12px; cursor: pointer; font-size: 0.9em; display: flex; align-items: center; gap: 6px; transition: all 0.2s;' } 
-        });
-        attachBtn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg> Attach';
-        attachBtn.addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
-
-        // 3. Metadata Bar (Chips)
-        const metaBar = body.createEl('div', {
-            attr: { style: 'margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--background-modifier-border-faint); display: flex; flex-direction: column; gap: 12px;' }
-        });
-
-        // Date selector for Tasks
-        let dateInput: HTMLInputElement | null = null;
-        if (this.isTask) {
-            const dateRow = metaBar.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 10px;' } });
-            dateRow.createSpan({ text: 'Due date', attr: { style: 'font-size: 0.8em; font-weight: 600; color: var(--text-muted); width: 80px;' } });
-            dateInput = dateRow.createEl('input', {
-                type: 'date',
-                value: this.initialDueDate || '',
-                attr: { style: 'font-size: 0.9em; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal);' }
-            });
-        }
-
-        // Context Chips
-        const contextRow = metaBar.createEl('div', { attr: { style: 'display: flex; align-items: flex-start; gap: 10px;' } });
-        contextRow.createSpan({ text: 'Contexts', attr: { style: 'font-size: 0.8em; font-weight: 600; color: var(--text-muted); width: 80px; margin-top: 4px;' } });
-        const chipContainer = contextRow.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 6px; flex-grow: 1;' } });
-
+        // Context Pills
+        const chipContainer = leftDock.createDiv({ attr: { style: 'display: flex; gap: 6px; flex-wrap: wrap;' } });
         const renderChips = () => {
             chipContainer.empty();
             this.initialContexts.forEach(ctx => {
                 const chip = chipContainer.createEl('span', { 
                     text: `#${ctx}`, 
-                    attr: { style: 'font-size: 0.75em; padding: 3px 10px; border-radius: 12px; background: var(--interactive-accent); color: var(--text-on-accent); cursor: pointer; font-weight: 600;' } 
+                    attr: { style: 'font-size: 0.65em; font-weight: 800; padding: 3px 10px; border-radius: 8px; background: var(--background-primary); color: var(--text-muted); border: 1px solid var(--background-modifier-border-faint); text-transform: uppercase; cursor: pointer; transition: all 0.2s;' } 
                 });
-                chip.addEventListener('click', () => {
-                    this.initialContexts = this.initialContexts.filter(c => c !== ctx);
-                    renderChips();
-                });
+                chip.addEventListener('click', () => { this.initialContexts = this.initialContexts.filter(c => c !== ctx); renderChips(); });
             });
-            const addChip = chipContainer.createEl('span', { 
+            const addBtn = chipContainer.createEl('button', { 
                 text: '+', 
-                attr: { style: 'font-size: 0.8em; padding: 2px 8px; border-radius: 12px; background: var(--background-secondary); color: var(--text-muted); cursor: pointer; border: 1px dashed var(--background-modifier-border);' } 
+                attr: { style: 'background: transparent; border: 1px dashed var(--text-faint); color: var(--text-faint); border-radius: 8px; width: 24px; height: 24px; font-size: 0.8em; cursor: pointer;' } 
             });
-            addChip.addEventListener('click', () => {
+            addBtn.addEventListener('click', () => {
                 new ContextSuggestModal(this.app, this.plugin.settings.contexts, async (ctx) => {
-                    if (!this.initialContexts.includes(ctx)) this.initialContexts.push(ctx);
-                    renderChips();
+                    if (!this.initialContexts.includes(ctx)) { this.initialContexts.push(ctx); renderChips(); }
                 }).open();
             });
         };
         renderChips();
 
-        // 4. Footer Actions
-        const footer = contentEl.createEl('div', {
-            attr: { style: 'padding: 16px 20px; background: var(--background-secondary-alt); border-top: 1px solid var(--background-modifier-border-faint); display: flex; justify-content: flex-end; gap: 12px;' }
-        });
+        // Project Chip
+        const projectArea = leftDock.createDiv();
+        const updateProjectChip = (project: string | null) => {
+            projectArea.empty();
+            if (!project) return;
+            const pChip = projectArea.createEl('span', { 
+                text: `[${project}]`, 
+                attr: { style: 'font-size: 0.65em; font-weight: 900; color: var(--interactive-accent); text-transform: uppercase; letter-spacing: 0.05em;' } 
+            });
+            pChip.addEventListener('click', () => { this.currentProject = null; updateProjectChip(null); });
+        };
+        if (this.currentProject) updateProjectChip(this.currentProject);
 
-        const cancelBtn = footer.createEl('button', { text: 'Cancel', attr: { style: 'background: transparent; border: none; color: var(--text-muted); font-weight: 600; cursor: pointer;' } });
+        // Date Picker (Tasks only)
+        let dateInput: HTMLInputElement | null = null;
+        if (this.isTask) {
+            dateInput = leftDock.createEl('input', {
+                type: 'date',
+                value: this.initialDueDate || moment().format('YYYY-MM-DD'),
+                attr: { style: 'font-size: 0.7em; background: transparent; border: none; color: var(--text-faint); cursor: pointer;' }
+            });
+        }
+
+        // 3. ACTION CLUSTER
+        const rightDock = dock.createDiv({ attr: { style: 'display: flex; gap: 8px;' } });
+        
+        const cancelBtn = rightDock.createEl('button', { text: 'CANCEL', attr: { style: 'background: transparent; border: none; color: var(--text-faint); font-size: 0.65em; font-weight: 900; padding: 8px 12px; cursor: pointer;' } });
         cancelBtn.addEventListener('click', () => this.close());
 
-        const saveBtn = footer.createEl('button', { 
-            text: this.stayOpen ? 'Add and Continue' : 'Save Changes', 
-            attr: { style: 'background: var(--interactive-accent); color: var(--text-on-accent); border: none; padding: 8px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);' } 
+        const saveBtn = rightDock.createEl('button', { 
+            text: this.stayOpen ? 'ADD' : 'SAVE', 
+            attr: { style: 'background: var(--interactive-accent); color: var(--text-on-accent); border: none; padding: 6px 20px; border-radius: 8px; font-size: 0.7em; font-weight: 900; cursor: pointer; box-shadow: 0 4px 15px rgba(var(--interactive-accent-rgb), 0.3);' } 
         });
 
-        const saveChanges = () => {
-            if (!textArea.value.trim()) { new Notice('Please enter some text'); return; }
-            const newText = textArea.value.replace(/\n/g, '<br>');
-            const newContextString = this.initialContexts.map(c => `#${c}`).join(' ');
-            const newDate = dateInput ? dateInput.value : null;
-            this.onSave(newText, newContextString, newDate, this.currentProject);
-            if (this.stayOpen) { textArea.value = ''; textArea.focus(); new Notice(this.isTask ? 'Task added!' : 'Thought added!'); }
+        const handleSave = () => {
+            if (!textArea.value.trim()) return;
+            const text = textArea.value.replace(/\n/g, '<br>');
+            const contexts = this.initialContexts.map(c => `#${c}`).join(' ');
+            const due = dateInput ? dateInput.value : null;
+            this.onSave(text, contexts, due, this.currentProject);
+            if (this.stayOpen) { textArea.value = ''; textArea.focus(); new Notice('Capture saved.'); }
             else this.close();
         };
 
-        saveBtn.addEventListener('click', saveChanges);
-        textArea.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); saveChanges(); } });
+        saveBtn.addEventListener('click', handleSave);
+        textArea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSave(); }
+            if (e.key === 'Escape') this.close();
+        });
+
+        // AI Auto-Classification
+        textArea.addEventListener('input', () => {
+            if (this.classificationTimeout) clearTimeout(this.classificationTimeout);
+            this.classificationTimeout = setTimeout(async () => {
+                const text = textArea.value;
+                if (text.length < 15) return;
+                const projects = this.plugin.index.getProjects();
+                const prompt = `Classify this note into one of these projects: ${projects.join(', ')}. Note: "${text}". Return ONLY the name or "None".`;
+                try {
+                    const result = await this.plugin.ai.callGemini(prompt, [], false, [], this.plugin.index.thoughtIndex);
+                    const match = projects.find(p => result.includes(p));
+                    if (match) { this.currentProject = match; updateProjectChip(match); }
+                } catch (e) {}
+            }, 1500);
+        });
     }
 
     onClose() { this.contentEl.empty(); }
