@@ -1,5 +1,6 @@
 import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import MinaPlugin from './main';
+import { FolderSettingsModal } from './modals/FolderSettingsModal';
 
 export class MinaSettingTab extends PluginSettingTab {
 	plugin: MinaPlugin;
@@ -7,14 +8,18 @@ export class MinaSettingTab extends PluginSettingTab {
 	display(): void {
 		const {containerEl} = this;
 		containerEl.empty();
-        new Setting(containerEl).setName('Tasks Folder').setDesc('Folder where MINA V2 task files are stored.').addText(text => text.setPlaceholder('000 Bin/MINA V2 Tasks').setValue(this.plugin.settings.tasksFolder).onChange(async (value) => { this.plugin.settings.tasksFolder = value; await this.plugin.saveSettings(); }));
-        new Setting(containerEl).setName('Thoughts Folder').setDesc('Folder where MINA V2 thought files are stored.').addText(text => text.setPlaceholder('000 Bin/MINA V2').setValue(this.plugin.settings.thoughtsFolder).onChange(async (value) => { this.plugin.settings.thoughtsFolder = value; await this.plugin.saveSettings(); }));
-        new Setting(containerEl).setName('Personal Finance Folder').setDesc('Folder scanned by the Dues tab for recurring payment notes.').addText(text => text.setPlaceholder('000 Bin/MINA V2 PF').setValue(this.plugin.settings.pfFolder).onChange(async (value) => { this.plugin.settings.pfFolder = value; await this.plugin.saveSettings(); }));
+
+        new Setting(containerEl)
+            .setName('Folder Configuration')
+            .setDesc('Configure the storage locations for tasks, thoughts, finance, and voice notes.')
+            .addButton(btn => btn
+                .setButtonText('Open Folder Config')
+                .onClick(() => {
+                    new FolderSettingsModal(this.app, this.plugin).open();
+                }));
+
         new Setting(containerEl).setName('Date format').addText(text => text.setPlaceholder('YYYY-MM-DD').setValue(this.plugin.settings.dateFormat).onChange(async (value) => { this.plugin.settings.dateFormat = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('Time format').addText(text => text.setPlaceholder('HH:mm').setValue(this.plugin.settings.timeFormat).onChange(async (value) => { this.plugin.settings.timeFormat = value; await this.plugin.saveSettings(); }));
-        new Setting(containerEl).setName('New Note Folder').setDesc('Folder where notes created via the [[ link picker are saved.').addText(text => text.setPlaceholder('000 Bin').setValue(this.plugin.settings.newNoteFolder).onChange(async (value) => { this.plugin.settings.newNoteFolder = value; await this.plugin.saveSettings(); }));
-        new Setting(containerEl).setName('Voice Memo Folder').setDesc('Folder where recorded voice notes will be stored.').addText(text => text.setPlaceholder('000 Bin/MINA V2 Voice').setValue(this.plugin.settings.voiceMemoFolder).onChange(async (value) => { this.plugin.settings.voiceMemoFolder = value; await this.plugin.saveSettings(); }));
-        new Setting(containerEl).setName('AI Chat Folder').setDesc('Folder where AI chat sessions are automatically saved.').addText(text => text.setPlaceholder('000 Bin/MINA V2 AI Chat').setValue(this.plugin.settings.aiChatFolder).onChange(async (value) => { this.plugin.settings.aiChatFolder = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('Transcription Language').setDesc('Target language for audio transcription/translation.').addText(text => text.setPlaceholder('English').setValue(this.plugin.settings.transcriptionLanguage).onChange(async (value) => { this.plugin.settings.transcriptionLanguage = value; await this.plugin.saveSettings(); }));
 
         containerEl.createEl('h3', { text: 'Memento Mori' });

@@ -43,6 +43,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
        - **Pop-up Configuration:** Integrated "Configure" button that opens a dedicated modal to update Birth Date and Life Expectancy.
        - **Full Refresh:** Includes a "Full Refresh" capability to synchronize settings and reload the entire plugin interface.
      - **Settings Mode (Gear):** Opens plugin configuration in a dedicated window.
+       - **Folder Configuration:** A dedicated "Folder Config" button consolidates storage path settings (Tasks, Thoughts, Finance, New Notes, Voice Memos, AI Chat) into a modern pop-up modal, decluttering the main settings view.
    - **Modern Card Design (Global):**
      - **Minimalist Action Toolbar:** Hover-activated toolbar with sleek line icons (Edit, Delete, Pin, Blur, Reply, Convert).
      - **Refined Expansion Toggle:** A minimalist centered chevron with a subtle gradient fade for long notes.
