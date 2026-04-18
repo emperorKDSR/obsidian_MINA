@@ -87,6 +87,64 @@ export class EditEntryModal extends Modal {
         });
         textArea.focus();
 
+        let lastValue = this.initialText;
+        textArea.addEventListener('input', (e) => {
+            const target = e.target as HTMLTextAreaElement;
+            const val = target.value;
+            const pos = target.selectionStart;
+            const textBeforeCursor = val.substring(0, pos);
+
+            // Natural Language Date conversion: @date followed by space/newline
+            const dateMatch = textBeforeCursor.match(/@([^@\n\s]+(?: [^@\n\s]+)*)([\s\n])$/);
+            if (dateMatch) {
+                const rawDate = dateMatch[1];
+                const terminator = dateMatch[2];
+                const parsed = parseNaturalDate(rawDate);
+                if (parsed) {
+                    const matchStart = dateMatch.index!;
+                    const before = val.substring(0, matchStart);
+                    const after = val.substring(pos);
+                    const insertText = `[[${parsed}]]${terminator}`;
+                    target.value = before + insertText + after;
+                    const newPos = matchStart + insertText.length;
+                    target.setSelectionRange(newPos, newPos);
+                    lastValue = target.value;
+                    return;
+                }
+            }
+
+            if (val.length > lastValue.length) {
+                const cursorPosition = target.selectionStart;
+                if (cursorPosition >= 2 && val.substring(cursorPosition - 2, cursorPosition) === '[[') {
+                    new FileSuggestModal(this.plugin.app, (file) => {
+                        const before = val.substring(0, cursorPosition - 2);
+                        const after = val.substring(cursorPosition);
+                        const insertText = `[[${file.basename}]]`;
+                        target.value = before + insertText + after;
+                        setTimeout(() => {
+                            target.focus();
+                            target.setSelectionRange(before.length + insertText.length, before.length + insertText.length);
+                        }, 50);
+                    }, this.plugin.settings.newNoteFolder).open();
+                } else if (cursorPosition > 0 && val.charAt(cursorPosition - 1) === '#') {
+                    new ContextSuggestModal(this.plugin.app, this.plugin.settings.contexts, async (ctx) => {
+                        const before = val.substring(0, cursorPosition - 1);
+                        const after = val.substring(cursorPosition);
+                        target.value = before + after;
+                        if (!this.initialContexts.includes(ctx)) {
+                            this.initialContexts.push(ctx);
+                            renderChips();
+                        }
+                        setTimeout(() => {
+                            target.focus();
+                            target.setSelectionRange(before.length, before.length);
+                        }, 50);
+                    }).open();
+                }
+            }
+            lastValue = val;
+        });
+
         const handleModalFiles = async (files: FileList) => {
             for (let i = 0; i < files.length; i++) {
                 const file = files[i]; if (!file || file.size === 0) continue;

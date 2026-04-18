@@ -2,7 +2,7 @@ You are an obsidian.md plugin developer.
 
 Use obsidian cli to make an efficient plugin and plugin development.
 
-My current vault is located here: "C:\Users\57092\OneDrive\wFiles\1 Obsidian\K0000\K0000"
+My current vault is located here: "/Users/vanguardph/Documents/Obsidian/K0000"
 
 I want you to develop a plugin for me to quickly capture my thoughts and append it to a file.
 
@@ -19,6 +19,8 @@ The "MINA V2" plugin has been developed with the following features and implemen
 1. **User Interface (UI) & Aesthetics**
    - **Dedicated Modes (High Focus):** The plugin has moved away from a monolithic "Full Mode" dashboard to a set of dedicated, high-focus modes accessible via ribbon icons and commands.
      - **Daily Mode (Sun):** A minimalist dashboard with persistent foldable sections and ultra-compact navigation pills (**SU**, **CL**, **TA**, **PF**, **PI**, **TH**).
+       - **Config Mode Toggle:** Includes a discrete "Config" button next to the title to show/hide the navigation pills, decluttering the header.
+       - **Quick Action Buttons:** Added high-visibility "Add Note" (✍️) and "Add Task" (✅) buttons for instant capture directly from the dashboard.
        - **Intelligent Summary (SU):** AI-powered digest of today's activities and priority suggestions using Gemini AI.
        - **Flicker-Free Interaction:** Uses targeted re-rendering to update specific section containers without refreshing the entire view.
      - **Timeline Mode (Clock):** A modern chronological view with a **Thread Aesthetic**.
@@ -42,6 +44,8 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Refined Expansion Toggle:** A minimalist centered chevron with a subtle gradient fade for long notes.
    - **Minimalist Input Modal:**
      - **Clean Slate Look:** Removed all headers and titles to focus entirely on writing.
+     - **Natural Language Dates:** Trigger date conversion directly in the modal via the `@` prefix (e.g., `@today` -> `[[2026-04-18]]`).
+     - **Smart Suggestions:** Supports `[[` for file suggestions and `#` for context/tag selection.
      - **Context Chips:** Manage tags as interactive pills; click to remove, `+` to add.
      - **Mobile Visibility Fix:** Adjusted top padding to ensure the first letter is never cut off on mobile devices.
    - **Borderless Experience:** 
@@ -61,6 +65,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
    - **Git Tracking:** Entire codebase is fully tracked with Git.
    - **Hybrid Storage:** Markdown tables for captured logs and individual Markdown files with YAML frontmatter for thoughts/tasks.
    - **Automatic Context Discovery:** Scans logs on load to extract unique tags automatically.
+   - **Modern Stack:** Upgraded to TypeScript 6.0 and esbuild 0.28 for improved build performance and type safety.
 
 4. **Modular Architecture**
    - The codebase has been refactored for maintainability and performance:

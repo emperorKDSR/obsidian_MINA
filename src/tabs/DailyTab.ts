@@ -39,17 +39,31 @@ export class DailyTab extends BaseTab {
         });
 
         const titleStack = header.createEl('div', { attr: { style: 'display: flex; flex-direction: column;' } });
-        titleStack.createEl('h2', {
+        const titleRow = titleStack.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
+        titleRow.createEl('h2', {
             text: 'Daily Focus',
             attr: { style: 'margin: 0; font-size: 1.4em; font-weight: 800; color: var(--text-normal); letter-spacing: -0.02em; line-height: 1.1;' }
         });
+
+        const configBtn = titleRow.createEl('button', {
+            text: 'Config',
+            attr: { style: 'background: transparent; border: 1px solid var(--background-modifier-border); border-radius: 6px; font-size: 0.65em; padding: 2px 8px; color: var(--text-muted); cursor: pointer; font-weight: 600;' }
+        });
+
         titleStack.createEl('span', {
             text: moment().format('dddd, MMMM D'),
             attr: { style: 'font-size: 0.85em; color: var(--text-muted); font-weight: 500; margin-top: 2px;' }
         });
 
         const toggleRow = header.createEl('div', {
-            attr: { style: 'display: flex; gap: 4px; padding: 3px; background: var(--background-secondary-alt); border-radius: 8px; width: fit-content; border: 1px solid var(--background-modifier-border-faint);' }
+            attr: { style: 'display: none; gap: 4px; padding: 3px; background: var(--background-secondary-alt); border-radius: 8px; width: fit-content; border: 1px solid var(--background-modifier-border-faint); margin-top: 4px;' }
+        });
+
+        configBtn.addEventListener('click', () => {
+            const isHidden = toggleRow.style.display === 'none';
+            toggleRow.style.display = isHidden ? 'flex' : 'none';
+            configBtn.style.borderColor = isHidden ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
+            configBtn.style.color = isHidden ? 'var(--text-accent)' : 'var(--text-muted)';
         });
 
         const renderPillToggle = (label: string, settingKey: keyof MinaSettings) => {
