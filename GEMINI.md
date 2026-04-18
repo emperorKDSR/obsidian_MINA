@@ -32,13 +32,19 @@ The codebase is structured for maximum scalability and type safety:
 - **Guided Workflow**: Specialized modes (Daily, Projects, AI, etc.) act as "Spokes" connected to the Hub.
 - **The Home Circuit**: A persistent **🏠 Home** icon in every mode ensures seamless transit back to the Command Center.
 
-### 4. OS Pillars & Synergy
+### 4. Visual Language & UX (Premium Minimalism)
+The interface is governed by a unified Design System:
+- **Design Language Constants**: Standardized spacing (`--mina-spacing`), radii (`12px`), and shadow depths for a cohesive feel.
+- **Glass Surface Logic**: Cards and panels utilize elevated surfaces with subtle shadows and high-performance mask-based fades.
+- **Tactile Interactions**: Large, responsive action targets with custom cubic-bezier transitions for an "alive" feel.
+- **Vision Engine**: High-performance image rendering and window-aware zooming integrated across all OS pillars.
+
+### 5. OS Pillars & Synergy
 - **Habit Lab**: Stitch Dots tracking with YAML persistence.
 - **Projects Mode**: Objective-based grouping and dedicated project focus dashboards.
 - **Weekly Review & Compass**: Multi-layered reflection (Weekly Focus + Quarterly North Star Goals).
 - **Synthesis Mode**: Split-pane workspace for transforming raw captures into permanent knowledge.
     - **Zero-Inbox Logic**: Synthesized thoughts are automatically flagged (`synthesized: true`) and cleared from the feed to maintain focus.
-    - **Vision Integration**: Full support for image rendering and high-performance zooming within the synthesis canvas.
 - **AI Synergy**: Debounced auto-classification during capture and intelligent activity summaries.
 
 ### Security, Performance & Release Mandates
@@ -49,7 +55,7 @@ The plugin is governed by strict, always-running mandates:
 - **Optimization**: Minimal memory footprint via lazy-loading (dynamic imports) and efficient indexing.
 - **UX Auditor**: Protects the "Premium Minimalist" aesthetic and unified design language.
 - **Security Auditor**: Rigorous secret protection and sanitization of all rendered content.
-- **Release Manager**: Enforces **Feature-Branch-First** protocols (no implementation on `main`), ensures documentation integrity, and requires explicit user approval for all production actions.
+- **Release Manager**: Enforces **Feature-Branch-First** protocols (no implementation on `main`), serves as the **Chief Documentarian** (proactively updating `GEMINI.md` to reflect changes), and requires explicit user approval for all production actions.
 
 ## Build & Deploy
 
