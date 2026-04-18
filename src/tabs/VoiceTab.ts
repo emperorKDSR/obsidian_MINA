@@ -96,7 +96,8 @@ export class VoiceTab extends BaseTab {
                     }, 'Transcribed Note').open();
                 } catch (e: any) {
                     transcribeBtn.setText('Failed');
-                    new Notice('Transcription failed: ' + e.message);
+                    console.error('[MINA VoiceTab]', e);
+                    new Notice('Transcription failed. Check the Gemini API key and model in settings.');
                 }
             });
         });
@@ -141,7 +142,11 @@ export class VoiceTab extends BaseTab {
                 timer.setText(`${m}:${s}`);
             }, 1000);
         } catch (e: any) {
-            new Notice('Microphone access denied: ' + e.message);
+            console.error('[MINA VoiceTab] mic access', e);
+            const friendly = (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError')
+                ? 'Microphone access denied — allow permission in your OS/browser settings.'
+                : 'Could not start recording. Ensure a microphone is connected.';
+            new Notice(friendly);
         }
     }
 

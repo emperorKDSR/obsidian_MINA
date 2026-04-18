@@ -46,6 +46,7 @@ export interface MinaSettings {
     habitsFolder: string;
     habits: Habit[];
     weeklyGoals: string[];
+    monthlyGoals: string[];
     monthlyIncome: number;
     northStarGoals: string[];
     enableAutoClassification: boolean;
@@ -95,13 +96,15 @@ export interface TaskEntry {
     created: string;       // "YYYY-MM-DD HH:mm:ss"
     modified: string;
     day: string;           // "YYYY-MM-DD"
-    status: 'open' | 'done';
+    status: 'open' | 'done' | 'waiting' | 'someday';
     due: string;           // "YYYY-MM-DD" or ""
     context: string[];
     body: string;
     lastUpdate: number;    // ms timestamp of modified for sorting
     children: ReplyEntry[]; // Support comments/replies on tasks
     project?: string;       // associated project name
+    priority?: 'high' | 'medium' | 'low';
+    energy?: 'high' | 'medium' | 'low';
 }
 
 export interface DueEntry { 

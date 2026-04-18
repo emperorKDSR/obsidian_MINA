@@ -176,7 +176,10 @@ export class IndexService {
             lastUpdate: file.stat.mtime,
             day: fm.day || '',
             context: fm.contexts || [],
-            children: []
+            children: [],
+            project: fm.project || undefined,
+            priority: fm.priority || undefined,
+            energy: fm.energy || undefined,
         });
         if (!skipRebuild) this.rebuildCalculatedState();
     }

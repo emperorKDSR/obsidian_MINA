@@ -14,6 +14,16 @@ export class VaultService {
         this.settings = settings;
     }
 
+    /** sec-015: Map errors to user-friendly messages; never surface raw e.message */
+    private static toUserMessage(e: unknown): string {
+        const msg = e instanceof Error ? e.message.toLowerCase() : String(e).toLowerCase();
+        if (msg.includes('permission') || msg.includes('denied') || msg.includes('access')) return 'Permission denied — check your vault folder permissions.';
+        if (msg.includes('not found') || msg.includes('does not exist')) return 'File not found — it may have been moved or deleted.';
+        if (msg.includes('already exists')) return 'A file with that name already exists.';
+        if (msg.includes('disk') || msg.includes('space') || msg.includes('enospc')) return 'Not enough disk space — free up storage and try again.';
+        return 'Something went wrong. Open the developer console (Ctrl+Shift+I) for details.';
+    }
+
     private extractTitle(text: string): string {
         const firstLine = text.split('\n').find(l => l.trim()) || text;
         return firstLine.replace(/[#*_`\[\]]/g, '').trim().substring(0, 60);
@@ -113,7 +123,8 @@ export class VaultService {
             const file = await this.app.vault.create(finalPath, content);
             return file;
         } catch (e) {
-            new Notice(`Vault Error: ${e.message}`);
+            console.error('[MINA VaultService]', e);
+            new Notice(VaultService.toUserMessage(e));
             throw e;
         }
     }
@@ -175,7 +186,8 @@ export class VaultService {
             
             await this.app.vault.modify(file, newFm + bodyToSave);
         } catch (e) {
-            new Notice('MINA Error: ' + e.message);
+            console.error('[MINA VaultService]', e);
+            new Notice(VaultService.toUserMessage(e));
         }
     }
 
@@ -206,7 +218,8 @@ export class VaultService {
             
             await this.app.vault.modify(file, newFm + newText + '\n');
         } catch (e) {
-            new Notice('MINA Error: ' + e.message);
+            console.error('[MINA VaultService]', e);
+            new Notice(VaultService.toUserMessage(e));
         }
     }
 
@@ -223,7 +236,8 @@ export class VaultService {
             const final = updated.replace(/^modified: .+$/m, `modified: ${this.formatDateTime(new Date())}`);
             await this.app.vault.modify(file, final);
         } catch (e) {
-            new Notice('MINA Error: ' + e.message);
+            console.error('[MINA VaultService]', e);
+            new Notice(VaultService.toUserMessage(e));
         }
     }
 
@@ -240,7 +254,8 @@ export class VaultService {
             await this.app.vault.rename(file, trashPath);
             new Notice('Moved to trash.');
         } catch (e) {
-            new Notice('MINA Error: ' + e.message);
+            console.error('[MINA VaultService]', e);
+            new Notice(VaultService.toUserMessage(e));
         }
     }
 
@@ -262,7 +277,8 @@ export class VaultService {
             
             return true;
         } catch (e) {
-            new Notice('MINA Error: ' + e.message);
+            console.error('[MINA VaultService]', e);
+            new Notice(VaultService.toUserMessage(e));
             return false;
         }
     }

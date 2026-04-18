@@ -161,9 +161,34 @@
     -webkit-mask-image: none !important;
 }
 
+/* ux-p3-hover-css: CSS-driven hover states */
+.mina-home-btn:hover {
+    opacity: 1 !important;
+    background: var(--background-secondary-alt) !important;
+}
+
+.mina-actions-overlay {
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.mina-card-row:hover .mina-actions-overlay,
+.mina-thought-content:hover .mina-actions-overlay {
+    opacity: 1;
+}
+
+.mina-task-edit-btn {
+    opacity: 0.3;
+    transition: opacity 0.2s;
+    cursor: pointer;
+}
+
+.mina-task-edit-btn:hover {
+    opacity: 1;
+}
+
 /* 4. Action Row & Tactical Items */
-.mina-action-btn {
-    width: 32px;
+.mina-action-btn {width: 32px;
     height: 32px;
     border-radius: var(--mina-radius-sm);
     display: flex;

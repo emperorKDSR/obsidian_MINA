@@ -71,6 +71,7 @@ export class MinaView extends ItemView {
             case 'synthesis': return "Synthesis";
             case 'compass': return "Compass";
             case 'review': return "Weekly Review";
+            case 'monthly-review': return "Monthly Review";
             case 'voice-note': return "Voice Notes";
             case 'settings': return "Settings";
             case 'timeline': return "Timeline";
@@ -116,6 +117,7 @@ export class MinaView extends ItemView {
         else if (tab === 'synthesis') import('./tabs/SynthesisTab').then(({ SynthesisTab }) => new SynthesisTab(this).render(container)).catch(loadErr);
         else if (tab === 'compass') import('./tabs/CompassTab').then(({ CompassTab }) => new CompassTab(this).render(container)).catch(loadErr);
         else if (tab === 'review') import('./tabs/ReviewTab').then(({ ReviewTab }) => new ReviewTab(this).render(container)).catch(loadErr);
+        else if (tab === 'monthly-review') import('./tabs/MonthlyReviewTab').then(({ MonthlyReviewTab }) => new MonthlyReviewTab(this).render(container)).catch(loadErr);
         else if (tab === 'voice-note') import('./tabs/VoiceTab').then(({ VoiceTab }) => new VoiceTab(this).render(container)).catch(loadErr);
         else if (tab === 'settings') import('./tabs/SettingsTab').then(({ SettingsTab }) => new SettingsTab(this).render(container)).catch(loadErr);
         else if (tab === 'timeline') import('./tabs/TimelineTab').then(({ TimelineTab }) => new TimelineTab(this).render(container)).catch(loadErr);

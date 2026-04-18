@@ -1,4 +1,4 @@
-import { moment } from 'obsidian';
+import { moment, setIcon } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from '../modals/EditEntryModal';
@@ -41,7 +41,8 @@ export class ContextTab extends BaseTab {
         const actionRow = wrap.createEl('div', { attr: { style: 'display: flex; gap: 10px;' } });
         const actionBtnStyle = 'flex: 1; padding: 10px; border-radius: 10px; background: var(--background-secondary-alt); border: 1px solid var(--background-modifier-border-faint); font-weight: 600; cursor: pointer;';
         
-        const addBtn = actionRow.createEl('button', { text: '✍️ Note', attr: { style: actionBtnStyle } });
+        const addBtn = actionRow.createEl('button', { attr: { style: actionBtnStyle } });
+        const addBtnIcon = addBtn.createEl('span'); setIcon(addBtnIcon, 'pencil'); addBtn.createSpan({ text: ' Note' });
         addBtn.addEventListener('click', () => {
             new EditEntryModal(this.app, this.plugin, '', modeContext, null, false, async (text, ctxs) => {
                 const contexts = parseContextString(ctxs);
@@ -50,7 +51,8 @@ export class ContextTab extends BaseTab {
             }, `New ${modeTitle} Note`).open();
         });
 
-        const addTaskBtn = actionRow.createEl('button', { text: '✅ Task', attr: { style: actionBtnStyle } });
+        const addTaskBtn = actionRow.createEl('button', { attr: { style: actionBtnStyle } });
+        const addTaskBtnIcon = addTaskBtn.createEl('span'); setIcon(addTaskBtnIcon, 'check-square-2'); addTaskBtn.createSpan({ text: ' Task' });
         addTaskBtn.addEventListener('click', () => {
             new EditEntryModal(this.app, this.plugin, '', modeContext, moment().format('YYYY-MM-DD'), true, async (text, ctxs, due) => {
                 const contexts = parseContextString(ctxs);

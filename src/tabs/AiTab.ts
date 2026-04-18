@@ -1,6 +1,7 @@
 import { moment, Platform, TFile, Notice, MarkdownRenderer, setIcon } from 'obsidian';
 import type { MinaView } from '../view';
-import { BaseTab } from "./BaseTab";
+import { BaseTab } from './BaseTab';
+import type { ChatMessage } from '../types';
 
 export class AiTab extends BaseTab {
     constructor(view: MinaView) { super(view); }
@@ -9,8 +10,59 @@ export class AiTab extends BaseTab {
         this.renderAiMode(container);
     }
 
+    private chatFolder(): string {
+        return (this.settings.aiChatFolder || '000 Bin/MINA V2 AI Chat').trim();
+    }
+
+    private async ensureChatFolder(): Promise<void> {
+        const folder = this.chatFolder();
+        if (!this.app.vault.getAbstractFileByPath(folder)) {
+            await this.app.vault.createFolder(folder).catch(() => {});
+        }
+    }
+
+    private async saveChatHistory(): Promise<void> {
+        if (!this.view.currentChatFile) {
+            await this.ensureChatFolder();
+            const name = `chat-${moment().format('YYYYMMDD-HHmmss')}.md`;
+            this.view.currentChatFile = `${this.chatFolder()}/${name}`;
+        }
+        const json = JSON.stringify(this.view.chatHistory, null, 2);
+        const content = `---\ncreated: ${moment().format('YYYY-MM-DD HH:mm:ss')}\nsession: ${this.view.currentChatFile}\n---\n\`\`\`json\n${json}\n\`\`\`\n`;
+        const existing = this.app.vault.getAbstractFileByPath(this.view.currentChatFile);
+        if (existing instanceof TFile) {
+            await this.app.vault.modify(existing, content);
+        } else {
+            await this.app.vault.create(this.view.currentChatFile, content);
+        }
+    }
+
+    private async loadMostRecentChat(): Promise<boolean> {
+        const folder = this.chatFolder();
+        const files = this.app.vault.getMarkdownFiles()
+            .filter(f => f.path.startsWith(folder + '/'))
+            .sort((a, b) => b.stat.mtime - a.stat.mtime);
+        if (files.length === 0) return false;
+        const file = files[0];
+        try {
+            const content = await this.app.vault.read(file);
+            const m = content.match(/```json\n([\s\S]*?)\n```/);
+            if (!m) return false;
+            const msgs: ChatMessage[] = JSON.parse(m[1]);
+            if (!Array.isArray(msgs) || msgs.length === 0) return false;
+            this.view.chatHistory = msgs;
+            this.view.currentChatFile = file.path;
+            return true;
+        } catch { return false; }
+    }
+
     async renderAiMode(container: HTMLElement) {
         container.empty();
+
+        // ai-09: Load most recent chat on first open (when history is empty and no session active)
+        if (this.view.chatHistory.length === 0 && !this.view.currentChatFile) {
+            await this.loadMostRecentChat();
+        }
         
         const wrap = container.createEl('div', {
             attr: {
@@ -28,6 +80,17 @@ export class AiTab extends BaseTab {
 
         const titleRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
         titleRow.createEl('h2', { text: 'AI Chat', attr: { style: 'margin: 0; font-size: 1.4em; font-weight: 800; color: var(--text-normal); letter-spacing: -0.02em; line-height: 1.1;' } });
+
+        // ai-09: New Chat button resets session state
+        const newChatBtn = titleRow.createEl('button', {
+            text: 'New Chat',
+            attr: { style: 'background: transparent; border: 1px solid var(--background-modifier-border); color: var(--text-muted); border-radius: 8px; padding: 4px 12px; font-size: 0.7em; font-weight: 700; cursor: pointer;' }
+        });
+        newChatBtn.addEventListener('click', () => {
+            this.view.chatHistory = [];
+            this.view.currentChatFile = null;
+            this.renderAiMode(container);
+        });
 
         // 2. Chat History
         const chatContainer = wrap.createEl('div', {
@@ -81,6 +144,8 @@ export class AiTab extends BaseTab {
                 thinking.remove();
                 this.view.chatHistory.push({ role: 'model', text: response });
                 renderHistory();
+                // ai-09: Persist chat history to vault after each exchange
+                this.saveChatHistory().catch(e => console.error('[MINA AiTab] save failed', e));
             } catch (e: any) {
                 // ai-11: Remove thinking div on error — was left as permanent "Thinking..." bubble
                 thinking.remove();

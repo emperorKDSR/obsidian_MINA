@@ -5,7 +5,7 @@ import { EditEntryModal } from "../modals/EditEntryModal";
 import type { TaskEntry } from '../types';
 import { parseContextString } from '../utils';
 
-type TaskViewMode = 'open' | 'not-due' | 'done';
+type TaskViewMode = 'open' | 'not-due' | 'done' | 'waiting' | 'someday';
 
 export class TasksTab extends BaseTab {
     viewMode: TaskViewMode = 'open';
@@ -77,9 +77,13 @@ export class TasksTab extends BaseTab {
         const openCount = allTasks.filter(t => t.status === 'open' && t.due && t.due.trim() !== "").length;
         const notDueCount = allTasks.filter(t => t.status === 'open' && (!t.due || t.due.trim() === "")).length;
         const doneCount = allTasks.filter(t => t.status === 'done').length;
+        const waitingCount = allTasks.filter(t => t.status === 'waiting').length;
+        const somedayCount = allTasks.filter(t => t.status === 'someday').length;
 
         renderToggle('Open', 'open', openCount);
         renderToggle('Not Due', 'not-due', notDueCount);
+        renderToggle('Waiting', 'waiting', waitingCount);
+        renderToggle('Someday', 'someday', somedayCount);
         renderToggle('Archive', 'done', doneCount);
 
         // 3. List Container
@@ -100,6 +104,10 @@ export class TasksTab extends BaseTab {
             tasks = tasks.filter(t => t.status === 'open' && t.due && t.due.trim() !== "");
         } else if (this.viewMode === 'not-due') {
             tasks = tasks.filter(t => t.status === 'open' && (!t.due || t.due.trim() === ""));
+        } else if (this.viewMode === 'waiting') {
+            tasks = tasks.filter(t => t.status === 'waiting');
+        } else if (this.viewMode === 'someday') {
+            tasks = tasks.filter(t => t.status === 'someday');
         } else {
             tasks = tasks.filter(t => t.status === 'done');
         }
@@ -169,12 +177,17 @@ export class TasksTab extends BaseTab {
 
         // Meta
         const meta = row.createDiv({ attr: { style: 'display: flex; align-items: center; gap: 16px; flex-shrink: 0;' } });
+        if (task.priority) {
+            const priorityColors: Record<string, string> = { high: 'var(--text-error)', medium: 'var(--color-orange, #f59e0b)', low: 'var(--text-muted)' };
+            meta.createEl('span', {
+                text: task.priority.toUpperCase(),
+                attr: { style: `font-size: 0.6em; font-weight: 900; letter-spacing: 0.08em; padding: 2px 6px; border-radius: 4px; background: ${priorityColors[task.priority] ?? 'var(--text-muted)'}20; color: ${priorityColors[task.priority] ?? 'var(--text-muted)'};` }
+            });
+        }
         if (task.due) meta.createEl('span', { text: task.due, attr: { style: `font-size: 0.7em; font-weight: 800; color: ${isDone ? 'var(--text-faint)' : 'var(--text-accent)'};` } });
 
-        const editBtn = meta.createDiv({ attr: { style: 'opacity: 0.3; cursor: pointer; transition: opacity 0.2s;' } });
+        const editBtn = meta.createDiv({ cls: 'mina-task-edit-btn' });
         setIcon(editBtn, 'lucide-pencil');
-        editBtn.addEventListener('mouseenter', () => editBtn.style.opacity = '1');
-        editBtn.addEventListener('mouseleave', () => editBtn.style.opacity = '0.3');
         editBtn.addEventListener('click', () => {
             new EditEntryModal(this.app, this.plugin, task.title, task.context.join(' #'), task.due, true, async (t, c, d) => {
                 await this.vault.editTask(task.filePath, t, parseContextString(c), d || undefined);

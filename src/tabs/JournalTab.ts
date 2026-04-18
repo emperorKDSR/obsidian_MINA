@@ -1,4 +1,4 @@
-import { moment, Platform } from 'obsidian';
+import { moment, Platform, setIcon } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from '../modals/EditEntryModal';
@@ -39,7 +39,7 @@ export class JournalTab extends BaseTab {
         const actionBtnStyle = 'flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--background-modifier-border-faint); background: var(--background-secondary-alt); color: var(--text-normal); font-size: 0.85em; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;';
         
         const addNoteBtn = actionRow.createEl('button', { attr: { style: actionBtnStyle } });
-        addNoteBtn.createSpan({ text: '✍️' }); addNoteBtn.createSpan({ text: 'Add Note' });
+        const addNoteIcon = addNoteBtn.createSpan(); setIcon(addNoteIcon, 'pencil'); addNoteBtn.createSpan({ text: ' Add Note' });
         addNoteBtn.addEventListener('click', () => {
             new EditEntryModal(this.app, this.plugin, '', 'journal', null, false, async (text, ctxs) => {
                 if (!text.trim()) return;

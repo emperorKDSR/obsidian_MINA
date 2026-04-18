@@ -27,9 +27,7 @@ export class BaseTab {
         const homeBtn = parent.createEl('button', {
             attr: { class: 'mina-home-btn', style: 'background: transparent; border: none; padding: 0; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; opacity: 0.6; transition: all 0.2s; width: 28px; height: 28px; border-radius: 8px;' }
         });
-        homeBtn.addEventListener('mouseenter', () => { homeBtn.style.opacity = '1'; homeBtn.style.background = 'var(--background-secondary-alt)'; });
-        homeBtn.addEventListener('mouseleave', () => { homeBtn.style.opacity = '0.6'; homeBtn.style.background = 'transparent'; });
-        setIcon(homeBtn, 'mina-home-icon');
+        homeBtn.addEventListener('mouseleave', () => { homeBtn.style.opacity = '0.6'; homeBtn.style.background = 'transparent'; });        setIcon(homeBtn, 'mina-home-icon');
         homeBtn.addEventListener('click', () => { this.view.activeTab = 'home'; this.view.renderView(); });
     }
 
@@ -148,9 +146,7 @@ export class BaseTab {
         await MarkdownRenderer.render(this.app, entry.body || entry.title, textEl, entry.filePath, this.view);
         this.hookInternalLinks(textEl, entry.filePath); this.hookImageZoom(textEl);
 
-        const actions = row.createEl('div', { attr: { style: 'position:absolute; top:8px; right:8px; display:flex; gap:4px; padding:4px; background:var(--background-primary); border-radius:10px; border:1px solid var(--background-modifier-border-faint); opacity:0; transition:opacity 0.2s; box-shadow: var(--mina-shadow);' } });
-        row.addEventListener('mouseenter', () => actions.style.opacity = '1');
-        row.addEventListener('mouseleave', () => actions.style.opacity = '0');
+        const actions = row.createEl('div', { cls: 'mina-actions-overlay', attr: { style: 'position:absolute; top:8px; right:8px; display:flex; gap:4px; padding:4px; background:var(--background-primary); border-radius:10px; border:1px solid var(--background-modifier-border-faint); box-shadow: var(--mina-shadow);' } });
 
         this.renderActionButton(actions, ICON_EDIT, 'Edit', () => {
             new EditEntryModal(this.app, this.plugin, entry.body, entry.context.map(c => `#${c}`).join(' '), entry.due || null, true, async (newText, newCtxStr, newDue) => {
@@ -198,16 +194,14 @@ export class BaseTab {
             const img = iconContainer.createEl('img', { attr: { style: 'width: 100%; height: 100%;' } }); img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(NINJA_AVATAR_SVG)}`;
         }
 
-        const contentDiv = itemEl.createEl('div', { attr: { style: 'flex-grow: 1; min-width: 0; position: relative;' } });
+        const contentDiv = itemEl.createEl('div', { cls: 'mina-thought-content', attr: { style: 'flex-grow: 1; min-width: 0; position: relative;' } });
         const isBlurred = blur ?? this.settings.blurredNotes.includes(entry.filePath);
         
         const card = contentDiv.createEl('div', { cls: 'mina-card' + (isBlurred ? ' mina-blurred' : ''), attr: { style: 'cursor: text;' } });
         await MarkdownRenderer.render(this.app, entry.body, card, filePath, this.view);
         this.hookInternalLinks(card, filePath); this.hookImageZoom(card); this.hookCheckboxes(card, entry);
 
-        const actions = contentDiv.createEl('div', { attr: { style: 'position:absolute; top:4px; right:4px; display:flex; gap:4px; padding:4px; background:var(--background-primary); border-radius:10px; border:1px solid var(--background-modifier-border-faint); opacity:0; transition:opacity 0.2s; z-index:10; box-shadow: var(--mina-shadow);' } });
-        contentDiv.addEventListener('mouseenter', () => actions.style.opacity = '1');
-        contentDiv.addEventListener('mouseleave', () => actions.style.opacity = '0');
+        const actions = contentDiv.createEl('div', { cls: 'mina-actions-overlay', attr: { style: 'position:absolute; top:4px; right:4px; display:flex; gap:4px; padding:4px; background:var(--background-primary); border-radius:10px; border:1px solid var(--background-modifier-border-faint); z-index:10; box-shadow: var(--mina-shadow);' } });
 
         this.renderActionButton(actions, ICON_EDIT, 'Edit', () => {
             new EditEntryModal(this.app, this.plugin, entry.body, entry.context.map(c => `#${c}`).join(' '), null, false, async (newText, newCtxStr) => {

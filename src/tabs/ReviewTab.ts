@@ -1,4 +1,4 @@
-import { moment } from 'obsidian';
+import { moment, setIcon } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 
@@ -38,7 +38,8 @@ export class ReviewTab extends BaseTab {
         });
 
         // 2. Inbox Clearing (Action Pillar)
-        const inboxHeader = wrap.createEl('h3', { text: '📥 Inbox Clearing', attr: { style: 'margin: 0; font-size: 0.75em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint);' } });
+        const inboxHeader = wrap.createEl('h3', { attr: { style: 'margin: 0; font-size: 0.75em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); display: flex; align-items: center; gap: 6px;' } });
+        const inboxIcon = inboxHeader.createEl('span'); setIcon(inboxIcon, 'inbox'); inboxHeader.createSpan({ text: ' Inbox Clearing' });
         const inboxList = wrap.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 10px;' } });
 
         const inboxTasks = Array.from(this.index.taskIndex.values()).filter(t => t.status === 'open' && !t.due && !t.project);
@@ -55,7 +56,8 @@ export class ReviewTab extends BaseTab {
         const focusSection = wrap.createEl('div', {
             attr: { style: 'padding: 20px; background: var(--background-secondary-alt); border-radius: 16px; border: 1px solid var(--background-modifier-border-faint); display: flex; flex-direction: column; gap: 12px;' }
         });
-        focusSection.createEl('h3', { text: '🎯 Next Week\'s Focus', attr: { style: 'margin: 0; font-size: 0.8em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-normal);' } });
+        const focusHeader = focusSection.createEl('h3', { attr: { style: 'margin: 0; font-size: 0.8em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-normal); display: flex; align-items: center; gap: 6px;' } });
+        const focusIcon = focusHeader.createEl('span'); setIcon(focusIcon, 'target'); focusHeader.createSpan({ text: ' Next Week\'s Focus' });
 
         const goals = this.settings.weeklyGoals || [];
         for (let i = 0; i < 3; i++) {

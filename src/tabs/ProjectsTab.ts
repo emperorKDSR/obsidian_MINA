@@ -1,4 +1,4 @@
-import { moment, Platform, TFile } from 'obsidian';
+import { moment, Platform, TFile, setIcon } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from '../modals/EditEntryModal';
@@ -78,8 +78,9 @@ export class ProjectsTab extends BaseTab {
 
         // Quick Add
         const actionRow = wrap.createEl('div', { attr: { style: 'display: flex; gap: 10px;' } });
-        const addBtn = (label: string, isTask: boolean) => {
-            const btn = actionRow.createEl('button', { text: label, attr: { style: 'flex: 1; padding: 8px; border-radius: 8px; background: var(--background-secondary-alt); border: 1px solid var(--background-modifier-border-faint); font-weight: 600; cursor: pointer;' } });
+        const addBtn = (label: string, icon: string, isTask: boolean) => {
+            const btn = actionRow.createEl('button', { attr: { style: 'flex: 1; padding: 8px; border-radius: 8px; background: var(--background-secondary-alt); border: 1px solid var(--background-modifier-border-faint); font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;' } });
+            const iconEl = btn.createEl('span'); setIcon(iconEl, icon); btn.createSpan({ text: ' ' + label });
             btn.addEventListener('click', () => {
                 new EditEntryModal(this.app, this.plugin, '', '', isTask ? moment().format('YYYY-MM-DD') : null, isTask, async (text, ctxs, due) => {
                     const contexts = parseContextString(ctxs);
@@ -88,8 +89,8 @@ export class ProjectsTab extends BaseTab {
                 }, `New ${projectName} ${isTask ? 'Task' : 'Thought'}`).open();
             });
         };
-        addBtn('✍️ Note', false);
-        addBtn('✅ Task', true);
+        addBtn('Note', 'pencil', false);
+        addBtn('Task', 'check-square-2', true);
 
         // Lists
         const projectTasks = Array.from(this.index.taskIndex.values()).filter(t => t.project === projectName);

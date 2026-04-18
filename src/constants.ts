@@ -162,6 +162,7 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     habitsFolder: '000 Bin/MINA V2 Habits',
     habits: [],
     weeklyGoals: [],
+    monthlyGoals: [],
     monthlyIncome: 0,
     northStarGoals: [],
     enableAutoClassification: false,
