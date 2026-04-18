@@ -21,7 +21,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Daily Mode (Sun):** A minimalist dashboard with persistent foldable sections and ultra-compact navigation pills (**SU**, **CL**, **TA**, **PF**, **PI**, **TH**).
        - **Config Mode Toggle:** Includes a discrete "Config" button next to the title to show/hide the navigation pills, decluttering the header.
        - **Quick Action Buttons:** Added high-visibility "Add Note" (✍️) and "Add Task" (✅) buttons for instant capture directly from the dashboard.
-       - **Intelligent Summary (SU):** AI-powered digest of today's activities and priority suggestions using Gemini AI.
+       - **Intelligent Summary (SU):** AI-powered digest of today's activities and priority suggestions. Now uses **Manual Generation** to respect Gemini API rate limits on the free tier.
        - **Flicker-Free Interaction:** Uses targeted re-rendering to update specific section containers without refreshing the entire view.
      - **Timeline Mode (Clock):** A modern chronological view with a **Thread Aesthetic**.
        - **Vertical Thread:** A continuous subtle line connecting all entries through the day.

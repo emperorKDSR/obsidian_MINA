@@ -199,41 +199,73 @@ export class DailyTab extends BaseTab {
 
     async updateDailySummary(container: HTMLElement) {
         container.empty();
-        const loading = container.createEl('p', { text: 'Generating summary...', attr: { style: 'color: var(--text-muted); font-size: 0.85em; font-style: italic; text-align: center;' } });
+        
+        const summaryPlaceholder = container.createEl('div', {
+            attr: { style: 'padding: 20px; text-align: center; background: var(--background-secondary-alt); border-radius: 12px; border: 1px dashed var(--background-modifier-border);' }
+        });
 
-        try {
-            const today = moment().format('YYYY-MM-DD');
-            const checklistItems: string[] = [];
-            for (const entry of Array.from(this.view.plugin.thoughtIndex.values())) {
-                const matches = entry.body.matchAll(/- \[ \] (.*)/g);
-                for (const m of matches) checklistItems.push(`- [Checklist] ${m[1]}`);
-                for (const child of entry.children) {
-                    const cMatches = child.text.matchAll(/- \[ \] (.*)/g);
-                    for (const cm of cMatches) checklistItems.push(`- [Checklist] ${cm[1]}`);
+        summaryPlaceholder.createEl('p', { 
+            text: 'Need a focus boost?', 
+            attr: { style: 'margin: 0 0 12px 0; font-size: 0.85em; color: var(--text-muted); font-style: italic;' } 
+        });
+
+        const generateBtn = summaryPlaceholder.createEl('button', {
+            text: '🤖 Generate AI Summary',
+            attr: { style: 'padding: 6px 16px; border-radius: 8px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; font-size: 0.8em; font-weight: 600; cursor: pointer;' }
+        });
+
+        generateBtn.addEventListener('click', async () => {
+            summaryPlaceholder.empty();
+            const loading = summaryPlaceholder.createEl('p', { text: 'Analyzing your day...', attr: { style: 'color: var(--text-muted); font-size: 0.85em; font-style: italic; margin: 0;' } });
+
+            try {
+                const today = moment().format('YYYY-MM-DD');
+                const checklistItems: string[] = [];
+                for (const entry of Array.from(this.view.plugin.thoughtIndex.values())) {
+                    const matches = entry.body.matchAll(/- \[ \] (.*)/g);
+                    for (const m of matches) checklistItems.push(`- [Checklist] ${m[1]}`);
+                    for (const child of entry.children) {
+                        const cMatches = child.text.matchAll(/- \[ \] (.*)/g);
+                        for (const cm of cMatches) checklistItems.push(`- [Checklist] ${cm[1]}`);
+                    }
                 }
+                const tasks = Array.from(this.view.plugin.taskIndex.values()).filter(t => t.status === 'open' && (t.due && t.due <= today)).map(t => `- [Task] ${t.title} (Due: ${t.due})`);
+                const dues: string[] = [];
+                const pfFolder = (this.view.plugin.settings.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/');
+                for (const file of this.view.app.vault.getMarkdownFiles()) {
+                    if (!file.path.startsWith(pfFolder + '/') && file.path !== pfFolder) continue;
+                    const fm = this.view.app.metadataCache.getFileCache(file)?.frontmatter;
+                    if (fm?.['active_status'] === false) continue;
+                    const dueDate = (fm?.['next_duedate'] ?? '').toString();
+                    if (dueDate && moment(dueDate).isSameOrBefore(moment(), 'day')) dues.push(`- [Due] ${file.basename} (Due: ${dueDate})`);
+                }
+                const thoughts = Array.from(this.view.plugin.thoughtIndex.values()).filter(e => e.allDates && e.allDates.includes(today)).map(t => `- [Thought] ${t.body.substring(0, 300)}`);
+                const pinned = Array.from(this.view.plugin.thoughtIndex.values()).filter(e => e.pinned).map(t => `- [Pinned] ${t.title}`);
+                const contextData = ["### PINNED NOTES", ...pinned, "### PENDING TASKS", ...tasks, "### CHECKLIST ITEMS", ...checklistItems, "### PENDING DUES", ...dues, "### TODAY'S THOUGHTS", ...thoughts].join('\n');
+                const prompt = `You are a productivity assistant. Based on the data below, show me a concise summary for today and suggest exactly 3 high-priority topics or items I need to focus on. Keep it professional, encouraging, and clear.\n\nDATA FOR CONTEXT:\n${contextData || 'No data captured yet for today.'}`;
+                const response = await this.view.callGemini(prompt, [], false, [{ role: 'user', text: prompt }]);
+                loading.remove();
+                summaryPlaceholder.style.textAlign = 'left';
+                summaryPlaceholder.style.borderStyle = 'solid';
+                const summaryText = summaryPlaceholder.createEl('div', { attr: { style: 'font-size: 0.9em; line-height: 1.5; color: var(--text-normal);' } });
+                await MarkdownRenderer.render(this.view.plugin.app, response, summaryText, '', this.view);
+                const btnRow = summaryPlaceholder.createEl('div', { attr: { style: 'display: flex; gap: 8px; margin-top: 12px;' } });
+                const refreshBtn = btnRow.createEl('button', { text: 'Refresh Summary', attr: { style: 'flex: 1; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: transparent; color: var(--text-muted); font-size: 0.75em; cursor: pointer;' } });
+                refreshBtn.addEventListener('click', () => this.updateDailySummary(container));
+            } catch (err: any) {
+                summaryPlaceholder.empty();
+                const isRateLimit = err.message?.includes('429');
+                summaryPlaceholder.createEl('div', { 
+                    text: isRateLimit ? '⚠️ AI Rate limit reached (Free tier). Please wait 60 seconds.' : '⚠️ Failed to generate summary.',
+                    attr: { style: 'color: var(--text-error); font-size: 0.85em; font-weight: 600;' }
+                });
+                const retryBtn = summaryPlaceholder.createEl('button', {
+                    text: 'Retry',
+                    attr: { style: 'margin-top: 8px; background: transparent; border: 1px solid var(--background-modifier-border); border-radius: 4px; font-size: 0.7em; padding: 2px 10px; cursor: pointer;' }
+                });
+                retryBtn.addEventListener('click', () => this.updateDailySummary(container));
             }
-            const tasks = Array.from(this.view.plugin.taskIndex.values()).filter(t => t.status === 'open' && (t.due && t.due <= today)).map(t => `- [Task] ${t.title} (Due: ${t.due})`);
-            const dues: string[] = [];
-            const pfFolder = (this.view.plugin.settings.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/');
-            for (const file of this.view.app.vault.getMarkdownFiles()) {
-                if (!file.path.startsWith(pfFolder + '/') && file.path !== pfFolder) continue;
-                const fm = this.view.app.metadataCache.getFileCache(file)?.frontmatter;
-                if (fm?.['active_status'] === false) continue;
-                const dueDate = (fm?.['next_duedate'] ?? '').toString();
-                if (dueDate && moment(dueDate).isSameOrBefore(moment(), 'day')) dues.push(`- [Due] ${file.basename} (Due: ${dueDate})`);
-            }
-            const thoughts = Array.from(this.view.plugin.thoughtIndex.values()).filter(e => e.allDates && e.allDates.includes(today)).map(t => `- [Thought] ${t.body.substring(0, 300)}`);
-            const pinned = Array.from(this.view.plugin.thoughtIndex.values()).filter(e => e.pinned).map(t => `- [Pinned] ${t.title}`);
-            const contextData = ["### PINNED NOTES", ...pinned, "### PENDING TASKS", ...tasks, "### CHECKLIST ITEMS", ...checklistItems, "### PENDING DUES", ...dues, "### TODAY'S THOUGHTS", ...thoughts].join('\n');
-            const prompt = `You are a productivity assistant. Based on the data below, show me a concise summary for today and suggest exactly 3 high-priority topics or items I need to focus on. Keep it professional, encouraging, and clear. If no data is provided, encourage me to capture my first thought of the day.\n\nDATA FOR CONTEXT:\n${contextData || 'No data captured yet for today.'}`;
-            const response = await this.view.callGemini(prompt, [], false, [{ role: 'user', text: prompt }]);
-            loading.remove();
-            const summaryText = container.createEl('div', { attr: { style: 'font-size: 0.9em; line-height: 1.5; color: var(--text-normal);' } });
-            MarkdownRenderer.render(this.view.plugin.app, response, summaryText, '', this.view);
-            const btnRow = container.createEl('div', { attr: { style: 'display: flex; gap: 8px; margin-top: 12px;' } });
-            const refreshBtn = btnRow.createEl('button', { text: 'Refresh Summary', attr: { style: 'flex: 1; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: transparent; color: var(--text-muted); font-size: 0.75em; cursor: pointer;' } });
-            refreshBtn.addEventListener('click', () => this.updateDailySummary(container));
-        } catch (err) { loading.setText('Failed to generate summary. Check console.'); console.error('AI Summary Error:', err); }
+        });
     }
 
     async updateDailyDues(container: HTMLElement) {
