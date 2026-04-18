@@ -90,9 +90,8 @@ export class MinaView extends ItemView {
 
     getViewType() { return VIEW_TYPE_MINA; }
     getDisplayText() { 
-        const title = this.getModeTitle();
-        if (Platform.isMobile) return `MINA - ${title}`;
-        return title;
+        if (Platform.isMobile) return `M.I.N.A.`;
+        return this.getModeTitle();
     }
     getIcon() { return KATANA_ICON_ID; }
 
