@@ -28,7 +28,10 @@ The codebase is structured for maximum scalability and type safety:
 - **Auto-Migration**: A built-in bridge automatically migrates legacy table rows into the new file model upon plugin startup.
 
 ### 3. Navigation: The Hub & Spoke Model
-- **Command Center**: A premium central hub serving as the "Heart" of the OS. Features dynamic snapshots of Habits, Cashflow, and a Global Capture field.
+- **Command Center**: A premium central hub serving as the "Cockpit" of the OS. 
+    - **Horizontal Clusters**: Pillar navigation is grouped into sleek, single-row "Service Bars" for maximum efficiency.
+    - **Personalized Experience**: Features a customized "Emperor" greeting stack.
+    - **Dynamic Snapshots**: Real-time visibility into Habits and Cashflow.
 - **Guided Workflow**: Specialized modes (Daily, Projects, AI, etc.) act as "Spokes" connected to the Hub.
 - **The Home Circuit**: A persistent **🏠 Home** icon in every mode ensures seamless transit back to the Command Center.
 
