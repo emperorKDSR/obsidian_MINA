@@ -1,15 +1,9 @@
 import { Plugin, TFile, Notice, WorkspaceLeaf, Platform, moment, addIcon } from 'obsidian';
-import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG, GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG, MEMENTO_ICON_ID, MEMENTO_ICON_SVG, TASK_ICON_ID, TASK_ICON_SVG, PF_ICON_ID, PF_ICON_SVG, SETTINGS_ICON_ID, SETTINGS_ICON_SVG, VOICE_ICON_ID, VOICE_ICON_SVG } from './constants';
+import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG, GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG, MEMENTO_ICON_ID, MEMENTO_ICON_SVG, TASK_ICON_ID, TASK_ICON_SVG, PF_ICON_ID, PF_ICON_SVG, SETTINGS_ICON_ID, SETTINGS_ICON_SVG, VOICE_ICON_ID, VOICE_ICON_SVG, HOME_ICON_ID, HOME_ICON_SVG, PROJECT_ICON_ID, PROJECT_ICON_SVG, SYNTHESIS_ICON_ID, SYNTHESIS_ICON_SVG, COMPASS_ICON_ID, COMPASS_ICON_SVG, REVIEW_ICON_ID, REVIEW_ICON_SVG } from './constants';
 import { MinaSettings, ThoughtEntry, TaskEntry, ReplyEntry } from './types';
 import { isTablet, toAsciiDigits } from './utils';
 import { MinaView } from './view';
 import { MinaSettingTab } from './settings';
-
-export const PROJECT_ICON_ID = "mina-project-icon";
-export const PROJECT_ICON_SVG = `<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
-
-export const REVIEW_ICON_ID = "mina-review-icon";
-export const REVIEW_ICON_SVG = `<g transform="translate(10,10) scale(3.5)"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16" y1="2" x2="16" y2="6" fill="none" stroke="currentColor" stroke-width="2"/><line x1="8" y1="2" x2="8" y2="6" fill="none" stroke="currentColor" stroke-width="2"/><line x1="3" y1="10" x2="21" y2="10" fill="none" stroke="currentColor" stroke-width="2"/><polyline points="9 16 11 18 15 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>`;
 
 export default class MinaPlugin extends Plugin {
 	settings: MinaSettings;
@@ -477,10 +471,16 @@ export default class MinaPlugin extends Plugin {
 	}
 
 	async saveSettings() {
-        if (!this.settingsInitialized) return;
-		await this.saveData(this.settings);
+	    if (!this.settingsInitialized) return;
+	await this.saveData(this.settings);
 	}
 
+	getProjects(): string[] {
+	    const projects = new Set<string>();
+	    this.thoughtIndex.forEach(t => { if (t.project) projects.add(t.project); });
+	    this.taskIndex.forEach(t => { if (t.project) projects.add(t.project); });
+	    return Array.from(projects).sort();
+	}
     async appendCapture(content: string, contexts: string[], isTask: boolean, dueDate?: string, parentId: string = '') {
         const { vault } = this.app;
         const fmtDate = () => toAsciiDigits(moment().locale('en').format(this.settings.dateFormat));

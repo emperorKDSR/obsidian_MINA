@@ -72,10 +72,11 @@ export class ContextTab extends BaseTab {
         };
 
         addNoteBtn.addEventListener('click', () => {
-            new EditEntryModal(this.app, this.view.plugin, '', getModeContext(), null, false, async (text: string, ctxs: string) => {
+            new EditEntryModal(this.app, this.view.plugin, '', getModeContext(), null, false, async (text: string, ctxs: string, _, project: string | null) => {
                 if (!text.trim()) return;
                 const contexts = ctxs.split('#').map((c: string) => c.trim()).filter((c: string) => c.length > 0);
-                await this.view.plugin.createThoughtFile(text, contexts);
+                const file = await this.view.plugin.createThoughtFile(text, contexts);
+                if (project) await this.app.fileManager.processFrontMatter(file, (fm) => { fm['project'] = project; });
                 this.updateContextList(modeId, listContainer);
             }, `New ${modeTitle} Note`).open();
         });
@@ -86,10 +87,11 @@ export class ContextTab extends BaseTab {
         addTaskBtn.createSpan({ text: '✅', attr: { style: 'font-size: 1.1em;' } });
         addTaskBtn.createSpan({ text: 'Add Task' });
         addTaskBtn.addEventListener('click', () => {
-            new EditEntryModal(this.app, this.view.plugin, '', getModeContext(), moment().format('YYYY-MM-DD'), true, async (text: string, ctxs: string, due: string | null) => {
+            new EditEntryModal(this.app, this.view.plugin, '', getModeContext(), moment().format('YYYY-MM-DD'), true, async (text: string, ctxs: string, due: string | null, project: string | null) => {
                 if (!text.trim()) return;
                 const contexts = ctxs.split('#').map((c: string) => c.trim()).filter((c: string) => c.length > 0);
-                await this.view.plugin.createTaskFile(text, contexts, due || undefined);
+                const file = await this.view.plugin.createTaskFile(text, contexts, due || undefined);
+                if (project) await this.app.fileManager.processFrontMatter(file, (fm) => { fm['project'] = project; });
                 this.updateContextList(modeId, listContainer);
             }, `New ${modeTitle} Task`).open();
         });

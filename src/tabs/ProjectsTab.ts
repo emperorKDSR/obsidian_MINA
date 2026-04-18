@@ -78,10 +78,13 @@ export class ProjectsTab extends BaseTab {
 
         // 1. Header
         const header = wrap.createEl('div', {
-            attr: { style: 'display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px;' }
+            attr: { style: 'display: flex; flex-direction: column; gap: 8px; margin-bottom: 2px;' }
         });
 
-        const titleRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px;' } });
+        const navRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px; margin-bottom: -4px;' } });
+        this.renderHomeIcon(navRow);
+
+        const titleRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
         
         const backBtn = titleRow.createEl('button', {
             text: '←',
@@ -107,10 +110,10 @@ export class ProjectsTab extends BaseTab {
         const addNoteBtn = actionRow.createEl('button', { attr: { style: actionBtnStyle } });
         addNoteBtn.createSpan({ text: '✍️' }); addNoteBtn.createSpan({ text: 'Add Note' });
         addNoteBtn.addEventListener('click', () => {
-            new EditEntryModal(this.app, this.view.plugin, '', '', null, false, async (text, ctxs) => {
+            new EditEntryModal(this.app, this.view.plugin, '', '', null, false, async (text, ctxs, _, project) => {
                 const contexts = ctxs.split('#').map(c => c.trim()).filter(c => c.length > 0);
                 const file = await this.view.plugin.createThoughtFile(text, contexts);
-                await this.app.fileManager.processFrontMatter(file, (fm) => { fm['project'] = projectName; });
+                await this.app.fileManager.processFrontMatter(file, (fm) => { fm['project'] = project || projectName; });
                 this.render(container);
             }, `New ${projectName} Note`).open();
         });
@@ -118,10 +121,10 @@ export class ProjectsTab extends BaseTab {
         const addTaskBtn = actionRow.createEl('button', { attr: { style: actionBtnStyle } });
         addTaskBtn.createSpan({ text: '✅' }); addTaskBtn.createSpan({ text: 'Add Task' });
         addTaskBtn.addEventListener('click', () => {
-            new EditEntryModal(this.app, this.view.plugin, '', '', moment().format('YYYY-MM-DD'), true, async (text, ctxs, due) => {
+            new EditEntryModal(this.app, this.view.plugin, '', '', moment().format('YYYY-MM-DD'), true, async (text, ctxs, due, project) => {
                 const contexts = ctxs.split('#').map(c => c.trim()).filter(c => c.length > 0);
                 const file = await this.view.plugin.createTaskFile(text, contexts, due || undefined);
-                await this.app.fileManager.processFrontMatter(file, (fm) => { fm['project'] = projectName; });
+                await this.app.fileManager.processFrontMatter(file, (fm) => { fm['project'] = project || projectName; });
                 this.render(container);
             }, `New ${projectName} Task`).open();
         });

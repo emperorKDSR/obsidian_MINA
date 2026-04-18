@@ -31,6 +31,7 @@ export class MinaSettingTab extends PluginSettingTab {
         new Setting(containerEl).setName('Date format').addText(text => text.setPlaceholder('YYYY-MM-DD').setValue(this.plugin.settings.dateFormat).onChange(async (value) => { this.plugin.settings.dateFormat = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('Time format').addText(text => text.setPlaceholder('HH:mm').setValue(this.plugin.settings.timeFormat).onChange(async (value) => { this.plugin.settings.timeFormat = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('Transcription Language').setDesc('Target language for audio transcription/translation.').addText(text => text.setPlaceholder('English').setValue(this.plugin.settings.transcriptionLanguage).onChange(async (value) => { this.plugin.settings.transcriptionLanguage = value; await this.plugin.saveSettings(); }));
+        new Setting(containerEl).setName('Monthly Income').setDesc('Used for the Cashflow Dashboard in Finance Mode.').addText(text => text.setPlaceholder('0').setValue(this.plugin.settings.monthlyIncome.toString()).onChange(async (value) => { this.plugin.settings.monthlyIncome = parseFloat(value) || 0; await this.plugin.saveSettings(); }));
 
         containerEl.createEl('h3', { text: 'Memento Mori' });
         new Setting(containerEl).setName('Birth Date').setDesc('Your birth date for Memento Mori visualization.').addText(text => {

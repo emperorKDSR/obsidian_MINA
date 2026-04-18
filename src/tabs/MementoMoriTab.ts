@@ -30,6 +30,9 @@ export class MementoMoriTab extends BaseTab {
             attr: { style: 'padding: 20px 20px 10px 20px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; flex-shrink: 0; position: relative; z-index: 20;' }
         });
 
+        const navRow = header.createEl('div', { attr: { style: 'position: absolute; left: 20px; top: 20px;' } });
+        this.renderHomeIcon(navRow);
+
         header.createEl('span', {
             text: 'Life Remaining',
             attr: { style: 'font-size: 0.75em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-normal); opacity: 0.9;' }

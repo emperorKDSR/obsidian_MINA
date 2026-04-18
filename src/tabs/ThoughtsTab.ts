@@ -9,7 +9,11 @@ export class ThoughtsTab extends BaseTab {
         this.renderReviewThoughtsMode(container);
     }
         renderReviewThoughtsMode(container: HTMLElement) {
-            const headerSection = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px; background-color: var(--background-secondary); padding: 10px; border-radius: 5px;' } });
+            const header = container.createEl('div', { attr: { style: 'padding: 16px 14px 10px 14px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; border-bottom: 1px solid var(--background-modifier-border-faint);' } });
+            this.renderHomeIcon(header);
+            header.createEl('h2', { text: 'Thoughts', attr: { style: 'margin: 0; font-size: 1.4em; font-weight: 800; color: var(--text-normal); letter-spacing: -0.02em;' } });
+
+            const headerSection = container.createEl('div', { attr: { style: 'flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; margin-top: 10px; margin-bottom: 15px; background-color: var(--background-secondary); padding: 10px; border-radius: 5px;' } });
             let captureContainer: HTMLElement;
             let filterBarEl: HTMLElement | null = null;
             const renderToggles = (parent: HTMLElement) => {

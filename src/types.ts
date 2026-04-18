@@ -41,6 +41,8 @@ export interface MinaSettings {
     habitsFolder: string;
     habits: Habit[];
     weeklyGoals: string[];
+    monthlyIncome: number;
+    northStarGoals: string[];
 }
 
 export interface Habit {

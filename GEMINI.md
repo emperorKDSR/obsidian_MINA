@@ -47,6 +47,7 @@ MINA V2 has evolved from a simple capture tool into a holistic **Personal Operat
 ### Security, Performance & Release Mandates
 The plugin is governed by strict, always-running mandates:
 - **Lead Engineer**: Enforces modular architecture, type safety, and technical design documents for all features.
+- **AI Architect**: Ensures robust configuration, model fallbacks, error resilience, and prompt engineering excellence.
 - **Optimization**: Zero-bloat policy, targeted re-renders, and high-efficiency vault indexing.
 - **UX Auditor**: Protects the modern, minimalist aesthetic and unified design theme.
 - **Security Auditor**: Continuous vulnerability scanning and rigorous secret protection (no hardcoded keys).

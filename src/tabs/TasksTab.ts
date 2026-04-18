@@ -25,6 +25,9 @@ export class TasksTab extends BaseTab {
             attr: { style: 'display: flex; flex-direction: column; gap: 8px; margin-bottom: 2px;' }
         });
 
+        const navRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px; margin-bottom: -4px;' } });
+        this.renderHomeIcon(navRow);
+
         const titleRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
         titleRow.createEl('h2', {
             text: 'Tasks',
@@ -46,10 +49,11 @@ export class TasksTab extends BaseTab {
 
         // Event: Add Task
         addTaskBtn.addEventListener('click', () => {
-            new EditEntryModal(this.app, this.view.plugin, '', '', moment().format('YYYY-MM-DD'), true, async (text: string, ctxs: string, due: string | null) => {
+            new EditEntryModal(this.app, this.view.plugin, '', '', moment().format('YYYY-MM-DD'), true, async (text: string, ctxs: string, due: string | null, project: string | null) => {
                 if (!text.trim()) return;
                 const contexts = ctxs.split('#').map((c: string) => c.trim()).filter((c: string) => c.length > 0);
-                await this.view.plugin.createTaskFile(text, contexts, due || undefined);
+                const file = await this.view.plugin.createTaskFile(text, contexts, due || undefined);
+                if (project) await this.app.fileManager.processFrontMatter(file, (fm) => { fm['project'] = project; });
                 this.updateReviewTasksList();
             }, 'New Task').open();
         });

@@ -10,7 +10,7 @@ export class MinaView extends ItemView {
     content: string = '';
     isTask: boolean = false;
     dueDate: string = moment().format('YYYY-MM-DD');
-    activeTab: string = 'daily';
+    activeTab: string = 'home';
     isDedicated: boolean = false;
     timelineSelectedDate: string = moment().format('YYYY-MM-DD');
     // Timeline State
@@ -97,12 +97,15 @@ export class MinaView extends ItemView {
 
     getModeTitle(): string {
         switch (this.activeTab) {
+            case 'home': return "MINA Hub";
             case 'daily': return "Daily";
             case 'review-thoughts': return "Thoughts";
             case 'review-tasks': return "Tasks";
             case 'mina-ai': return "AI Chat";
             case 'dues': return "Dues";
             case 'projects': return "Projects";
+            case 'synthesis': return "Synthesis";
+            case 'compass': return "Compass";
             case 'review': return "Weekly Review";
             case 'voice-note': return "Voice Notes";
             case 'settings': return "Settings";
@@ -211,12 +214,15 @@ export class MinaView extends ItemView {
             leftHeader.createEl('h3', { text: this.getModeTitle(), attr: { style: 'margin: 0; font-size: 1.1em; color: var(--text-accent);' } });
         }
 
-        if (this.activeTab === 'daily') import('./tabs/DailyTab').then(({ DailyTab }) => new DailyTab(this).render(container));
+        if (this.activeTab === 'home') import('./tabs/CommandCenterTab').then(({ CommandCenterTab }) => new CommandCenterTab(this).render(container));
+        else if (this.activeTab === 'daily') import('./tabs/DailyTab').then(({ DailyTab }) => new DailyTab(this).render(container));
         else if (this.activeTab === 'review-tasks') import('./tabs/TasksTab').then(({ TasksTab }) => new TasksTab(this).render(container));
         else if (this.activeTab === 'review-thoughts') import('./tabs/ThoughtsTab').then(({ ThoughtsTab }) => new ThoughtsTab(this).render(container));
         else if (this.activeTab === 'mina-ai') import('./tabs/AiTab').then(({ AiTab }) => new AiTab(this).render(container));
         else if (this.activeTab === 'dues' || this.activeTab === 'pf') import('./tabs/DuesTab').then(({ DuesTab }) => new DuesTab(this).render(container));
         else if (this.activeTab === 'projects') import('./tabs/ProjectsTab').then(({ ProjectsTab }) => new ProjectsTab(this).render(container));
+        else if (this.activeTab === 'synthesis') import('./tabs/SynthesisTab').then(({ SynthesisTab }) => new SynthesisTab(this).render(container));
+        else if (this.activeTab === 'compass') import('./tabs/CompassTab').then(({ CompassTab }) => new CompassTab(this).render(container));
         else if (this.activeTab === 'review') import('./tabs/ReviewTab').then(({ ReviewTab }) => new ReviewTab(this).render(container));
         else if (this.activeTab === 'settings') import('./tabs/SettingsTab').then(({ SettingsTab }) => new SettingsTab(this).render(container));
         else if (this.activeTab === 'voice-note') import('./tabs/VoiceTab').then(({ VoiceTab }) => new VoiceTab(this).render(container));

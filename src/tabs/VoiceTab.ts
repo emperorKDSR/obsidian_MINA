@@ -23,15 +23,20 @@ export class VoiceTab extends BaseTab {
 
         // 1. Header (Ultra-minimalist)
         const header = wrap.createEl('div', {
-            attr: { style: 'display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px;' }
+            attr: { style: 'display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px;' }
         });
 
-        header.createEl('h2', {
+        const navRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px; margin-bottom: -4px;' } });
+        this.renderHomeIcon(navRow);
+
+        const titleRow = header.createEl('div', { attr: { style: 'display: flex; align-items: baseline; justify-content: space-between;' } });
+
+        titleRow.createEl('h2', {
             text: 'Voice',
             attr: { style: 'margin: 0; font-size: 1.4em; font-weight: 800; color: var(--text-normal); letter-spacing: -0.02em; line-height: 1.1;' }
         });
 
-        header.createEl('span', {
+        titleRow.createEl('span', {
             text: moment().format('dddd, MMMM D'),
             attr: { style: 'font-size: 0.85em; color: var(--text-muted); font-weight: 500;' }
         });
@@ -183,9 +188,10 @@ export class VoiceTab extends BaseTab {
 
                 const saveAsTask = routeRow.createEl('button', { text: 'Task', attr: { style: routeBtnStyle } });
                 saveAsTask.addEventListener('click', async () => {
-                    new EditEntryModal(this.app, this.view.plugin, text, 'transcribed', moment().format('YYYY-MM-DD'), true, async (txt, ctxs, due) => {
+                    new EditEntryModal(this.app, this.view.plugin, text, 'transcribed', moment().format('YYYY-MM-DD'), true, async (txt, ctxs, due, project) => {
                         const contexts = ctxs.split('#').map(c => c.trim()).filter(c => c.length > 0);
-                        await this.view.plugin.createTaskFile(txt, contexts, due || undefined);
+                        const file = await this.view.plugin.createTaskFile(txt, contexts, due || undefined);
+                        if (project) await this.app.fileManager.processFrontMatter(file, (fm) => { fm['project'] = project; });
                         this.render(fullContainer);
                     }, 'New Task from Voice').open();
                 });

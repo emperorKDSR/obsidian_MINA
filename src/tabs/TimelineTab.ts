@@ -19,9 +19,11 @@ export class TimelineTab extends BaseTab {
         // 1. Sleek Header with Modern Date Carousel
         const carouselContainer = wrap.createEl('div', {
             attr: {
-                style: 'flex-shrink: 0; position: relative; border-bottom: 1px solid var(--background-modifier-border-faint); padding: 12px 0; background: var(--background-primary); display: flex; align-items: center;'
+                style: 'flex-shrink: 0; position: relative; border-bottom: 1px solid var(--background-modifier-border-faint); padding: 12px 14px; background: var(--background-primary); display: flex; align-items: center; gap: 12px;'
             }
         });
+
+        this.renderHomeIcon(carouselContainer);
 
         this.view.timelineCarousel = carouselContainer.createEl('div', {
             attr: {

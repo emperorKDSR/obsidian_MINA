@@ -10,9 +10,13 @@ export class EditEntryModal extends Modal {
     initialDueDate: string | null;
     isTask: boolean;
     plugin: MinaPlugin;
-    onSave: (newText: string, newContexts: string, newDueDate: string | null) => void;
+    onSave: (newText: string, newContexts: string, newDueDate: string | null, project: string | null) => void;
     customTitle?: string;
     stayOpen: boolean;
+    
+    suggestedProject: string | null = null;
+    currentProject: string | null = null;
+    classificationTimeout: ReturnType<typeof setTimeout> | null = null;
 
     constructor(
         app: App,
@@ -21,7 +25,7 @@ export class EditEntryModal extends Modal {
         initialContext: string,
         initialDueDate: string | null,
         isTask: boolean,
-        onSave: (newText: string, newContexts: string, newDueDate: string | null) => void,
+        onSave: (newText: string, newContexts: string, newDueDate: string | null, project: string | null) => void,
         customTitle?: string,
         stayOpen: boolean = false
     ) {
@@ -77,7 +81,7 @@ export class EditEntryModal extends Modal {
         // 2. Content Area
         const body = contentEl.createEl('div', { attr: { style: 'padding: 20px;' } });
         
-        const textAreaWrapper = body.createEl('div', { attr: { style: 'position: relative; margin-bottom: 16px;' } });
+        const textAreaWrapper = body.createEl('div', { attr: { style: 'position: relative; margin-bottom: 8px;' } });
         const textArea = textAreaWrapper.createEl('textarea', {
             text: this.initialText,
             attr: { 
@@ -87,6 +91,43 @@ export class EditEntryModal extends Modal {
         });
         textArea.focus();
 
+        // AI Suggestion Area
+        const aiSuggestionArea = body.createEl('div', {
+            attr: { style: 'height: 24px; margin-bottom: 8px; display: flex; align-items: center;' }
+        });
+
+        const updateAiSuggestion = (project: string | null) => {
+            aiSuggestionArea.empty();
+            if (!project) return;
+            
+            const chip = aiSuggestionArea.createEl('span', {
+                text: `Link to Project: ${project}?`,
+                attr: { style: 'font-size: 0.65em; font-weight: 700; color: var(--interactive-accent); background: rgba(var(--interactive-accent-rgb), 0.1); padding: 2px 8px; border-radius: 4px; cursor: pointer; border: 1px solid var(--background-modifier-border-faint); text-transform: uppercase; letter-spacing: 0.05em;' }
+            });
+            chip.addEventListener('click', () => {
+                this.currentProject = project;
+                aiSuggestionArea.empty();
+                aiSuggestionArea.createEl('span', { text: `Linked to: ${project} ✓`, attr: { style: 'font-size: 0.65em; font-weight: 800; color: var(--text-success); text-transform: uppercase;' } });
+            });
+        };
+
+        const classifyInput = async (text: string) => {
+            if (text.length < 10) return;
+            const projects = this.plugin.getProjects();
+            if (projects.length === 0) return;
+
+            const prompt = `Classify this note into one of these existing projects: ${projects.join(', ')}. 
+            Note text: "${text}". 
+            If it clearly matches a project, return ONLY the project name. If no clear match, return "None".`;
+
+            try {
+                const leaf = this.plugin.app.workspace.getLeavesOfType('mina-v2-view')[0];
+                const result = await (leaf?.view as any).callGemini(prompt, [], false, [{ role: 'user', text: prompt }]);
+                const match = projects.find((p: string) => result?.includes(p));
+                if (match) updateAiSuggestion(match);
+            } catch (e) {}
+        };
+
         let lastValue = this.initialText;
         textArea.addEventListener('input', (e) => {
             const target = e.target as HTMLTextAreaElement;
@@ -94,7 +135,11 @@ export class EditEntryModal extends Modal {
             const pos = target.selectionStart;
             const textBeforeCursor = val.substring(0, pos);
 
-            // Natural Language Date conversion: @date followed by space/newline
+            // Debounced AI Classification
+            if (this.classificationTimeout) clearTimeout(this.classificationTimeout);
+            this.classificationTimeout = setTimeout(() => classifyInput(val), 2000);
+
+            // Natural Language Date conversion: @date
             const dateMatch = textBeforeCursor.match(/@([^@\n\s]+(?: [^@\n\s]+)*)([\s\n])$/);
             if (dateMatch) {
                 const rawDate = dateMatch[1];
@@ -121,10 +166,7 @@ export class EditEntryModal extends Modal {
                         const after = val.substring(cursorPosition);
                         const insertText = `[[${file.basename}]]`;
                         target.value = before + insertText + after;
-                        setTimeout(() => {
-                            target.focus();
-                            target.setSelectionRange(before.length + insertText.length, before.length + insertText.length);
-                        }, 50);
+                        setTimeout(() => { target.focus(); target.setSelectionRange(before.length + insertText.length, before.length + insertText.length); }, 50);
                     }, this.plugin.settings.newNoteFolder).open();
                 } else if (cursorPosition > 0 && val.charAt(cursorPosition - 1) === '#') {
                     new ContextSuggestModal(this.plugin.app, this.plugin.settings.contexts, async (ctx) => {
@@ -135,10 +177,7 @@ export class EditEntryModal extends Modal {
                             this.initialContexts.push(ctx);
                             renderChips();
                         }
-                        setTimeout(() => {
-                            target.focus();
-                            target.setSelectionRange(before.length, before.length);
-                        }, 50);
+                        setTimeout(() => { target.focus(); target.setSelectionRange(before.length, before.length); }, 50);
                     }).open();
                 }
             }
@@ -239,7 +278,7 @@ export class EditEntryModal extends Modal {
             const newText = textArea.value.replace(/\n/g, '<br>');
             const newContextString = this.initialContexts.map(c => `#${c}`).join(' ');
             const newDate = dateInput ? dateInput.value : null;
-            this.onSave(newText, newContextString, newDate);
+            this.onSave(newText, newContextString, newDate, this.currentProject);
             if (this.stayOpen) { textArea.value = ''; textArea.focus(); new Notice(this.isTask ? 'Task added!' : 'Thought added!'); }
             else this.close();
         };

@@ -1,4 +1,4 @@
-import { Platform, MarkdownRenderer, Notice, Menu, MenuItem, TFile, moment } from 'obsidian';
+import { Platform, MarkdownRenderer, Notice, Menu, MenuItem, TFile, moment, setIcon } from 'obsidian';
 import type { MinaView } from '../view';
 import type { ThoughtEntry, TaskEntry, ReplyEntry } from '../types';
 import { NINJA_AVATAR_SVG, ICON_PIN, ICON_EDIT, ICON_TRASH, ICON_REPLY, ICON_LINK, ICON_EYE, ICON_EYE_OFF, ICON_CHECKLIST, ICON_MESSAGE_SQUARE } from '../constants';
@@ -19,6 +19,16 @@ export class BaseTab {
     get plugin() { return this.view.plugin; }
     get app() { return this.view.app; }
     get settings() { return this.view.plugin.settings; }
+
+    renderHomeIcon(parent: HTMLElement) {
+        const homeBtn = parent.createEl('button', {
+            attr: { style: 'background: transparent; border: none; padding: 0; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; opacity: 0.6; transition: opacity 0.1s; width: 24px; height: 24px;' }
+        });
+        homeBtn.addEventListener('mouseenter', () => homeBtn.style.opacity = '1');
+        homeBtn.addEventListener('mouseleave', () => homeBtn.style.opacity = '0.6');
+        setIcon(homeBtn, 'mina-home-icon');
+        homeBtn.addEventListener('click', () => { this.view.activeTab = 'home'; this.view.renderView(); });
+    }
 
     hookInternalLinks(el: HTMLElement, sourcePath: string) {
         el.querySelectorAll('a.internal-link').forEach((a) => {
@@ -48,245 +58,101 @@ export class BaseTab {
                 document.addEventListener('keydown', onKey);
                 overlay.addEventListener('wheel', (ev: WheelEvent) => { ev.preventDefault(); const delta = ev.deltaY < 0 ? 0.15 : -0.15; scale = Math.max(0.2, Math.min(8, scale + delta)); clampTranslate(); applyTransform(); }, { passive: false });
                 let dragStart: { x: number; y: number } | null = null; let dragTx = 0, dragTy = 0;
-                zoomed.addEventListener('mousedown', (ev) => { if (scale <= 1) return; ev.preventDefault(); dragStart = { x: ev.clientX, y: ev.clientY }; dragTx = tx; dragTy = ty; zoomed.style.cursor = 'grabbing'; });
-                document.addEventListener('mousemove', (ev) => { if (!dragStart) return; tx = dragTx + (ev.clientX - dragStart.x); ty = dragTy + (ev.clientY - dragStart.y); clampTranslate(); applyTransform(); });
-                document.addEventListener('mouseup', () => { dragStart = null; applyTransform(); });
-                let lastPinchDist = 0, lastPinchScale = 1; let touchStart: { x: number; y: number; tx: number; ty: number } | null = null;
-                overlay.addEventListener('touchstart', (ev: TouchEvent) => { if (ev.touches.length === 2) { const dx = ev.touches[0].clientX - ev.touches[1].clientX; const dy = ev.touches[0].clientY - ev.touches[1].clientY; lastPinchDist = Math.hypot(dx, dy); lastPinchScale = scale; touchStart = null; } else if (ev.touches.length === 1 && scale > 1) { touchStart = { x: ev.touches[0].clientX, y: ev.touches[0].clientY, tx, ty }; } }, { passive: true });
-                overlay.addEventListener('touchmove', (ev: TouchEvent) => { ev.preventDefault(); if (ev.touches.length === 2) { const dx = ev.touches[0].clientX - ev.touches[1].clientX; const dy = ev.touches[0].clientY - ev.touches[1].clientY; const dist = Math.hypot(dx, dy); scale = Math.max(0.2, Math.min(8, lastPinchScale * (dist / lastPinchDist))); clampTranslate(); applyTransform(); } else if (ev.touches.length === 1 && touchStart) { tx = touchStart.tx + (ev.touches[0].clientX - touchStart.x); ty = touchStart.ty + (ev.touches[0].clientY - touchStart.y); clampTranslate(); applyTransform(); } }, { passive: false });
-                overlay.addEventListener('touchend', (ev: TouchEvent) => { if (ev.changedTouches.length === 1 && scale <= 1.05) { if (!(ev.target as HTMLElement).closest('img')) close(); } });
-                setTimeout(() => hint.style.opacity = '0', 2500);
+                zoomed.addEventListener('mousedown', (ev: MouseEvent) => { if (scale > 1) { dragStart = { x: ev.clientX, y: ev.clientY }; dragTx = tx; dragTy = ty; zoomed.style.cursor = 'grabbing'; ev.preventDefault(); } });
+                window.addEventListener('mousemove', (ev: MouseEvent) => { if (dragStart) { tx = dragTx + (ev.clientX - dragStart.x); ty = dragTy + (ev.clientY - dragStart.y); clampTranslate(); applyTransform(); } });
+                window.addEventListener('mouseup', () => { dragStart = null; if (scale > 1) zoomed.style.cursor = 'grab'; });
+                let touchStart: { x: number; y: number; dist: number } | null = null; let touchTx = 0, touchTy = 0, touchScale = 1;
+                overlay.addEventListener('touchstart', (ev: TouchEvent) => { if (ev.touches.length === 1) { dragStart = { x: ev.touches[0].clientX, y: ev.touches[0].clientY }; dragTx = tx; dragTy = ty; } else if (ev.touches.length === 2) { const dist = Math.hypot(ev.touches[0].clientX - ev.touches[1].clientX, ev.touches[0].clientY - ev.touches[1].clientY); touchStart = { x: (ev.touches[0].clientX + ev.touches[1].clientX) / 2, y: (ev.touches[0].clientY + ev.touches[1].clientY) / 2, dist }; touchScale = scale; dragStart = null; } }, { passive: false });
+                overlay.addEventListener('touchmove', (ev: TouchEvent) => { ev.preventDefault(); if (ev.touches.length === 1 && dragStart) { tx = dragTx + (ev.touches[0].clientX - dragStart.x); ty = dragTy + (ev.touches[0].clientY - dragStart.y); clampTranslate(); applyTransform(); } else if (ev.touches.length === 2 && touchStart) { const dist = Math.hypot(ev.touches[0].clientX - ev.touches[1].clientX, ev.touches[0].clientY - ev.touches[1].clientY); scale = Math.max(0.2, Math.min(8, touchScale * (dist / touchStart.dist))); clampTranslate(); applyTransform(); } }, { passive: false });
+                overlay.addEventListener('touchend', () => { dragStart = null; touchStart = null; });
             });
+        });
+    }
+
+    renderActionButton(parent: HTMLElement, iconPath: string, title: string, onClick: () => void, color: string = 'var(--text-muted)') {
+        const btn = parent.createEl('button', { attr: { title, class: 'mina-action-btn', style: `color: ${color};` } });
+        btn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${iconPath}</svg>`;
+        btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); onClick(); });
+    }
+
+    renderSearchInput(parent: HTMLElement, onSearch: (val: string) => void) {
+        const wrap = parent.createEl('div', { attr: { style: 'padding: 0 14px 10px 14px; flex-shrink: 0;' } });
+        const inp = wrap.createEl('input', { type: 'text', attr: { placeholder: 'Search...', style: 'width: 100%; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary-alt); color: var(--text-normal); font-size: 0.85em;' } });
+        inp.addEventListener('input', (e) => onSearch((e.target as HTMLInputElement).value));
+    }
+
+    renderExpandToggle(content: HTMLElement, textEl: HTMLElement) {
+        const toggle = content.createEl('div', { cls: 'mina-expand-toggle' });
+        toggle.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+        toggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isExpanded = textEl.classList.toggle('is-expanded');
+            toggle.style.transform = isExpanded ? 'rotate(180deg)' : 'none';
         });
     }
 
     hookCheckboxes(el: HTMLElement, entry: ThoughtEntry) {
-        try {
-            const checkboxEls = Array.from(el.querySelectorAll('input[type="checkbox"]'));
-            checkboxEls.forEach((cb, idx) => {
-                try {
-                    const checkbox = cb as HTMLInputElement; const isChecked = checkbox.checked;
-                    const circle = document.createElement('span');
-                    const applyCircleStyle = (checked: boolean) => {
-                        circle.style.cssText = `display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; border-radius:50%; border:2px solid var(--interactive-accent); cursor:pointer; flex-shrink:0; transition:background 0.15s; background:${checked ? 'var(--interactive-accent)' : 'transparent'}; font-size:10px; color:var(--background-primary); user-select:none; vertical-align:middle; margin-right:4px`;
-                        circle.textContent = checked ? '✓' : ''; circle.setAttribute('data-checked', checked ? '1' : '0'); circle.title = checked ? 'Mark incomplete' : 'Mark complete';
-                    };
-                    applyCircleStyle(isChecked);
-                    const parent = checkbox.parentElement; if (parent) { parent.insertBefore(circle, checkbox); parent.removeChild(checkbox); }
-                    circle.addEventListener('click', async (e) => {
-                        e.preventDefault(); e.stopPropagation();
-                        const currentlyChecked = circle.getAttribute('data-checked') === '1'; const newChecked = !currentlyChecked; applyCircleStyle(newChecked);
-                        let count = 0; const newRaw = entry.body.replace(/- \[([ x])\] /g, (match: string, state: string) => { if (count++ === idx) return state === ' ' ? '- [x] ' : '- [ ] '; return match; });
-                        if (newRaw !== entry.body) { entry.body = newRaw; await this.view.plugin.editThoughtBody(entry.filePath, newRaw, entry.context); }
-                    });
-                } catch (itemErr) { console.warn('MINA: hookCheckboxes item error', itemErr); }
-            });
-        } catch (err) { console.warn('MINA: hookCheckboxes error', err); }
-    }
-
-    renderCaptureMode(container: HTMLElement, isThoughtsOnly: boolean = false, isTasksOnly: boolean = false) {
-        if (this.view.replyToId) {
-            const replyBanner = container.createEl('div', { attr: { style: 'background-color: var(--background-secondary-alt); padding: 8px 12px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid var(--interactive-accent); display: flex; justify-content: space-between; align-items: center; font-size: 0.85em;' } });
-            const bannerText = replyBanner.createEl('div', { attr: { style: 'overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-grow: 1; margin-right: 10px;' } });
-            bannerText.createSpan({ text: 'Replying to: ', attr: { style: 'font-weight: bold; color: var(--text-accent);' } });
-            bannerText.createSpan({ text: this.view.replyToText || '' });
-            const cancelReply = replyBanner.createEl('button', { text: '✕', attr: { style: 'padding: 2px 6px; font-size: 0.8em; background: transparent; border: none; cursor: pointer;' } });
-            cancelReply.addEventListener('click', () => { this.view.replyToId = null; this.view.replyToText = null; this.view.renderView(); });
-        }
-        const inputSection = container.createEl('div', { attr: { style: 'flex-shrink: 0; margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-end;' } });
-        const textAreaWrapper = inputSection.createEl('div', { attr: { style: 'flex-grow: 1;' } });
-        const textArea = textAreaWrapper.createEl('textarea', { attr: { placeholder: Platform.isMobile && !isTablet() ? 'Type thought… use @ for date, # for context, [[ for links, + for checklist' : 'Enter thought or task… Shift+Enter to save', rows: isTablet() ? '4' : '3', style: 'width: 100%; font-family: var(--font-text); resize: vertical; display: block;' } });
-        textArea.value = this.view.content;
-        if (Platform.isMobile) textArea.addEventListener('focus', () => { setTimeout(() => { textArea.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300); });
-        let lastValue = this.view.content;
-        textArea.addEventListener('input', (e) => {
-            const target = e.target as HTMLTextAreaElement; const val = target.value;
-            const pos = target.selectionStart;
-            const textBeforeCursor = val.substring(0, pos);
-
-            // Natural Language Date conversion: @date followed by space/newline
-            const dateMatch = textBeforeCursor.match(/@([^@\n\s]+(?: [^@\n\s]+)*)([\s\n])$/);
-            if (dateMatch) {
-                const rawDate = dateMatch[1];
-                const terminator = dateMatch[2];
-                const parsed = parseNaturalDate(rawDate);
-                if (parsed) {
-                    const matchStart = dateMatch.index!;
-                    const before = val.substring(0, matchStart);
-                    const after = val.substring(pos);
-                    const insertText = `[[${parsed}]]${terminator}`;
-                    target.value = before + insertText + after;
-                    this.view.content = target.value;
-                    const newPos = matchStart + insertText.length;
-                    target.setSelectionRange(newPos, newPos);
-                    lastValue = target.value;
-                    return;
-                }
-            }
-
-            if (val.length > lastValue.length) {
-                const cursorPosition = target.selectionStart;
-                if (cursorPosition >= 2 && val.substring(cursorPosition - 2, cursorPosition) === '[[') {
-                    new FileSuggestModal(this.view.plugin.app, (file) => {
-                        const before = val.substring(0, cursorPosition - 2); const after = val.substring(cursorPosition); const insertText = `[[${file.basename}]]`;
-                        target.value = before + insertText + after; this.view.content = target.value;
-                        setTimeout(() => { target.focus(); target.setSelectionRange(before.length + insertText.length, before.length + insertText.length); }, 50);
-                    }, this.view.plugin.settings.newNoteFolder).open();
-                } else if (cursorPosition > 0 && val.charAt(cursorPosition - 1) === '#') {
-                    new ContextSuggestModal(this.view.plugin.app, this.view.plugin.settings.contexts, async (ctx) => {
-                        if (!this.view.plugin.settings.contexts.includes(ctx)) {
-                            this.view.plugin.settings.contexts.push(ctx);
-                            await this.view.plugin.saveSettings();
+        const cbs = el.querySelectorAll('input[type="checkbox"]');
+        cbs.forEach((cb, idx) => {
+            cb.addEventListener('change', async () => {
+                const isChecked = (cb as HTMLInputElement).checked;
+                const lines = entry.body.split('\n');
+                let count = 0;
+                for (let i = 0; i < lines.length; i++) {
+                    if (lines[i].includes('- [ ]') || lines[i].includes('- [x]')) {
+                        if (count === idx) {
+                            lines[i] = lines[i].replace(isChecked ? '- [ ]' : '- [x]', isChecked ? '- [x]' : '- [ ]');
+                            break;
                         }
-                        if (!this.view.selectedContexts.includes(ctx)) {
-                            this.view.selectedContexts.push(ctx);
-                            this.view.plugin.settings.selectedContexts = [...this.view.selectedContexts];
-                            await this.view.plugin.saveSettings();
-                        }
-                        const before = val.substring(0, cursorPosition - 1);
-                        const after = val.substring(cursorPosition);
-                        target.value = before + after;
-                        this.view.content = target.value;
-
-                        setTimeout(() => { target.focus(); target.setSelectionRange(before.length, before.length); }, 50);
-                    }).open();
-                }
-            }
-            const converted = val.replace(/^\+ /gm, '- [ ] '); if (converted !== val) { const cursor = target.selectionStart; const diff = converted.length - val.length; target.value = converted; target.setSelectionRange(cursor + diff, cursor + diff); }
-            lastValue = target.value; this.view.content = target.value;
-        });
-        textArea.addEventListener('keydown', (ev) => { });
-        textArea.addEventListener('paste', async (e: ClipboardEvent) => { e.stopPropagation(); if (e.clipboardData && e.clipboardData.files.length > 0) { let hasImage = false; for (let i = 0; i < e.clipboardData.items.length; i++) { if (e.clipboardData.items[i].type.indexOf('image') !== -1) { hasImage = true; break; } } if (hasImage) { e.preventDefault(); await this.view.handleFiles(e.clipboardData.files); } } });
-        textArea.addEventListener('dragover', (e) => { e.stopPropagation(); e.preventDefault(); });
-        textArea.addEventListener('drop', async (e: DragEvent) => { e.stopPropagation(); if (e.dataTransfer && e.dataTransfer.files.length > 0) { e.preventDefault(); await this.view.handleFiles(e.dataTransfer.files); } });
-        textAreaWrapper.style.position = 'relative';
-        const fileInput = textAreaWrapper.createEl('input', { attr: { type: 'file', multiple: '', style: 'display:none;', accept: 'image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,*' } }) as HTMLInputElement;
-        fileInput.addEventListener('change', async () => { if (fileInput.files && fileInput.files.length > 0) { await this.view.handleFiles(fileInput.files); fileInput.value = ''; } });
-        const attachBtn = textAreaWrapper.createEl('button', { attr: { title: 'Attach image or file', style: 'position:absolute; bottom:6px; right:34px; background:transparent; border:none; color:var(--text-muted); opacity:0.5; padding:2px 4px; cursor:pointer; font-size:1em; line-height:1; transition:opacity 0.15s; z-index:1' } });
-        attachBtn.textContent = '📎'; attachBtn.addEventListener('mouseenter', () => attachBtn.style.opacity = '1'); attachBtn.addEventListener('mouseleave', () => attachBtn.style.opacity = '0.5'); attachBtn.addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
-        const submitBtn = inputSection.createEl('button', { text: 'Sync', attr: { style: 'background-color: var(--interactive-accent); color: var(--text-on-accent); padding: 8px 16px; height: 100%; min-height: 40px;' } });
-        const controlsDiv = container.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; margin-bottom: 15px;' } });
-
-        if (!isThoughtsOnly && !isTasksOnly) {
-            const taskToggleDiv = controlsDiv.createEl('div', { attr: { style: `display: flex; align-items: center; gap: 8px; ${Platform.isMobile && !isTablet() ? '' : 'margin-left: auto;'}` } });
-            const taskCheckbox = taskToggleDiv.createEl('input', { type: 'checkbox', attr: { id: 'is-task-checkbox' } }); taskCheckbox.checked = this.view.isTask;
-            taskToggleDiv.createEl('label', { attr: { for: 'is-task-checkbox', style: 'cursor: pointer;' }, text: 'As Task' });
-            const dueDateContainer = taskToggleDiv.createEl('div', { attr: { style: `display: ${this.view.isTask ? 'flex' : 'none'}; align-items: center; gap: 5px; margin-left: 10px;` } });
-            dueDateContainer.createSpan({ text: 'Due:', attr: { style: 'font-size: 0.85em; color: var(--text-muted);' } });
-            const datePicker = dueDateContainer.createEl('input', { type: 'date', attr: { style: 'font-size: 0.85em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;' } });
-            datePicker.value = this.view.dueDate; datePicker.addEventListener('change', (e) => { this.view.dueDate = (e.target as HTMLInputElement).value; });
-            taskCheckbox.addEventListener('change', (e) => { this.view.isTask = (e.target as HTMLInputElement).checked; dueDateContainer.style.display = this.view.isTask ? 'flex' : 'none'; });
-        } else if (isTasksOnly) {
-            this.view.isTask = true;
-            const taskControlsDiv = controlsDiv.createEl('div', { attr: { style: `display: flex; align-items: center; gap: 8px; ${Platform.isMobile && !isTablet() ? '' : 'margin-left: auto;'}` } });
-            taskControlsDiv.createSpan({ text: 'Due:', attr: { style: 'font-size: 0.85em; color: var(--text-muted);' } });
-            const datePicker = taskControlsDiv.createEl('input', { type: 'date', attr: { style: 'font-size: 0.85em; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); cursor: pointer;' } });
-            datePicker.value = this.view.dueDate; datePicker.addEventListener('change', (e) => { this.view.dueDate = (e.target as HTMLInputElement).value; });
-        } else this.view.isTask = false;
-        const submitAction = async () => {
-            if (this.view.content.trim().length > 0) {
-                const contextsToSave = this.view.activeTab === 'journal' ? ['journal'] : (this.view.activeTab === 'grundfos' ? ['Grundfos'] : this.view.selectedContexts);
-                if (this.view.isTask) {
-                    await this.view.plugin.createTaskFile(this.view.content.trim(), contextsToSave, this.view.dueDate || undefined);
-                } else if (this.view.replyToId) {
-                    const isTask = this.view.plugin.taskIndex.has(this.view.replyToId);
-                    let replied = false;
-                    if (isTask) {
-                        replied = await this.view.plugin.appendCommentToTaskFile(this.view.replyToId, this.view.content.trim());
-                    } else {
-                        replied = await this.view.plugin.appendReplyToFile(this.view.replyToId, this.view.content.trim());
+                        count++;
                     }
-                    if (replied) new Notice('Reply added!');
-                } else {
-                    await this.view.plugin.createThoughtFile(this.view.content.trim(), contextsToSave);
                 }
-                this.view.content = ''; textArea.value = ''; this.view.replyToId = null; this.view.replyToText = null;
-                if (Platform.isMobile && !isTablet()) { this.view.selectedContexts = []; this.view.plugin.settings.selectedContexts = []; await this.view.plugin.saveSettings(); }
-                this.view.renderView();
-            } else new Notice('Please enter some text');
-        };
-        submitBtn.addEventListener('click', submitAction);
-        textArea.addEventListener('keydown', async (e) => { if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); await submitAction(); } });
-    }
-
-    renderSearchInput(container: HTMLElement, updateFn: () => void) {
-        const searchContainer = container.createEl('div', { attr: { style: `padding: 0 12px 10px 12px; flex-shrink: 0; display: ${this.view.showSearch ? 'block' : 'none'};` } });
-        const input = searchContainer.createEl('input', {
-            type: 'text',
-            attr: {
-                placeholder: 'Search notes...',
-                style: 'width: 100%; font-size: 0.85em; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal);'
-            }
-        });
-        input.value = this.view.searchQuery;
-        input.addEventListener('input', () => {
-            this.view.searchQuery = input.value.toLowerCase();
-            updateFn();
+                await this.view.plugin.editThoughtBody(entry.filePath, lines.join('\n'), entry.context);
+                new Notice(isChecked ? 'Task completed' : 'Task reopened');
+            });
         });
     }
 
     refreshCurrentList() {
-        if (this.view.activeTab === 'grundfos' || this.view.activeTab === 'journal' || this.view.plugin.settings.customModes.some(m => m.id === this.view.activeTab)) {
-            this.view.updateContextList(this.view.activeTab);
+        if (typeof (this as any).render === 'function') {
+            const container = (this.view as any).containerEl.querySelector('.mina-view-content');
+            if (container) (this as any).render(container);
+            else this.view.renderView();
+        } else {
+            this.view.renderView();
         }
-        else if (this.view.activeTab === 'focus') this.view.updateFocusList();
-        else if (this.view.activeTab === 'review-thoughts') this.view.updateReviewThoughtsList();
-        else if (this.view.activeTab === 'review-tasks') this.view.updateReviewTasksList();
-        else this.view.renderView();
     }
 
-    renderActionButton(container: HTMLElement, iconSvg: string, title: string, onClick: (e: MouseEvent) => void) {
-        const btn = container.createEl('span', { 
-            attr: { 
-                title: title, 
-                style: 'cursor:pointer; display:flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:4px; transition:all 0.15s; color:var(--text-muted); opacity:0.6;' 
-            } 
-        });
-        btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${iconSvg}</svg>`;
-        
-        btn.addEventListener('mouseenter', () => { btn.style.opacity = '1'; btn.style.backgroundColor = 'var(--background-modifier-border)'; btn.style.color = 'var(--text-normal)'; });
-        btn.addEventListener('mouseleave', () => { btn.style.opacity = '0.6'; btn.style.backgroundColor = 'transparent'; btn.style.color = 'var(--text-muted)'; });
-        btn.addEventListener('click', (e) => { e.stopPropagation(); onClick(e); });
-        return btn;
+    renderCaptureMode(container: HTMLElement, isThoughtsOnly = false, isTasksOnly = false) {
+        container.empty();
+        const wrap = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 10px;' } });
+        const inputWrap = wrap.createEl('div', { attr: { style: 'position: relative;' } });
+        const textArea = inputWrap.createEl('textarea', { attr: { placeholder: "What's on your mind?", style: 'width: 100%; min-height: 100px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary-alt); color: var(--text-normal); padding: 12px; font-size: 0.95em; resize: vertical; display: block;' } });
+        textArea.value = this.view.content;
+        if (Platform.isMobile) textArea.addEventListener('focus', () => { setTimeout(() => { textArea.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300); });
+        textArea.addEventListener('input', () => { this.view.content = textArea.value; });
+        const footer = wrap.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: center;' } });
+        const btnGroup = footer.createEl('div', { attr: { style: 'display: flex; gap: 8px;' } });
+        if (!isTasksOnly) {
+            const tBtn = btnGroup.createEl('button', { text: 'Thought', attr: { style: 'background: var(--interactive-accent); color: var(--text-on-accent); border: none; padding: 6px 16px; border-radius: 6px; font-weight: 600; cursor: pointer;' } });
+            tBtn.addEventListener('click', async () => { if (!textArea.value.trim()) return; await this.view.plugin.createThoughtFile(textArea.value, this.view.selectedContexts); textArea.value = ''; this.view.content = ''; this.refreshCurrentList(); });
+        }
+        if (!isThoughtsOnly) {
+            const kBtn = btnGroup.createEl('button', { text: 'Task', attr: { style: 'background: var(--background-secondary); border: 1px solid var(--background-modifier-border); padding: 6px 16px; border-radius: 6px; font-weight: 600; cursor: pointer;' } });
+            kBtn.addEventListener('click', async () => { if (!textArea.value.trim()) return; await this.view.plugin.createTaskFile(textArea.value, this.view.selectedContexts); textArea.value = ''; this.view.content = ''; this.refreshCurrentList(); });
+        }
     }
 
-    renderExpandToggle(container: HTMLElement, targetEl: HTMLElement) {
-        const wrapper = container.createEl('div', { cls: 'mina-expand-wrapper' });
-        wrapper.innerHTML = `<svg class="mina-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
-        
-        wrapper.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isExpanded = targetEl.classList.contains('mina-card-expanded');
-            if (isExpanded) {
-                targetEl.classList.remove('mina-card-expanded');
-                if (this.view.plugin.settings.isCompactView) targetEl.classList.add('mina-card-compact');
-                else targetEl.classList.add('mina-card-auto-compact');
-            } else {
-                targetEl.classList.remove('mina-card-compact');
-                targetEl.classList.remove('mina-card-auto-compact');
-                targetEl.classList.add('mina-card-expanded');
-            }
-        });
-    }
-
-    async renderTaskRow(entry: TaskEntry, container: HTMLElement, hideMetadata: boolean = false) {
+    async renderTaskRow(entry: TaskEntry, container: HTMLElement, hideMetadata = false) {
         const isDone = entry.status === 'done';
-        const row = container.createEl('div', { attr: { style: `display:flex; flex-direction:column; padding:10px; margin-bottom:6px; border-radius:10px; background:var(--background-secondary); border:1px solid var(--background-modifier-border-faint); opacity:${isDone ? '0.6' : '1'}; position:relative;` } });
-        const topRow = row.createEl('div', { attr: { style: 'display:flex; gap:10px; align-items:flex-start;' } });
-        
-        const toggleContainer = topRow.createEl('div', { attr: { style: 'margin-top:2px; flex-shrink:0;' } });
-        const circle = toggleContainer.createEl('div');
-        const applyCircleStyle = (checked: boolean) => {
-            circle.style.cssText = `display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; border:2px solid var(--interactive-accent); cursor:pointer; flex-shrink:0; transition:all 0.2s; background:${checked ? 'var(--interactive-accent)' : 'transparent'}; font-size:10px; color:var(--text-on-accent); user-select:none;`;
-            circle.textContent = checked ? '✓' : '';
-        };
-        applyCircleStyle(isDone);
-        circle.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const nextDone = entry.status !== 'done';
-            applyCircleStyle(nextDone);
-            row.style.opacity = nextDone ? '0.6' : '1';
-            await this.view.plugin.toggleTaskStatus(entry.filePath, nextDone);
+        const row = container.createEl('div', { cls: 'mina-card-row', attr: { style: 'position:relative; margin-bottom:12px;' } });
+        const card = row.createEl('div', { cls: 'mina-card', attr: { style: `background:var(--background-secondary); border-radius:12px; padding:12px; border:1px solid var(--background-modifier-border-faint); transition:all 0.2s; ${isDone ? 'opacity:0.6;' : ''}` } });
+        const topRow = card.createEl('div', { attr: { style: 'display:flex; gap:10px; align-items:flex-start;' } });
+        const cb = topRow.createEl('input', { type: 'checkbox', attr: { style: 'margin-top:4px; cursor:pointer;' } });
+        cb.checked = isDone;
+        cb.addEventListener('change', async () => {
+            await this.view.plugin.toggleTaskStatus(entry.filePath, cb.checked);
+            new Notice(cb.checked ? 'Task marked as done' : 'Task reopened');
             this.refreshCurrentList();
         });
 
@@ -519,5 +385,9 @@ export class BaseTab {
         this.renderActionButton(actions, ICON_TRASH, 'Delete', () => {
             new ConfirmModal(this.view.plugin.app, 'Delete this reply?', async () => { await this.view.plugin.deleteReply(parent.filePath, reply.anchor); this.refreshCurrentList(); }).open();
         });
+    }
+
+    render(container: HTMLElement, ...args: any[]): void {
+        // Base implementation (empty or default)
     }
 }

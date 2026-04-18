@@ -26,6 +26,9 @@ export class DuesTab extends BaseTab {
             attr: { style: 'display: flex; flex-direction: column; gap: 8px; margin-bottom: 2px;' }
         });
 
+        const navRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px; margin-bottom: -4px;' } });
+        this.renderHomeIcon(navRow);
+
         const titleRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
         titleRow.createEl('h2', {
             text: 'Finance',
@@ -40,7 +43,42 @@ export class DuesTab extends BaseTab {
             new NewDueModal(this.view.plugin.app, this.view.plugin.settings.pfFolder, () => this.renderDuesMode(container)).open(); 
         });
 
-        // 2. Filter Row (Mini Pills)
+        // 2. Cashflow Dashboard (New)
+        const entries = this.buildEntries();
+        const totalDues = entries.filter(e => e.isActive).reduce((acc, e) => {
+            // Very simple parser for demo - expects number in title or somewhere
+            const amount = parseFloat(e.title.match(/[\d.]+/)?.[0] || '0');
+            return acc + amount;
+        }, 0);
+        const income = this.view.plugin.settings.monthlyIncome || 0;
+        const remaining = income - totalDues;
+
+        const cashflow = header.createEl('div', {
+            attr: { style: 'background: var(--background-secondary-alt); border-radius: 12px; padding: 12px; border: 1px solid var(--background-modifier-border-faint); display: flex; flex-direction: column; gap: 8px;' }
+        });
+
+        const statsRow = cashflow.createEl('div', { attr: { style: 'display: flex; justify-content: space-between; align-items: baseline;' } });
+        const leftStats = statsRow.createEl('div', { attr: { style: 'display: flex; gap: 12px;' } });
+        
+        const miniStat = (parent: HTMLElement, label: string, val: string, color?: string) => {
+            const wrap = parent.createEl('div', { attr: { style: 'display: flex; flex-direction: column;' } });
+            wrap.createSpan({ text: label, attr: { style: 'font-size: 0.55em; font-weight: 800; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.05em;' } });
+            wrap.createSpan({ text: val, attr: { style: `font-size: 0.9em; font-weight: 700; color: ${color || 'var(--text-normal)'};` } });
+        };
+
+        miniStat(leftStats, 'Income', income.toLocaleString());
+        miniStat(leftStats, 'Dues', totalDues.toLocaleString(), 'var(--text-error)');
+        miniStat(statsRow, 'Remaining', remaining.toLocaleString(), remaining < 0 ? 'var(--text-error)' : 'var(--text-success)');
+
+        const progressContainer = cashflow.createEl('div', {
+            attr: { style: 'width: 100%; height: 6px; background: var(--background-primary); border-radius: 3px; overflow: hidden; border: 1px solid var(--background-modifier-border-faint);' }
+        });
+        const percent = income > 0 ? Math.min(100, (totalDues / income) * 100) : 0;
+        progressContainer.createEl('div', {
+            attr: { style: `width: ${percent}%; height: 100%; background: ${percent > 90 ? 'var(--text-error)' : 'var(--interactive-accent)'}; transition: width 0.3s;` }
+        });
+
+        // 3. Filter Row (Mini Pills)
         const filterRow = header.createEl('div', {
             attr: { style: 'display: flex; gap: 4px; padding: 2px; background: var(--background-secondary-alt); border-radius: 6px; width: fit-content; border: 1px solid var(--background-modifier-border-faint);' }
         });
@@ -67,41 +105,16 @@ export class DuesTab extends BaseTab {
         };
         updateFilters();
 
-        // 3. Content List (Compact Table-like Cards)
+        // 4. Content List (Compact Table-like Cards)
         const listContainer = wrap.createEl('div', {
             attr: { style: 'display: flex; flex-direction: column; gap: 8px; width: 100%;' }
         });
 
-        const { metadataCache, vault } = this.view.plugin.app;
-        const pfFolder = (this.view.plugin.settings.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/');
-
-        const buildEntries = (): DueEntry[] => {
-            const all: DueEntry[] = [];
-            for (const file of vault.getMarkdownFiles()) {
-                if (!file.path.startsWith(pfFolder + '/') && file.path !== pfFolder) continue;
-                const fm = metadataCache.getFileCache(file)?.frontmatter;
-                const dueDate = (fm?.['next_duedate'] ?? '').toString().trim();
-                const lastPayment = (fm?.['last_payment'] ?? '').toString().trim();
-                const dueMoment = dueDate ? moment(dueDate, ['YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY'], true) : null;
-                const hasRecurring = !!(dueDate);
-                const activeStatus = fm?.['active_status'];
-                const isActive = activeStatus === true || activeStatus === 'true' || activeStatus === 'True';
-                all.push({ title: file.basename, path: file.path, dueDate, lastPayment, dueMoment, hasRecurring, isActive });
-            }
-            all.sort((a, b) => {
-                if (!a.dueMoment?.isValid() && !b.dueMoment?.isValid()) return a.title.localeCompare(b.title);
-                if (!a.dueMoment?.isValid()) return 1;
-                if (!b.dueMoment?.isValid()) return -1;
-                return a.dueMoment.valueOf() - b.dueMoment.valueOf();
-            });
-            return all;
-        };
-
         const renderList = () => {
             listContainer.empty();
-            const entries = buildEntries().filter(e => (!recurringOnly || e.hasRecurring) && (!activeOnly || e.isActive));
+            const filteredEntries = this.buildEntries().filter(e => (!recurringOnly || e.hasRecurring) && (!activeOnly || e.isActive));
             
-            if (entries.length === 0) { 
+            if (filteredEntries.length === 0) { 
                 listContainer.createEl('p', { 
                     text: 'No matching entries.', 
                     attr: { style: 'color: var(--text-muted); text-align: center; margin-top: 24px; font-size: 0.8em; opacity: 0.5;' } 
@@ -111,7 +124,7 @@ export class DuesTab extends BaseTab {
 
             const today = moment().startOf('day');
 
-            entries.forEach(entry => {
+            filteredEntries.forEach(entry => {
                 const card = listContainer.createEl('div', {
                     attr: { style: 'display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; background: var(--background-secondary-alt); border-radius: 8px; border: 1px solid var(--background-modifier-border-faint);' }
                 });
@@ -141,7 +154,6 @@ export class DuesTab extends BaseTab {
                     });
                 }
 
-                // Metadata Row (Compact Inline)
                 const metaRow = card.createEl('div', {
                     attr: { style: 'display: flex; gap: 12px; align-items: center;' }
                 });
@@ -173,7 +185,7 @@ export class DuesTab extends BaseTab {
                     });
 
                     payBtn.addEventListener('click', () => {
-                        const fileObj = vault.getAbstractFileByPath(entry.path) as TFile;
+                        const fileObj = this.view.app.vault.getAbstractFileByPath(entry.path) as TFile;
                         if (!fileObj) { new Notice('Note file not found.'); return; }
                         new PaymentModal(this.view.plugin.app, fileObj, entry.dueDate, () => this.renderDuesMode(container), dateInput.value).open();
                     });
@@ -182,5 +194,29 @@ export class DuesTab extends BaseTab {
         };
 
         renderList();
+    }
+
+    private buildEntries(): DueEntry[] {
+        const { metadataCache, vault } = this.view.plugin.app;
+        const pfFolder = (this.view.plugin.settings.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/');
+        const all: DueEntry[] = [];
+        for (const file of vault.getMarkdownFiles()) {
+            if (!file.path.startsWith(pfFolder + '/') && file.path !== pfFolder) continue;
+            const fm = metadataCache.getFileCache(file)?.frontmatter;
+            const dueDate = (fm?.['next_duedate'] ?? '').toString().trim();
+            const lastPayment = (fm?.['last_payment'] ?? '').toString().trim();
+            const dueMoment = dueDate ? moment(dueDate, ['YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY'], true) : null;
+            const hasRecurring = !!(dueDate);
+            const activeStatus = fm?.['active_status'];
+            const isActive = activeStatus === true || activeStatus === 'true' || activeStatus === 'True';
+            all.push({ title: file.basename, path: file.path, dueDate, lastPayment, dueMoment, hasRecurring, isActive });
+        }
+        all.sort((a, b) => {
+            if (!a.dueMoment?.isValid() && !b.dueMoment?.isValid()) return a.title.localeCompare(b.title);
+            if (!a.dueMoment?.isValid()) return 1;
+            if (!b.dueMoment?.isValid()) return -1;
+            return a.dueMoment.valueOf() - b.dueMoment.valueOf();
+        });
+        return all;
     }
 }

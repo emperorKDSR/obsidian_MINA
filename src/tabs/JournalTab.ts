@@ -23,6 +23,9 @@ export class JournalTab extends BaseTab {
             attr: { style: 'display: flex; flex-direction: column; gap: 12px; margin-bottom: 4px;' }
         });
 
+        const navRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px; margin-bottom: -4px;' } });
+        this.renderHomeIcon(navRow);
+
         const titleStack = header.createEl('div', { attr: { style: 'display: flex; flex-direction: column;' } });
         const titleRow = titleStack.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
         titleRow.createEl('h2', {
@@ -63,10 +66,11 @@ export class JournalTab extends BaseTab {
         addNoteBtn.createSpan({ text: '✍️', attr: { style: 'font-size: 1.1em;' } });
         addNoteBtn.createSpan({ text: 'Add Note' });
         addNoteBtn.addEventListener('click', () => {
-            new EditEntryModal(this.app, this.view.plugin, '', 'journal', null, false, async (text: string, ctxs: string) => {
+            new EditEntryModal(this.app, this.view.plugin, '', 'journal', null, false, async (text: string, ctxs: string, _, project: string | null) => {
                 if (!text.trim()) return;
                 const contexts = ctxs.split('#').map((c: string) => c.trim()).filter((c: string) => c.length > 0);
-                await this.view.plugin.createThoughtFile(text, contexts);
+                const file = await this.view.plugin.createThoughtFile(text, contexts);
+                if (project) await this.app.fileManager.processFrontMatter(file, (fm) => { fm['project'] = project; });
                 this.updateJournalList(listContainer);
             }, 'New Journal Note').open();
         });
@@ -77,10 +81,11 @@ export class JournalTab extends BaseTab {
         addTaskBtn.createSpan({ text: '✅', attr: { style: 'font-size: 1.1em;' } });
         addTaskBtn.createSpan({ text: 'Add Task' });
         addTaskBtn.addEventListener('click', () => {
-            new EditEntryModal(this.app, this.view.plugin, '', 'journal', moment().format('YYYY-MM-DD'), true, async (text: string, ctxs: string, due: string | null) => {
+            new EditEntryModal(this.app, this.view.plugin, '', 'journal', moment().format('YYYY-MM-DD'), true, async (text: string, ctxs: string, due: string | null, project: string | null) => {
                 if (!text.trim()) return;
                 const contexts = ctxs.split('#').map((c: string) => c.trim()).filter((c: string) => c.length > 0);
-                await this.view.plugin.createTaskFile(text, contexts, due || undefined);
+                const file = await this.view.plugin.createTaskFile(text, contexts, due || undefined);
+                if (project) await this.app.fileManager.processFrontMatter(file, (fm) => { fm['project'] = project; });
                 this.updateJournalList(listContainer);
             }, 'New Journal Task').open();
         });

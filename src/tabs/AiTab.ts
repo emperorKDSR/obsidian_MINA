@@ -32,8 +32,11 @@ export class AiTab extends BaseTab {
 
         // 1. Header (consistent with other modes)
         const header = wrap.createEl('div', {
-            attr: { style: 'padding: 16px 14px 10px 14px; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; border-bottom: 1px solid var(--background-modifier-border-faint);' }
+            attr: { style: 'padding: 16px 14px 10px 14px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; border-bottom: 1px solid var(--background-modifier-border-faint);' }
         });
+
+        const navRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px; margin-bottom: -4px;' } });
+        this.renderHomeIcon(navRow);
 
         const titleRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
         titleRow.createEl('h2', {
