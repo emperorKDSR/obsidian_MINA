@@ -21,23 +21,27 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Daily Mode (Sun):** A minimalist dashboard with persistent foldable sections and ultra-compact navigation pills (**SU**, **CL**, **TA**, **PF**, **PI**, **TH**).
        - **Intelligent Summary (SU):** AI-powered digest of today's activities and priority suggestions using Gemini AI.
        - **Flicker-Free Interaction:** Uses targeted re-rendering to update specific section containers without refreshing the entire view.
-       - **Minimalist Design:** Removed redundant UI elements like search bars and close buttons to maximize content focus.
+     - **Timeline Mode (Clock):** A modern chronological view with a **Thread Aesthetic**.
+       - **Vertical Thread:** A continuous subtle line connecting all entries through the day.
+       - **Stitch Dots:** Every thought and task is "pinned" to the thread with a small indicator dot.
+       - **Spotlight Carousel:** A redesigned date carousel at the top that highlights the selected day with focus effects.
      - **Journal Mode (Pen):** Auto-tags captures with `#journal` and supports persistent drag-and-drop reordering.
      - **Task Mode (Check-square):** A dedicated view for task management and review.
      - **Personal Finance Mode (Dollar):** Specifically manages recurring payments and dues (replaces old Dues tab).
      - **AI Mode (Robot):** Interactive chat with Gemini AI, supporting file grounding and numeric citations.
-     - **Timeline Mode (Clock):** A chronological view of all captures across the vault.
      - **Focus Mode (Target):** Displays strictly only pinned notes (`pinned: true`) with persistent reordering.
      - **Grundfos Mode (Pump):** High-focus view for entries tagged with "Grundfos".
      - **Memento Mori (Hourglass):** Life visualization grid (90 years x 52 weeks) with real-time stats.
      - **Settings Mode (Gear):** Opens plugin configuration in a dedicated window.
+   - **Modern Card Design (Global):**
+     - **Minimalist Action Toolbar:** Hover-activated toolbar with sleek line icons (Edit, Delete, Pin, Blur, Reply, Convert) replacing traditional emojis.
+     - **Refined Expansion Toggle:** A minimalist centered chevron with a subtle gradient fade for auto-compacted long notes.
+     - **Consistent Experience:** Unified rendering logic ensures all cards across Daily, Tasks, Thoughts, and Timeline share the same high-end aesthetic.
    - **Borderless Experience:** 
      - On desktop (macOS & Windows), dedicated windows are truly borderless. 
      - Native Obsidian tab headers (`.workspace-tab-header-container`) and view headers (`.view-header`) are force-hidden via CSS and class injection.
      - Includes a custom **drag handle** at the top for window movement.
-   - **Modern Card Layout:** Responsive "cards" with rounded corners, universal blur toggles (👁️/👁️‍🗨️), and compact view support.
    - **Floating Action Button (FAB):** Movable circular button for quick capture across all modes.
-   - **Contextual Search:** "AND" logic multi-token search integrated into specialized modes (excluding Daily Mode).
    - **Mobile Optimization:** Dynamic headers ("MINA - {mode}"), `#` trigger for context picking, and visual viewport syncing for reliable keyboard handling.
 
 2. **Review & Management**

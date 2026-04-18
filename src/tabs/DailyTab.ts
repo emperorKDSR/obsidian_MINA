@@ -154,8 +154,6 @@ export class DailyTab extends BaseTab {
 
         try {
             const today = moment().format('YYYY-MM-DD');
-            
-            // 1. Gather Checklist To-dos
             const checklistItems: string[] = [];
             for (const entry of Array.from(this.view.plugin.thoughtIndex.values())) {
                 const matches = entry.body.matchAll(/- \[ \] (.*)/g);
@@ -165,13 +163,7 @@ export class DailyTab extends BaseTab {
                     for (const cm of cMatches) checklistItems.push(`- [Checklist] ${cm[1]}`);
                 }
             }
-
-            // 2. Gather Tasks
-            const tasks = Array.from(this.view.plugin.taskIndex.values())
-                .filter(t => t.status === 'open' && (t.due && t.due <= today))
-                .map(t => `- [Task] ${t.title} (Due: ${t.due})`);
-
-            // 3. Gather Dues (PF)
+            const tasks = Array.from(this.view.plugin.taskIndex.values()).filter(t => t.status === 'open' && (t.due && t.due <= today)).map(t => `- [Task] ${t.title} (Due: ${t.due})`);
             const dues: string[] = [];
             const pfFolder = (this.view.plugin.settings.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/');
             for (const file of this.view.app.vault.getMarkdownFiles()) {
@@ -179,51 +171,20 @@ export class DailyTab extends BaseTab {
                 const fm = this.view.app.metadataCache.getFileCache(file)?.frontmatter;
                 if (fm?.['active_status'] === false) continue;
                 const dueDate = (fm?.['next_duedate'] ?? '').toString();
-                if (dueDate && moment(dueDate).isSameOrBefore(moment(), 'day')) {
-                    dues.push(`- [Due] ${file.basename} (Due: ${dueDate})`);
-                }
+                if (dueDate && moment(dueDate).isSameOrBefore(moment(), 'day')) dues.push(`- [Due] ${file.basename} (Due: ${dueDate})`);
             }
-
-            // 4. Gather Thoughts
-            const thoughts = Array.from(this.view.plugin.thoughtIndex.values())
-                .filter(e => e.allDates && e.allDates.includes(today))
-                .map(t => `- [Thought] ${t.body.substring(0, 300)}`);
-
-            // 5. Gather Pinned
-            const pinned = Array.from(this.view.plugin.thoughtIndex.values())
-                .filter(e => e.pinned)
-                .map(t => `- [Pinned] ${t.title}`);
-            
-            const contextData = [
-                "### PINNED NOTES", ...pinned,
-                "### PENDING TASKS", ...tasks,
-                "### CHECKLIST ITEMS", ...checklistItems,
-                "### PENDING DUES", ...dues,
-                "### TODAY'S THOUGHTS", ...thoughts
-            ].join('\n');
-
-            console.log('MINA AI Context Data:', contextData);
-
+            const thoughts = Array.from(this.view.plugin.thoughtIndex.values()).filter(e => e.allDates && e.allDates.includes(today)).map(t => `- [Thought] ${t.body.substring(0, 300)}`);
+            const pinned = Array.from(this.view.plugin.thoughtIndex.values()).filter(e => e.pinned).map(t => `- [Pinned] ${t.title}`);
+            const contextData = ["### PINNED NOTES", ...pinned, "### PENDING TASKS", ...tasks, "### CHECKLIST ITEMS", ...checklistItems, "### PENDING DUES", ...dues, "### TODAY'S THOUGHTS", ...thoughts].join('\n');
             const prompt = `You are a productivity assistant. Based on the data below, show me a concise summary for today and suggest exactly 3 high-priority topics or items I need to focus on. Keep it professional, encouraging, and clear. If no data is provided, encourage me to capture my first thought of the day.\n\nDATA FOR CONTEXT:\n${contextData || 'No data captured yet for today.'}`;
-
-            // Use customHistory to ensure a fresh, single-turn interaction for the summary
             const response = await this.view.callGemini(prompt, [], false, [{ role: 'user', text: prompt }]);
-            
             loading.remove();
             const summaryText = container.createEl('div', { attr: { style: 'font-size: 0.9em; line-height: 1.5; color: var(--text-normal);' } });
             MarkdownRenderer.render(this.view.plugin.app, response, summaryText, '', this.view);
-
             const btnRow = container.createEl('div', { attr: { style: 'display: flex; gap: 8px; margin-top: 12px;' } });
-            const refreshBtn = btnRow.createEl('button', {
-                text: 'Refresh Summary',
-                attr: { style: 'flex: 1; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: transparent; color: var(--text-muted); font-size: 0.75em; cursor: pointer;' }
-            });
+            const refreshBtn = btnRow.createEl('button', { text: 'Refresh Summary', attr: { style: 'flex: 1; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: transparent; color: var(--text-muted); font-size: 0.75em; cursor: pointer;' } });
             refreshBtn.addEventListener('click', () => this.updateDailySummary(container));
-
-        } catch (err) {
-            loading.setText('Failed to generate summary. Check console for details.');
-            console.error('AI Summary Error:', err);
-        }
+        } catch (err) { loading.setText('Failed to generate summary. Check console.'); console.error('AI Summary Error:', err); }
     }
 
     async updateDailyDues(container: HTMLElement) {
@@ -231,23 +192,18 @@ export class DailyTab extends BaseTab {
         const { metadataCache, vault } = this.view.plugin.app;
         const pfFolder = (this.view.plugin.settings.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/');
         const today = moment().startOf('day');
-
         let dues: DueEntry[] = [];
-        const files = vault.getMarkdownFiles();
-        for (const file of files) {
+        for (const file of vault.getMarkdownFiles()) {
             if (!file.path.startsWith(pfFolder + '/') && file.path !== pfFolder) continue;
             const fm = metadataCache.getFileCache(file)?.frontmatter;
-            const activeStatus = fm?.['active_status'];
-            if (activeStatus === false || activeStatus === 'false' || activeStatus === 'False') continue;
+            if (fm?.['active_status'] === false || fm?.['active_status'] === 'false' || fm?.['active_status'] === 'False') continue;
             const dueDate = (fm?.['next_duedate'] ?? '').toString().trim();
             const dueMoment = dueDate ? moment(dueDate, ['YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY'], true) : null;
             if (dueMoment && dueMoment.isValid() && dueMoment.isSameOrBefore(today, 'day')) {
                 dues.push({ title: file.basename, path: file.path, dueDate, lastPayment: (fm?.['last_payment'] ?? '').toString().trim(), dueMoment, hasRecurring: true, isActive: true });
             }
         }
-        if (this.view.searchQuery) dues = dues.filter(e => this.view.matchesSearch(this.view.searchQuery, [e.title]));
         if (dues.length === 0) { container.createEl('p', { text: 'Clear for today.', attr: { style: 'color: var(--text-muted); font-size: 0.85em; text-align: center; margin: 0; opacity: 0.6;' } }); return; }
-
         dues.sort((a, b) => a.dueMoment.valueOf() - b.dueMoment.valueOf());
         const duesList = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px;' } });
         for (const entry of dues) {
@@ -264,36 +220,33 @@ export class DailyTab extends BaseTab {
     async updateDailyThoughts(container: HTMLElement) {
         container.empty();
         const today = moment().format('YYYY-MM-DD');
-        let thoughts = Array.from(this.view.plugin.thoughtIndex.values()).filter(e => e.allDates && e.allDates.includes(today));
-        if (this.view.searchQuery) thoughts = thoughts.filter(e => this.view.matchesSearch(this.view.searchQuery, [e.body, e.title]));
+        const thoughts = Array.from(this.view.plugin.thoughtIndex.values()).filter(e => e.allDates && e.allDates.includes(today));
         thoughts.sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate);
-        if (thoughts.length === 0) { container.createEl('p', { text: 'No thoughts captured yet.', attr: { style: 'color: var(--text-muted); font-size: 0.85em; text-align: center; margin: 0; opacity: 0.6;' } }); return; }
-        const thoughtsRowContainer = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 10px; width: 100%;' } });
-        for (const entry of thoughts) await this.renderThoughtRow(entry, thoughtsRowContainer, entry.filePath, 0, true, true);
+        if (thoughts.length === 0) { container.createEl('p', { text: 'No activity.', attr: { style: 'color: var(--text-muted); font-size: 0.85em; text-align: center; margin: 0; opacity: 0.6;' } }); return; }
+        const list = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px;' } });
+        for (const entry of thoughts) await this.renderThoughtRow(entry, list, entry.filePath, 0, true, true);
     }
 
     async updatePinnedThoughts(container: HTMLElement) {
         container.empty();
-        let thoughts = Array.from(this.view.plugin.thoughtIndex.values()).filter(e => e.pinned);
-        if (this.view.searchQuery) thoughts = thoughts.filter(e => this.view.matchesSearch(this.view.searchQuery, [e.body, e.title]));
+        const thoughts = Array.from(this.view.plugin.thoughtIndex.values()).filter(e => e.pinned);
         thoughts.sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate);
-        if (thoughts.length === 0) { container.createEl('p', { text: 'No pinned thoughts.', attr: { style: 'color: var(--text-muted); font-size: 0.85em; text-align: center; margin: 0; opacity: 0.6;' } }); return; }
-        const thoughtsRowContainer = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 10px; width: 100%;' } });
-        for (const entry of thoughts) await this.renderThoughtRow(entry, thoughtsRowContainer, entry.filePath, 0, true, true);
+        if (thoughts.length === 0) { container.createEl('p', { text: 'No pinned items.', attr: { style: 'color: var(--text-muted); font-size: 0.85em; text-align: center; margin: 0; opacity: 0.6;' } }); return; }
+        const list = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px;' } });
+        for (const entry of thoughts) await this.renderThoughtRow(entry, list, entry.filePath, 0, true, true);
     }
 
     async updateDailyThoughtTodos(container: HTMLElement) {
         container.empty();
         const thoughts = Array.from(this.view.plugin.thoughtIndex.values());
         let foundAny = false;
-        const todoList = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 6px;' } });
+        const list = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px;' } });
         for (const entry of thoughts) {
             const renderTodo = (text: string, sourceFilePath: string, isChild: boolean = false, anchor?: string) => {
-                if (this.view.searchQuery && !text.toLowerCase().includes(this.view.searchQuery)) return;
                 foundAny = true;
-                const row = todoList.createEl('div', { attr: { style: 'display: flex; align-items: flex-start; gap: 10px; padding: 4px 0; width: 100%;' } });
+                const row = list.createEl('div', { attr: { style: 'display: flex; align-items: flex-start; gap: 10px; padding: 6px; background: var(--background-primary); border-radius: 8px; border: 1px solid var(--background-modifier-border-faint);' } });
                 const circle = row.createEl('span');
-                const applyStyle = (checked: boolean) => { circle.style.cssText = `margin-top: 3px; display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; border:2px solid var(--interactive-accent); cursor:pointer; flex-shrink:0; transition:all 0.2s; background:${checked ? 'var(--interactive-accent)' : 'transparent'}; font-size:10px; color:var(--text-on-accent); user-select:none;`; circle.textContent = checked ? '✓' : ''; };
+                const applyStyle = (checked: boolean) => { circle.style.cssText = `margin-top: 3px; display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; border:2px solid var(--interactive-accent); cursor:pointer; flex-shrink:0; transition:all 0.15s; background:${checked ? 'var(--interactive-accent)' : 'transparent'}; font-size:10px; color:var(--text-on-accent); user-select:none;`; circle.textContent = checked ? '✓' : ''; };
                 applyStyle(false);
                 circle.addEventListener('click', async (e) => {
                     e.stopPropagation(); applyStyle(true); row.style.opacity = '0.4'; row.style.textDecoration = 'line-through';
@@ -323,25 +276,16 @@ export class DailyTab extends BaseTab {
                 for (const m of childMatches) renderTodo(m[1], entry.filePath, true, child.anchor);
             }
         }
-        if (!foundAny) container.createEl('p', { text: 'Everything done!', attr: { style: 'color: var(--text-muted); font-size: 0.9em; text-align: center; margin: 0; opacity: 0.6;' } });
+        if (!foundAny) container.createEl('p', { text: 'Done!', attr: { style: 'color: var(--text-muted); font-size: 0.9em; text-align: center; margin: 0; opacity: 0.6;' } });
     }
 
     async updateDailyTasks(container: HTMLElement) {
         container.empty();
         const today = moment().format('YYYY-MM-DD');
-        let tasks = Array.from(this.view.plugin.taskIndex.values()).filter(t => t.status === 'open' && (t.due && t.due <= today));
-        if (this.view.searchQuery) tasks = tasks.filter(t => this.view.matchesSearch(this.view.searchQuery, [t.body, t.title]));
+        const tasks = Array.from(this.view.plugin.taskIndex.values()).filter(t => t.status === 'open' && (t.due && t.due <= today));
         tasks.sort((a, b) => (a.due || '').localeCompare(b.due || ''));
         if (tasks.length === 0) { container.createEl('p', { text: 'No pending tasks.', attr: { style: 'color: var(--text-muted); font-size: 0.9em; text-align: center; margin: 0; opacity: 0.6;' } }); return; }
-        const taskList = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 10px;' } });
-        for (const task of tasks) {
-            const row = taskList.createEl('div', { attr: { style: 'display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: var(--background-primary); border-radius: 8px; border: 1px solid var(--background-modifier-border-faint);' } });
-            const cb = row.createEl('input', { type: 'checkbox', attr: { style: 'width: 16px; height: 16px; flex-shrink: 0; margin-top: 3px; cursor: pointer;' } });
-            cb.addEventListener('change', async () => { if (cb.checked) { row.style.opacity = '0.4'; row.style.textDecoration = 'line-through'; await this.view.plugin.toggleTaskStatus(task.filePath, true); setTimeout(() => this.updateDailyTasks(container), 500); } });
-            const textEl = row.createEl('div', { attr: { style: 'font-size: 0.9em; line-height: 1.4; color: var(--text-normal); flex-grow: 1; min-width: 0;' } });
-            MarkdownRenderer.render(this.view.plugin.app, task.body || task.title, textEl, task.filePath, this.view);
-            const p = textEl.querySelector('p'); if (p) { p.style.margin = '0'; p.style.display = 'inline'; }
-            if (task.due && task.due < today) { row.createSpan({ text: 'OVERDUE', attr: { style: 'font-size: 0.65em; background: var(--text-error); color: white; padding: 1px 6px; border-radius: 4px; font-weight: 800; margin-left: auto; align-self: center;' } }); }
-        }
+        const list = container.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 8px;' } });
+        for (const task of tasks) await this.renderTaskRow(task, list, true);
     }
 }

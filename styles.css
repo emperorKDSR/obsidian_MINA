@@ -131,3 +131,42 @@
 .mina-dedicated-window .workspace-tabs {
     padding-top: 0 !important;
 }
+
+/* Modern minimalist expansion toggle */
+.mina-expand-wrapper {
+    position: relative;
+    width: 100%;
+    margin-top: -16px;
+    height: 32px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: linear-gradient(to top, var(--background-secondary) 40%, transparent);
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0.8;
+}
+
+.mina-expand-wrapper:hover {
+    opacity: 1;
+    background: linear-gradient(to top, var(--background-modifier-border-faint) 40%, transparent);
+}
+
+.mina-expand-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+    transition: transform 0.3s;
+}
+
+.mina-card-expanded + .mina-expand-wrapper {
+    margin-top: 4px;
+    background: transparent;
+    height: 20px;
+}
+
+.mina-card-expanded + .mina-expand-wrapper .mina-expand-icon {
+    transform: rotate(180deg);
+}
