@@ -102,7 +102,7 @@ export class MinaView extends ItemView {
             case 'review-tasks': return "Tasks";
             case 'mina-ai': return "AI Chat";
             case 'dues': return "Dues";
-            case 'vo': return "Voice";
+            case 'voice-note': return "Voice Notes";
             case 'settings': return "Settings";
             case 'timeline': return "Timeline";
             case 'journal': return "Journal";
@@ -215,7 +215,7 @@ export class MinaView extends ItemView {
         else if (this.activeTab === 'mina-ai') import('./tabs/AiTab').then(({ AiTab }) => new AiTab(this).render(container));
         else if (this.activeTab === 'dues' || this.activeTab === 'pf') import('./tabs/DuesTab').then(({ DuesTab }) => new DuesTab(this).render(container));
         else if (this.activeTab === 'settings') import('./tabs/SettingsTab').then(({ SettingsTab }) => new SettingsTab(this).render(container));
-        else if (this.activeTab === 'vo') import('./tabs/VoiceTab').then(({ VoiceTab }) => new VoiceTab(this).render(container));
+        else if (this.activeTab === 'voice-note') import('./tabs/VoiceTab').then(({ VoiceTab }) => new VoiceTab(this).render(container));
         else if (this.activeTab === 'timeline') import('./tabs/TimelineTab').then(({ TimelineTab }) => new TimelineTab(this).render(container));
         else if (this.activeTab === 'focus') import('./tabs/FocusTab').then(({ FocusTab }) => new FocusTab(this).render(container));
         else if (this.activeTab === 'memento-mori') import('./tabs/MementoMoriTab').then(({ MementoMoriTab }) => new MementoMoriTab(this).render(container));

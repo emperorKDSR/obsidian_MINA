@@ -1,5 +1,5 @@
 import { Plugin, TFile, Notice, WorkspaceLeaf, Platform, moment, addIcon } from 'obsidian';
-import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG, GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG, MEMENTO_ICON_ID, MEMENTO_ICON_SVG, TASK_ICON_ID, TASK_ICON_SVG, PF_ICON_ID, PF_ICON_SVG, SETTINGS_ICON_ID, SETTINGS_ICON_SVG } from './constants';
+import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG, GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG, MEMENTO_ICON_ID, MEMENTO_ICON_SVG, TASK_ICON_ID, TASK_ICON_SVG, PF_ICON_ID, PF_ICON_SVG, SETTINGS_ICON_ID, SETTINGS_ICON_SVG, VOICE_ICON_ID, VOICE_ICON_SVG } from './constants';
 import { MinaSettings, ThoughtEntry, TaskEntry, ReplyEntry } from './types';
 import { isTablet, toAsciiDigits } from './utils';
 import { MinaView } from './view';
@@ -54,10 +54,15 @@ export default class MinaPlugin extends Plugin {
 		addIcon(GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG);
 		addIcon(MEMENTO_ICON_ID, MEMENTO_ICON_SVG);
 		addIcon(PF_ICON_ID, PF_ICON_SVG);
+		addIcon(VOICE_ICON_ID, VOICE_ICON_SVG);
 		addIcon(SETTINGS_ICON_ID, SETTINGS_ICON_SVG);
 
 		this.addRibbonIcon(DAILY_ICON_ID, 'Daily Mode', () => {
 			this.activateView('daily', true);
+		});
+
+		this.addRibbonIcon(VOICE_ICON_ID, 'Voice Note Mode', () => {
+			this.activateView('voice-note', true);
 		});
 
 		this.addRibbonIcon(JOURNAL_ICON_ID, 'Journal Mode', () => {
@@ -147,6 +152,15 @@ export default class MinaPlugin extends Plugin {
 			icon: MEMENTO_ICON_ID,
 			callback: () => {
 				this.activateView('memento-mori', true);
+			}
+		});
+
+		this.addCommand({
+			id: 'open-mina-voice-note',
+			name: 'Voice Note Mode',
+			icon: VOICE_ICON_ID,
+			callback: () => {
+				this.activateView('voice-note', true);
 			}
 		});
 

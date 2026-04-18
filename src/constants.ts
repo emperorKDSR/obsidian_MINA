@@ -82,6 +82,14 @@ export const PF_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </g>`;
 
+export const VOICE_ICON_ID = "mina-voice-icon";
+export const VOICE_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
+    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M19 10v1a7 7 0 0 1-14 0v-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="12" y1="18" x2="12" y2="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="8" y1="22" x2="16" y2="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>`;
+
 export const SETTINGS_ICON_ID = "mina-settings-icon";
 export const SETTINGS_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/>

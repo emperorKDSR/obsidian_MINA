@@ -29,6 +29,9 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - **Journal Mode (Pen):** A high-end minimalist logbook experience with sticky date headers, a modern action row (Add Note/Task), and a discrete search toggle.
      - **Task Mode (Check-square):** A dedicated view for task management and review.
      - **Personal Finance Mode (Dollar):** Specifically manages recurring payments and dues.
+     - **Voice Note Mode (Microphone):** A high-end interface for recording and managing voice notes.
+       - **Modern Recorder:** A sleek, glowing recording interface with real-time timer and high-contrast visuals.
+       - **AI Transcription:** One-tap AI-powered transcription that automatically saves your voice notes as structured thoughts in your vault.
      - **AI Mode (Robot):** Redesigned interactive chat with a modern, floating input area, refined message bubbles, and high-visibility grounding chips.
        - **Modern Input:** Auto-expanding input area with integrated "Attach" and "Save" shortcuts.
        - **AI Configuration:** Includes a dedicated "Config" button that opens a modern modal to manage your Gemini API Key, Model selection, and Token limits, removing clutter from the main settings tab.
