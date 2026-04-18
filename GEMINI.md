@@ -28,7 +28,11 @@ The "MINA V2" plugin has been developed with the following features and implemen
        - **Stitch Dots:** Every thought and task is "pinned" to the thread with a small indicator dot.
      - **Journal Mode (Pen):** A high-end minimalist logbook experience with sticky date headers, a modern action row (Add Note/Task), and a discrete search toggle.
      - **Task Mode (Check-square):** A dedicated view for task management and review.
-     - **Personal Finance Mode (Dollar):** Specifically manages recurring payments and dues.
+     - **Personal Finance Mode (Dollar):** A modern, high-density interface for managing recurring payments and dues.
+       - **Compact Card Design:** Optimized for data density with minimalist typography and reduced padding.
+       - **Unified Header:** Features a discrete "+ Add" button and high-visibility filter pills (Active, Recurring).
+       - **Dynamic Status Tags:** Instant visual feedback for Overdue, Due Today, and Upcoming payments.
+       - **Integrated Action Row:** Streamlined date picker and "Pay" buttons built directly into each card for efficient recording.
      - **Voice Note Mode (Microphone):** A high-end interface for recording and managing voice notes.
        - **Modern Recorder:** A sleek, glowing recording interface with real-time timer and high-contrast visuals.
        - **AI Transcription:** One-tap AI-powered transcription that automatically saves your voice notes as structured thoughts in your vault.
