@@ -43,12 +43,13 @@ The codebase is structured for maximum scalability and type safety:
 
 ### Security, Performance & Release Mandates
 The plugin is governed by strict, always-running mandates:
-- **Lead Engineer**: Enforces modular architecture, type safety, and SOLID design principles.
+- **Design Lead**: Creative authority. Defines visual blueprints, CSS standards, and ensures "Premium Minimalism" across all interfaces.
+- **Lead Engineer**: Enforces modular architecture and type safety. Must consult the **Design Lead** before implementation.
 - **AI Architect**: Ensures robust configuration, model fallbacks, and prompt engineering excellence.
 - **Optimization**: Minimal memory footprint via lazy-loading (dynamic imports) and efficient indexing.
 - **UX Auditor**: Protects the "Premium Minimalist" aesthetic and unified design language.
 - **Security Auditor**: Rigorous secret protection and sanitization of all rendered content.
-- **Release Manager**: Strict documentation integrity and explicit user approval for all production actions.
+- **Release Manager**: Enforces **Feature-Branch-First** protocols (no implementation on `main`), ensures documentation integrity, and requires explicit user approval for all production actions.
 
 ## Build & Deploy
 

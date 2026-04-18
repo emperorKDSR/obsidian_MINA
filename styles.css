@@ -1,182 +1,91 @@
-/* Card style for Tasks and Thoughts */
+/* --- MINA V2 MODERN DESIGN SYSTEM --- */
+
+/* 1. Core Card Elevation */
 .mina-card {
-    padding: 8px 12px;
-    border-radius: 8px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--background-modifier-border-faint);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 
 .theme-dark .mina-card {
-    background-color: rgba(255, 255, 255, 0.05); /* Transparent white */
+    background-color: var(--background-secondary-alt);
 }
 
 .theme-light .mina-card {
-    background-color: rgba(0, 0, 0, 0.05); /* Transparent grey */
+    background-color: #ffffff;
 }
 
+.mina-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    border-color: var(--background-modifier-border);
+}
+
+/* 2. Enhanced Blurring */
 .mina-blurred {
-    filter: blur(8px);
-    transition: filter 0.3s ease;
-}
-
-/* Compact View Styles */
-.mina-card-compact {
-    max-height: 80px !important; /* Force a height limit (~4 lines) */
-    overflow: hidden !important;
-    position: relative;
-    display: block !important;
-}
-
-.mina-card-auto-compact {
-    max-height: 200px !important; /* Force a height limit (~10 lines) */
-    overflow: hidden !important;
-    position: relative;
-    display: block !important;
-}
-
-/* Add a fade-out effect at the bottom of compact cards */
-.mina-card-compact::after, .mina-card-auto-compact::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 30px;
-    background: linear-gradient(to bottom, transparent, var(--background-secondary));
-    pointer-events: none;
-}
-
-.theme-dark .mina-card-compact::after, .theme-dark .mina-card-auto-compact::after {
-    background: linear-gradient(to bottom, transparent, #2a2a2a); 
-}
-
-/* When expanded, remove the height limit and fade effect */
-.mina-card-expanded {
-    max-height: none !important;
-}
-
-.mina-card-expanded::after {
-    display: none;
-}
-
-.mina-expand-toggle {
-    font-size: 0.75em;
-    color: var(--text-accent);
-    cursor: pointer;
-    margin-top: 4px;
-    display: inline-block;
-    border-bottom: 1px dashed var(--text-accent);
-}
-
-.mina-expand-toggle:hover {
-    color: var(--text-accent-hover);
-    border-bottom-style: solid;
-}
-
-/* Memento Mori Styles */
-.mina-memento-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.mina-memento-row {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    gap: 2px;
-    flex: 1;
-    min-height: 0;
-}
-
-.mina-memento-box {
-    flex: 1;
-    aspect-ratio: 1/1;
-    border-radius: 50%; /* Circle look */
-    min-width: 0;
-    box-sizing: border-box;
+    filter: blur(12px) grayscale(0.5);
+    opacity: 0.6;
     transition: all 0.3s ease;
 }
 
-.memento-past {
-    background-color: var(--text-muted);
-    opacity: 0.8; /* High contrast */
+.mina-blurred:hover {
+    filter: blur(0);
+    opacity: 1;
 }
 
-.memento-current {
-    background-color: var(--interactive-accent);
-    box-shadow: 0 0 10px var(--interactive-accent);
-    transform: scale(1.4);
-    z-index: 10;
+/* 3. Modern Compact View */
+.mina-card-compact, .mina-card-auto-compact {
+    max-height: 85px !important;
+    overflow: hidden !important;
+    position: relative;
+    mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+}
+
+.mina-card-expanded {
+    max-height: none !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+}
+
+/* 4. Memento Mori Refinement (Hourglass Aesthetic) */
+.mina-memento-box {
+    border-radius: 4px; /* Squircle style instead of pure circles */
+    transition: all 0.2s ease;
+}
+
+.memento-past {
+    background-color: var(--text-faint);
+    opacity: 0.3;
 }
 
 .memento-future {
-    background-color: var(--text-accent); /* Use theme accent or light color */
-    opacity: 0.8; /* Keep it light but prominent */
+    background-color: var(--interactive-accent);
+    opacity: 0.15;
 }
 
-.theme-dark .memento-future {
-    background-color: #f0f0f0; /* Crisp light grey/white for dark mode */
-    opacity: 0.7;
+.memento-future:hover {
+    opacity: 0.4;
+    transform: scale(1.2);
 }
 
-.theme-light .memento-future {
-    background-color: var(--interactive-accent); /* Vibrant accent for light mode */
-    opacity: 0.5;
+/* 5. Command Center Hub Icons */
+.mina-pillar-icon {
+    transition: transform 0.2s ease;
 }
 
-.memento-none {
-    background-color: transparent;
-    opacity: 0;
-    pointer-events: none;
+.mina-pillar-card:hover .mina-pillar-icon {
+    transform: scale(1.1) rotate(-5deg);
+    color: var(--interactive-accent);
 }
 
-/* Force-hide native Obsidian UI in dedicated MINA windows */
-.mina-dedicated-window .workspace-tab-header-container {
-    display: none !important;
+/* 6. Dedicated Window Overrides */
+.mina-dedicated-window {
+    background-color: var(--background-primary);
 }
 
 .mina-dedicated-window .view-header {
     display: none !important;
-}
-
-.mina-dedicated-window .workspace-tabs {
-    padding-top: 0 !important;
-}
-
-/* Modern minimalist expansion toggle */
-.mina-expand-wrapper {
-    position: relative;
-    width: 100%;
-    margin-top: -16px;
-    height: 32px;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    background: linear-gradient(to top, var(--background-secondary) 40%, transparent);
-    border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-    opacity: 0.8;
-}
-
-.mina-expand-wrapper:hover {
-    opacity: 1;
-    background: linear-gradient(to top, var(--background-modifier-border-faint) 40%, transparent);
-}
-
-.mina-expand-icon {
-    width: 16px;
-    height: 16px;
-    color: var(--text-muted);
-    transition: transform 0.3s;
-}
-
-.mina-card-expanded + .mina-expand-wrapper {
-    margin-top: 4px;
-    background: transparent;
-    height: 20px;
-}
-
-.mina-card-expanded + .mina-expand-wrapper .mina-expand-icon {
-    transform: rotate(180deg);
 }

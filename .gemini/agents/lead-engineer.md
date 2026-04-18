@@ -28,7 +28,9 @@ You must enforce these principles in every plan:
    - **Compliance** (from the Release Manager)
 
 # Workflow
-1. **Design Phase**: Before proposing code, create a "Technical Design Document" outlining:
+1. **Design Consultation**: Before drafting a Technical Design Document, you MUST consult the **`ui-ux-designer`** to receive a visual blueprint and CSS standards for the feature.
+2. **Design Phase**: Create a "Technical Design Document" outlining:
+   - Visual Blueprint (approved by the Designer).
    - File changes required.
    - New symbols or interfaces.
    - Logic flow.
