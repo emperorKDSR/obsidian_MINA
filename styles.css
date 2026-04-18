@@ -1,16 +1,21 @@
-/* --- MINA V2 MODERN DESIGN SYSTEM --- */
-
-/* 1. Core Card Elevation */
-.mina-card {
-    padding: 14px 16px;
-    border-radius: 12px;
-    border: 1px solid var(--background-modifier-border-faint);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+/* --- MINA V2 DESIGN LANGUAGE CONSTANTS --- */
+:root {
+    --mina-radius: 12px;
+    --mina-radius-sm: 8px;
+    --mina-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    --mina-shadow-hover: 0 8px 30px rgba(0,0,0,0.08);
+    --mina-spacing: 20px;
+    --mina-spacing-sm: 12px;
 }
 
-.theme-dark .mina-card {
-    background-color: var(--background-secondary-alt);
+/* 1. Core Card Elevation (Glass Effect) */
+.mina-card {
+    padding: var(--mina-spacing-sm) 16px;
+    border-radius: var(--mina-radius);
+    border: 1px solid var(--background-modifier-border-faint);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--mina-shadow);
+    background: var(--background-secondary-alt);
 }
 
 .theme-light .mina-card {
@@ -19,7 +24,7 @@
 
 .mina-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    box-shadow: var(--mina-shadow-hover);
     border-color: var(--background-modifier-border);
 }
 
@@ -35,7 +40,7 @@
     opacity: 1;
 }
 
-/* 3. Modern Compact View */
+/* 3. High-Density Utility */
 .mina-card-compact, .mina-card-auto-compact {
     max-height: 85px !important;
     overflow: hidden !important;
@@ -50,35 +55,52 @@
     -webkit-mask-image: none !important;
 }
 
-/* 4. Memento Mori Refinement (Hourglass Aesthetic) */
-.mina-memento-box {
-    border-radius: 4px; /* Squircle style instead of pure circles */
+/* 4. Action Row Refinement */
+.mina-action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--mina-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    opacity: 0.7;
+}
+
+.mina-action-btn:hover {
+    background: var(--background-secondary-alt);
+    color: var(--interactive-accent) !important;
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* 5. Pillar Grid (Hub) */
+.mina-pillar-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--mina-spacing-sm);
+}
+
+.mina-pillar-card {
+    background: var(--background-secondary);
+    border-radius: var(--mina-radius);
+    padding: var(--mina-spacing);
+    border: 1px solid var(--background-modifier-border-faint);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     transition: all 0.2s ease;
 }
 
-.memento-past {
-    background-color: var(--text-faint);
-    opacity: 0.3;
-}
-
-.memento-future {
-    background-color: var(--interactive-accent);
-    opacity: 0.15;
-}
-
-.memento-future:hover {
-    opacity: 0.4;
-    transform: scale(1.2);
-}
-
-/* 5. Command Center Hub Icons */
-.mina-pillar-icon {
-    transition: transform 0.2s ease;
-}
-
-.mina-pillar-card:hover .mina-pillar-icon {
-    transform: scale(1.1) rotate(-5deg);
-    color: var(--interactive-accent);
+.mina-pillar-card:hover {
+    background: var(--background-secondary-alt);
+    transform: translateY(-4px);
+    box-shadow: var(--mina-shadow-hover);
+    border-color: var(--interactive-accent);
 }
 
 /* 6. Dedicated Window Overrides */

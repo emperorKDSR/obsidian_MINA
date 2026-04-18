@@ -16,7 +16,7 @@ export class CommandCenterTab extends BaseTab {
         
         const wrap = container.createEl('div', {
             attr: {
-                style: 'padding: 24px 20px 200px 20px; display: flex; flex-direction: column; gap: 28px; overflow-y: auto; flex-grow: 1; min-height: 0; -webkit-overflow-scrolling: touch; background: var(--background-primary); max-width: 800px; margin: 0 auto;'
+                style: 'padding: var(--mina-spacing); display: flex; flex-direction: column; gap: 32px; overflow-y: auto; flex-grow: 1; min-height: 0; -webkit-overflow-scrolling: touch; background: var(--background-primary); max-width: 900px; margin: 0 auto;'
             }
         });
 
@@ -27,83 +27,95 @@ export class CommandCenterTab extends BaseTab {
         
         topRow.createEl('h1', {
             text: `${greeting}, M.I.N.A.`,
-            attr: { style: 'margin: 0; font-size: 1.8em; font-weight: 900; color: var(--text-normal); letter-spacing: -0.04em;' }
+            attr: { style: 'margin: 0; font-size: 2em; font-weight: 900; color: var(--text-normal); letter-spacing: -0.04em;' }
         });
 
         const vision = this.settings.northStarGoals?.[0];
         if (vision) {
             topRow.createEl('p', {
-                text: `Focus: ${vision}`,
-                attr: { style: 'margin: 0; font-size: 0.9em; color: var(--text-muted); font-weight: 600; font-style: italic;' }
+                text: `Current Mission: ${vision}`,
+                attr: { style: 'margin: 0; font-size: 0.95em; color: var(--text-muted); font-weight: 600; font-style: italic; opacity: 0.8;' }
             });
         }
 
         // 2. GLOBAL CAPTURE
-        const captureCard = wrap.createEl('div', {
-            attr: { style: 'background: var(--background-secondary-alt); border-radius: 20px; padding: 16px; border: 1px solid var(--background-modifier-border-faint); cursor: text; transition: all 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.05);' }
+        const captureArea = wrap.createEl('div', {
+            attr: { style: 'display: flex; flex-direction: column; gap: 12px;' }
         });
-        captureCard.createEl('span', { text: "What's on your mind? (Shift+Enter to add)", attr: { style: 'color: var(--text-faint); font-size: 1.1em; font-weight: 500;' } });
+        
+        const captureCard = captureArea.createEl('div', {
+            attr: { style: 'background: var(--background-secondary-alt); border-radius: 20px; padding: 20px; border: 1px solid var(--background-modifier-border-faint); cursor: text; transition: all 0.2s; box-shadow: var(--mina-shadow); display: flex; align-items: center; gap: 12px;' }
+        });
+        
+        const capIcon = captureCard.createDiv();
+        setIcon(capIcon, 'lucide-plus-circle');
+        capIcon.style.color = 'var(--interactive-accent)';
+        
+        captureCard.createEl('span', { text: "Capture a thought or task...", attr: { style: 'color: var(--text-faint); font-size: 1.1em; font-weight: 500;' } });
+        
+        captureCard.addEventListener('mouseenter', () => { captureCard.style.boxShadow = 'var(--mina-shadow-hover)'; captureCard.style.borderColor = 'var(--interactive-accent)'; });
+        captureCard.addEventListener('mouseleave', () => { captureCard.style.boxShadow = 'var(--mina-shadow)'; captureCard.style.borderColor = 'var(--background-modifier-border-faint)'; });
+        
         captureCard.addEventListener('click', () => {
             new EditEntryModal(this.app, this.plugin, '', '', null, false, async (text, ctxs, _, project) => {
                 if (!text.trim()) return;
                 const contexts = ctxs.split('#').map(c => c.trim()).filter(c => c.length > 0);
-                await this.vault.createThoughtFile(text, contexts, project || undefined);
+                const file = await this.vault.createThoughtFile(text, contexts, project || undefined);
                 this.renderCommandCenter(container);
             }, 'Global Capture').open();
         });
 
         // 3. PILLARS GRID
-        const pillarCard = (parent: HTMLElement, label: string, iconId: string, tabId: string, color: string = 'var(--text-normal)') => {
-            const card = parent.createEl('div', {
-                attr: { style: 'background: var(--background-secondary); border-radius: 16px; padding: 16px; border: 1px solid var(--background-modifier-border-faint); cursor: pointer; display: flex; flex-direction: column; gap: 12px; transition: transform 0.1s, background 0.1s;' }
-            });
-            const iconWrap = card.createDiv({ attr: { style: `width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: ${color}; opacity: 0.8;` } });
+        const pillarCard = (parent: HTMLElement, label: string, iconId: string, tabId: string, color: string = 'var(--text-muted)') => {
+            const card = parent.createEl('div', { cls: 'mina-pillar-card' });
+            const iconWrap = card.createDiv({ cls: 'mina-pillar-icon', attr: { style: `width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: ${color}; opacity: 0.9;` } });
             setIcon(iconWrap, iconId);
-            card.createSpan({ text: label, attr: { style: 'font-size: 0.85em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);' } });
-            
-            card.addEventListener('mouseenter', () => { card.style.background = 'var(--background-secondary-alt)'; card.style.transform = 'translateY(-2px)'; });
-            card.addEventListener('mouseleave', () => { card.style.background = 'var(--background-secondary)'; card.style.transform = 'none'; });
+            card.createSpan({ text: label, attr: { style: 'font-size: 0.75em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);' } });
             card.addEventListener('click', () => { this.view.activeTab = tabId; this.view.renderView(); });
         };
 
-        const renderPillarHeader = (text: string) => {
-            wrap.createEl('h3', { text, attr: { style: 'margin: 0 -4px; font-size: 0.7em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-faint);' } });
+        const renderPillarGroup = (title: string, items: {label: string, icon: string, tab: string, color?: string}[]) => {
+            const group = wrap.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 14px;' } });
+            group.createEl('h3', { text: title, attr: { style: 'margin: 0; font-size: 0.7em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-faint);' } });
+            const grid = group.createEl('div', { cls: 'mina-pillar-grid' });
+            items.forEach(i => pillarCard(grid, i.label, i.icon, i.tab, i.color));
         };
 
-        renderPillarHeader('Action');
-        const actionGrid = wrap.createEl('div', { attr: { style: 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;' } });
-        pillarCard(actionGrid, 'Focus', DAILY_ICON_ID, 'daily', 'var(--interactive-accent)');
-        pillarCard(actionGrid, 'Tasks', TASK_ICON_ID, 'review-tasks');
-        pillarCard(actionGrid, 'Finance', PF_ICON_ID, 'dues');
+        renderPillarGroup('Action', [
+            { label: 'Focus', icon: DAILY_ICON_ID, tab: 'daily', color: 'var(--interactive-accent)' },
+            { label: 'Tasks', icon: TASK_ICON_ID, tab: 'review-tasks' },
+            { label: 'Finance', icon: PF_ICON_ID, tab: 'dues' }
+        ]);
 
-        renderPillarHeader('Organization');
-        const orgGrid = wrap.createEl('div', { attr: { style: 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;' } });
-        pillarCard(orgGrid, 'Projects', PROJECT_ICON_ID, 'projects');
-        pillarCard(orgGrid, 'Synthesis', SYNTHESIS_ICON_ID, 'synthesis');
-        pillarCard(orgGrid, 'Journal', JOURNAL_ICON_ID, 'journal');
+        renderPillarGroup('Organization', [
+            { label: 'Projects', icon: PROJECT_ICON_ID, tab: 'projects' },
+            { label: 'Synthesis', icon: SYNTHESIS_ICON_ID, tab: 'synthesis' },
+            { label: 'Journal', icon: JOURNAL_ICON_ID, tab: 'journal' }
+        ]);
 
-        renderPillarHeader('Intelligence');
-        const insightGrid = wrap.createEl('div', { attr: { style: 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;' } });
-        pillarCard(insightGrid, 'AI Chat', AI_CHAT_ICON_ID, 'mina-ai');
-        pillarCard(insightGrid, 'Review', REVIEW_ICON_ID, 'review');
-        pillarCard(insightGrid, 'Compass', COMPASS_ICON_ID, 'compass');
+        renderPillarGroup('Intelligence', [
+            { label: 'AI Chat', icon: AI_CHAT_ICON_ID, tab: 'mina-ai' },
+            { label: 'Review', icon: REVIEW_ICON_ID, tab: 'review' },
+            { label: 'Compass', icon: COMPASS_ICON_ID, tab: 'compass' }
+        ]);
 
-        renderPillarHeader('Utility');
-        const utilGrid = wrap.createEl('div', { attr: { style: 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;' } });
-        pillarCard(utilGrid, 'Voice', VOICE_ICON_ID, 'voice-note');
-        pillarCard(utilGrid, 'Timeline', TIMELINE_ICON_ID, 'timeline');
-        pillarCard(utilGrid, 'Settings', SETTINGS_ICON_ID, 'settings');
+        renderPillarGroup('Utility', [
+            { label: 'Voice', icon: VOICE_ICON_ID, tab: 'voice-note' },
+            { label: 'Timeline', icon: TIMELINE_ICON_ID, tab: 'timeline' },
+            { label: 'Settings', icon: SETTINGS_ICON_ID, tab: 'settings' }
+        ]);
 
         // 4. SNAPSHOTS
-        renderPillarHeader('Snapshots');
-        const snapshots = wrap.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px;' } });
+        const snapshotSection = wrap.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 14px;' } });
+        snapshotSection.createEl('h3', { text: 'Snapshots', attr: { style: 'margin: 0; font-size: 0.7em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-faint);' } });
         
+        const snapshots = snapshotSection.createEl('div', { attr: { style: 'display: grid; grid-template-columns: 1fr 1fr; gap: 16px;' } });
+        if (Platform.isMobile) snapshots.style.gridTemplateColumns = '1fr';
+
         // Habits Snapshot
-        const habitsCard = snapshots.createEl('div', {
-            attr: { style: 'background: var(--background-secondary-alt); border-radius: 16px; padding: 16px; border: 1px solid var(--background-modifier-border-faint);' }
-        });
-        habitsCard.createEl('div', { text: 'TODAY\'S HABITS', attr: { style: 'font-size: 0.6em; font-weight: 900; letter-spacing: 0.1em; color: var(--text-faint); margin-bottom: 10px;' } });
-        const dotsContainer = habitsCard.createDiv({ attr: { style: 'display: flex; gap: 8px;' } });
+        const habitsCard = snapshots.createEl('div', { cls: 'mina-card', attr: { style: 'padding: 20px;' } });
+        habitsCard.createEl('div', { text: 'HABIT LAB', attr: { style: 'font-size: 0.6em; font-weight: 900; letter-spacing: 0.15em; color: var(--text-faint); margin-bottom: 14px;' } });
+        const dotsContainer = habitsCard.createDiv({ attr: { style: 'display: flex; flex-wrap: wrap; gap: 10px;' } });
         
         const todayStr = moment().format('YYYY-MM-DD');
         const completedHabits = await this.vault.getHabitStatus(todayStr);
@@ -112,7 +124,7 @@ export class CommandCenterTab extends BaseTab {
             dotsContainer.createDiv({
                 attr: { 
                     title: h.name,
-                    style: `width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid ${isDone ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; background: ${isDone ? 'var(--interactive-accent)' : 'transparent'}; opacity: ${isDone ? '1' : '0.4'};` 
+                    style: `width: 14px; height: 14px; border-radius: 50%; border: 2px solid ${isDone ? 'var(--interactive-accent)' : 'var(--background-modifier-border-faint)'}; background: ${isDone ? 'var(--interactive-accent)' : 'transparent'}; opacity: ${isDone ? '1' : '0.4'}; transition: all 0.3s;` 
                 }
             });
         });
@@ -120,20 +132,18 @@ export class CommandCenterTab extends BaseTab {
         // Cashflow Snapshot
         const income = this.settings.monthlyIncome || 0;
         if (income > 0) {
-            const financeCard = snapshots.createEl('div', {
-                attr: { style: 'background: var(--background-secondary-alt); border-radius: 16px; padding: 16px; border: 1px solid var(--background-modifier-border-faint);' }
-            });
-            financeCard.createEl('div', { text: 'MONTHLY BURN RATE', attr: { style: 'font-size: 0.6em; font-weight: 900; letter-spacing: 0.1em; color: var(--text-faint); margin-bottom: 10px;' } });
+            const financeCard = snapshots.createEl('div', { cls: 'mina-card', attr: { style: 'padding: 20px;' } });
+            financeCard.createEl('div', { text: 'BURN RATE', attr: { style: 'font-size: 0.6em; font-weight: 900; letter-spacing: 0.15em; color: var(--text-faint); margin-bottom: 14px;' } });
             
             const totalDues = await this.calculateTotalDues();
             const percent = Math.min(100, (totalDues / income) * 100);
             
-            const barWrap = financeCard.createDiv({ attr: { style: 'width: 100%; height: 6px; background: var(--background-primary); border-radius: 3px; overflow: hidden;' } });
-            barWrap.createDiv({ attr: { style: `width: ${percent}%; height: 100%; background: ${percent > 90 ? 'var(--text-error)' : 'var(--interactive-accent)'};` } });
+            const barWrap = financeCard.createDiv({ attr: { style: 'width: 100%; height: 8px; background: var(--background-primary); border-radius: 4px; overflow: hidden; border: 1px solid var(--background-modifier-border-faint);' } });
+            barWrap.createDiv({ attr: { style: `width: ${percent}%; height: 100%; background: ${percent > 90 ? 'var(--text-error)' : 'var(--interactive-accent)'}; transition: width 0.5s ease;` } });
             
-            const stats = financeCard.createDiv({ attr: { style: 'display: flex; justify-content: space-between; margin-top: 8px;' } });
-            stats.createSpan({ text: `${percent.toFixed(0)}% Utilized`, attr: { style: 'font-size: 0.7em; font-weight: 700; color: var(--text-muted);' } });
-            stats.createSpan({ text: `Remaining: ${(income - totalDues).toLocaleString()}`, attr: { style: 'font-size: 0.7em; font-weight: 700; color: var(--text-muted);' } });
+            const stats = financeCard.createDiv({ attr: { style: 'display: flex; justify-content: space-between; margin-top: 10px;' } });
+            stats.createSpan({ text: `${percent.toFixed(0)}%`, attr: { style: 'font-size: 1.1em; font-weight: 900; color: var(--text-normal);' } });
+            stats.createSpan({ text: `Rem: ${(income - totalDues).toLocaleString()}`, attr: { style: 'font-size: 0.75em; font-weight: 700; color: var(--text-muted); opacity: 0.8;' } });
         }
     }
 

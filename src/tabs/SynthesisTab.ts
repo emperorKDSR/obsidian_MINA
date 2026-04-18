@@ -14,10 +14,11 @@ class InsightTitleModal extends Modal {
 
     onOpen() {
         const { contentEl } = this;
-        contentEl.createEl('h2', { text: 'New Insight Note' });
+        contentEl.createEl('h2', { text: 'New Insight Note', attr: { style: 'margin-bottom: 14px; font-weight: 800;' } });
 
         new Setting(contentEl)
             .setName('Title')
+            .setDesc('Enter a descriptive name for this synthesis.')
             .addText((text) =>
                 text.onChange((value) => {
                     this.result = value;
@@ -60,36 +61,39 @@ export class SynthesisTab extends BaseTab {
 
         // 1. Sidebar (Recent Raw Captures)
         const sidebar = wrap.createEl('div', {
-            attr: { style: `width: ${isMobilePhone ? '100%' : '350px'}; display: ${isMobilePhone && this.view.activeMasterNote ? 'none' : 'flex'}; flex-direction: column; border-right: 1px solid var(--background-modifier-border-faint);` }
+            attr: { style: `width: ${isMobilePhone ? '100%' : '380px'}; display: ${isMobilePhone && this.view.activeMasterNote ? 'none' : 'flex'}; flex-direction: column; border-right: 1px solid var(--background-modifier-border-faint); background: var(--background-primary);` }
         });
 
         const sideHeader = sidebar.createEl('div', {
-            attr: { style: 'padding: 16px 14px; border-bottom: 1px solid var(--background-modifier-border-faint); display: flex; align-items: center; gap: 10px;' }
+            attr: { style: 'padding: 20px 16px; border-bottom: 1px solid var(--background-modifier-border-faint); display: flex; align-items: center; gap: 12px;' }
         });
         this.renderHomeIcon(sideHeader);
-        sideHeader.createEl('h3', { text: 'Synthesis Feed', attr: { style: 'margin: 0; font-size: 0.9em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;' } });
+        sideHeader.createEl('h3', { text: 'Synthesis Feed', attr: { style: 'margin: 0; font-size: 0.85em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-faint);' } });
 
         const sideScroll = sidebar.createEl('div', {
-            attr: { style: 'flex-grow: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch;' }
+            attr: { style: 'flex-grow: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; -webkit-overflow-scrolling: touch;' }
         });
 
         const recentThoughts = Array.from(this.index.thoughtIndex.values())
-            .filter(t => !t.project && !t.synthesized) // Only show unorganized and unsynthesized thoughts
+            .filter(t => !t.project && !t.synthesized)
             .sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate)
             .slice(0, 30);
 
         if (recentThoughts.length === 0) {
-            sideScroll.createEl('p', { text: 'No unorganized thoughts.', attr: { style: 'color: var(--text-muted); font-size: 0.8em; text-align: center; margin-top: 20px; opacity: 0.6;' } });
+            const empty = sideScroll.createEl('div', { attr: { style: 'display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; opacity: 0.4; gap: 12px;' } });
+            empty.createSpan({ text: '🌊', attr: { style: 'font-size: 2em;' } });
+            empty.createSpan({ text: 'Inbox clear.', attr: { style: 'font-weight: 700; font-size: 0.85em;' } });
         } else {
             for (const thought of recentThoughts) {
                 const card = sideScroll.createEl('div', {
+                    cls: 'mina-card',
                     attr: { 
                         draggable: 'true',
-                        style: 'background: var(--background-secondary-alt); border-radius: 8px; padding: 10px; border: 1px solid var(--background-modifier-border-faint); cursor: grab; transition: transform 0.1s;' 
+                        style: 'cursor: grab; padding: 16px; background: var(--background-primary-alt);' 
                     }
                 });
-                card.createEl('div', { text: thought.title, attr: { style: 'font-size: 0.8em; font-weight: 700; color: var(--text-normal); margin-bottom: 4px;' } });
-                card.createEl('div', { text: thought.body.substring(0, 100) + '...', attr: { style: 'font-size: 0.7em; color: var(--text-muted); line-height: 1.4;' } });
+                card.createEl('div', { text: thought.title, attr: { style: 'font-size: 0.85em; font-weight: 800; color: var(--text-normal); margin-bottom: 6px;' } });
+                card.createEl('div', { text: thought.body.substring(0, 120) + '...', attr: { style: 'font-size: 0.75em; color: var(--text-muted); line-height: 1.5; opacity: 0.8;' } });
 
                 card.addEventListener('dragstart', (e) => {
                     if (e.dataTransfer) {
@@ -100,11 +104,8 @@ export class SynthesisTab extends BaseTab {
                 card.addEventListener('dragend', () => card.style.opacity = '1');
                 
                 card.addEventListener('click', () => {
-                    if (this.view.activeMasterNote) {
-                        this.appendToMasterNote(thought);
-                    } else {
-                        new Notice('Select or create a Master Note first.');
-                    }
+                    if (this.view.activeMasterNote) this.appendToMasterNote(thought);
+                    else new Notice('Select or create a Master Note first.');
                 });
             }
         }
@@ -115,24 +116,25 @@ export class SynthesisTab extends BaseTab {
         });
 
         const mainHeader = main.createEl('div', {
-            attr: { style: 'padding: 16px 20px; border-bottom: 1px solid var(--background-modifier-border-faint); display: flex; align-items: center; justify-content: space-between;' }
+            attr: { style: 'padding: 20px 24px; border-bottom: 1px solid var(--background-modifier-border-faint); display: flex; align-items: center; justify-content: space-between; background: var(--background-primary);' }
         });
 
         if (isMobilePhone) {
-            const backBtn = mainHeader.createEl('button', { text: '←', attr: { style: 'background:transparent; border:none; font-size:1.2em; cursor:pointer;' } });
+            const backBtn = mainHeader.createEl('button', { text: '←', attr: { style: 'background:transparent; border:none; font-size:1.4em; cursor:pointer; margin-right: 12px;' } });
             backBtn.addEventListener('click', () => { this.view.activeMasterNote = null; this.view.renderView(); });
         }
 
-        const titleStack = mainHeader.createEl('div', { attr: { style: 'display: flex; flex-direction: column;' } });
+        const titleStack = mainHeader.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 2px;' } });
         titleStack.createEl('h2', { 
-            text: this.view.activeMasterNote ? this.view.activeMasterNote.basename : 'Select Insight Note', 
-            attr: { style: 'margin: 0; font-size: 1.1em; font-weight: 800;' } 
+            text: this.view.activeMasterNote ? this.view.activeMasterNote.basename : 'Canvas', 
+            attr: { style: 'margin: 0; font-size: 1.4em; font-weight: 900; color: var(--text-normal); letter-spacing: -0.02em;' } 
         });
+        if (this.view.activeMasterNote) titleStack.createEl('span', { text: 'Master Insight Note', attr: { style: 'font-size: 0.7em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--interactive-accent);' } });
 
-        const actions = mainHeader.createEl('div', { attr: { style: 'display: flex; gap: 8px;' } });
+        const actions = mainHeader.createEl('div', { attr: { style: 'display: flex; gap: 10px;' } });
         const newBtn = actions.createEl('button', {
             text: '+ New Insight',
-            attr: { style: 'background: transparent; border: 1px solid var(--background-modifier-border); border-radius: 6px; font-size: 0.6em; padding: 2px 8px; color: var(--text-muted); cursor: pointer; font-weight: 700; text-transform: uppercase;' }
+            attr: { style: 'background: var(--interactive-accent); color: var(--text-on-accent); border: none; border-radius: 8px; font-size: 0.65em; padding: 6px 14px; cursor: pointer; font-weight: 800; text-transform: uppercase; transition: all 0.2s;' }
         });
         
         newBtn.addEventListener('click', () => {
@@ -142,34 +144,31 @@ export class SynthesisTab extends BaseTab {
                     const folder = this.settings.newNoteFolder.trim() || '000 Bin';
                     const filename = `${name}.md`;
                     const fullPath = folder && folder !== '/' ? `${folder}/${filename}` : filename;
-                    
                     const existingFile = this.app.vault.getAbstractFileByPath(fullPath);
+                    
                     if (existingFile instanceof TFile) {
                         this.view.activeMasterNote = existingFile;
                         this.view.renderView();
-                        new Notice(`Using existing insight: ${existingFile.basename}`);
+                        new Notice(`Switched to: ${existingFile.basename}`);
                         return;
                     }
 
-                    new Notice(`Creating insight: ${name}...`);
                     const content = `---\narea: INSIGHT\ncreated: ${moment().format('YYYY-MM-DD HH:mm:ss')}\n---\n\n# ${name}\n\n`;
                     const file = await this.vault.createFile(folder, filename, content);
                     this.view.activeMasterNote = file;
                     this.view.renderView();
-                    new Notice(`Success: ${file.basename} ready.`);
-                } catch (e) {
-                    new Notice(`Synthesis Error: ${e.message}`);
-                }
+                    new Notice(`Ready: ${file.basename}`);
+                } catch (e) { new Notice(`Error: ${e.message}`); }
             }).open();
         });
 
         const content = main.createEl('div', {
-            attr: { style: 'flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px;' }
+            attr: { style: 'flex-grow: 1; padding: 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px;' }
         });
 
         if (this.view.activeMasterNote) {
             const rawContent = await this.app.vault.read(this.view.activeMasterNote);
-            const renderTarget = content.createEl('div', { cls: 'mina-insight-content', attr: { style: 'line-height: 1.6; font-size: 1.05em;' } });
+            const renderTarget = content.createEl('div', { cls: 'mina-insight-content', attr: { style: 'line-height: 1.7; font-size: 1.1em; color: var(--text-normal); max-width: 800px;' } });
             await MarkdownRenderer.render(this.app, rawContent, renderTarget, this.view.activeMasterNote.path, this.view);
             this.hookInternalLinks(renderTarget, this.view.activeMasterNote.path);
             this.hookImageZoom(renderTarget);
@@ -183,18 +182,15 @@ export class SynthesisTab extends BaseTab {
                     const { filePath, content: appendText } = JSON.parse(jsonData);
                     const existing = await this.app.vault.read(this.view.activeMasterNote);
                     await this.app.vault.modify(this.view.activeMasterNote, existing.trimEnd() + '\n\n' + appendText);
-                    
-                    // Auto-Clear logic: mark as synthesized
                     await this.vault.markAsSynthesized(filePath);
-                    
                     this.view.renderView();
-                    new Notice('Thought synthesized.');
+                    new Notice('Thought Synthesized.');
                 }
             });
         } else {
-            const empty = content.createEl('div', { attr: { style: 'flex-grow: 1; display: flex; align-items: center; justify-content: center; opacity: 0.3; flex-direction: column; gap: 10px;' } });
-            empty.createSpan({ text: '🧠', attr: { style: 'font-size: 3em;' } });
-            empty.createSpan({ text: 'Select a note to start synthesizing knowledge.', attr: { style: 'font-weight: 600;' } });
+            const empty = content.createEl('div', { attr: { style: 'flex-grow: 1; display: flex; align-items: center; justify-content: center; opacity: 0.2; flex-direction: column; gap: 14px;' } });
+            empty.createSpan({ text: '🧠', attr: { style: 'font-size: 4em;' } });
+            empty.createSpan({ text: 'Select a note to start building knowledge.', attr: { style: 'font-weight: 800; font-size: 1.1em; letter-spacing: 0.05em;' } });
         }
     }
 
@@ -203,11 +199,8 @@ export class SynthesisTab extends BaseTab {
         const existing = await this.app.vault.read(this.view.activeMasterNote);
         const data = `[[${thought.filePath}|${thought.title}]]\n\n${thought.body}`;
         await this.app.vault.modify(this.view.activeMasterNote, existing.trimEnd() + '\n\n' + data);
-        
-        // Auto-Clear logic: mark as synthesized
         await this.vault.markAsSynthesized(thought.filePath);
-        
-        new Notice('Thought synthesized.');
+        new Notice('Thought Synthesized.');
         this.view.renderView();
     }
 }
