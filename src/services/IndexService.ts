@@ -1,5 +1,5 @@
 import { App, TFile, moment } from 'obsidian';
-import { MinaSettings, ThoughtEntry, TaskEntry } from '../types';
+import { MinaSettings, ThoughtEntry, TaskEntry, DueEntry } from '../types';
 
 export interface ChecklistItem {
     text: string;
@@ -14,7 +14,8 @@ export class IndexService {
     // Memory Indices
     thoughtIndex: Map<string, ThoughtEntry> = new Map();
     taskIndex: Map<string, TaskEntry> = new Map();
-    dueIndex: Map<string, number> = new Map();
+    // ob-perf-03: Full DueEntry index — DuesTab reads from here instead of scanning vault on every render
+    dueIndex: Map<string, DueEntry> = new Map();
     checklistIndex: ChecklistItem[] = [];
     habitStatusIndex: string[] = [];
     
@@ -56,7 +57,7 @@ export class IndexService {
 
         // 2. Total Dues
         let sum = 0;
-        this.dueIndex.forEach(v => sum += v);
+        this.dueIndex.forEach(entry => sum += entry.amount || 0);
         this.totalDues = sum;
     }
 
@@ -100,11 +101,23 @@ export class IndexService {
         const files = this.app.vault.getMarkdownFiles().filter(f => f.path.startsWith(pfFolder + '/'));
         for (const file of files) {
             const cache = this.app.metadataCache.getFileCache(file);
-            const active = cache?.frontmatter?.['active_status'];
-            if (active === true || active === 'true' || active === 'True') {
-                const amount = parseFloat(file.basename.match(/[\d.]+/)?.[0] || '0');
-                if (!isNaN(amount)) this.dueIndex.set(file.path, amount);
-            }
+            const fm = cache?.frontmatter;
+            const active = fm?.['active_status'];
+            const isActive = active === true || active === 'true' || active === 'True';
+            const dueDate = (fm?.['next_duedate'] ?? '').toString().trim();
+            const lastPayment = (fm?.['last_payment'] ?? '').toString().trim();
+            const dueMoment = dueDate ? moment(dueDate, ['YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY'], true) : null;
+            const amount = parseFloat(file.basename.match(/[\d.]+/)?.[0] || '0');
+            this.dueIndex.set(file.path, {
+                title: file.basename,
+                path: file.path,
+                dueDate,
+                lastPayment,
+                dueMoment,
+                hasRecurring: !!dueDate,
+                isActive,
+                amount: isNaN(amount) ? 0 : amount
+            });
         }
     }
 

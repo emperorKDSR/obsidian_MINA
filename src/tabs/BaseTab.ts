@@ -25,12 +25,42 @@ export class BaseTab {
 
     renderHomeIcon(parent: HTMLElement) {
         const homeBtn = parent.createEl('button', {
-            attr: { style: 'background: transparent; border: none; padding: 0; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; opacity: 0.6; transition: all 0.2s; width: 28px; height: 28px; border-radius: 8px;' }
+            attr: { class: 'mina-home-btn', style: 'background: transparent; border: none; padding: 0; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; opacity: 0.6; transition: all 0.2s; width: 28px; height: 28px; border-radius: 8px;' }
         });
         homeBtn.addEventListener('mouseenter', () => { homeBtn.style.opacity = '1'; homeBtn.style.background = 'var(--background-secondary-alt)'; });
         homeBtn.addEventListener('mouseleave', () => { homeBtn.style.opacity = '0.6'; homeBtn.style.background = 'transparent'; });
         setIcon(homeBtn, 'mina-home-icon');
         homeBtn.addEventListener('click', () => { this.view.activeTab = 'home'; this.view.renderView(); });
+    }
+
+    /** ob-dry-01: Render a standard page header with nav row + home icon + h2 title */
+    renderPageHeader(parent: HTMLElement, title: string, subtitle?: string): HTMLElement {
+        const header = parent.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px;' } });
+        const navRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px; margin-bottom: 2px;' } });
+        this.renderHomeIcon(navRow);
+        header.createEl('h2', { text: title, attr: { style: 'margin: 0; font-size: 1.4em; font-weight: 800; color: var(--text-normal); letter-spacing: -0.03em; line-height: 1.1;' } });
+        if (subtitle) header.createEl('span', { text: subtitle, attr: { style: 'font-size: 0.85em; color: var(--text-muted); font-weight: 500;' } });
+        return header;
+    }
+
+    /** ob-dry-04: Render a standard centered empty state message */
+    renderEmptyState(parent: HTMLElement, message: string): void {
+        parent.createEl('div', {
+            text: message,
+            attr: { style: 'color: var(--text-muted); font-size: 0.9em; font-style: italic; text-align: center; margin-top: 40px; padding: 24px; background: var(--background-secondary); border-radius: 12px;' }
+        });
+    }
+
+    /** ob-dry-03: Render a toggle/filter pill button */
+    renderFilterPill(parent: HTMLElement, label: string, isActive: boolean, onClick: () => void): HTMLElement {
+        const btn = parent.createEl('button', {
+            text: label,
+            attr: {
+                style: `padding: 6px 14px; border-radius: 20px; border: 1px solid ${isActive ? 'var(--interactive-accent)' : 'var(--background-modifier-border)'}; background: ${isActive ? 'var(--interactive-accent)' : 'transparent'}; color: ${isActive ? 'var(--text-on-accent)' : 'var(--text-muted)'}; font-size: 0.78em; font-weight: 700; cursor: pointer; transition: all 0.15s; white-space: nowrap;`
+            }
+        });
+        btn.addEventListener('click', onClick);
+        return btn;
     }
 
     hookInternalLinks(el: HTMLElement, sourcePath: string) {
@@ -55,6 +85,8 @@ export class BaseTab {
         });
     }
 
+    // sec-013: iconPath is an SVG path string — safe only because all callers use hardcoded constants.
+    // Do NOT pass user-supplied strings; migrate callers to setIcon() if extensibility is needed.
     renderActionButton(parent: HTMLElement, iconPath: string, title: string, onClick: () => void, color: string = 'var(--text-muted)') {
         const btn = parent.createEl('button', { attr: { title, class: 'mina-action-btn', style: `color: ${color};` } });
         btn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${iconPath}</svg>`;

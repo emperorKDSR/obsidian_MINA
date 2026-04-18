@@ -1,45 +1,9 @@
-import { moment, Platform, MarkdownRenderer, TFile, Notice, Modal, App, Setting } from 'obsidian';
+import { moment, Platform, MarkdownRenderer, TFile, Notice } from 'obsidian';
 import type { MinaView } from '../view';
 import type { ThoughtEntry } from '../types';
 import { BaseTab } from "./BaseTab";
+import { InsightTitleModal } from '../modals/InsightTitleModal';
 
-class InsightTitleModal extends Modal {
-    result: string = '';
-    onSubmit: (result: string) => void;
-
-    constructor(app: App, onSubmit: (result: string) => void) {
-        super(app);
-        this.onSubmit = onSubmit;
-    }
-
-    onOpen() {
-        const { contentEl } = this;
-        contentEl.createEl('h2', { text: 'New Insight Note', attr: { style: 'margin-bottom: 14px; font-weight: 800;' } });
-
-        new Setting(contentEl)
-            .setName('Title')
-            .setDesc('Enter a descriptive name for this synthesis.')
-            .addText((text) =>
-                text.onChange((value) => {
-                    this.result = value;
-                }));
-
-        new Setting(contentEl)
-            .addButton((btn) =>
-                btn
-                    .setButtonText('Create')
-                    .setCta()
-                    .onClick(() => {
-                        this.close();
-                        this.onSubmit(this.result);
-                    }));
-    }
-
-    onClose() {
-        const { contentEl } = this;
-        contentEl.empty();
-    }
-}
 
 export class SynthesisTab extends BaseTab {
     constructor(view: MinaView) { super(view); }
@@ -97,7 +61,8 @@ export class SynthesisTab extends BaseTab {
 
                 card.addEventListener('dragstart', (e) => {
                     if (e.dataTransfer) {
-                        e.dataTransfer.setData('application/json', JSON.stringify({ filePath: thought.filePath, content: `[[${thought.filePath}|${thought.title}]]\n\n${thought.body}` }));
+                        // sec-011: Use custom MIME type to distinguish internal drags from external
+                        e.dataTransfer.setData('application/mina-thought', JSON.stringify({ filePath: thought.filePath, content: `[[${thought.filePath}|${thought.title}]]\n\n${thought.body}` }));
                         card.style.opacity = '0.5';
                     }
                 });
@@ -177,15 +142,26 @@ export class SynthesisTab extends BaseTab {
             renderTarget.addEventListener('dragover', (e) => e.preventDefault());
             renderTarget.addEventListener('drop', async (e) => {
                 e.preventDefault();
-                const jsonData = e.dataTransfer?.getData('application/json');
-                if (jsonData && this.view.activeMasterNote) {
-                    const { filePath, content: appendText } = JSON.parse(jsonData);
-                    const existing = await this.app.vault.read(this.view.activeMasterNote);
-                    await this.app.vault.modify(this.view.activeMasterNote, existing.trimEnd() + '\n\n' + appendText);
-                    await this.vault.markAsSynthesized(filePath);
-                    this.view.renderView();
-                    new Notice('Thought Synthesized.');
+                // sec-011: Use custom MIME type to reject external drag sources
+                const jsonData = e.dataTransfer?.getData('application/mina-thought');
+                if (!jsonData || !this.view.activeMasterNote) return;
+                let parsed: { filePath?: string; content?: string };
+                try { parsed = JSON.parse(jsonData); } catch { return; }
+                const { filePath, content: appendText } = parsed;
+                if (!filePath || typeof filePath !== 'string') return;
+                // sec-011: Validate filePath exists in vault before operating
+                const fileCheck = this.app.vault.getAbstractFileByPath(filePath);
+                if (!fileCheck || !(fileCheck instanceof TFile)) {
+                    new Notice('MINA: Invalid drag source');
+                    return;
                 }
+                // sec-011: Cap appended content size to prevent runaway modifications
+                const safeText = (appendText || '').slice(0, 50000);
+                const existing = await this.app.vault.read(this.view.activeMasterNote);
+                await this.app.vault.modify(this.view.activeMasterNote, existing.trimEnd() + '\n\n' + safeText);
+                await this.vault.markAsSynthesized(filePath);
+                this.view.renderView();
+                new Notice('Thought Synthesized.');
             });
         } else {
             const empty = content.createEl('div', { attr: { style: 'flex-grow: 1; display: flex; align-items: center; justify-content: center; opacity: 0.2; flex-direction: column; gap: 14px;' } });

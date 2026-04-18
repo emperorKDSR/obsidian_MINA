@@ -6,6 +6,112 @@
     --mina-shadow-hover: 0 8px 30px rgba(0,0,0,0.08);
     --mina-spacing: 20px;
     --mina-spacing-sm: 12px;
+    /* ui-p3-max-width: Standardized content max-width */
+    --mina-content-max-width: 900px;
+    /* ui-p3-spacing: Bottom padding to clear floating nav bars */
+    --mina-footer-clearance: 200px;
+}
+
+/* --- UTILITY LAYOUT CLASSES (ui-css-classes) --- */
+.mina-tab-wrap {
+    padding: var(--mina-spacing) var(--mina-spacing-sm) var(--mina-footer-clearance) var(--mina-spacing-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    flex-grow: 1;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+    background: var(--background-primary);
+    max-width: var(--mina-content-max-width);
+    margin: 0 auto;
+    width: 100%;
+}
+
+.mina-tab-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+.mina-tab-title {
+    margin: 0;
+    font-size: 1.4em;
+    font-weight: 800;
+    color: var(--text-normal);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+
+.mina-btn-primary {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: var(--mina-radius-sm);
+    padding: 8px 20px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.mina-btn-primary:hover { opacity: 0.9; }
+
+.mina-btn-secondary {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: var(--mina-radius-sm);
+    padding: 8px 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* AI chat bubbles */
+.mina-ai-user-bubble {
+    align-self: flex-end;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-radius: 16px 16px 4px 16px;
+    padding: 10px 14px;
+    max-width: 80%;
+    font-size: 0.9em;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.mina-ai-bot-bubble {
+    align-self: flex-start;
+    background: var(--background-secondary-alt);
+    border: 1px solid var(--background-modifier-border-faint);
+    border-radius: 4px 16px 16px 16px;
+    padding: 10px 14px;
+    max-width: 90%;
+    font-size: 0.9em;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+/* Modal chrome helpers */
+.mina-modal-standard {
+    border-radius: 16px !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+.mina-modal-header {
+    padding: 20px 24px 16px 24px;
+    border-bottom: 1px solid var(--background-modifier-border-faint);
+}
+
+.mina-modal-footer {
+    padding: 16px 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    background: var(--background-secondary);
+    border-top: 1px solid var(--background-modifier-border-faint);
 }
 
 /* 1. Core Card Elevation (Glass Effect) */

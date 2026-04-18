@@ -21,8 +21,6 @@ export const NINJA_AVATAR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox
     <path d="${MINA_ALIEN_PATH_EYE_R}" fill="#39FF14" stroke="none"/>
 </svg>`;
 
-export const WOLF_SVG = NINJA_AVATAR_SVG;
-
 export const JOURNAL_ICON_ID = "mina-journal-icon";
 export const JOURNAL_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -166,5 +164,6 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     weeklyGoals: [],
     monthlyIncome: 0,
     northStarGoals: [],
-    enableAutoClassification: false
+    enableAutoClassification: false,
+    lifeMission: ''
 }

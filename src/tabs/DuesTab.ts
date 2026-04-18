@@ -129,20 +129,8 @@ export class DuesTab extends BaseTab {
     }
 
     private buildEntries(): DueEntry[] {
-        const { metadataCache, vault } = this.app;
-        const pfFolder = (this.settings.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/');
-        const all: DueEntry[] = [];
-        for (const file of vault.getMarkdownFiles()) {
-            if (!file.path.startsWith(pfFolder + '/') && file.path !== pfFolder) continue;
-            const fm = metadataCache.getFileCache(file)?.frontmatter;
-            const dueDate = (fm?.['next_duedate'] ?? '').toString().trim();
-            const lastPayment = (fm?.['last_payment'] ?? '').toString().trim();
-            const dueMoment = dueDate ? moment(dueDate, ['YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY'], true) : null;
-            const hasRecurring = !!(dueDate);
-            const activeStatus = fm?.['active_status'];
-            const isActive = activeStatus === true || activeStatus === 'true' || activeStatus === 'True';
-            all.push({ title: file.basename, path: file.path, dueDate, lastPayment, dueMoment, hasRecurring, isActive });
-        }
-        return all.sort((a, b) => (a.dueMoment?.valueOf() || 0) - (b.dueMoment?.valueOf() || 0));
+        // ob-perf-03: Read from pre-built index (O(1)) instead of scanning vault on every render
+        return Array.from(this.index.dueIndex.values())
+            .sort((a, b) => (a.dueMoment?.valueOf() || 0) - (b.dueMoment?.valueOf() || 0));
     }
 }

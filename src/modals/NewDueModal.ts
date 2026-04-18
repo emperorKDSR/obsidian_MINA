@@ -11,11 +11,15 @@ export class NewDueModal extends Modal {
     }
 
     onOpen() {
+        this.modalEl.style.cssText = 'border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); max-width: 460px; padding: 0; overflow: hidden;';
         const { contentEl } = this;
         contentEl.empty();
-        contentEl.createEl('h2', { text: 'Add Recurring Due', attr: { style: 'margin-top: 0; color: var(--text-accent);' } });
+        contentEl.style.padding = '0';
 
-        const main = contentEl.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 15px;' } });
+        const header = contentEl.createEl('div', { attr: { style: 'padding: 20px 24px 16px 24px; border-bottom: 1px solid var(--background-modifier-border-faint);' } });
+        header.createEl('h3', { text: 'Add Recurring Due', attr: { style: 'margin: 0; font-size: 1em; font-weight: 800; color: var(--text-normal);' } });
+
+        const main = contentEl.createEl('div', { attr: { style: 'padding: 20px 24px; display: flex; flex-direction: column; gap: 15px;' } });
 
         // Payable Name
         const nameCol = main.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 5px;' } });
@@ -47,10 +51,9 @@ export class NewDueModal extends Modal {
         notesCol.createEl('label', { text: 'Initial Notes', attr: { style: 'font-size: 0.85em; font-weight: 600;' } });
         const notesArea = notesCol.createEl('textarea', { attr: { style: 'width: 100%; height: 80px; resize: none; padding: 10px; border-radius: 6px; border: 1px solid var(--background-modifier-border);' } });
 
-        // Footer Actions
-        const footer = main.createEl('div', { attr: { style: 'display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;' } });
-        const cancelBtn = footer.createEl('button', { text: 'Cancel', attr: { style: 'padding: 8px 20px;' } });
-        const saveBtn = footer.createEl('button', { text: 'Create Payable', attr: { style: 'padding: 8px 25px; background-color: var(--interactive-accent); color: var(--text-on-accent); font-weight: 600;' } });
+        const footer = main.createEl('div', { attr: { style: 'display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; padding-top: 16px; border-top: 1px solid var(--background-modifier-border-faint);' } });
+        const cancelBtn = footer.createEl('button', { text: 'Cancel', attr: { style: 'padding: 8px 16px; border-radius: 8px; background: transparent; border: 1px solid var(--background-modifier-border); color: var(--text-muted); font-weight: 600; cursor: pointer;' } });
+        const saveBtn = footer.createEl('button', { text: 'Create Payable', attr: { style: 'padding: 8px 20px; border-radius: 8px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; font-weight: 700; cursor: pointer;' } });
 
         cancelBtn.onclick = () => this.close();
         saveBtn.onclick = async () => {

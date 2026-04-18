@@ -49,6 +49,7 @@ export interface MinaSettings {
     monthlyIncome: number;
     northStarGoals: string[];
     enableAutoClassification: boolean;
+    lifeMission: string;
 }
 
 export interface Habit {
@@ -110,7 +111,8 @@ export interface DueEntry {
     lastPayment: string; 
     dueMoment: any; 
     hasRecurring: boolean; 
-    isActive: boolean; 
+    isActive: boolean;
+    amount?: number;
 }
 
 export type FileOrCreate = TFile | string;

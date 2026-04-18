@@ -83,15 +83,23 @@ export class CompassTab extends BaseTab {
         statCard('Projects', projectCount.toString(), 'Active Objectives');
         statCard('Velocity', tasksCompleted.toString(), 'Total Tasks Done');
 
-        // 4. Mission Statement Area
+        // 4. Mission Statement — editable, backed by settings.lifeMission (ux-p3-mission)
         const missionWrap = wrap.createEl('div', {
             attr: { style: 'margin-top: 10px; display: flex; flex-direction: column; gap: 10px;' }
         });
         missionWrap.createEl('span', { text: 'Life Mission', attr: { style: 'font-size: 0.75em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);' } });
         
-        missionWrap.createEl('div', {
-            text: "This Personal OS is designed to bridge the gap between daily capture and long-term vision. Use this space to remind yourself of your 'Why'.",
-            attr: { style: 'font-size: 0.9em; line-height: 1.6; color: var(--text-muted); font-style: italic; background: var(--background-primary-alt); padding: 16px; border-radius: 12px; border-left: 4px solid var(--interactive-accent);' }
+        const missionTextarea = missionWrap.createEl('textarea', {
+            attr: {
+                placeholder: "Write your life mission — your 'Why'...",
+                style: 'width: 100%; min-height: 110px; resize: vertical; background: var(--background-primary-alt); border: 1px solid var(--background-modifier-border); border-left: 4px solid var(--interactive-accent); border-radius: 12px; padding: 16px; font-size: 0.9em; line-height: 1.6; color: var(--text-normal); font-style: italic; font-family: inherit;'
+            }
+        });
+        missionTextarea.value = this.settings.lifeMission || '';
+        missionTextarea.addEventListener('change', async () => {
+            this.settings.lifeMission = missionTextarea.value;
+            await this.plugin.saveSettings();
+            new Notice('Mission saved');
         });
     }
 }

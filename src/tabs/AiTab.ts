@@ -53,16 +53,16 @@ export class AiTab extends BaseTab {
 
         // 3. Input Area
         const inputArea = wrap.createEl('div', {
-            attr: { style: 'padding: 14px; border-top: 1px solid var(--background-modifier-border-faint); background: var(--background-primary); flex-shrink: 0;' }
+            attr: { style: 'padding: 14px; border-top: 1px solid var(--background-modifier-border-faint); background: var(--background-primary); flex-shrink: 0; display: flex; gap: 8px; align-items: flex-end;' }
         });
 
         const textArea = inputArea.createEl('textarea', {
-            attr: { placeholder: 'Ask M.I.N.A...', style: 'width: 100%; min-height: 44px; max-height: 200px; border-radius: 12px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary-alt); color: var(--text-normal); padding: 10px 14px; font-size: 0.95em; resize: none; outline: none; margin-bottom: 8px;' }
+            attr: { placeholder: 'Ask M.I.N.A...', style: 'flex: 1; min-height: 44px; max-height: 200px; border-radius: 12px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary-alt); color: var(--text-normal); padding: 10px 14px; font-size: 0.95em; resize: none; outline: none;' }
         });
 
         const sendBtn = inputArea.createEl('button', {
             text: 'Send',
-            attr: { style: 'background: var(--interactive-accent); color: var(--text-on-accent); border: none; padding: 8px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; float: right;' }
+            attr: { style: 'flex-shrink: 0; background: var(--interactive-accent); color: var(--text-on-accent); border: none; padding: 8px 20px; border-radius: 8px; font-weight: 700; cursor: pointer;' }
         });
 
         sendBtn.addEventListener('click', async () => {

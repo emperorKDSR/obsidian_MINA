@@ -73,6 +73,10 @@ export class VaultService {
     }
 
     async ensureFolder(folder: string) {
+        // sec-014: Reject paths with traversal sequences or absolute paths
+        if (folder.includes('..') || folder.startsWith('/') || folder.startsWith('\\')) {
+            throw new Error(`Invalid folder path: "${folder}"`);
+        }
         const { vault } = this.app;
         if (!folder || folder === '/' || folder === '.') return;
         
@@ -153,7 +157,9 @@ export class VaultService {
             if (!fmMatch) return;
             
             const oldFm = fmMatch[1];
-            const get = (key: string) => { const m = oldFm.match(new RegExp(`^${key}: (.+)$`, 'm')); return m ? m[1].trim() : ''; };
+            // sec-008: Escape key to prevent RegExp injection (defensive — keys are currently hardcoded)
+            const escKey = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const get = (key: string) => { const m = oldFm.match(new RegExp(`^${escKey(key)}: (.+)$`, 'm')); return m ? m[1].trim() : ''; };
             
             const created = get('created') || this.formatDateTime(new Date());
             const pinned = get('pinned') === 'true';
@@ -185,7 +191,9 @@ export class VaultService {
             if (!fmMatch) return;
             
             const oldFm = fmMatch[1];
-            const get = (key: string) => { const m = oldFm.match(new RegExp(`^${key}: (.+)$`, 'm')); return m ? m[1].trim() : ''; };
+            // sec-008: Escape key to prevent RegExp injection (defensive — keys are currently hardcoded)
+            const escKey = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const get = (key: string) => { const m = oldFm.match(new RegExp(`^${escKey(key)}: (.+)$`, 'm')); return m ? m[1].trim() : ''; };
             
             const created = get('created') || this.formatDateTime(new Date());
             const status = get('status') || 'open';
