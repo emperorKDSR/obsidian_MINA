@@ -397,6 +397,7 @@ export default class MinaPlugin extends Plugin {
             if (loadedData.showDailyDues !== undefined) this.settings.showDailyDues = loadedData.showDailyDues;
             if (loadedData.showDailyThoughts !== undefined) this.settings.showDailyThoughts = loadedData.showDailyThoughts;
             if (loadedData.showDailyPinned !== undefined) this.settings.showDailyPinned = loadedData.showDailyPinned;
+            if (loadedData.showDailySummary !== undefined) this.settings.showDailySummary = loadedData.showDailySummary;
             if (loadedData.focusModeOrder !== undefined) this.settings.focusModeOrder = [...loadedData.focusModeOrder];
             if (loadedData.grundfosModeOrder !== undefined) this.settings.grundfosModeOrder = [...loadedData.grundfosModeOrder];
             if (loadedData.journalModeOrder !== undefined) this.settings.journalModeOrder = [...loadedData.journalModeOrder];

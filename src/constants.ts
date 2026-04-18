@@ -113,6 +113,7 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     showDailyDues: true,
     showDailyThoughts: true,
     showDailyPinned: true,
+    showDailySummary: true,
     focusModeOrder: [],
     grundfosModeOrder: [],
     journalModeOrder: [],

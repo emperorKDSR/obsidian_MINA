@@ -18,7 +18,10 @@ The "MINA V2" plugin has been developed with the following features and implemen
 
 1. **User Interface (UI) & Aesthetics**
    - **Dedicated Modes (High Focus):** The plugin has moved away from a monolithic "Full Mode" dashboard to a set of dedicated, high-focus modes accessible via ribbon icons and commands.
-     - **Daily Mode (Sun):** A dashboard with persistent foldable sections and individual visibility toggles (**Cl**, **Ta**, **Du**, **Pi**, **Th**).
+     - **Daily Mode (Sun):** A minimalist dashboard with persistent foldable sections and ultra-compact navigation pills (**SU**, **CL**, **TA**, **PF**, **PI**, **TH**).
+       - **Intelligent Summary (SU):** AI-powered digest of today's activities and priority suggestions using Gemini AI.
+       - **Flicker-Free Interaction:** Uses targeted re-rendering to update specific section containers without refreshing the entire view.
+       - **Minimalist Design:** Removed redundant UI elements like search bars and close buttons to maximize content focus.
      - **Journal Mode (Pen):** Auto-tags captures with `#journal` and supports persistent drag-and-drop reordering.
      - **Task Mode (Check-square):** A dedicated view for task management and review.
      - **Personal Finance Mode (Dollar):** Specifically manages recurring payments and dues (replaces old Dues tab).
@@ -34,7 +37,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
      - Includes a custom **drag handle** at the top for window movement.
    - **Modern Card Layout:** Responsive "cards" with rounded corners, universal blur toggles (👁️/👁️‍🗨️), and compact view support.
    - **Floating Action Button (FAB):** Movable circular button for quick capture across all modes.
-   - **Contextual Search:** "AND" logic multi-token search integrated into every mode.
+   - **Contextual Search:** "AND" logic multi-token search integrated into specialized modes (excluding Daily Mode).
    - **Mobile Optimization:** Dynamic headers ("MINA - {mode}"), `#` trigger for context picking, and visual viewport syncing for reliable keyboard handling.
 
 2. **Review & Management**
@@ -52,7 +55,7 @@ The "MINA V2" plugin has been developed with the following features and implemen
 4. **Modular Architecture**
    - The codebase has been refactored for maintainability and performance:
      - **`src/main.ts`**: Plugin entry point and orchestrator.
-     - **`src/view.ts`**: Lean view manager that lazily loads tab components.
+     - **`src/view.ts`**: Lean view manager that lazily loads tab components and provides shared AI services.
      - **`src/tabs/`**: Contains specialized components (`DailyTab`, `TasksTab`, `AiTab`, etc.) inheriting from a shared `BaseTab`.
      - **`src/tabs/BaseTab.ts`**: Centralizes shared UI rendering logic and interaction hooks.
      - **`src/modals/`**: Specialized modal implementations.

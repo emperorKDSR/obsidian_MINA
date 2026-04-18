@@ -25,6 +25,7 @@ export interface MinaSettings {
     showDailyDues: boolean;
     showDailyThoughts: boolean;
     showDailyPinned: boolean;
+    showDailySummary: boolean;
     focusModeOrder: string[];
     grundfosModeOrder: string[];
     journalModeOrder: string[];
