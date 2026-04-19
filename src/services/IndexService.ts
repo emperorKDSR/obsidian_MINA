@@ -7,6 +7,13 @@ export interface ChecklistItem {
     line: string;
 }
 
+export interface ThoughtChecklistItem {
+    filePath: string;
+    text: string;
+    line: string;
+    lineIndex: number;
+}
+
 export class IndexService {
     app: App;
     settings: MinaSettings;
@@ -17,6 +24,9 @@ export class IndexService {
     // ob-perf-03: Full DueEntry index — DuesTab reads from here instead of scanning vault on every render
     dueIndex: Map<string, DueEntry> = new Map();
     checklistIndex: ChecklistItem[] = [];
+    thoughtChecklistIndex: ThoughtChecklistItem[] = [];
+    // - [x] items from MINA V2 files modified today
+    thoughtDoneChecklistIndex: ThoughtChecklistItem[] = [];
     habitStatusIndex: string[] = [];
     
     // Performance Cache (Synchronous Access)
@@ -123,6 +133,8 @@ export class IndexService {
 
     async buildThoughtIndex(): Promise<void> {
         this.thoughtIndex.clear();
+        this.thoughtChecklistIndex = [];
+        this.thoughtDoneChecklistIndex = [];
         const files = this.app.vault.getMarkdownFiles().filter(f => this.isThoughtFile(f.path));
         for (const f of files) await this.indexThoughtFile(f);
     }
@@ -145,15 +157,38 @@ export class IndexService {
             filePath: file.path,
             title: file.basename,
             body: body,
-            day: fm.day || '',
+            day: String(fm.day || '').replace(/^\[\[|\]\]$/g, ''),
             created: fm.created || '',
             modified: fm.modified || '',
-            context: fm.contexts || [],
+            context: fm.context || fm.contexts || [],
             synthesized: fm.synthesized || false,
             project: fm.project || null,
             allDates: fm.allDates || [],
             children: [],
             lastThreadUpdate: file.stat.mtime
+        });
+
+        // Collect open checklist items from this thought file (clear stale entries first)
+        this.thoughtChecklistIndex = this.thoughtChecklistIndex.filter(item => item.filePath !== file.path);
+        this.thoughtDoneChecklistIndex = this.thoughtDoneChecklistIndex.filter(item => item.filePath !== file.path);
+        const lines = body.split('\n');
+        const fileModifiedToday = moment(file.stat.mtime).isSame(moment(), 'day');
+        lines.forEach((line, lineIndex) => {
+            if (line.includes('- [ ]')) {
+                this.thoughtChecklistIndex.push({
+                    filePath: file.path,
+                    text: line.replace(/^[\s>]*- \[ \] /, '').trim(),
+                    line,
+                    lineIndex
+                });
+            } else if (fileModifiedToday && line.includes('- [x]')) {
+                this.thoughtDoneChecklistIndex.push({
+                    filePath: file.path,
+                    text: line.replace(/^[\s>]*- \[x\] /i, '').trim(),
+                    line,
+                    lineIndex
+                });
+            }
         });
     }
 
@@ -170,17 +205,17 @@ export class IndexService {
             title: fm.title || file.basename,
             body: body,
             status: fm.status || 'open',
-            // Normalize due: YAML may parse bare dates as JS Date objects
+            // Normalize due: strip [[...]] wikilink wrapper, handle Date objects from YAML
             due: fm.due
                 ? (typeof fm.due === 'object'
                     ? moment(fm.due).format('YYYY-MM-DD')
-                    : String(fm.due).trim())
+                    : String(fm.due).trim().replace(/^\[\[|\]\]$/g, ''))
                 : '',
             created: fm.created || '',
             modified: fm.modified || '',
             lastUpdate: file.stat.mtime,
-            day: fm.day || '',
-            context: fm.contexts || [],
+            day: String(fm.day || '').replace(/^\[\[|\]\]$/g, ''),
+            context: fm.context || fm.contexts || [],
             children: [],
             project: fm.project || undefined,
             priority: fm.priority || undefined,

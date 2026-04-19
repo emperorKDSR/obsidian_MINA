@@ -3,7 +3,6 @@ import MinaPlugin from '../main';
 import { isTablet, parseNaturalDate, parseContextString } from '../utils';
 import { FileSuggestModal } from './FileSuggestModal';
 import { ContextSuggestModal } from './ContextSuggestModal';
-
 export class EditEntryModal extends Modal {
     initialText: string;
     initialContexts: string[];
@@ -152,6 +151,56 @@ export class EditEntryModal extends Modal {
         textArea.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSave(); }
             if (e.key === 'Escape') this.close();
+        });
+
+        // Inline triggers: @ → NLP date, [[ → file link, + at line start → checklist item
+        textArea.addEventListener('input', () => {
+            const val = textArea.value;
+            const pos = textArea.selectionStart ?? val.length;
+            const before = val.substring(0, pos);
+
+            // @ trigger → natural language date (fires when space typed after @word)
+            // Replaces @word with [[YYYY-MM-DD]] inline and also sets the date input if present
+            const atMatch = before.match(/@(\S+)\s$/);
+            if (atMatch) {
+                const parsed = parseNaturalDate(atMatch[1]);
+                if (parsed) {
+                    const removeFrom = pos - atMatch[0].length;
+                    const wikiDate = `[[${parsed}]] `;
+                    textArea.value = val.substring(0, removeFrom) + wikiDate + val.substring(pos);
+                    textArea.setSelectionRange(removeFrom + wikiDate.length, removeFrom + wikiDate.length);
+                    if (dateInput) {
+                        dateInput.value = parsed;
+                        dateInput.style.color = 'var(--interactive-accent)';
+                        setTimeout(() => { if (dateInput) dateInput.style.color = ''; }, 1500);
+                    }
+                    return;
+                }
+            }
+
+            // [[ trigger → wiki-link insertion
+            if (before.endsWith('[[')) {
+                textArea.value = val.substring(0, pos - 2) + val.substring(pos);
+                const insertAt = pos - 2;
+                textArea.setSelectionRange(insertAt, insertAt);
+                new FileSuggestModal(this.app, (file) => {
+                    const link = `[[${file.basename}]]`;
+                    const cur = textArea.value;
+                    const curPos = textArea.selectionStart ?? insertAt;
+                    textArea.value = cur.substring(0, curPos) + link + cur.substring(curPos);
+                    textArea.setSelectionRange(curPos + link.length, curPos + link.length);
+                    textArea.focus();
+                }).open();
+                return;
+            }
+
+            // + at line start → insert checklist item
+            if (before.endsWith('\n+') || before === '+') {
+                const insertAt = pos - 1;
+                textArea.value = val.substring(0, insertAt) + '- [ ] ' + val.substring(pos);
+                textArea.setSelectionRange(insertAt + 6, insertAt + 6);
+                return;
+            }
         });
 
         // sec-004: AI Auto-Classification — only runs when user has explicitly opted in

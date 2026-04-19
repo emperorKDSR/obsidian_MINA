@@ -52,7 +52,7 @@ export class TimelineTab extends BaseTab {
 
         const selectedDate = this.view.timelineSelectedDate;
         const tasks = Array.from(this.index.taskIndex.values()).filter(t => t.day === selectedDate || t.due === selectedDate);
-        const thoughts = Array.from(this.index.thoughtIndex.values()).filter(t => t.allDates.includes(selectedDate));
+        const thoughts = Array.from(this.index.thoughtIndex.values()).filter(t => t.day === selectedDate || t.allDates.includes(selectedDate));
 
         const allEntries = [
             ...tasks.map(t => ({ type: 'task', entry: t, time: t.created.split(' ')[1] })),

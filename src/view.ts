@@ -34,8 +34,12 @@ export class MinaView extends ItemView {
 
     // Tasks state — persists across re-renders (viewMode survives vault events)
     tasksViewMode: string = 'open';
-    _taskTogglePending: number = 0;    // > 0 = suppress vault-event re-renders
-    _habitTogglePending: number = 0;   // > 0 = suppress vault-event re-renders
+    _taskTogglePending: number = 0;       // > 0 = suppress vault-event re-renders
+    _habitTogglePending: number = 0;      // > 0 = suppress vault-event re-renders
+    _checklistTogglePending: number = 0;  // > 0 = suppress vault-event re-renders
+    checklistOrder: string[] = [];        // persisted drag-reorder keys: "filePath:lineIndex"
+    // key = "filePath:lineIndex", value = YYYY-MM-DD — keeps completed items visible for the day
+    checklistCompletedToday: Map<string, { text: string; date: string }> = new Map();
     
     // AI State
     chatHistory: ChatMessage[] = [];

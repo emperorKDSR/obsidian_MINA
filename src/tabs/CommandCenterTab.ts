@@ -1,9 +1,9 @@
-import { moment, Platform, Notice, TFile, setIcon } from 'obsidian';
-import type { MinaView } from '../view';
+import { moment, Platform, Notice, TFile, setIcon } from 'obsidian';import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from '../modals/EditEntryModal';
 import { DAILY_ICON_ID, TASK_ICON_ID, PF_ICON_ID, PROJECT_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, COMPASS_ICON_ID, SETTINGS_ICON_ID, VOICE_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID } from '../constants';
 import { parseContextString } from '../utils';
+import type { TaskEntry } from '../types';
 
 export class CommandCenterTab extends BaseTab {
     private parentContainer: HTMLElement;
@@ -24,7 +24,9 @@ export class CommandCenterTab extends BaseTab {
         this.renderHeader(wrap);
         this.renderCaptureBar(wrap);
         this.renderHabitQuickBar(wrap);
-        this.renderTaskRadar(wrap);
+        this.renderToDo(wrap);
+        this.renderWeeklyGoals(wrap);
+        this.renderMonthlyGoals(wrap);
         this.renderDailyRoutine(wrap);
         this.renderIntelligence(wrap);
         this.renderNavigationFooter(wrap);
@@ -104,70 +106,321 @@ export class CommandCenterTab extends BaseTab {
         }
     }
 
-    // ── 3. Task Radar ────────────────────────────────────────────────────────
-    private renderTaskRadar(parent: HTMLElement) {
-        const radar = this.index.radarQueue.slice(0, 6);
+    // ── 3. To Do ──────────────────────────────────────────────────────────────
+    private renderToDo(parent: HTMLElement) {
+        const today = moment().startOf('day');
+        const allOpen = Array.from(this.index.taskIndex.values()).filter(t => t.status === 'open');
+        const parsed = allOpen.map(t => ({ task: t, m: t.due && t.due.trim() ? moment(t.due, 'YYYY-MM-DD') : null }));
+
+        const overdue  = parsed.filter(({m}) => m?.isValid() && m.isBefore(today, 'day')).map(x => x.task)
+                               .sort((a, b) => moment(a.due).valueOf() - moment(b.due).valueOf());
+        const dueToday = parsed.filter(({m}) => m?.isValid() && m.isSame(today, 'day')).map(x => x.task)
+                               .sort((a, b) => moment(a.due).valueOf() - moment(b.due).valueOf());
+        const upcoming = parsed.filter(({m}) => m?.isValid() && m.isAfter(today, 'day')).map(x => x.task)
+                               .sort((a, b) => moment(a.due).valueOf() - moment(b.due).valueOf());
+        const noDate   = parsed.filter(({m}) => !m || !m.isValid()).map(x => x.task)
+                               .sort((a, b) => b.lastUpdate - a.lastUpdate);
 
         const section = parent.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 6px;' } });
         const labelRow = section.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
-        labelRow.createEl('span', { text: 'RADAR', attr: { style: 'font-size: 0.65em; font-weight: 900; letter-spacing: 0.15em; color: var(--text-faint);' } });
-        const seeAll = labelRow.createEl('button', { text: 'See all', attr: { style: 'background: transparent; border: none; font-size: 0.72em; font-weight: 700; color: var(--interactive-accent); cursor: pointer; padding: 0;' } });
-        seeAll.addEventListener('click', () => { this.view.activeTab = 'review-tasks'; this.view.renderView(); });
+        labelRow.createEl('span', { text: 'TO DO', attr: { style: 'font-size: 0.65em; font-weight: 900; letter-spacing: 0.15em; color: var(--text-faint);' } });
 
-        if (radar.length === 0) {
-            section.createEl('div', { text: 'No urgent tasks — all clear.', attr: { style: 'font-size: 0.82em; color: var(--text-faint); font-style: italic; padding: 8px 0;' } });
+        // Checklist first — above task groups
+        this.renderChecklist(section);
+
+        if (!overdue.length && !dueToday.length && !upcoming.length && !noDate.length) {
             return;
         }
 
+        const list = section.createEl('div', { cls: 'mina-task-list' });
+
+        const renderGroup = (label: string, tasks: TaskEntry[], danger: boolean, cap = 5) => {
+            if (!tasks.length) return;
+            const group = list.createEl('div', { cls: 'mina-task-group' });
+            group.createEl('div', { text: label, cls: `mina-task-group-label${danger ? ' is-danger' : ''}` });
+            tasks.slice(0, cap).forEach(t => this.renderToDoRow(t, group, list));
+        };
+
+        renderGroup('Overdue', overdue, true, 10);
+        renderGroup('Today', dueToday, false, 10);
+        renderGroup('Upcoming', upcoming, false, 5);
+        if (noDate.length) renderGroup('No Date', noDate, false, 3);
+    }
+
+    private renderChecklist(parent: HTMLElement) {
+        const todayStr = moment().format('YYYY-MM-DD');
+
+        // Purge stale completed entries (from previous days)
+        this.view.checklistCompletedToday.forEach((v, k) => {
+            if (v.date !== todayStr) this.view.checklistCompletedToday.delete(k);
+        });
+
+        const openItems = this.index.thoughtChecklistIndex;
+
+        // Build combined list: open from index + done from vault (files modified today)
+        type CItem = { filePath: string; text: string; line: string; lineIndex: number; done: boolean };
+        const keyOf = (item: CItem) => `${item.filePath}:${item.lineIndex}`;
+
+        const buildCombined = (): CItem[] => {
+            const open: CItem[] = openItems.map(i => ({ ...i, done: false }));
+            // Done items from vault index (files modified today)
+            const doneFromVault: CItem[] = this.index.thoughtDoneChecklistIndex.map(i => ({ ...i, done: true }));
+            // Optimistic items ticked this session not yet re-indexed
+            const doneFromSession: CItem[] = [...this.view.checklistCompletedToday.entries()]
+                .filter(([, v]) => v.date === todayStr)
+                .map(([k, v]) => {
+                    const colonIdx = k.lastIndexOf(':');
+                    return { filePath: k.substring(0, colonIdx), text: v.text, line: '', lineIndex: Number(k.substring(colonIdx + 1)), done: true };
+                })
+                // Exclude if already in vault index (avoids duplicates after vault re-index)
+                .filter(s => !doneFromVault.some(d => d.filePath === s.filePath && d.lineIndex === s.lineIndex));
+            const done: CItem[] = [...doneFromVault, ...doneFromSession];
+            // Apply persisted order across all items
+            const orderMap = new Map(this.view.checklistOrder.map((k, i) => [k, i]));
+            const allItems = [...open, ...done];
+            allItems.sort((a, b) => {
+                const ai = orderMap.get(keyOf(a)) ?? Infinity;
+                const bi = orderMap.get(keyOf(b)) ?? Infinity;
+                // If both have no order, done items sink below open items
+                if (ai === Infinity && bi === Infinity) return (a.done ? 1 : 0) - (b.done ? 1 : 0);
+                return ai - bi;
+            });
+            return allItems;
+        };
+
+        let ordered = buildCombined();
+        if (!ordered.length) return;
+
+        const section = parent.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 6px;' } });
+        const clHeaderRow = section.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
+        clHeaderRow.createEl('span', { text: 'CHECKLIST', attr: { style: 'font-size: 0.65em; font-weight: 900; letter-spacing: 0.15em; color: var(--text-faint);' } });
+
+        // Refresh button
+        const refreshBtn = clHeaderRow.createEl('button', {
+            attr: {
+                title: 'Refresh checklist',
+                style: 'background: none; border: none; cursor: pointer; color: var(--text-faint); display: flex; align-items: center; padding: 2px 4px; border-radius: 4px; transition: color 0.15s;'
+            }
+        });
+        setIcon(refreshBtn, 'refresh-cw');
+        refreshBtn.addEventListener('mouseenter', () => { refreshBtn.style.color = 'var(--text-normal)'; });
+        refreshBtn.addEventListener('mouseleave', () => { refreshBtn.style.color = 'var(--text-faint)'; });
+        refreshBtn.addEventListener('click', async () => {
+            setIcon(refreshBtn, 'loader');
+            refreshBtn.style.opacity = '0.5';
+            await this.index.buildThoughtIndex();
+            this.view.renderView();
+        });
+
         const list = section.createEl('div', { attr: { style: 'display: flex; flex-direction: column; border-radius: 10px; overflow: hidden; border: 1px solid var(--background-modifier-border-faint);' } });
+        let dragSrcIdx: number | null = null;
 
-        for (const task of radar) {
-            const isDone = task.status === 'done';
-            const dueM = task.due ? moment(task.due, 'YYYY-MM-DD') : null;
-            const isOverdue = !isDone && dueM?.isValid() && dueM.isBefore(moment(), 'day');
-            const isToday = !isDone && dueM?.isValid() && dueM.isSame(moment(), 'day');
+        const renderItems = (items: CItem[]) => {
+            list.empty();
+            items.forEach((item, i) => {
+                const row = list.createEl('div', {
+                    attr: {
+                        draggable: 'true',
+                        style: `display: flex; align-items: center; gap: 10px; padding: 7px 12px; background: var(--background-primary); border-bottom: 1px solid var(--background-modifier-border-faint); cursor: grab; transition: background 0.15s;`
+                    }
+                });
 
-            const row = list.createEl('div', { cls: `mina-hub-task-row${isDone ? ' is-done' : ''}` });
+                // Compact checkbox
+                const cb = row.createEl('div', {
+                    cls: `mina-task-cb${item.done ? ' is-done' : ''}`,
+                    attr: { style: 'flex-shrink: 0;' }
+                });
+                if (item.done) { const ck = cb.createEl('span'); setIcon(ck, 'check'); }
 
-            const cb = row.createEl('div', { cls: `mina-task-cb${isDone ? ' is-done' : ''}` });
-            if (isDone) { const ck = cb.createEl('span'); setIcon(ck, 'check'); }
+                const titleEl = row.createEl('span', {
+                    text: item.text,
+                    attr: {
+                        style: `flex: 1; font-size: 0.85em; font-weight: 500; color: var(--text-normal); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;${item.done ? ' text-decoration: line-through; opacity: 0.4;' : ''}`
+                    }
+                });
 
-            cb.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const nextDone = !isDone;
-                cb.empty();
-                if (nextDone) {
-                    cb.addClass('is-done'); const ck = cb.createEl('span'); setIcon(ck, 'check');
-                    titleEl.style.textDecoration = 'line-through'; titleEl.style.opacity = '0.35';
-                } else {
-                    cb.removeClass('is-done'); titleEl.style.textDecoration = ''; titleEl.style.opacity = '';
+                // Grip handle
+                const grip = row.createEl('div', { attr: { style: 'color: var(--text-faint); flex-shrink: 0; display: flex; align-items: center;' } });
+                setIcon(grip, 'grip-vertical');
+
+                // Checkbox toggle (only for open items)
+                if (!item.done) {
+                    cb.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        // Optimistic UI: mark done, move to bottom
+                        cb.addClass('is-done');
+                        const ck = cb.createEl('span'); setIcon(ck, 'check');
+                        titleEl.style.textDecoration = 'line-through';
+                        titleEl.style.opacity = '0.4';
+
+                        // Update session state
+                        const key = keyOf(item);
+                        this.view.checklistCompletedToday.set(key, { text: item.text, date: todayStr });
+
+                        // Rebuild ordered list: move ticked item to bottom, preserve rest
+                        const openItems2 = ordered.filter(x => !x.done && keyOf(x) !== key);
+                        const doneItems2 = [...ordered.filter(x => x.done), { ...item, done: true }];
+                        ordered = [...openItems2, ...doneItems2];
+                        this.view.checklistOrder = ordered.map(keyOf);
+
+                        // Re-render list locally (no full view re-render)
+                        renderItems(ordered);
+
+                        // Write to file with pending guard
+                        this.view._checklistTogglePending++;
+                        try {
+                            const file = this.app.vault.getAbstractFileByPath(item.filePath);
+                            if (file instanceof TFile) {
+                                const content = await this.app.vault.read(file);
+                                const fileLines = content.split('\n');
+                                const lineIdx = fileLines.findIndex((l, idx) => idx >= item.lineIndex && l.trim() === item.line.trim());
+                                if (lineIdx !== -1) {
+                                    fileLines[lineIdx] = fileLines[lineIdx].replace('- [ ]', '- [x]');
+                                    await this.app.vault.modify(file, fileLines.join('\n'));
+                                }
+                            }
+                        } finally {
+                            setTimeout(() => { this.view._checklistTogglePending = Math.max(0, this.view._checklistTogglePending - 1); }, 400);
+                        }
+                    });
                 }
-                this.view._taskTogglePending++;
-                await this.vault.toggleTask(task.filePath, nextDone);
-                const h = row.offsetHeight;
-                row.style.overflow = 'hidden'; row.style.maxHeight = h + 'px';
-                row.style.transition = 'max-height 0.28s ease, opacity 0.2s ease, padding 0.28s ease';
-                await new Promise(r => setTimeout(r, 160));
-                row.style.maxHeight = '0'; row.style.opacity = '0'; row.style.padding = '0';
-                setTimeout(() => { row.remove(); this.view._taskTogglePending = Math.max(0, this.view._taskTogglePending - 1); }, 300);
-            });
 
-            const titleEl = row.createEl('span', {
-                text: task.title,
-                attr: { style: `flex: 1; font-size: 0.88em; font-weight: 600; color: var(--text-normal); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ${isDone ? 'text-decoration: line-through; opacity: 0.35;' : ''}` }
+                // Drag-and-drop — all items draggable
+                row.addEventListener('dragstart', (e) => {
+                    dragSrcIdx = i;
+                    row.style.opacity = '0.4';
+                    e.dataTransfer?.setData('text/plain', String(i));
+                });
+                row.addEventListener('dragend', () => {
+                    row.style.opacity = '';
+                    list.querySelectorAll<HTMLElement>('[draggable]').forEach(r => r.style.background = '');
+                });
+                row.addEventListener('dragover', (e) => { e.preventDefault(); row.style.background = 'var(--background-modifier-hover)'; });
+                row.addEventListener('dragleave', () => { row.style.background = ''; });
+                row.addEventListener('drop', (e) => {
+                    e.preventDefault(); row.style.background = '';
+                    if (dragSrcIdx === null || dragSrcIdx === i) return;
+                    const moved = ordered.splice(dragSrcIdx, 1)[0];
+                    ordered.splice(i, 0, moved);
+                    this.view.checklistOrder = ordered.map(keyOf);
+                    renderItems(ordered);
+                });
             });
+        };
 
-            if (dueM?.isValid()) {
-                const chipText = isToday ? 'Today' : dueM.format('MMM D');
-                row.createEl('span', {
-                    text: chipText,
-                    attr: { style: `font-size: 0.66em; font-weight: 700; padding: 1px 6px; border-radius: 4px; flex-shrink: 0; background: ${isOverdue ? 'rgba(239,68,68,0.10)' : 'rgba(var(--interactive-accent-rgb),0.10)'}; color: ${isOverdue ? 'var(--text-error)' : 'var(--interactive-accent)'};` }
+        renderItems(ordered);
+    }
+
+    private renderToDoRow(task: TaskEntry, parent: HTMLElement, listRoot?: HTMLElement) {
+        const isDone = task.status === 'done';
+        const dueM = task.due ? moment(task.due, 'YYYY-MM-DD', true) : null;
+        const isOverdue = !isDone && dueM?.isValid() && dueM.isBefore(moment(), 'day');
+        const isToday   = !isDone && dueM?.isValid() && dueM.isSame(moment(), 'day');
+
+        const row = parent.createEl('div', { cls: `mina-task-row${isDone ? ' is-done' : ''}` });
+
+        const cb = row.createEl('div', { cls: `mina-task-cb${isDone ? ' is-done' : ''}` });
+        if (isDone) { const ck = cb.createEl('span'); setIcon(ck, 'check'); }
+
+        cb.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const nextDone = !isDone;
+            cb.empty();
+            if (nextDone) {
+                cb.addClass('is-done');
+                const ck = cb.createEl('span'); setIcon(ck, 'check');
+                titleEl.addClass('is-done');
+            } else {
+                cb.removeClass('is-done');
+                titleEl.removeClass('is-done');
+            }
+            this.view._taskTogglePending++;
+            await this.vault.toggleTask(task.filePath, nextDone);
+            const h = row.offsetHeight;
+            row.style.overflow = 'hidden';
+            row.style.maxHeight = h + 'px';
+            row.style.transition = 'max-height 0.32s ease, opacity 0.22s ease, padding 0.32s ease';
+            await new Promise(r => setTimeout(r, 180));
+            row.style.maxHeight = '0';
+            row.style.opacity = '0';
+            row.style.paddingTop = '0';
+            row.style.paddingBottom = '0';
+            setTimeout(() => {
+                row.remove();
+                this.view._taskTogglePending = Math.max(0, this.view._taskTogglePending - 1);
+                const root = listRoot ?? parent;
+                if (root.querySelectorAll('.mina-task-row').length === 0) {
+                    root.createEl('div', { text: 'All clear ✓', attr: { style: 'font-size: 0.82em; color: var(--text-faint); font-style: italic; padding: 8px 0;' } });
+                }
+            }, 340);
+        });
+
+        const content = row.createEl('div', { cls: 'mina-task-content' });
+        const titleEl = content.createEl('span', { text: task.title, cls: `mina-task-title${isDone ? ' is-done' : ''}` });
+
+        const hasMeta = (task.due && dueM?.isValid()) || task.priority || task.context.length > 0;
+        if (hasMeta) {
+            const meta = content.createEl('div', { cls: 'mina-task-meta' });
+            if (task.due && dueM?.isValid()) {
+                const dateText = isToday ? 'Today' : dueM.format('MMM D');
+                meta.createEl('span', {
+                    text: dateText,
+                    cls: `mina-chip mina-chip--date${isOverdue ? ' is-overdue' : isToday ? ' is-today' : ''}`
                 });
             }
+            if (task.priority) {
+                const pMap: Record<string, string> = { high: 'high', medium: 'med', low: 'low' };
+                meta.createEl('span', { text: pMap[task.priority] || task.priority, cls: `mina-chip mina-chip--pri-${task.priority}` });
+            }
+            task.context.slice(0, 2).forEach(ctx => meta.createEl('span', { text: `#${ctx}`, cls: 'mina-chip mina-chip--ctx' }));
         }
     }
 
-    // ── 4. Daily Routine ─────────────────────────────────────────────────────
+    // ── 4. Weekly Goals ───────────────────────────────────────────────────────
+    private renderWeeklyGoals(parent: HTMLElement) {
+        const goals = (this.settings.weeklyGoals || []).filter(g => g && g.trim());
+        const section = parent.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 6px;' } });
+        const labelRow = section.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
+        labelRow.createEl('span', { text: 'WEEKLY GOALS', attr: { style: 'font-size: 0.65em; font-weight: 900; letter-spacing: 0.15em; color: var(--text-faint);' } });
+        const editBtn = labelRow.createEl('button', { text: 'Edit', attr: { style: 'background: transparent; border: none; font-size: 0.72em; font-weight: 700; color: var(--interactive-accent); cursor: pointer; padding: 0;' } });
+        editBtn.addEventListener('click', () => { this.view.activeTab = 'review'; this.view.renderView(); });
+
+        if (!goals.length) {
+            section.createEl('div', { text: 'No weekly goals set — add them in Review.', attr: { style: 'font-size: 0.82em; color: var(--text-faint); font-style: italic; padding: 8px 0;' } });
+            return;
+        }
+
+        const list = section.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 4px;' } });
+        goals.forEach((goal, i) => {
+            const row = list.createEl('div', { attr: { style: 'display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; background: var(--background-secondary-alt); border-radius: 8px; border: 1px solid var(--background-modifier-border-faint);' } });
+            row.createEl('span', { text: String(i + 1), attr: { style: 'font-size: 0.7em; font-weight: 800; color: var(--interactive-accent); flex-shrink: 0; min-width: 14px; margin-top: 1px;' } });
+            row.createEl('span', { text: goal, attr: { style: 'font-size: 0.88em; font-weight: 500; color: var(--text-normal); line-height: 1.4;' } });
+        });
+    }
+
+    // ── 5. Monthly Goals ──────────────────────────────────────────────────────
+    private renderMonthlyGoals(parent: HTMLElement) {
+        const goals = (this.settings.monthlyGoals || []).filter(g => g && g.trim());
+        const section = parent.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 6px;' } });
+        const labelRow = section.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
+        labelRow.createEl('span', { text: 'MONTHLY GOALS', attr: { style: 'font-size: 0.65em; font-weight: 900; letter-spacing: 0.15em; color: var(--text-faint);' } });
+        const editBtn = labelRow.createEl('button', { text: 'Edit', attr: { style: 'background: transparent; border: none; font-size: 0.72em; font-weight: 700; color: var(--interactive-accent); cursor: pointer; padding: 0;' } });
+        editBtn.addEventListener('click', () => { this.view.activeTab = 'monthly-review'; this.view.renderView(); });
+
+        if (!goals.length) {
+            section.createEl('div', { text: 'No monthly goals set — add them in Monthly Review.', attr: { style: 'font-size: 0.82em; color: var(--text-faint); font-style: italic; padding: 8px 0;' } });
+            return;
+        }
+
+        const list = section.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 4px;' } });
+        goals.forEach((goal, i) => {
+            const row = list.createEl('div', { attr: { style: 'display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; background: var(--background-secondary-alt); border-radius: 8px; border: 1px solid var(--background-modifier-border-faint);' } });
+            row.createEl('span', { text: String(i + 1), attr: { style: 'font-size: 0.7em; font-weight: 800; color: var(--text-muted); flex-shrink: 0; min-width: 14px; margin-top: 1px;' } });
+            row.createEl('span', { text: goal, attr: { style: 'font-size: 0.88em; font-weight: 500; color: var(--text-normal); line-height: 1.4;' } });
+        });
+    }
+
+
     private renderDailyRoutine(parent: HTMLElement) {
         if (this.index.checklistIndex.length === 0) return;
 
@@ -189,7 +442,7 @@ export class CommandCenterTab extends BaseTab {
         });
     }
 
-    // ── 5. Intelligence ──────────────────────────────────────────────────────
+    // ── 7. Intelligence ──────────────────────────────────────────────────────
     private renderIntelligence(parent: HTMLElement) {
         const intel = parent.createEl('div', { cls: 'mina-card', attr: { style: 'padding: 16px 20px; display: flex; flex-direction: column; gap: 12px;' } });
         const intelHeader = intel.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });

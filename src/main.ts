@@ -106,22 +106,7 @@ export default class MinaPlugin extends Plugin {
 		this.addRibbonIcon(GRUNDFOS_ICON_ID, 'Grundfos Mode', () => { this.activateView('grundfos', true); });
 		this.addRibbonIcon(MEMENTO_ICON_ID, 'Memento Mori', () => { this.activateView('memento-mori', true); });
 
-        this.addCommand({ id: 'open-mina-home-mode', name: 'MINA Hub', icon: HOME_ICON_ID, callback: () => { this.activateView('home', true); } });
-		this.addCommand({ id: 'open-mina-journal-mode', name: 'Journal Mode', icon: JOURNAL_ICON_ID, callback: () => { this.activateView('journal', true); } });
-		this.addCommand({ id: 'open-mina-daily-mode', name: 'Daily Summary', icon: DAILY_ICON_ID, callback: () => { this.activateView('home', true); } });
-		this.addCommand({ id: 'open-mina-timeline', name: 'Timeline Mode', icon: TIMELINE_ICON_ID, callback: () => { this.activateView('timeline', true); } });
-		this.addCommand({ id: 'open-mina-focus-mode', name: 'Focus Mode', icon: FOCUS_ICON_ID, callback: () => { this.activateView('focus', true); } });
-		this.addCommand({ id: 'open-mina-grundfos-mode', name: 'Grundfos Mode', icon: GRUNDFOS_ICON_ID, callback: () => { this.activateView('grundfos', true); } });
-		this.addCommand({ id: 'open-mina-memento-mori', name: 'Memento Mori', icon: MEMENTO_ICON_ID, callback: () => { this.activateView('memento-mori', true); } });
-		this.addCommand({ id: 'open-mina-voice-note', name: 'Voice Note Mode', icon: VOICE_ICON_ID, callback: () => { this.activateView('voice-note', true); } });
-		this.addCommand({ id: 'open-mina-projects-mode', name: 'Projects Mode', icon: PROJECT_ICON_ID, callback: () => { this.activateView('projects', true); } });
-		this.addCommand({ id: 'open-mina-synthesis-mode', name: 'Synthesis Mode', icon: SYNTHESIS_ICON_ID, callback: () => { this.activateView('synthesis', true); } });
-		this.addCommand({ id: 'open-mina-compass-mode', name: 'Quarterly Compass', icon: COMPASS_ICON_ID, callback: () => { this.activateView('compass', true); } });
-		this.addCommand({ id: 'open-mina-weekly-review', name: 'Weekly Review', icon: REVIEW_ICON_ID, callback: () => { this.activateView('review', true); } });
-		this.addCommand({ id: 'open-mina-pf-mode', name: 'Personal Finance Mode', icon: PF_ICON_ID, callback: () => { this.activateView('pf', true); } });
-		this.addCommand({ id: 'open-mina-settings', name: 'Settings Mode', icon: SETTINGS_ICON_ID, callback: () => { this.activateView('settings', true); } });
-		this.addCommand({ id: 'open-mina-task-mode', name: 'Task Mode', icon: TASK_ICON_ID, callback: () => { this.activateView('review-tasks', true); } });
-		this.addCommand({ id: 'open-mina-ai-mode', name: 'AI Mode', icon: AI_CHAT_ICON_ID, callback: () => { this.activateView('mina-ai', true); } });
+        this.addCommand({ id: 'open-mina-home-mode', name: 'MINA: Open Command Center', icon: HOME_ICON_ID, callback: () => { this.activateView('home', true); } });
 
         this.registerCustomModes();
 		this.addSettingTab(new MinaSettingTab(this.app, this));
@@ -216,7 +201,7 @@ export default class MinaPlugin extends Plugin {
                 const view = leaf.view as MinaView;
                 if (view && typeof view.renderView === 'function') {
                     // Don't re-render while the user is mid-toggle — let optimistic UI stand
-                    if (view._taskTogglePending > 0 || view._habitTogglePending > 0) continue;
+                    if (view._taskTogglePending > 0 || view._habitTogglePending > 0 || view._checklistTogglePending > 0) continue;
                     view.renderView();
                 }
             }
