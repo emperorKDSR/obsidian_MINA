@@ -53,7 +53,7 @@ export class VaultService {
         return `---\ntitle: "${safeTitle}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA\ncontext:\n${contextYaml}\ntags:\n${contextYaml}\npinned: ${pinned}\n${projectLine}---\n`;
     }
 
-    private buildTaskFrontmatter(title: string, created: string, modified: string, dayStr: string, status: string, due: string, contexts: string[], project?: string, recurrence?: string, recurrenceParentId?: string): string {
+    private buildTaskFrontmatter(title: string, created: string, modified: string, dayStr: string, status: string, due: string, contexts: string[], project?: string, recurrence?: string, recurrenceParentId?: string, priority?: string, energy?: string): string {
         // sec-006: Sanitize title and contexts before YAML embedding to prevent injection
         const safeTitle = this.sanitizeYamlString(title);
         const safeContexts = contexts.map(c => this.sanitizeContext(c));
@@ -62,7 +62,9 @@ export class VaultService {
         const projectLine = project ? `project: "${this.sanitizeYamlString(project)}"\n` : '';
         const recurrenceLine = recurrence ? `recurrence: ${recurrence}\n` : '';
         const parentLine = recurrenceParentId ? `recurrenceParentId: "${recurrenceParentId}"\n` : '';
-        return `---\ntitle: "${safeTitle}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA_TASKS\nstatus: ${status}\ndue: ${dueYaml}\ncontext:\n${contextYaml}\ntags:\n${contextYaml}\n${projectLine}${recurrenceLine}${parentLine}---\n`;
+        const priorityLine = priority ? `priority: ${priority}\n` : '';
+        const energyLine = energy ? `energy: ${energy}\n` : '';
+        return `---\ntitle: "${safeTitle}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA_TASKS\nstatus: ${status}\ndue: ${dueYaml}\ncontext:\n${contextYaml}\ntags:\n${contextYaml}\n${projectLine}${recurrenceLine}${parentLine}${priorityLine}${energyLine}---\n`;
     }
 
     // sec-006: Strip characters that break YAML string values
@@ -144,7 +146,7 @@ export class VaultService {
         return await this.createFile(folder, filename, fm + text);
     }
 
-    async createTaskFile(text: string, contexts: string[], dueDate?: string, project?: string, opts?: { priority?: string; energy?: string; recurrence?: string; recurrenceParentId?: string }): Promise<TFile> {
+    async createTaskFile(text: string, contexts: string[], dueDate?: string, project?: string, opts?: { priority?: string; energy?: string; status?: string; recurrence?: string; recurrenceParentId?: string }): Promise<TFile> {
         // arch-08: Normalize <br> → newline at service boundary
         text = text.replace(/<br>/g, '\n');
         const folder = this.settings.tasksFolder.trim() || '000 Bin/MINA V2 Tasks';
@@ -153,7 +155,7 @@ export class VaultService {
         const dayStr = this.formatDate(now);
         const title = this.extractTitle(text);
         const due = dueDate || '';
-        const fm = this.buildTaskFrontmatter(title, created, created, dayStr, 'open', due, contexts, project, opts?.recurrence, opts?.recurrenceParentId);
+        const fm = this.buildTaskFrontmatter(title, created, created, dayStr, opts?.status ?? 'open', due, contexts, project, opts?.recurrence, opts?.recurrenceParentId, opts?.priority, opts?.energy);
         const filename = this.generateFilename('task_');
         return await this.createFile(folder, filename, fm + text);
     }
@@ -195,7 +197,7 @@ export class VaultService {
         }
     }
 
-    async editTask(filePath: string, newText: string, contexts: string[], dueDate?: string): Promise<void> {
+    async editTask(filePath: string, newText: string, contexts: string[], dueDate?: string, opts?: { priority?: string | null; energy?: string | null; status?: string }): Promise<void> {
         // arch-08: Normalize <br> → newline at service boundary
         newText = newText.replace(/<br>/g, '\n');
         const file = this.app.vault.getAbstractFileByPath(filePath);
@@ -205,9 +207,7 @@ export class VaultService {
             const nowStr = this.formatDateTime(now);
             const dayStr = this.formatDate(now);
             const title = this.extractTitle(newText);
-            const safeContexts = contexts.map(c => this.sanitizeContext(c));
-
-            // Step 1: update FM fields safely via Obsidian API — preserves status, created, project
+            const safeContexts = contexts.map(c => this.sanitizeContext(c));            // Step 1: update FM fields safely via Obsidian API — preserves status, created, project
             await this.app.fileManager.processFrontMatter(file, (fm) => {
                 fm['title'] = this.sanitizeYamlString(title);
                 fm['modified'] = nowStr;
@@ -215,6 +215,9 @@ export class VaultService {
                 fm['context'] = safeContexts;
                 fm['tags'] = safeContexts;
                 if (dueDate !== undefined) fm['due'] = dueDate ? `[[${dueDate}]]` : '';
+                if (opts?.priority !== undefined) fm['priority'] = opts.priority ?? null;
+                if (opts?.energy  !== undefined) fm['energy']   = opts.energy  ?? null;
+                if (opts?.status  !== undefined) fm['status']   = opts.status;
             });
 
             // Step 2: update body text

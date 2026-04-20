@@ -5150,3 +5150,179 @@
     min-width: 56px;
 }
 .is-mobile .mina-recur-zone.is-visible { max-height: 72px; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MINA TASK META BAR — Mobile (Priority · Energy · Status)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.mina-task-meta-bar {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 220ms cubic-bezier(0.4, 0, 0.2, 1), opacity 180ms ease;
+}
+.mina-task-meta-bar.is-visible {
+    max-height: 60px;
+    opacity: 1;
+}
+
+/* ── Mobile strip: horizontal scrollable ── */
+.mina-task-meta-bar .mina-meta-strip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 2px 0 6px;
+    -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+    mask-image: linear-gradient(to right, black 85%, transparent 100%);
+}
+.mina-task-meta-bar .mina-meta-strip::-webkit-scrollbar { display: none; }
+
+/* ── Label ── */
+.mina-meta-label {
+    flex-shrink: 0;
+    font-size: 0.58em;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    color: var(--text-faint);
+    opacity: 0.55;
+    user-select: none;
+    pointer-events: none;
+    padding: 0 2px 0 4px;
+}
+
+/* ── Divider ── */
+.mina-meta-divider {
+    flex-shrink: 0;
+    width: 1px;
+    height: 18px;
+    background: var(--background-modifier-border-faint);
+    margin: 0 4px;
+    align-self: center;
+    opacity: 0.6;
+}
+
+/* ── Base meta button (mobile 44px) ── */
+.mina-meta-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0 11px;
+    border-radius: 12px;
+    border: 1.5px solid var(--background-modifier-border-faint);
+    background: transparent;
+    color: var(--text-faint);
+    font-size: 0.72em;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.10s ease;
+}
+.mina-meta-btn:active { transform: scale(0.96); }
+.mina-meta-btn:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
+
+/* Priority colors */
+.mina-meta-btn--pri[data-priority="low"].is-active {
+    background: rgba(148,163,184,0.13); border-color: rgba(148,163,184,0.50); color: #94a3b8;
+}
+.mina-meta-btn--pri[data-priority="medium"].is-active {
+    background: rgba(245,158,11,0.13); border-color: rgba(245,158,11,0.50); color: #f59e0b;
+}
+.theme-dark .mina-meta-btn--pri[data-priority="medium"].is-active { background: rgba(251,191,36,0.15); border-color: rgba(251,191,36,0.42); color: #fbbf24; }
+.mina-meta-btn--pri[data-priority="high"].is-active {
+    background: rgba(239,68,68,0.13); border-color: rgba(239,68,68,0.50); color: #ef4444;
+}
+.theme-dark .mina-meta-btn--pri[data-priority="high"].is-active { background: rgba(239,68,68,0.18); border-color: rgba(248,113,113,0.45); color: #f87171; }
+
+/* Energy colors */
+.mina-meta-btn--energy[data-energy="low"].is-active {
+    background: rgba(99,102,241,0.13); border-color: rgba(99,102,241,0.50); color: #818cf8;
+}
+.theme-dark .mina-meta-btn--energy[data-energy="low"].is-active { background: rgba(129,140,248,0.17); border-color: rgba(129,140,248,0.42); color: #a5b4fc; }
+.mina-meta-btn--energy[data-energy="medium"].is-active {
+    background: rgba(148,163,184,0.13); border-color: rgba(148,163,184,0.50); color: #94a3b8;
+}
+.mina-meta-btn--energy[data-energy="high"].is-active {
+    background: rgba(132,204,22,0.13); border-color: rgba(132,204,22,0.50); color: #65a30d;
+}
+.theme-dark .mina-meta-btn--energy[data-energy="high"].is-active { background: rgba(163,230,53,0.16); border-color: rgba(163,230,53,0.42); color: #a3e635; }
+
+/* Status colors */
+.mina-meta-btn--status[data-status="waiting"].is-active {
+    background: rgba(251,146,60,0.13); border-color: rgba(251,146,60,0.50); color: #ea580c;
+}
+.theme-dark .mina-meta-btn--status[data-status="waiting"].is-active { background: rgba(251,146,60,0.17); border-color: rgba(251,146,60,0.42); color: #fb923c; }
+.mina-meta-btn--status[data-status="someday"].is-active {
+    background: rgba(167,139,250,0.13); border-color: rgba(167,139,250,0.50); color: #7c3aed;
+}
+.theme-dark .mina-meta-btn--status[data-status="someday"].is-active { background: rgba(167,139,250,0.17); border-color: rgba(167,139,250,0.42); color: #a78bfa; }
+
+/* 320px micro-phone: hide labels */
+@media (max-width: 340px) {
+    .mina-meta-label { display: none; }
+    .mina-meta-btn { padding: 0 8px; min-width: 40px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MINA META ZONE — Desktop (Priority · Energy · Status — 3 rows)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.mina-meta-zone {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 220ms cubic-bezier(0.4, 0, 0.2, 1), opacity 180ms ease;
+}
+.mina-meta-zone.is-visible {
+    max-height: 110px;
+    opacity: 1;
+}
+
+.mina-meta-zone .mina-meta-strip {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px 0 6px;
+}
+
+.mina-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mina-meta-icon {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--text-faint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 2px;
+}
+.mina-meta-icon .svg-icon { width: 13px; height: 13px; }
+
+/* Desktop buttons: 28px height override */
+.mina-meta-zone .mina-meta-btn {
+    min-height: 28px;
+    height: 28px;
+    min-width: unset;
+    padding: 0 10px;
+    border-radius: 14px;
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+/* Hide mobile meta bar on desktop; hide meta zone on mobile */
+.is-mobile .mina-meta-zone { display: none !important; }

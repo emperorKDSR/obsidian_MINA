@@ -49,9 +49,14 @@ export class TasksTab extends BaseTab {
         const addIcon = addBtn.createEl('span'); setIcon(addIcon, 'plus');
         addBtn.createSpan({ text: 'New' });
         addBtn.addEventListener('click', () => {
-            new EditEntryModal(this.app, this.plugin, '', '', moment().format('YYYY-MM-DD'), true, async (text, ctxs, due, _proj, recur) => {
+            new EditEntryModal(this.app, this.plugin, '', '', moment().format('YYYY-MM-DD'), true, async (text, ctxs, due, _proj, recur, priority, energy, status) => {
                 if (!text.trim()) return;
-                await this.vault.createTaskFile(text, parseContextString(ctxs), due || undefined, undefined, recur ? { recurrence: recur } : undefined);
+                await this.vault.createTaskFile(text, parseContextString(ctxs), due || undefined, undefined, {
+                    recurrence: recur ?? undefined,
+                    priority: priority ?? undefined,
+                    energy: energy ?? undefined,
+                    status: status !== 'open' ? status : undefined,
+                });
                 this.renderTaskOverview(container);
             }, 'New Task').open();
         });
@@ -278,10 +283,18 @@ export class TasksTab extends BaseTab {
             btn.addEventListener('click', (e) => { e.stopPropagation(); fn(); });
         };
         mkBtn('pencil', () => {
-            new EditEntryModal(this.app, this.plugin, task.title, task.context.map(c => `#${c}`).join(' '), task.due || null, true, async (t, c, d) => {
-                await this.vault.editTask(task.filePath, t, parseContextString(c), d || undefined);
+            const modal = new EditEntryModal(this.app, this.plugin, task.title, task.context.map(c => `#${c}`).join(' '), task.due || null, true, async (t, c, d, _proj, _recur, priority, energy, status) => {
+                await this.vault.editTask(task.filePath, t, parseContextString(c), d || undefined, {
+                    priority: priority !== undefined ? priority : undefined,
+                    energy:   energy   !== undefined ? energy   : undefined,
+                    status:   status   !== undefined ? status   : undefined,
+                });
                 this.renderList();
-            }, 'Edit Task').open();
+            }, 'Edit Task');
+            modal.currentPriority = task.priority ?? null;
+            modal.currentEnergy   = task.energy   ?? null;
+            modal.currentStatus   = (task.status === 'waiting' || task.status === 'someday') ? task.status : 'open';
+            modal.open();
         });
         mkBtn('trash-2', () => {
             new ConfirmModal(this.app, 'Move this task to trash?', async () => {
