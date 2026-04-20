@@ -36,6 +36,8 @@ Branch naming convention:
 
 Before compiling and shipping any release, the following steps **must** be completed in order:
 
+> Note (roadmap releases): For the recent roadmap work, treat the Monthly Review release as v1.6 and the Synthesis redesign as v1.7. Ensure the manual, changelog, and version files reflect those labels when performing the release checklist.
+
 1. **Update the manual** — Open `src/modals/HelpModal.ts`. Review the `SECTIONS` array and update or add entries to reflect any new or changed features in this release. Every user-facing feature must have a plain-language description. Add 💡 tips for non-obvious behaviour.
 2. **Update CHANGELOG** — Add a `## [x.y.z] - YYYY-MM-DD` entry in `CHANGELOG.md` with a clear description of what changed, the architecture impact, and files modified.
 3. **Bump version files** — Increment the version in `manifest.json`, `package.json`, and add the new version key to `versions.json`.
