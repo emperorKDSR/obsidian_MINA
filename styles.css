@@ -1050,6 +1050,20 @@
 .is-mobile .mina-refresh-btn { padding: 10px; min-width: 44px; min-height: 44px; border-radius: 8px; justify-content: center; }
 .is-mobile .mina-refresh-btn:active { background: var(--background-secondary-alt); color: var(--text-normal); }
 
+/* Tablet refinements — restore desktop-like density on tablets (≥768px short-edge) */
+@media (min-width: 768px) {
+    .is-mobile .mina-task-row { padding: 10px 14px; }
+    .is-mobile .mina-tactical-row { padding: 8px 14px; min-height: 40px; }
+    .is-mobile .mina-pillar-item { padding: 12px 8px; min-height: 56px; gap: 6px; }
+    .is-mobile .mina-pillar-item:hover { transform: translateY(-2px); box-shadow: var(--mina-shadow-hover); }
+    .is-mobile .mina-card:hover { transform: translateY(-2px); box-shadow: var(--mina-shadow-hover); }
+    .is-mobile .mina-cc-wrap { padding: 20px 16px var(--mina-footer-clearance); gap: 18px; }
+    .is-mobile .mina-cc-title { font-size: 1.45em; }
+    .is-mobile .mina-cc-northstar { max-width: 400px; }
+    .is-mobile .mina-zen-btn .svg-icon { width: 16px; height: 16px; }
+    .is-mobile .mina-capture-fab { display: none; }
+}
+
 @media (max-width: 499px) {
     .mina-cc-wrap { padding: 14px 10px 160px; gap: 14px; }
     .mina-cc-title { font-size: 1.25em; }

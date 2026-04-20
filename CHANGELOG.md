@@ -4,6 +4,26 @@ All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]
 
+## [1.5.7] - 2026-04-20
+### Feat — Tablet UX Enhancements
+
+Comprehensive tablet audit and upgrade. Tablets (iPad, Android tablets with short-edge ≥ 768px) now receive a **desktop-class experience** instead of being treated as oversized phones.
+
+**Changes:**
+- **Command Center header**: Desktop-sized buttons (42px) on tablet instead of phone-oversized (48px).
+- **Habit Quick Bar**: Horizontal scrollable bar on tablet (desktop layout) instead of grid (phone layout). Tooltips enabled.
+- **Habit name length**: 13 chars on tablet (desktop) instead of 11 (phone).
+- **Goal cards**: Monthly goals expanded by default on tablet. Goal edit buttons use desktop density.
+- **Navigation clusters**: All clusters expanded on tablet — no collapsible phone accordion.
+- **Tactical rows**: Desktop-density padding and min-height on tablet.
+- **Help Modal**: Desktop sidebar+content layout on tablet instead of phone accordion.
+- **CSS refinements**: Tablet-specific `@media (min-width: 768px)` block restores hover effects, desktop card padding, title sizing, and hides the mobile FAB.
+- **Capture FAB**: Hidden on tablet (inline capture bar is active instead).
+
+**Files modified:** `src/tabs/CommandCenterTab.ts`, `src/modals/HelpModal.ts`, `styles.css`, `src/modals/HelpModal.ts` (manual entry).
+
+**Architecture:** All tablet detection uses `isTablet()` from `src/utils.ts` (short-edge ≥ 768px). Pattern: `Platform.isMobile && !isTablet()` = phone-only. `!Platform.isMobile || isTablet()` = desktop-or-tablet.
+
 ## [1.5.6] - 2026-04-20
 ### Feat — In-Plugin Manual (Help Modal)
 
