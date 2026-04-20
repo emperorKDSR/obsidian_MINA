@@ -1,3 +1,8 @@
+## [1.10.9] - Compass in Command Center
+
+### Added
+- **Command Center**: Compass now appears in the SYSTEM cluster nav grid — tap/click to open the Quarterly Compass directly from the hub; uses the existing compass icon already registered in the plugin
+
 ## [1.10.8] - Habit Theme Alignment
 
 ### Fixed
