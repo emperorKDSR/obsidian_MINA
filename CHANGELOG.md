@@ -1,3 +1,10 @@
+## [1.11.1] - Review & Compass MD Persistence
+
+### Fixed / Improved
+- **Monthly Review**: Monthly focus goals now save to a dedicated vault file Reviews/Monthly/YYYY-MM.md (YAML frontmatter + goals list) instead of plugin settings only; on open, loads from the MD file first (source of truth) with settings as fallback
+- **Compass**: North Star Goals and Life Mission now save to Reviews/Compass/YYYY-Qx.md per quarter; loads from MD file on open with settings fallback; both the goals and mission are kept in sync — editing either field writes the full compass document atomically
+- **VaultService**: Added saveMonthlyGoals, loadMonthlyGoals, saveCompassData, loadCompassData methods
+
 ## [1.11.0] - Compass in Command Center
 
 ### Added
