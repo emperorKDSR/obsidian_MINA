@@ -22,6 +22,12 @@ export class CommandCenterTab extends BaseTab {
         const wrap = container.createEl('div', { cls: 'mina-cc-wrap' });
 
         this.renderHeader(wrap);
+
+        // Search pill: phone-only entry point between greeting and capture bar
+        if (Platform.isMobile && !isTablet()) {
+            this.renderSearchPill(wrap);
+        }
+
         this.renderCaptureBar(wrap);
         this.renderHabitQuickBar(wrap);
         this.renderZenBanner(wrap);
@@ -74,6 +80,23 @@ export class CommandCenterTab extends BaseTab {
             this.view.isZenMode = !this.view.isZenMode;
             if (Platform.isMobile) new Notice(this.view.isZenMode ? '⚡ Zen Mode — Focus engaged' : '🗺 Zen Mode off', 1500);
             this.render(this.parentContainer);
+        });
+    }
+
+    private renderSearchPill(parent: HTMLElement) {
+        const pill = parent.createEl('div', {
+            cls: 'mina-search-pill',
+            attr: { role: 'button', 'aria-label': 'Search MINA', tabindex: '0' }
+        });
+        const icon = pill.createEl('span', { cls: 'mina-search-pill-icon' });
+        setIcon(icon, 'lucide-search');
+        pill.createEl('span', { cls: 'mina-search-pill-text', text: 'Search MINA…' });
+        pill.addEventListener('click', () => new SearchModal(this.app, this.plugin).open());
+        pill.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                new SearchModal(this.app, this.plugin).open();
+            }
         });
     }
 

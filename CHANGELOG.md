@@ -4,6 +4,30 @@ All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.1] - 2026-04-21
+### Fix — Search Navigation + Mobile Search Redesign
+
+Two targeted fixes to the Global Search feature introduced in v1.9.0.
+
+#### Fix 1 — Search Navigation (Critical)
+Search results and Quick Jump tiles were silently failing to navigate when tapped.
+
+**Root cause:** `getLeavesOfType('mina-view')` used the wrong view type string. The correct constant is `VIEW_TYPE_MINA = "mina-v2-view"` from `constants.ts`.
+
+**Changes:**
+- `SearchModal.ts`: Import and use `VIEW_TYPE_MINA` from `constants.ts` in both `activateResult()` and the Quick Jump grid click handler.
+- `SearchModal.ts`: Added `setActiveLeaf()` to bring the MINA panel into focus after navigation.
+- `SearchModal.ts`: Added `setTimeout(50ms)` so the modal fully closes before the tab switch fires.
+
+#### Fix 2 — Mobile Search UX Redesign
+The v1.9.0 bottom-sheet on phone was broken. Replaced with a full iOS Spotlight-style full-screen takeover.
+
+**Changes:**
+- `SearchModal.ts`: Full-screen overlay on phone; `visualViewport` keyboard compensation; 16px input font (prevents iOS auto-zoom); 56px+ touch targets; 2-column Quick Jump grid; safe-area-inset handling; swipe-down-to-dismiss; back button; reduced-motion support.
+- `CommandCenterTab.ts`: Search pill entry point added between greeting and capture bar (phone only).
+- `styles.css`: Entire search CSS block replaced with mobile-first responsive version.
+- `HelpModal.ts`: Search section expanded with Search Pill, Mobile Full-Screen Mode, Swipe to Dismiss, and Quick Jump 2-col entries.
+
 ## [1.9.0] - 2026-04-20
 ### Feat — Global Search / Spotlight
 
