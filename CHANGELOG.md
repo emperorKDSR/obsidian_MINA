@@ -2,6 +2,11 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.0.2] - 2026-04-20
+
+### Changed
+- **Tasks — merged open queue** — merged the separate Inbox and Due filters into one `Open` view that groups tasks by Overdue, Today, Upcoming, and No Date while preserving `No Date` as a focused subset filter
+
 ## [1.0.1] - 2026-04-20
 
 ### Added

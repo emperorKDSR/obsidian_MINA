@@ -6,11 +6,10 @@ import { ConfirmModal } from "../modals/ConfirmModal";
 import type { TaskEntry } from '../types';
 import { parseContextString } from '../utils';
 
-type TaskViewMode = 'inbox' | 'open' | 'not-due' | 'done' | 'waiting' | 'someday';
+type TaskViewMode = 'open' | 'not-due' | 'done' | 'waiting' | 'someday';
 
 const MODES: { mode: TaskViewMode; label: string }[] = [
-    { mode: 'inbox',   label: 'Inbox' },
-    { mode: 'open',    label: 'Due' },
+    { mode: 'open',    label: 'Open' },
     { mode: 'not-due', label: 'No Date' },
     { mode: 'waiting', label: 'Waiting' },
     { mode: 'someday', label: 'Someday' },
@@ -23,7 +22,7 @@ export class TasksTab extends BaseTab {
 
     constructor(view: MinaView) {
         super(view);
-        this.viewMode = (this.view.tasksViewMode as TaskViewMode) || 'inbox';
+        this.viewMode = this.view.tasksViewMode === 'inbox' ? 'open' : ((this.view.tasksViewMode as TaskViewMode) || 'open');
     }
 
     render(container: HTMLElement) {
@@ -68,8 +67,7 @@ export class TasksTab extends BaseTab {
         // ── Segmented control ──
         const allTasks = Array.from(this.index.taskIndex.values());
         const counts: Record<TaskViewMode, number> = {
-            'inbox':   allTasks.filter(t => t.status === 'open').length,
-            'open':    allTasks.filter(t => t.status === 'open' && t.due && t.due.trim() !== "").length,
+            'open':    allTasks.filter(t => t.status === 'open').length,
             'not-due': allTasks.filter(t => t.status === 'open' && (!t.due || t.due.trim() === "")).length,
             'waiting': allTasks.filter(t => t.status === 'waiting').length,
             'someday': allTasks.filter(t => t.status === 'someday').length,
@@ -93,20 +91,16 @@ export class TasksTab extends BaseTab {
         this.listContainer.empty();
 
         let tasks = Array.from(this.index.taskIndex.values());
-        if (this.viewMode === 'inbox') {
-            // All open tasks — due-date items first (soonest), then no-date by recency
+        if (this.viewMode === 'open') {
             tasks = tasks.filter(t => t.status === 'open');
             tasks.sort((a, b) => {
-                const aHasDue = a.due && a.due.trim() !== '';
-                const bHasDue = b.due && b.due.trim() !== '';
+                const aHasDue = !!(a.due && a.due.trim() !== '');
+                const bHasDue = !!(b.due && b.due.trim() !== '');
                 if (aHasDue && !bHasDue) return -1;
                 if (!aHasDue && bHasDue) return 1;
                 if (aHasDue && bHasDue) return moment(a.due).valueOf() - moment(b.due).valueOf();
                 return b.lastUpdate - a.lastUpdate;
             });
-        } else if (this.viewMode === 'open') {
-            tasks = tasks.filter(t => t.status === 'open' && t.due && t.due.trim() !== "");
-            tasks.sort((a, b) => moment(a.due).valueOf() - moment(b.due).valueOf());
         } else if (this.viewMode === 'not-due') {
             tasks = tasks.filter(t => t.status === 'open' && (!t.due || t.due.trim() === ""));
             tasks.sort((a, b) => b.lastUpdate - a.lastUpdate);
@@ -126,25 +120,25 @@ export class TasksTab extends BaseTab {
 
         if (tasks.length === 0) {
             const emptyMsgs: Record<TaskViewMode, string> = {
-                inbox: 'Inbox empty. You\'re clear ✓', open: 'Queue is clear ✓', 'not-due': 'Inbox empty.',
+                open: 'All clear ✓', 'not-due': 'No undated tasks.',
                 waiting: 'Nothing waiting.', someday: 'No someday items.', done: 'No completed tasks.'
             };
             this.renderEmptyState(this.listContainer, emptyMsgs[this.viewMode]);
             return;
         }
 
-        // ── Group 'open/due' by time horizon; inbox is flat for speed ──
+        // ── Group the merged open queue by time horizon ─────────────────────
         if (this.viewMode === 'open') {
             const today = moment().startOf('day');
-            // Parse once per task; use non-strict to handle minor format variations
             const parsed = tasks.map(t => ({ task: t, m: moment(t.due, 'YYYY-MM-DD') }));
             const overdue  = parsed.filter(({m}) => m.isValid() && m.isBefore(today, 'day')).map(x => x.task);
             const dueToday = parsed.filter(({m}) => m.isValid() && m.isSame(today, 'day')).map(x => x.task);
-            // Fallback: invalid moments (malformed date) treated as upcoming rather than dropped
-            const upcoming = parsed.filter(({m}) => !m.isValid() || m.isAfter(today, 'day')).map(x => x.task);
+            const upcoming = parsed.filter(({m}) => m.isValid() && m.isAfter(today, 'day')).map(x => x.task);
+            const noDate = parsed.filter(({task, m}) => !task.due || task.due.trim() === '' || !m.isValid()).map(x => x.task);
             if (overdue.length)  this.renderGroup('Overdue', overdue, true);
             if (dueToday.length) this.renderGroup('Today', dueToday, false);
             if (upcoming.length) this.renderGroup('Upcoming', upcoming, false);
+            if (noDate.length)   this.renderGroup('No Date', noDate, false);
         } else {
             for (const task of tasks) this.renderRow(task, this.listContainer!);
         }
