@@ -113,9 +113,14 @@ export class SynthesisTab extends BaseTab {
     private renderSynthesisMode(container: HTMLElement): void {
         container.empty();
         const isPhone = Platform.isMobile && !isTablet();
+        const isTabletDevice = Platform.isMobile && isTablet();
 
         const shell = container.createEl('div', {
-            cls: `mina-syn-shell${isPhone ? ' is-phone' : ''}`,
+            cls: [
+                'mina-syn-shell',
+                isPhone ? 'is-phone' : '',
+                isTabletDevice ? 'is-tablet' : '',
+            ].filter(Boolean).join(' '),
         });
 
         if (!isPhone) {
@@ -821,9 +826,10 @@ export class SynthesisTab extends BaseTab {
         setIcon(ctxBtn, 'tag');
         ctxBtn.createEl('span', { text: 'Contexts' });
         ctxBtn.addEventListener('click', () => {
+            this.pendingAssignThought = null;
             const sheet = shell.querySelector<HTMLElement>('.mina-syn-ctx-sheet');
             if (sheet) {
-                this.populateContextSheet(sheet, null);
+                this.renderManageSheetContent(sheet, shell);
                 sheet.classList.add('is-open');
             }
         });
@@ -833,121 +839,164 @@ export class SynthesisTab extends BaseTab {
         const sheet = shell.createEl('div', { cls: 'mina-syn-ctx-sheet' });
         sheet.createEl('div', { cls: 'mina-syn-ctx-sheet-handle' });
 
-        const sheetHdr = sheet.createEl('div', {
-            attr: {
-                style: [
-                    'display:flex; align-items:center;',
-                    'justify-content:space-between; margin-bottom:12px;',
-                ].join(' '),
-            },
+        const sheetHdr = sheet.createEl('div', { cls: 'mina-syn-ctx-sheet-hdr' });
+        const sheetTitle = sheetHdr.createEl('span', {
+            cls: 'mina-syn-ctx-sheet-title',
+            text: 'Contexts',
         });
-        sheetHdr.createEl('span', {
-            text: 'ASSIGN CONTEXT',
-            attr: {
-                style: [
-                    'font-size:0.75em; font-weight:900;',
-                    'letter-spacing:0.1em; color:var(--text-faint);',
-                ].join(' '),
-            },
-        });
-        const closeBtn = sheetHdr.createEl('button', {
-            attr: { style: 'background:none; border:none; cursor:pointer; color:var(--text-muted); display:flex; align-items:center;' },
-        });
+        const closeBtn = sheetHdr.createEl('button', { cls: 'mina-syn-ctx-sheet-close' });
         setIcon(closeBtn, 'x');
 
-        const thoughtTitleEl = sheet.createEl('div', {
-            attr: { style: 'font-size:0.85em; color:var(--text-muted); margin-bottom:14px; font-style:italic;' },
-        });
-        const pillsGrid = sheet.createEl('div', {
-            attr: { style: 'display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;' },
-        });
-
-        const alsoProcessLabel = sheet.createEl('label', {
-            attr: { style: 'display:flex; align-items:center; gap:8px; font-size:0.82em; color:var(--text-muted); margin-bottom:16px; cursor:pointer;' },
-        });
-        const alsoProcessCheck = alsoProcessLabel.createEl('input', { type: 'checkbox' });
-        alsoProcessCheck.checked = true;
-        alsoProcessLabel.createEl('span', { text: 'Also mark as synthesized' });
-
-        const confirmBtn = sheet.createEl('button', {
-            text: 'Apply',
-            cls: 'mina-btn-primary',
-            attr: { style: 'width:100%;' },
-        });
+        const contentArea = sheet.createEl('div', { cls: 'mina-syn-ctx-sheet-content' });
 
         const closeSheet = () => {
-            sheet.classList.remove('is-open');
+            sheet.classList.remove('is-open', 'is-manage');
             this.pendingAssignThought = null;
         };
-
         closeBtn.addEventListener('click', closeSheet);
 
-        confirmBtn.addEventListener('click', async () => {
-            if (!this.pendingAssignThought) return;
-            const selected: string[] = [];
-            pillsGrid.querySelectorAll<HTMLElement>('[data-ctx].is-active').forEach((p) => {
-                if (p.dataset.ctx) selected.push(p.dataset.ctx);
-            });
-            if (selected.length > 0) {
-                await this.vault.assignContext(
-                    this.pendingAssignThought.filePath,
-                    selected,
-                    false,
-                );
-            }
-            if (alsoProcessCheck.checked) {
-                await this.vault.markAsSynthesized(this.pendingAssignThought.filePath);
-            }
-            new Notice(alsoProcessCheck.checked
-                ? 'Context assigned & synthesized.'
-                : 'Context assigned.',
-            );
-            closeSheet();
-            this.view.renderView();
-        });
-
-        // Store dynamic refs for populateContextSheet
-        (sheet as any)._thoughtTitleEl = thoughtTitleEl;
-        (sheet as any)._pillsGrid      = pillsGrid;
+        // Store refs for later population
+        (sheet as any)._title   = sheetTitle;
+        (sheet as any)._content = contentArea;
+        (sheet as any)._close   = closeSheet;
     }
 
     private openContextSheet(shell: HTMLElement, thought: ThoughtEntry): void {
         this.pendingAssignThought = thought;
         const sheet = shell.querySelector<HTMLElement>('.mina-syn-ctx-sheet');
         if (!sheet) return;
-        this.populateContextSheet(sheet, thought);
+        sheet.classList.remove('is-manage');
+        this.renderAssignSheetContent(sheet, thought);
         sheet.classList.add('is-open');
     }
 
-    private populateContextSheet(
-        sheet: HTMLElement,
-        thought: ThoughtEntry | null,
-    ): void {
-        const thoughtTitleEl = (sheet as any)._thoughtTitleEl as HTMLElement | undefined;
-        const pillsGrid      = (sheet as any)._pillsGrid      as HTMLElement | undefined;
-        if (!pillsGrid) return;
+    /** Assign mode: displayed when the user taps "Assign" on a card. */
+    private renderAssignSheetContent(sheet: HTMLElement, thought: ThoughtEntry): void {
+        const titleEl    = (sheet as any)._title   as HTMLElement | undefined;
+        const contentArea = (sheet as any)._content as HTMLElement | undefined;
+        if (!contentArea) return;
 
-        const t = thought ?? this.pendingAssignThought;
-        if (thoughtTitleEl) {
-            thoughtTitleEl.textContent = t
-                ? `"${t.title.substring(0, 60)}"`
-                : 'Select contexts';
-        }
+        if (titleEl) titleEl.textContent = `"${thought.title.substring(0, 50)}"`;
+        contentArea.empty();
 
-        pillsGrid.empty();
-        for (const ctx of (this.settings.contexts || [])) {
-            const isActive = (t?.context || []).includes(ctx);
-            const pill = pillsGrid.createEl('button', {
-                cls: `mina-chip mina-chip--ctx${isActive ? ' is-active' : ''}`,
-                text: `#${ctx}`,
-                attr: {
-                    'data-ctx': ctx,
-                    style: 'cursor:pointer; padding:6px 12px; border:none;',
-                },
-            });
-            pill.addEventListener('click', () => pill.classList.toggle('is-active'));
-        }
+        // ── Search ───────────────────────────────────────────────────────────
+        const searchInput = contentArea.createEl('input', {
+            type: 'text',
+            cls: 'mina-syn-ctx-search-input mina-syn-sheet-search',
+            attr: { placeholder: 'Search contexts…', spellcheck: 'false' },
+        });
+
+        // ── Pills grid ───────────────────────────────────────────────────────
+        const pillsGrid = contentArea.createEl('div', { cls: 'mina-syn-sheet-pills' });
+
+        // ── Also-process checkbox ────────────────────────────────────────────
+        const alsoProcessLabel = contentArea.createEl('label', {
+            cls: 'mina-syn-sheet-also-process',
+        });
+        const alsoProcessCheck = alsoProcessLabel.createEl('input', { type: 'checkbox' });
+        alsoProcessCheck.checked = true;
+        alsoProcessLabel.createEl('span', { text: 'Also mark as synthesized' });
+
+        // ── Apply button ─────────────────────────────────────────────────────
+        const confirmBtn = contentArea.createEl('button', {
+            text: 'Apply',
+            cls: 'mina-btn-primary mina-syn-sheet-apply',
+        });
+
+        // Build sorted, hidden-filtered pills
+        const hidden = new Set<string>(this.settings.hiddenContexts || []);
+        const visibleContexts = [...(this.settings.contexts || [])]
+            .filter((c) => !hidden.has(c))
+            .sort((a, b) => a.localeCompare(b));
+
+        const hiddenCount = (this.settings.contexts || []).filter((c) => hidden.has(c)).length;
+
+        const buildPills = (query: string) => {
+            pillsGrid.empty();
+            for (const ctx of visibleContexts) {
+                if (query && !ctx.toLowerCase().includes(query)) continue;
+                const isActive = (thought.context || []).includes(ctx);
+                const pill = pillsGrid.createEl('button', {
+                    cls: `mina-chip mina-chip--ctx${isActive ? ' is-active' : ''}`,
+                    text: `#${ctx}`,
+                    attr: { 'data-ctx': ctx },
+                });
+                pill.addEventListener('click', () => pill.classList.toggle('is-active'));
+            }
+            if (hiddenCount > 0 && !query) {
+                pillsGrid.createEl('span', {
+                    text: `${hiddenCount} hidden`,
+                    cls: 'mina-syn-sheet-hidden-note',
+                });
+            }
+        };
+
+        buildPills('');
+        searchInput.addEventListener('input', () =>
+            buildPills(searchInput.value.toLowerCase().trim()),
+        );
+
+        confirmBtn.addEventListener('click', async () => {
+            const selected: string[] = [];
+            pillsGrid
+                .querySelectorAll<HTMLElement>('[data-ctx].is-active')
+                .forEach((p) => { if (p.dataset.ctx) selected.push(p.dataset.ctx); });
+            if (selected.length > 0) {
+                await this.vault.assignContext(thought.filePath, selected, false);
+            }
+            if (alsoProcessCheck.checked) {
+                await this.vault.markAsSynthesized(thought.filePath);
+            }
+            new Notice(
+                alsoProcessCheck.checked
+                    ? 'Context assigned & synthesized.'
+                    : 'Context assigned.',
+            );
+            const closeSheet = (sheet as any)._close as (() => void) | undefined;
+            if (closeSheet) closeSheet();
+            this.view.renderView();
+        });
     }
+
+    /** Manage mode: displayed when the user taps "Contexts" in the bottom nav. */
+    private renderManageSheetContent(sheet: HTMLElement, shell: HTMLElement): void {
+        const titleEl    = (sheet as any)._title   as HTMLElement | undefined;
+        const contentArea = (sheet as any)._content as HTMLElement | undefined;
+        if (!contentArea) return;
+
+        if (titleEl) titleEl.textContent = 'CONTEXTS';
+        sheet.classList.add('is-manage');
+        contentArea.empty();
+
+        // ── Search ───────────────────────────────────────────────────────────
+        const searchWrap = contentArea.createEl('div', { cls: 'mina-syn-ctx-search' });
+        const searchInput = searchWrap.createEl('input', {
+            type: 'text',
+            cls: 'mina-syn-ctx-search-input',
+            attr: { placeholder: 'Search…', spellcheck: 'false' },
+        });
+
+        // ── Context list (same structure as desktop left panel) ───────────────
+        const list = contentArea.createEl('div', {
+            cls: 'mina-syn-ctx-list mina-syn-sheet-ctx-list',
+        });
+        this.buildContextList(list, shell);
+
+        searchInput.addEventListener('input', () => {
+            const q = searchInput.value.toLowerCase().trim();
+            list.querySelectorAll<HTMLElement>('.mina-syn-ctx-row').forEach((row) => {
+                const name = (row.dataset.ctx || '').toLowerCase();
+                row.style.display = !q || name.includes(q) ? '' : 'none';
+            });
+        });
+    }
+
+    // ── Legacy stub — kept so any stale references compile ────────────────────
+    /** @deprecated Use renderAssignSheetContent or renderManageSheetContent */
+    private populateContextSheet(
+        _sheet: HTMLElement,
+        _thought: ThoughtEntry | null,
+    ): void { /* no-op */ }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Data helpers

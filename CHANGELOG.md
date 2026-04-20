@@ -1,6 +1,16 @@
 # Changelog
 
+All notable changes to MINA V2 will be documented in this file.
 
+## [1.10.5] - 2026-04-20
+
+### Added
+- **Tablet UX**: is-tablet CSS class on synthesis shell. All context rows 44px min touch targets, eye/trash always visible (no hover needed), card buttons and segmented tabs have larger touch padding.
+- **Phone - Context Manage Sheet**: Contexts nav button now opens full management panel (same as desktop left panel: search, add, hide/unhide, delete).
+- **Phone - Assign Sheet Upgraded**: Live search, alphabetical sort, hides hidden contexts, shows N hidden indicator.
+
+### Changed
+- Refactored phone bottom sheet into renderAssignSheetContent (assign) and renderManageSheetContent (manage) modes.
 
 ## [1.10.4] — Synthesis: Done All
 
@@ -32,24 +42,19 @@
 - **Dynamic assign button**: dashed when nothing primed → solid accent "Assign to {ctx}" when primed → green checkmark if already assigned
 - **Attention shake**: clicking Assign without a context primed shakes the context panel as a prompt
 - **DOM-surgical priming**: selecting a context updates all buttons in-place without re-rendering the feed
+
 ## [1.10.0] — Synthesis V2: Context-First Routing
 
 ### ✨ New
-- **Synthesis Tab completely redesigned** — replaced "master note" paradigm with Context-First Routing
-- **Full-body thought cards** — no more 120-char truncation; full note content rendered inline with expand/collapse for long notes
+- **Synthesis Tab completely redesigned** — replaced the legacy master note paradigm with Context-First Routing
+- **Full-body thought cards** — full note content rendered inline with expand/collapse for long notes
 - **3-state feed filter** — Inbox (no context), Mapped (with context), Done (processed)
-- **Dual-pane layout** — Feed (340px left) + Canvas (right); context pill bar routes thoughts to #tags in frontmatter
-- **Drag-to-assign** — drag a thought card to the canvas to assign it to the active context
-- **Phone support** — single-pane with bottom nav Feed/Canvas toggle + bottom sheet for context assignment
+- **Context-first layout** — context pill bar routes thoughts to #tags in frontmatter; phone gets bottom sheet for context assignment
 - **VaultService** — new `assignContext()` and `removeContext()` methods
-All notable changes to MINA V2 will be documented in this file.
-
-## [Unreleased]
 
 ## [1.9.2] - 2026-04-20
 ### Fix — Search Modal Centered Layout
-Center the Global Search overlay vertically in the window (desktop/tablet).
-Changed overlay from top-aligned (lign-items: flex-start + padding-top: 14vh) to fully centered (lign-items: center). The panel now sits at the visual midpoint of the screen for a cleaner, more natural feel.
+Global Search overlay now centered vertically (`align-items: center`) on desktop/tablet.
 
 ## [1.9.1] - 2026-04-21
 ### Fix — Search Navigation + Mobile Search Redesign
