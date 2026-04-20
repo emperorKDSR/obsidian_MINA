@@ -841,7 +841,7 @@ export class CommandCenterTab extends BaseTab {
                 const item = cluster.createEl('div', { cls: 'mina-pillar-item', attr: { tabindex: '0' } });
                 const iconWrap = item.createDiv({ cls: 'mina-pillar-icon' }); setIcon(iconWrap, i.icon);
                 item.createSpan({ text: i.label, cls: 'mina-pillar-label' });
-                item.addEventListener('click', () => { this.view.activeTab = i.tab; this.view.renderView(); });
+                item.addEventListener('click', () => { this.plugin.activateView(i.tab, false); });
                 item.addEventListener('keydown', (e: KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); item.click(); } });
             });
         };

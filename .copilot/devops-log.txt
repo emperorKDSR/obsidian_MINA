@@ -27,3 +27,8 @@
 [2026-04-20T02:54:00+02:00] ACTION: documenting deployment and pushing to remote
 [2026-04-20T02:54:00+02:00] INFO: deployed build to vault: C:\Users\57092\OneDrive\wFiles\1 Obsidian\K0000\K0000\.obsidian\plugins\mina_v2
 [2026-04-20T02:54:00+02:00] CMD: git add .copilot/devops-log.txt && git commit -m 'docs(devops): document deployment' -m 'Documented deployment to vault and pushed.' -m 'Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>' && git push origin main
+[2026-04-20T02:54:00+02:00] RESULT: git commit succeeded (aad4f47)
+[2026-04-20T02:54:00+02:00] RESULT: git push succeeded
+[2026-04-20T03:02:16+02:00] RELEASE v1.0.4: navigation buttons open new window on desktop
+[2026-04-20T03:02:16+02:00] FILES CHANGED: src/main.ts (activateView exact-match), src/tabs/CommandCenterTab.ts (nav click -> activateView)
+[2026-04-20T03:02:16+02:00] DEPLOYED to: C:\Users\57092\OneDrive\wFiles\1 Obsidian\K0000\K0000\.obsidian\plugins\mina_v2

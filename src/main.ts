@@ -138,7 +138,16 @@ export default class MinaPlugin extends Plugin {
         let targetLeaf: WorkspaceLeaf | null = null;
         for (const leaf of leaves) {
             const view = leaf.view as MinaView;
-            if (view && view.isDedicated === isDedicated && (isDedicated ? view.activeTab === targetTab : true)) { targetLeaf = leaf; break; }
+            if (view && view.isDedicated === isDedicated && view.activeTab === targetTab) { targetLeaf = leaf; break; }
+        }
+        if (!targetLeaf && isDedicated && !Platform.isMobile) {
+            for (const leaf of leaves) {
+                const view = leaf.view as MinaView;
+                if (view && view.isDedicated) {
+                    targetLeaf = leaf;
+                    break;
+                }
+            }
         }
         if (!targetLeaf) targetLeaf = Platform.isMobile ? (isTablet() ? workspace.getLeaf(false) : workspace.getLeaf('tab')) : workspace.getLeaf('window');
         if (targetLeaf) {

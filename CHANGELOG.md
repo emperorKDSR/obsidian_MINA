@@ -2,6 +2,12 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.0.4] - 2026-04-20
+
+### Changed
+- **Navigation — new-window mode** — clicking any ACTION, MANAGEMENT, or SYSTEM button in the Command Center footer now opens the target mode in a **new window** (desktop) or new tab (mobile) instead of replacing the current view
+- **activateView — exact tab match** — the leaf-reuse logic now matches by `activeTab` for all leaves (dedicated and non-dedicated), so clicking the same nav button a second time focuses the existing window rather than spawning a duplicate
+
 ## [1.0.3] - 2026-04-20
 
 ### Changed
