@@ -1,9 +1,3 @@
-## [1.10.8] - Habit Ring Perfect Circle
-
-### Fixed
-- **Habits**: Incomplete habit rings now render as a perfect circle — root cause was the ring SVG using inset: -3px / calc(100% + 6px) which inherited the button'''s non-square dimensions (tall flex column), stretching the circle into an ellipse; fixed by giving the ring a fixed 42x42px square positioned absolutely at the button'''s centre via left:50%; top:50%; transform:translate(-50%,-50%)
-- **Habits**: Incomplete ring fill is now always a full dark-grey circle (ar(--background-modifier-border)) so the ring always looks complete; accent colour animates on completion (	ransition: stroke)
-
 ## [1.10.7] - Habit Ring Fix
 
 ### Fixed
