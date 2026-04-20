@@ -2,6 +2,7 @@ import { moment, Notice, TFile, setIcon, Platform } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from '../modals/EditEntryModal';
+import { ConfirmModal } from '../modals/ConfirmModal';
 import { parseContextString, isTablet } from '../utils';
 import type { VoiceState, ReviewData } from '../types';
 
@@ -275,7 +276,9 @@ export class VoiceTab extends BaseTab {
             const row = list.createEl('div', { cls: 'mina-clip-row' });
             row.createEl('span', { cls: 'mina-clip-name', text: file.basename });
 
-            const transcribeBtn = row.createEl('button', {
+            const actions = row.createEl('div', { cls: 'mina-clip-actions' });
+
+            const transcribeBtn = actions.createEl('button', {
                 cls: 'mina-clip-transcribe-btn',
                 text: 'Transcribe',
                 attr: { title: `Transcribe ${file.basename}` }
@@ -293,7 +296,26 @@ export class VoiceTab extends BaseTab {
                     transcribeBtn.disabled = false;
                 }
             });
+
+            const deleteBtn = actions.createEl('button', { cls: 'mina-clip-delete-btn', attr: { title: 'Delete clip' } });
+            setIcon(deleteBtn, 'lucide-trash-2');
+            deleteBtn.addEventListener('click', () => {
+                new ConfirmModal(this.app, `Delete "${file.basename}"? This cannot be undone.`, async () => {
+                    await this.deleteClip(file);
+                    row.remove();
+                    if (list.children.length === 0) section.remove();
+                }).open();
+            });
         });
+    }
+
+    private async deleteClip(audioFile: TFile) {
+        const sidecarPath = audioFile.path.replace(/\.[^.]+$/, '.md');
+        const sidecar = this.app.vault.getAbstractFileByPath(sidecarPath);
+        if (sidecar instanceof TFile) {
+            try { await this.app.vault.trash(sidecar, true); } catch { /* ignore */ }
+        }
+        await this.app.vault.trash(audioFile, true);
     }
 
     // ─── RECORDING CONTROL ──────────────────────────────────────────────────────

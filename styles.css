@@ -4059,6 +4059,34 @@
 }
 .mina-clip-transcribe-btn:active { background: rgba(124,58,237,0.10); transform: scale(0.96); }
 .mina-clip-transcribe-btn:disabled { opacity: 0.5; pointer-events: none; }
+.mina-clip-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.mina-clip-delete-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1.5px solid transparent;
+    border-radius: 10px;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.mina-clip-delete-btn:hover {
+    color: var(--text-error);
+    border-color: var(--text-error);
+    background: rgba(220,50,50,0.08);
+}
+.mina-clip-delete-btn:active { transform: scale(0.93); }
 
 /* ── Desktop overrides (≥768px) ── */
 @media (min-width: 768px) {

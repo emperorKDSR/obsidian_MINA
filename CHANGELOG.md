@@ -2,6 +2,12 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [Unreleased]
+### Feat — Voice Memo Management
+- **Voice nav button**: Added "Voice" entry to the SYSTEM cluster in the Command Center navigation footer — direct access without the command palette
+- **Delete voice memo**: Each clip in the RECENT CLIPS list now has a trash icon button; tapping it opens a confirm dialog and moves both the audio file and its sidecar `.md` to the Obsidian trash
+- **Clip actions row**: Buttons grouped into a dedicated `mina-clip-actions` flex container with consistent spacing and touch targets
+
 ## [1.3.0] - 2026-04-20
 ### Feat — 5-State Voice Capture Redesign
 
