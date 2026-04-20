@@ -28,8 +28,6 @@ export class CommandCenterTab extends BaseTab {
         const goalsDual = wrap.createEl('div', { cls: 'mina-goals-pane mina-section--hideable' });
         this.renderWeeklyGoals(goalsDual);
         this.renderMonthlyGoals(goalsDual);
-        this.renderDailyRoutine(wrap);
-        this.renderIntelligence(wrap);
         this.renderNavigationFooter(wrap);
     }
 

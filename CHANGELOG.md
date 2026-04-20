@@ -2,6 +2,12 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.0.3] - 2026-04-20
+
+### Changed
+- **Command Center — Intelligence hidden** — hid the Intelligence section from the Command Center UI for now without removing the underlying AI implementation
+- **Command Center — center strip removed** — removed the remaining section between the Weekly/Monthly goals block and the footer button clusters so the layout flows directly into navigation
+
 ## [1.0.2] - 2026-04-20
 
 ### Changed
