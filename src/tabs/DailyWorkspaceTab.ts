@@ -2,7 +2,8 @@ import { moment, Platform, Notice, setIcon, TFile } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from './BaseTab';
 import type { TaskEntry, ThoughtEntry } from '../types';
-import { isTablet, attachInlineTriggers } from '../utils';
+import { isTablet, attachInlineTriggers, parseContextString } from '../utils';
+import { EditEntryModal } from '../modals/EditEntryModal';
 
 export class DailyWorkspaceTab extends BaseTab {
     private parentContainer: HTMLElement;
@@ -277,14 +278,30 @@ export class DailyWorkspaceTab extends BaseTab {
                 });
             }
 
-            // Hover actions (desktop)
+            // Hover actions (desktop) + mobile long-press
             if (!Platform.isMobile || isTablet()) {
                 const actionsEl = entryEl.createEl('div', { cls: 'mina-dw-entry-actions' });
                 const editBtn = actionsEl.createEl('button', { cls: 'mina-dw-entry-action-btn', attr: { 'aria-label': 'Edit' } });
                 setIcon(editBtn, 'lucide-pencil');
                 editBtn.addEventListener('click', () => {
-                    this.view.activeTab = item.type === 'task' ? 'review-tasks' : 'review-thoughts';
-                    this.view.renderView();
+                    const entry = item.entry;
+                    const isTask = item.type === 'task';
+                    const ctxStr = entry.context?.map((c: string) => `#${c}`).join(' ') ?? '';
+                    const due = isTask ? ((entry as any).due || null) : null;
+                    new EditEntryModal(
+                        this.app, this.plugin,
+                        entry.body ?? (entry as any).title ?? '',
+                        ctxStr, due, isTask,
+                        async (newText, newCtxStr, newDue) => {
+                            const ctxArr = newCtxStr ? parseContextString(newCtxStr) : [];
+                            if (isTask) {
+                                await this.vault.editTask(entry.filePath, newText.replace(/<br>/g, '\n'), ctxArr, newDue || undefined);
+                            } else {
+                                await this.vault.editThought(entry.filePath, newText.replace(/<br>/g, '\n'), ctxArr);
+                            }
+                            setTimeout(() => this.render(this.parentContainer), 200);
+                        }
+                    ).open();
                 });
             }
         }
