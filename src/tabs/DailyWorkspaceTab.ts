@@ -235,53 +235,41 @@ export class DailyWorkspaceTab extends BaseTab {
         const entries = parent.createEl('div', { cls: 'mina-dw-entries' });
         const dayStr = this.currentDate;
 
-        // Get today's thoughts from IndexService
+        // Left writing surface shows only thoughts — tasks live in the right task panel
         const todayThoughts: ThoughtEntry[] = Array.from(this.index.thoughtIndex.values())
             .filter(t => t.day === dayStr)
             .sort((a, b) => b.created.localeCompare(a.created));
 
-        // Get today's tasks from IndexService
-        const todayTasks: TaskEntry[] = Array.from(this.index.taskIndex.values())
-            .filter(t => t.day === dayStr)
-            .sort((a, b) => b.created.localeCompare(a.created));
-
-        // Merge and sort by created timestamp
-        const allEntries: Array<{ type: 'thought' | 'task'; entry: ThoughtEntry | TaskEntry }> = [
-            ...todayThoughts.map(t => ({ type: 'thought' as const, entry: t })),
-            ...todayTasks.map(t => ({ type: 'task' as const, entry: t }))
-        ].sort((a, b) => b.entry.created.localeCompare(a.entry.created));
-
-        if (allEntries.length === 0) {
+        if (todayThoughts.length === 0) {
             this.renderEmptyState(entries, dayStr === moment().format('YYYY-MM-DD')
-                ? 'Start capturing your thoughts and tasks for today…'
-                : `No entries for ${moment(dayStr).format('MMMM D, YYYY')}`);
+                ? 'Capture your first thought for today…'
+                : `No thoughts for ${moment(dayStr).format('MMMM D, YYYY')}`);
             return;
         }
 
-        for (const item of allEntries) {
+        for (const entry of todayThoughts) {
             const entryEl = entries.createEl('div', { cls: 'mina-dw-entry' });
 
             // Timestamp
-            const timeStr = moment(item.entry.created, 'YYYY-MM-DD HH:mm:ss').format('h:mm A');
-            const typeBadge = item.type === 'task' ? '✓' : '✦';
+            const timeStr = moment(entry.created, 'YYYY-MM-DD HH:mm:ss').format('h:mm A');
             entryEl.createEl('div', {
-                text: `${timeStr} ${typeBadge}`,
+                text: `${timeStr} ✦`,
                 cls: 'mina-dw-entry-time'
             });
 
             // Body
             const bodyEl = entryEl.createEl('div', { cls: 'mina-dw-entry-body' });
-            bodyEl.setText(item.entry.body || item.entry.title);
+            bodyEl.setText(entry.body || entry.title);
 
             // Context tags
-            if (item.entry.context && item.entry.context.length > 0) {
+            if (entry.context && entry.context.length > 0) {
                 const tagRow = entryEl.createEl('div', { cls: 'mina-dw-entry-tags' });
-                item.entry.context.forEach(ctx => {
+                entry.context.forEach(ctx => {
                     tagRow.createEl('span', { text: `#${ctx}`, cls: 'mina-dw-entry-tag' });
                 });
             }
 
-            // Hover actions (desktop) + mobile long-press
+            // Hover actions (desktop)
             if (!Platform.isMobile || isTablet()) {
                 const actionsEl = entryEl.createEl('div', { cls: 'mina-dw-entry-actions' });
 
@@ -289,21 +277,14 @@ export class DailyWorkspaceTab extends BaseTab {
                 const editBtn = actionsEl.createEl('button', { cls: 'mina-dw-entry-action-btn', attr: { 'aria-label': 'Edit' } });
                 setIcon(editBtn, 'lucide-pencil');
                 editBtn.addEventListener('click', () => {
-                    const entry = item.entry;
-                    const isTask = item.type === 'task';
                     const ctxStr = entry.context?.map((c: string) => `#${c}`).join(' ') ?? '';
-                    const due = isTask ? ((entry as any).due || null) : null;
                     new EditEntryModal(
                         this.app, this.plugin,
-                        entry.body ?? (entry as any).title ?? '',
-                        ctxStr, due, isTask,
-                        async (newText, newCtxStr, newDue) => {
+                        entry.body ?? entry.title ?? '',
+                        ctxStr, null, false,
+                        async (newText, newCtxStr) => {
                             const ctxArr = newCtxStr ? parseContextString(newCtxStr) : [];
-                            if (isTask) {
-                                await this.vault.editTask(entry.filePath, newText.replace(/<br>/g, '\n'), ctxArr, newDue || undefined);
-                            } else {
-                                await this.vault.editThought(entry.filePath, newText.replace(/<br>/g, '\n'), ctxArr);
-                            }
+                            await this.vault.editThought(entry.filePath, newText.replace(/<br>/g, '\n'), ctxArr);
                             setTimeout(() => this.render(this.parentContainer), 500);
                         }
                     ).open();
@@ -314,12 +295,11 @@ export class DailyWorkspaceTab extends BaseTab {
                 setIcon(delBtn, 'lucide-trash-2');
                 delBtn.style.color = 'var(--text-error)';
                 delBtn.addEventListener('click', () => {
-                    const isTask = item.type === 'task';
                     new ConfirmModal(
                         this.app,
-                        `Move this ${isTask ? 'task' : 'thought'} to trash?`,
+                        'Move this thought to trash?',
                         async () => {
-                            await this.vault.deleteFile(item.entry.filePath, isTask ? 'tasks' : 'thoughts');
+                            await this.vault.deleteFile(entry.filePath, 'thoughts');
                             setTimeout(() => this.render(this.parentContainer), 500);
                         }
                     ).open();
@@ -383,9 +363,23 @@ export class DailyWorkspaceTab extends BaseTab {
                 addInput.disabled = true;
                 try {
                     const newFile = await this.vault.createTaskFile(text, []);
-                    // Eagerly index the new file so the task list updates immediately
-                    // without waiting for the vault-event → metadataCache → notifyRefresh chain
-                    await this.index.indexTaskFile(newFile);
+                    // Directly inject into taskIndex — metadataCache is not ready immediately
+                    // after file creation, so indexTaskFile() would silently bail.
+                    const now = moment().format('YYYY-MM-DD HH:mm:ss');
+                    this.index.taskIndex.set(newFile.path, {
+                        filePath: newFile.path,
+                        title: text.split('\n')[0].substring(0, 120),
+                        body: text,
+                        status: 'open',
+                        due: '',
+                        created: now,
+                        modified: now,
+                        lastUpdate: newFile.stat.mtime,
+                        day: moment().format('YYYY-MM-DD'),
+                        context: [],
+                        children: [],
+                    });
+                    this.index.rebuildCalculatedState();
                     new Notice('✓ Task added');
                     this.render(this.parentContainer);
                 } finally {

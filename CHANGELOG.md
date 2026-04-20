@@ -2,6 +2,13 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.2.3] - 2026-04-20
+### Patch — Daily Workspace quick-add reliability & panel separation
+
+#### Fixed
+- **Quick-add task list updates immediately** — root cause was `indexTaskFile()` relying on `metadataCache.getFileCache()` which returns `null` right after file creation. Fixed by directly injecting a `TaskEntry` into `taskIndex` with the known data (title, body, day, status) immediately after `createTaskFile()` resolves, bypassing the async metadataCache pipeline entirely. `rebuildCalculatedState()` is called to keep radar queue consistent. The metadataCache event still runs later and overwrites with the full parsed entry as expected.
+- **Left panel shows only thoughts** — the writing surface (left pane) was incorrectly showing both thoughts and tasks, creating confusing duplicate visibility (tasks appeared in left entry list AND right task panel). Left panel now shows today's thoughts only. Tasks created via quick-add or the main capture bar remain exclusively in the right task panel where they belong.
+
 ## [1.2.2] - 2026-04-20
 ### Patch — Daily Workspace quick-add refresh & delete entries
 
