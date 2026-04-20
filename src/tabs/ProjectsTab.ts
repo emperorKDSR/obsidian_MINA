@@ -1,110 +1,245 @@
-import { moment, Platform, TFile, setIcon } from 'obsidian';
+import { moment, TFile, setIcon } from 'obsidian';
 import type { MinaView } from '../view';
-import { BaseTab } from "./BaseTab";
-import { EditEntryModal } from '../modals/EditEntryModal';
-import { parseContextString } from '../utils';
+import { BaseTab } from './BaseTab';
+import { NewProjectModal } from '../modals/NewProjectModal';
+import type { ProjectEntry } from '../types';
+
+type ProjectFilter = 'all' | 'active' | 'on-hold' | 'completed';
+
+const FILTER_LABELS: { val: ProjectFilter; label: string }[] = [
+    { val: 'all', label: 'All' },
+    { val: 'active', label: 'Active' },
+    { val: 'on-hold', label: 'On Hold' },
+    { val: 'completed', label: 'Completed' },
+];
+
+const STATUS_ORDER: ProjectEntry['status'][] = ['active', 'on-hold', 'completed', 'archived'];
+
+const STATUS_LABELS: Record<ProjectEntry['status'], string> = {
+    active: 'Active',
+    'on-hold': 'On Hold',
+    completed: 'Completed',
+    archived: 'Archived',
+};
 
 export class ProjectsTab extends BaseTab {
+    private filter: ProjectFilter = 'all';
+    private expandedIds: Set<string> = new Set();
+
     constructor(view: MinaView) { super(view); }
 
     render(container: HTMLElement) {
-        this.renderProjectDashboard(container);
+        container.empty();
+        const wrap = container.createDiv('mina-projects-wrap');
+
+        // Header
+        const header = wrap.createDiv('mina-projects-header');
+        header.createEl('h2', { text: 'Projects', cls: 'mina-projects-title' });
+        const newBtn = header.createEl('button', { text: '+ New', cls: 'mina-btn mina-btn--primary mina-btn--sm' });
+        newBtn.addEventListener('click', () => {
+            new NewProjectModal(this.app, this.vault, (entry) => {
+                this.index.projectIndex.set(entry.id, entry);
+                this.render(container);
+            }).open();
+        });
+
+        // Filter pills
+        const filterRow = wrap.createDiv('mina-filter-pills');
+        FILTER_LABELS.forEach(f => {
+            const pill = filterRow.createEl('button', { text: f.label, cls: 'mina-filter-pill' });
+            if (f.val === this.filter) pill.addClass('is-active');
+            pill.addEventListener('click', () => {
+                this.filter = f.val;
+                this.render(container);
+            });
+        });
+
+        // Get and sort projects
+        const allProjects = Array.from(this.index.projectIndex.values());
+        const visible = allProjects
+            .filter(p => p.status !== 'archived')
+            .filter(p => this.filter === 'all' || p.status === this.filter)
+            .sort((a, b) => {
+                const oa = STATUS_ORDER.indexOf(a.status);
+                const ob = STATUS_ORDER.indexOf(b.status);
+                if (oa !== ob) return oa - ob;
+                return a.name.localeCompare(b.name);
+            });
+
+        if (visible.length === 0) {
+            const empty = wrap.createDiv('mina-empty-state');
+            empty.createEl('p', { text: 'No projects yet. Tap "+ New" to create one.', cls: 'mina-empty-msg' });
+            return;
+        }
+
+        const list = wrap.createDiv('mina-projects-list');
+        visible.forEach(p => this.renderCard(list, p, container));
     }
 
-    async renderProjectDashboard(container: HTMLElement) {
-        container.empty();
-        
-        const wrap = container.createEl('div', {
-            attr: {
-                style: 'padding: 18px 16px 200px 16px; display: flex; flex-direction: column; gap: 24px; overflow-y: auto; flex-grow: 1; min-height: 0; -webkit-overflow-scrolling: touch; background: var(--background-primary);'
+    private renderCard(list: HTMLElement, project: ProjectEntry, rootContainer: HTMLElement) {
+        const card = list.createDiv({ cls: `mina-project-card mina-project-card--${project.status}` });
+        if (project.color) card.style.setProperty('--project-color', project.color);
+
+        // Task counts from index
+        const tasks = Array.from(this.index.taskIndex.values())
+            .filter(t => t.project === project.id || t.project === project.name);
+        const openCount = tasks.filter(t => t.status === 'open').length;
+        const doneCount = tasks.filter(t => t.status === 'done').length;
+        const totalCount = tasks.length;
+
+        // Card header row
+        const cardHeader = card.createDiv('mina-project-card__header');
+        const nameLine = cardHeader.createDiv('mina-project-card__name-line');
+        nameLine.createEl('span', { text: project.name, cls: 'mina-project-card__name' });
+
+        // Status badge (clickable)
+        const badge = nameLine.createEl('span', {
+            text: STATUS_LABELS[project.status],
+            cls: `mina-status-badge mina-status--${project.status}`
+        });
+        badge.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.openStatusPicker(badge, project, rootContainer);
+        });
+
+        // Goal text
+        if (project.goal) {
+            card.createEl('p', { text: project.goal, cls: 'mina-project-card__goal' });
+        }
+
+        // Meta row
+        const meta = card.createDiv('mina-project-card__meta');
+        if (totalCount > 0) {
+            meta.createEl('span', { text: `${openCount} open · ${doneCount} done`, cls: 'mina-project-card__task-count' });
+        }
+        if (project.due) {
+            const dueM = moment(project.due);
+            const isOverdue = dueM.isBefore(moment(), 'day');
+            meta.createEl('span', {
+                text: `📅 ${dueM.format('MMM D')}`,
+                cls: `mina-chip mina-chip--date${isOverdue ? ' is-overdue' : ''}`
+            });
+        }
+
+        // Next task preview
+        const nextTask = tasks.filter(t => t.status === 'open').sort((a, b) => {
+            if (a.due && b.due) return a.due.localeCompare(b.due);
+            if (a.due) return -1;
+            if (b.due) return 1;
+            return 0;
+        })[0];
+        if (nextTask) {
+            const nextRow = card.createDiv('mina-project-card__next');
+            nextRow.createEl('span', { text: 'NEXT', cls: 'mina-project-card__next-label' });
+            nextRow.createEl('span', { text: nextTask.title, cls: 'mina-project-card__next-title' });
+        }
+
+        // Expand toggle
+        const isExpanded = this.expandedIds.has(project.id);
+        const expandPanel = card.createDiv({ cls: `mina-project-card__expand${isExpanded ? ' is-open' : ''}` });
+
+        // Expand toggle button
+        const toggleRow = card.createDiv('mina-project-card__toggle-row');
+        const toggleBtn = toggleRow.createEl('button', { cls: 'mina-project-card__toggle-btn' });
+        const toggleIcon = toggleBtn.createEl('span');
+        setIcon(toggleIcon, isExpanded ? 'chevron-up' : 'chevron-down');
+        toggleBtn.addEventListener('click', () => {
+            if (this.expandedIds.has(project.id)) {
+                this.expandedIds.delete(project.id);
+            } else {
+                this.expandedIds.add(project.id);
             }
+            this.render(rootContainer);
         });
 
-        // 1. Header
-        const header = wrap.createEl('div', {
-            attr: { style: 'display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px;' }
-        });
+        if (isExpanded) {
+            this.renderExpandPanel(expandPanel, project, rootContainer);
+        }
+    }
 
-        const navRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px; margin-bottom: 2px;' } });
-        this.renderHomeIcon(navRow);
+    private renderExpandPanel(panel: HTMLElement, project: ProjectEntry, rootContainer: HTMLElement) {
+        panel.empty();
 
-        header.createEl('h2', {
-            text: 'Projects',
-            attr: { style: 'margin: 0; font-size: 1.4em; font-weight: 800; color: var(--text-normal); letter-spacing: -0.03em; line-height: 1.1;' }
-        });
+        // Task list (max 5)
+        const tasks = Array.from(this.index.taskIndex.values())
+            .filter(t => t.project === project.id || t.project === project.name)
+            .filter(t => t.status === 'open')
+            .slice(0, 5);
 
-        // 2. Project Grid
-        const grid = wrap.createEl('div', {
-            attr: { style: 'display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px;' }
-        });
-
-        const projects = new Set<string>();
-        this.index.thoughtIndex.forEach(t => { if (t.project) projects.add(t.project); });
-        this.index.taskIndex.forEach(t => { if (t.project) projects.add(t.project); });
-
-        if (projects.size === 0) {
-            wrap.createEl('p', { text: 'No projects found. Add "project: Name" to your notes or tasks.', attr: { style: 'color: var(--text-muted); font-size: 0.9em; font-style: italic; text-align: center; margin-top: 40px;' } });
-        } else {
-            // ob-perf-08: Pre-build task count map in O(N) — was O(P×N) inline filter per project card
-            const openTasksByProject = new Map<string, number>();
-            this.index.taskIndex.forEach(t => {
-                if (t.project && t.status === 'open') {
-                    openTasksByProject.set(t.project, (openTasksByProject.get(t.project) || 0) + 1);
+        if (tasks.length > 0) {
+            const taskList = panel.createDiv('mina-project-expand__tasks');
+            tasks.forEach(task => {
+                const row = taskList.createDiv('mina-project-expand__task-row');
+                const dot = row.createEl('span', { cls: 'mina-project-expand__dot' });
+                setIcon(dot, 'circle');
+                row.createEl('span', { text: task.title, cls: 'mina-project-expand__task-title' });
+                if (task.due) {
+                    row.createEl('span', { text: moment(task.due).format('MMM D'), cls: 'mina-chip mina-chip--date mina-chip--sm' });
                 }
             });
-
-            Array.from(projects).sort().forEach(projectName => {
-                const card = grid.createEl('div', {
-                    attr: { style: 'background: var(--background-secondary-alt); border-radius: 12px; padding: 16px; border: 1px solid var(--background-modifier-border-faint); cursor: pointer; transition: transform 0.1s;' }
-                });
-                card.createEl('div', { text: projectName, attr: { style: 'font-weight: 800; font-size: 0.9em; color: var(--text-normal);' } });
-                
-                const count = openTasksByProject.get(projectName) || 0;
-                card.createEl('div', { text: `${count} active tasks`, attr: { style: 'font-size: 0.7em; color: var(--text-muted); margin-top: 4px;' } });
-
-                card.addEventListener('click', () => this.renderProjectFocus(container, projectName));
-            });
         }
+
+        // Actions
+        const actions = panel.createDiv('mina-project-expand__actions');
+
+        const viewBtn = actions.createEl('button', { text: 'View', cls: 'mina-btn mina-btn--ghost mina-btn--sm' });
+        viewBtn.addEventListener('click', () => {
+            const file = this.app.vault.getAbstractFileByPath(project.filePath);
+            if (file instanceof TFile) this.app.workspace.getLeaf().openFile(file);
+        });
+
+        const archiveBtn = actions.createEl('button', { text: 'Archive', cls: 'mina-btn mina-btn--danger mina-btn--sm' });
+        archiveBtn.addEventListener('click', async () => {
+            const file = this.app.vault.getAbstractFileByPath(project.filePath);
+            if (file instanceof TFile) {
+                await this.vault.archiveProject(file);
+                this.index.projectIndex.delete(project.id);
+                this.expandedIds.delete(project.id);
+                this.render(rootContainer);
+            }
+        });
     }
 
-    async renderProjectFocus(container: HTMLElement, projectName: string) {
-        container.empty();
-        const wrap = container.createEl('div', { attr: { style: 'padding: 18px 16px 200px 16px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; flex-grow: 1;' } });
+    private openStatusPicker(anchor: HTMLElement, project: ProjectEntry, rootContainer: HTMLElement) {
+        const existing = document.querySelector('.mina-status-picker');
+        if (existing) existing.remove();
 
-        const header = wrap.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px;' } });
-        const backBtn = header.createEl('button', { text: '←', attr: { style: 'background: transparent; border: none; font-size: 1.2em; cursor: pointer; color: var(--text-muted);' } });
-        backBtn.addEventListener('click', () => this.renderProjectDashboard(container));
-        header.createEl('h2', { text: projectName, attr: { style: 'margin: 0; font-size: 1.4em; font-weight: 800;' } });
+        const picker = document.createElement('div');
+        picker.className = 'mina-status-picker';
 
-        // Quick Add
-        const actionRow = wrap.createEl('div', { attr: { style: 'display: flex; gap: 10px;' } });
-        const addBtn = (label: string, icon: string, isTask: boolean) => {
-            const btn = actionRow.createEl('button', { attr: { style: 'flex: 1; padding: 8px; border-radius: 8px; background: var(--background-secondary-alt); border: 1px solid var(--background-modifier-border-faint); font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;' } });
-            const iconEl = btn.createEl('span'); setIcon(iconEl, icon); btn.createSpan({ text: ' ' + label });
-            btn.addEventListener('click', () => {
-                new EditEntryModal(this.app, this.plugin, '', '', isTask ? moment().format('YYYY-MM-DD') : null, isTask, async (text, ctxs, due) => {
-                    const contexts = parseContextString(ctxs);
-                    const file = isTask ? await this.vault.createTaskFile(text, contexts, due || undefined, projectName) : await this.vault.createThoughtFile(text, contexts, projectName);
-                    this.renderProjectFocus(container, projectName);
-                }, `New ${projectName} ${isTask ? 'Task' : 'Thought'}`).open();
+        const statuses: ProjectEntry['status'][] = ['active', 'on-hold', 'completed'];
+        statuses.forEach(s => {
+            const opt = picker.createEl('button', {
+                text: STATUS_LABELS[s],
+                cls: `mina-status-picker__opt mina-status--${s}${s === project.status ? ' is-current' : ''}`
             });
+            opt.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const file = this.app.vault.getAbstractFileByPath(project.filePath);
+                if (file instanceof TFile) {
+                    await this.vault.updateProject(file, { status: s });
+                    project.status = s;
+                    this.index.projectIndex.set(project.id, project);
+                }
+                picker.remove();
+                this.render(rootContainer);
+            });
+        });
+
+        document.body.appendChild(picker);
+
+        // Position near anchor
+        const rect = anchor.getBoundingClientRect();
+        picker.style.top = `${rect.bottom + 4}px`;
+        picker.style.left = `${rect.left}px`;
+
+        // Close on outside click
+        const close = (e: MouseEvent) => {
+            if (!picker.contains(e.target as Node)) {
+                picker.remove();
+                document.removeEventListener('click', close, true);
+            }
         };
-        addBtn('Note', 'pencil', false);
-        addBtn('Task', 'check-square-2', true);
-
-        // Lists
-        const projectTasks = Array.from(this.index.taskIndex.values()).filter(t => t.project === projectName);
-        const projectThoughts = Array.from(this.index.thoughtIndex.values()).filter(t => t.project === projectName);
-
-        if (projectTasks.length > 0) {
-            wrap.createEl('h3', { text: 'Tasks', attr: { style: 'margin: 10px 0 0 0; font-size: 0.8em; text-transform: uppercase; color: var(--text-faint);' } });
-            for (const task of projectTasks) await this.renderTaskRow(task, wrap, true);
-        }
-
-        if (projectThoughts.length > 0) {
-            wrap.createEl('h3', { text: 'Thoughts', attr: { style: 'margin: 10px 0 0 0; font-size: 0.8em; text-transform: uppercase; color: var(--text-faint);' } });
-            projectThoughts.sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate);
-            for (const thought of projectThoughts) await this.renderThoughtRow(thought, wrap, thought.filePath, 0, true);
-        }
+        setTimeout(() => document.addEventListener('click', close, true), 10);
     }
 }

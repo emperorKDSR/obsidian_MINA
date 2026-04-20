@@ -5,6 +5,17 @@ export interface ChatMessage {
     text: string;
 }
 
+export interface ProjectEntry {
+    id: string;
+    name: string;
+    status: 'active' | 'on-hold' | 'completed' | 'archived';
+    goal: string;
+    due?: string;
+    created: string;
+    color?: string;
+    filePath: string;
+}
+
 export interface MinaSettings {
     captureFolder: string;
 	captureFilePath: string;
@@ -52,6 +63,7 @@ export interface MinaSettings {
     enableAutoClassification: boolean;
     lifeMission: string;
     attachmentsFolder: string;
+    projectsFolder: string;
 }
 
 export interface Habit {

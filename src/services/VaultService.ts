@@ -1,5 +1,5 @@
 import { App, TFile, Notice, moment } from 'obsidian';
-import type { MinaSettings, ThoughtEntry, TaskEntry, ReplyEntry } from '../types';
+import type { MinaSettings, ThoughtEntry, TaskEntry, ReplyEntry, ProjectEntry } from '../types';
 
 export class VaultService {
     app: App;
@@ -401,6 +401,48 @@ export class VaultService {
             console.error('[MINA VaultService] saveWeeklyReview', e);
             throw e;
         }
+    }
+
+    async createProject(entry: ProjectEntry): Promise<TFile> {
+        const folder = (this.settings.projectsFolder || 'Projects').replace(/\\/g, '/');
+        await this.ensureFolder(folder);
+        const safeName = entry.id.replace(/[/\\?%*:|"<>]/g, '-');
+        const path = `${folder}/${safeName}.md`;
+        const lines = [
+            '---',
+            `id: "${entry.id}"`,
+            `name: "${entry.name.replace(/"/g, '\\"')}"`,
+            `status: ${entry.status}`,
+            `goal: "${entry.goal.replace(/"/g, '\\"')}"`,
+        ];
+        if (entry.due) lines.push(`due: "${entry.due}"`);
+        lines.push(`created: "${entry.created}"`);
+        if (entry.color) lines.push(`color: "${entry.color}"`);
+        lines.push('---', '', '## Notes', '');
+        return await this.app.vault.create(path, lines.join('\n'));
+    }
+
+    async updateProject(file: TFile, updates: Partial<ProjectEntry>): Promise<void> {
+        await this.app.fileManager.processFrontMatter(file, (fm) => {
+            if (updates.name !== undefined) fm['name'] = updates.name;
+            if (updates.status !== undefined) fm['status'] = updates.status;
+            if (updates.goal !== undefined) fm['goal'] = updates.goal;
+            if (updates.due !== undefined) fm['due'] = updates.due;
+            if (updates.color !== undefined) fm['color'] = updates.color;
+        });
+    }
+
+    async archiveProject(file: TFile): Promise<void> {
+        await this.app.fileManager.processFrontMatter(file, (fm) => {
+            fm['status'] = 'archived';
+        });
+    }
+
+    async loadProjectNotes(file: TFile): Promise<string> {
+        const content = await this.app.vault.read(file);
+        const yamlEnd = content.indexOf('\n---', 3);
+        if (yamlEnd === -1) return content;
+        return content.slice(yamlEnd + 4).trim();
     }
 
     /** Load a weekly review file and parse wins/lessons/focus sections */

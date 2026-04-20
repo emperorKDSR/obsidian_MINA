@@ -4,6 +4,28 @@ All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]
 
+## [1.5.0] - 2025-07-28
+### Feat — Project Lifecycle Entities (rm-6)
+
+New vault-entity-backed `ProjectsTab` replacing the tag-based grid, providing a full project management dashboard with card list, inline expansion, status management, and color coding.
+
+**Architecture:**
+- New `ProjectEntry` type with `id`, `name`, `status`, `goal`, `due`, `created`, `color`, `filePath` fields
+- `IndexService.buildProjectIndex()` scans `Settings.projectsFolder` (default: `Projects/`) at startup
+- `VaultService`: `createProject()`, `updateProject()`, `archiveProject()`, `loadProjectNotes()` methods
+- `NewProjectModal` — clean-slate form with Name, Goal, Status seg-bar (Active/On Hold), Due date, 8-color swatch picker
+- `ProjectsTab` — full vault-entity card list with filter pills (All/Active/On Hold/Completed), color-coded left-border cards, inline expand panel with task preview, status popover picker
+- `DEFAULT_SETTINGS.projectsFolder: 'Projects'` + `MinaSettings.projectsFolder: string`
+
+**UX:**
+- Filter pills: All / Active / On Hold / Completed
+- Card sort: active → on-hold → completed, alphabetical within groups
+- Status badge: click to open inline popover with status options
+- Expand panel: top-5 open tasks, View (opens vault file) + Archive actions
+- NEXT task preview: earliest-due open task surfaced on card
+- Task linkage: matches by `task.project === project.id || task.project === project.name` (backward compat)
+- Desktop: 2-column grid layout via `@media (min-width: 768px)`
+
 ## [1.4.1] - 2026-04-21
 ### Feat — Habits Tab & Streak Engine (rm-2)
 
