@@ -2,6 +2,11 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.0.7] - 2026-04-20
+
+### Fixed
+- **Timeline — delete not reflected in view** — after confirming a delete, the entry was still visible because `renderTimeline()` ran before the async vault `'delete'` event could update the index. Fix: eagerly remove the entry from `thoughtIndex` / `taskIndex` before calling `renderTimeline()`, matching the same eager-purge pattern used in `main.ts`'s vault event handler
+
 ## [1.0.6] - 2026-04-20
 
 ### Changed

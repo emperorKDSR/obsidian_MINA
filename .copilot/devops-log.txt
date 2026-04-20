@@ -42,3 +42,8 @@
 [2026-04-20T03:27:29+02:00] ENGINEERING: Lead Engineer implemented TimelineTab.ts (full rewrite) + 323 lines CSS in styles.css
 [2026-04-20T03:27:29+02:00] FILES: src/tabs/TimelineTab.ts (full rewrite), styles.css (+323 lines .mina-tl-*)
 [2026-04-20T03:27:29+02:00] DEPLOYED to: C:\Users\57092\OneDrive\wFiles\1 Obsidian\K0000\K0000\.obsidian\plugins\mina_v2
+[2026-04-20T03:27:34+02:00] GIT: committed 0112413 and pushed to origin/main
+[2026-04-20T03:31:14+02:00] FIX v1.0.7: Timeline delete — eager index purge before re-render
+[2026-04-20T03:31:14+02:00] ROOT CAUSE: renderTimeline() read stale index because vault 'delete' event fires async/debounced; deleted entry remained visible
+[2026-04-20T03:31:14+02:00] FIX: manually call index.thoughtIndex.delete()/taskIndex.delete() before renderTimeline()
+[2026-04-20T03:31:14+02:00] FILES: src/tabs/TimelineTab.ts

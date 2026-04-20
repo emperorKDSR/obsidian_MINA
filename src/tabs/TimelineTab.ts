@@ -185,6 +185,10 @@ export class TimelineTab extends BaseTab {
             delBtn.addEventListener('click', () => {
                 new ConfirmModal(this.app, `Move this ${item.type} to trash?`, async () => {
                     await this.vault.deleteFile(item.entry.filePath, item.type === 'task' ? 'tasks' : 'thoughts');
+                    // Eagerly remove from index before re-render — vault 'delete' event
+                    // fires asynchronously so the index would still contain the entry otherwise.
+                    if (item.type === 'task') this.index.taskIndex.delete(item.entry.filePath);
+                    else this.index.thoughtIndex.delete(item.entry.filePath);
                     this.renderTimeline();
                 }).open();
             });
