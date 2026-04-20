@@ -7110,3 +7110,217 @@
     font-size: 16px; /* Prevent iOS zoom */
 }
 .is-mobile .mina-ai-model-badge { display: none; }
+/* ═══════════════════════════════════════════════════════════════════
+   MINA V2 — GLOBAL SEARCH / SPOTLIGHT
+   ═══════════════════════════════════════════════════════════════════ */
+
+@keyframes mina-search-overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mina-search-overlay-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes mina-search-panel-in {
+    from { opacity: 0; transform: translateY(-12px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes mina-search-panel-out {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to { opacity: 0; transform: translateY(-8px) scale(0.97); }
+}
+@keyframes mina-search-result-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Overlay backdrop */
+.mina-search-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 14vh;
+    background: rgba(0, 0, 0, 0.45);
+    animation: mina-search-overlay-in 0.18s ease both;
+}
+@supports (backdrop-filter: blur(1px)) {
+    .mina-search-overlay {
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        background: rgba(0, 0, 0, 0.30);
+    }
+}
+.mina-search-overlay.is-closing { animation: mina-search-overlay-out 0.16s ease both; }
+.mina-search-overlay.is-closing .mina-search-panel { animation: mina-search-panel-out 0.16s ease both; }
+
+/* Panel */
+.mina-search-panel {
+    width: 100%;
+    max-width: 620px;
+    max-height: 68vh;
+    margin: 0 var(--mina-spacing-sm, 12px);
+    background: var(--background-primary);
+    border-radius: 20px;
+    border: 1px solid var(--background-modifier-border-faint);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.22), 0 8px 24px rgba(0,0,0,0.12);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: mina-search-panel-in 0.22s cubic-bezier(0.34, 1.20, 0.64, 1) both;
+    contain: layout style;
+}
+
+/* Input row */
+.mina-search-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--background-modifier-border-faint);
+    flex-shrink: 0;
+    background: var(--background-primary);
+}
+.mina-search-icon { color: var(--text-faint); width: 16px; height: 16px; flex-shrink: 0; transition: color 0.15s; }
+.mina-search-icon .svg-icon { width: 16px; height: 16px; }
+.mina-search-panel.has-query .mina-search-icon { color: var(--interactive-accent); }
+.mina-search-input {
+    flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+    color: var(--text-normal); font-size: 1.05em; font-weight: 500;
+    caret-color: var(--interactive-accent);
+}
+.mina-search-input::placeholder { color: var(--text-faint); font-weight: 400; }
+.mina-search-kbd-hint {
+    font-size: 0.65em; font-weight: 700; color: var(--text-faint);
+    background: var(--background-secondary-alt); border: 1px solid var(--background-modifier-border-faint);
+    border-radius: 5px; padding: 2px 7px; flex-shrink: 0; user-select: none;
+}
+
+/* Scope bar */
+.mina-search-scope-bar {
+    display: flex; gap: 4px; padding: 10px 16px; overflow-x: auto;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    border-bottom: 1px solid var(--background-modifier-border-faint);
+    flex-shrink: 0; background: var(--background-secondary-alt);
+}
+.mina-search-scope-bar::-webkit-scrollbar { display: none; }
+.mina-search-scope-btn {
+    display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
+    height: 26px; padding: 0 10px;
+    border: 1px solid var(--background-modifier-border-faint); border-radius: 6px;
+    background: transparent; color: var(--text-muted);
+    font-size: 0.64em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;
+    cursor: pointer; transition: background 0.14s, color 0.14s, border-color 0.14s; white-space: nowrap;
+}
+.mina-search-scope-btn:hover { background: var(--background-primary); color: var(--text-normal); border-color: var(--background-modifier-border); }
+.mina-search-scope-btn.is-active { background: rgba(var(--interactive-accent-rgb), 0.10); color: var(--interactive-accent); border-color: rgba(var(--interactive-accent-rgb), 0.25); }
+.mina-search-scope-count { font-size: 0.85em; font-weight: 700; opacity: 0.65; }
+.mina-search-scope-btn.is-active .mina-search-scope-count { opacity: 0.9; }
+
+/* Body */
+.mina-search-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 4px 0; }
+.mina-search-body::-webkit-scrollbar { width: 4px; }
+.mina-search-body::-webkit-scrollbar-track { background: transparent; }
+.mina-search-body::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 2px; }
+
+/* Sections */
+.mina-search-section { padding: 0 8px 4px; }
+.mina-search-section + .mina-search-section { border-top: 1px solid var(--background-modifier-border-faint); margin-top: 2px; padding-top: 4px; }
+.mina-search-section-header { display: flex; align-items: center; gap: 6px; padding: 10px 8px 4px; }
+.mina-search-section-type-icon { width: 13px; height: 13px; flex-shrink: 0; }
+.mina-search-section-type-icon .svg-icon { width: 13px; height: 13px; color: var(--text-faint); }
+.mina-search-section-type-label { font-size: 0.6em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.16em; color: var(--text-faint); flex: 1; }
+.mina-search-section-result-count { font-size: 0.6em; font-weight: 700; color: var(--text-faint); background: var(--background-modifier-border-faint); border-radius: 4px; padding: 1px 5px; }
+
+/* Result items */
+.mina-search-result-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+    border-radius: 8px; cursor: pointer; transition: background 0.10s;
+    animation: mina-search-result-in 0.18s ease both;
+    animation-delay: calc(var(--mina-search-i, 0) * 30ms);
+    position: relative; -webkit-tap-highlight-color: transparent;
+}
+.mina-search-result-item:hover { background: var(--background-secondary-alt); }
+.mina-search-result-item.is-focused { background: rgba(var(--interactive-accent-rgb), 0.08); outline: none; }
+.mina-search-result-item.is-focused::before {
+    content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
+    border-radius: 0 2px 2px 0; background: var(--interactive-accent);
+}
+
+/* Result icon */
+.mina-search-result-icon {
+    width: 30px; height: 30px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    background: var(--background-secondary-alt); border: 1px solid var(--background-modifier-border-faint);
+}
+.mina-search-result-icon .svg-icon { width: 14px; height: 14px; }
+.mina-search-result-icon--thought { background: rgba(139, 92, 246, 0.08); color: #8b5cf6; border-color: rgba(139, 92, 246, 0.15); }
+.mina-search-result-icon--task { background: rgba(var(--interactive-accent-rgb), 0.08); color: var(--interactive-accent); border-color: rgba(var(--interactive-accent-rgb), 0.18); }
+.mina-search-result-icon--due { background: rgba(245, 158, 11, 0.08); color: #f59e0b; border-color: rgba(245, 158, 11, 0.18); }
+.mina-search-result-icon--project { background: rgba(16, 185, 129, 0.08); color: #10b981; border-color: rgba(16, 185, 129, 0.18); }
+.mina-search-result-icon--habit { background: rgba(239, 68, 68, 0.08); color: #ef4444; border-color: rgba(239, 68, 68, 0.18); }
+
+/* Result body */
+.mina-search-result-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mina-search-result-title { font-size: 0.875em; font-weight: 600; color: var(--text-normal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mina-search-result-title mark { background: rgba(var(--interactive-accent-rgb), 0.20); color: var(--interactive-accent); border-radius: 2px; padding: 0 1px; font-weight: 700; }
+.mina-search-result-preview { font-size: 0.75em; font-weight: 400; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mina-search-result-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+
+/* Initial state */
+.mina-search-initial { padding: 16px 18px 20px; display: flex; flex-direction: column; gap: 16px; }
+.mina-search-recents-label { font-size: 0.6em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.16em; color: var(--text-faint); padding: 0 2px; }
+.mina-search-quickjump-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.mina-search-quickjump-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    padding: 12px 8px; border-radius: 12px;
+    border: 1px solid var(--background-modifier-border-faint); background: var(--background-secondary-alt);
+    cursor: pointer; transition: background 0.14s, border-color 0.14s, transform 0.14s;
+    -webkit-tap-highlight-color: transparent;
+}
+.mina-search-quickjump-btn:hover { background: var(--background-primary); border-color: var(--background-modifier-border); transform: translateY(-1px); }
+.mina-search-quickjump-btn .svg-icon { width: 16px; height: 16px; color: var(--text-faint); transition: color 0.14s; }
+.mina-search-quickjump-btn:hover .svg-icon { color: var(--interactive-accent); }
+.mina-search-quickjump-label { font-size: 0.62em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-faint); }
+.mina-search-quickjump-btn:hover .mina-search-quickjump-label { color: var(--text-normal); }
+
+/* Empty state */
+.mina-search-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 48px 32px; text-align: center; }
+.mina-search-empty-icon { width: 40px; height: 40px; color: var(--text-faint); opacity: 0.35; }
+.mina-search-empty-icon .svg-icon { width: 40px; height: 40px; }
+.mina-search-empty-text { font-size: 0.9em; font-weight: 700; color: var(--text-muted); }
+.mina-search-empty-query { font-family: var(--font-monospace); font-size: 0.85em; font-weight: 600; color: var(--interactive-accent); background: rgba(var(--interactive-accent-rgb), 0.08); border-radius: 5px; padding: 1px 6px; }
+.mina-search-empty-sub { font-size: 0.78em; font-weight: 400; color: var(--text-faint); max-width: 240px; line-height: 1.5; }
+
+/* Footer */
+.mina-search-footer { display: flex; align-items: center; gap: 16px; padding: 9px 20px; border-top: 1px solid var(--background-modifier-border-faint); background: var(--background-secondary-alt); flex-shrink: 0; }
+.mina-search-footer-hint { display: flex; align-items: center; gap: 5px; font-size: 0.6em; font-weight: 600; color: var(--text-faint); }
+.mina-search-footer-kbd { display: inline-flex; align-items: center; height: 17px; padding: 0 5px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 3px; font-size: 0.9em; font-weight: 700; color: var(--text-muted); font-family: var(--font-monospace); }
+.mina-search-footer-divider { width: 1px; height: 12px; background: var(--background-modifier-border-faint); }
+
+/* ── Mobile (phone) ── */
+@media (max-width: 499px) {
+    .mina-search-overlay { align-items: flex-end; justify-content: stretch; padding-top: 0; }
+    .mina-search-panel {
+        width: 100vw; max-width: 100vw; max-height: 92dvh; margin: 0;
+        border-radius: 24px 24px 0 0; border-bottom: none;
+    }
+    .mina-search-panel::before {
+        content: ''; display: block; width: 40px; height: 4px; border-radius: 2px;
+        background: var(--background-modifier-border); opacity: 0.6; margin: 12px auto 0; flex-shrink: 0;
+    }
+    .mina-search-input-row { padding: 12px 16px; }
+    .mina-search-input { font-size: 16px; }
+    .mina-search-footer { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+    .mina-search-quickjump-grid { grid-template-columns: repeat(2, 1fr); }
+}
+/* ── Tablet ── */
+@media (min-width: 500px) and (max-width: 767px) {
+    .mina-search-panel { max-width: calc(100vw - 48px); margin: 0 24px; }
+    .mina-search-overlay { padding-top: 10vh; }
+}
+/* ── Touch devices ── */
+@media (pointer: coarse) {
+    .mina-search-result-item { padding: 11px 10px; min-height: 52px; }
+    .mina-search-scope-btn { height: 32px; padding: 0 12px; font-size: 0.66em; }
+    .mina-search-result-item:active { background: var(--background-secondary-alt); }
+    .mina-search-quickjump-btn:hover { transform: none; }
+    .mina-search-quickjump-btn:active { transform: scale(0.97); background: var(--background-primary); }
+}
