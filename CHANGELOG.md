@@ -2,6 +2,12 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.0.12] - 2026-04-20
+### Changed
+- **Capture textarea — Calibri font** — `font-family` on `.mina-capture-inline-textarea` changed from `var(--font-text)` to `'Calibri', var(--font-text), sans-serif` for both desktop and mobile capture bars
+- **Capture textarea — removed top padding** — `padding: 12px 0 0 0` reduced to `padding: 0`; text now starts flush at the top of the input area
+- **Mobile capture — CANCEL pill matches CAPTURE shape** — `.mina-capture-inline-cancel` redesigned as a ghost pill: `border-radius: 10px`, `border: 1.5px solid var(--background-modifier-border-faint)`, `min-height: 44px`, uppercase 800-weight label — visually identical shape to the CAPTURE button. Both buttons use `flex: 1` / `flex: 2` ratio so CAPTURE stays dominant. Active state transitions border and text color instead of the old plain text fade.
+
 ## [1.0.11] - 2026-04-20
 ### Fixed
 - **`#` tag trigger — replaced broken inline suggest panel with native `SuggestModal`** — the inline DOM-based pill panel was unreliable due to overflow clipping, focus loss, and re-render collisions. Replaced entirely with `ContextSuggestModal` (Obsidian `SuggestModal`) opened immediately when `#` is typed at the start of text or after whitespace — identical UX to `[[`. The `#` is stripped from the textarea, the modal opens pre-filtered, and selecting a tag fires `onContext(tag)` to add a chip. `+ Create "#tag"` option shown when the typed name is new.
