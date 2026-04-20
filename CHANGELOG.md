@@ -1,3 +1,9 @@
+## [1.10.6] - Synthesis UX Polish
+
+### Fixed
+- **Mobile**: Synthesis feed seg bar (Inbox/Mapped/Done pills) no longer clipped — added lex: 1; min-width: 0 to toggle bar on phone; tightened header padding and gap for more room
+- **Tablet**: Synthesis layout now visually matches desktop — reverted ctx panel to 33.333% width (was incorrectly 36%); removed over-sized button/padding overrides that broke visual density parity; context action buttons now use low-opacity default with full-opacity on tap/hover/active instead of always-full-visible
+
 # Changelog
 
 All notable changes to MINA V2 will be documented in this file.
