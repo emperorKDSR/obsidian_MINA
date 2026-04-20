@@ -3516,8 +3516,80 @@
     height: 44px;
     min-width: 44px;
 }
-.is-mobile .mina-dw-entry-actions { opacity: 1; }
 .is-mobile .mina-dw-entry:hover { background: transparent; }
+/* ── Long-Press: Press feedback (300ms pre-activation) ──────── */
+.mina-dw-entry.is-lp-pressing {
+    transform: scale(0.98);
+    background: var(--background-secondary);
+    transition: transform 0.18s ease, background 0.18s;
+}
+/* ── Long-Press: Activated card ─────────────────────────────── */
+.mina-dw-entry.is-lp-active {
+    background: var(--background-secondary-alt);
+    border-left: 3px solid var(--interactive-accent);
+    border-radius: 10px;
+    transform: none;
+    transition: transform 0.12s ease, background 0.12s;
+}
+/* ── Long-Press: Action strip container ─────────────────────── */
+.mina-dw-entry-lp-strip {
+    display: flex;
+    align-items: stretch;
+    height: 0;
+    overflow: hidden;
+    border-top: 1px solid transparent;
+    transition: height 0.18s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.18s;
+    margin-top: 0;
+}
+.mina-dw-entry.is-lp-active .mina-dw-entry-lp-strip {
+    height: 48px;
+    border-top-color: var(--background-modifier-border-faint);
+    margin-top: 10px;
+}
+/* ── Long-Press: Strip buttons ───────────────────────────────── */
+.mina-dw-entry-lp-edit,
+.mina-dw-entry-lp-delete {
+    flex: 1;
+    height: 48px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.68em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.1s;
+}
+.mina-dw-entry-lp-edit {
+    color: var(--interactive-accent);
+    border-right: 1px solid var(--background-modifier-border-faint);
+    border-radius: 0 0 0 10px;
+}
+.mina-dw-entry-lp-delete {
+    color: var(--text-error);
+    border-radius: 0 0 10px 0;
+}
+.mina-dw-entry-lp-edit:active {
+    background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
+}
+.mina-dw-entry-lp-delete:active {
+    background: rgba(239, 68, 68, 0.10);
+}
+.mina-dw-entry-lp-edit .svg-icon,
+.mina-dw-entry-lp-delete .svg-icon {
+    width: 13px;
+    height: 13px;
+}
+@media (prefers-reduced-motion: reduce) {
+    .mina-dw-entry-lp-strip { transition: none; }
+    .mina-dw-entry.is-lp-pressing { transform: none; }
+}
 .is-mobile .mina-dw-entry:active {
     background: var(--background-secondary-alt);
     transform: scale(0.99);

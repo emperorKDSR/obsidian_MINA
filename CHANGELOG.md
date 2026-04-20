@@ -2,7 +2,24 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
-## [1.2.6] - 2026-04-20
+## [1.2.7] - 2026-04-20
+### Feature — Mobile long-press edit/delete for thought cards
+
+#### Added
+- **Long-press to edit or delete thoughts on mobile** — Thought cards in the Daily Workspace now support a long-press interaction (500ms stationary hold) on mobile phones. Activating a card reveals an inline **EDIT / DELETE** action strip that slides in at the bottom of the card (height 0 → 48px animated). Tapping outside any activated card collapses the strip.
+- **Long-press engine** (`attachLongPress()`) — Scroll-safe: a `pointermove` guard cancels the hold if the finger travels >8px, so normal scrolling never accidentally triggers the strip. Haptic hint via `navigator.vibrate(25)` on activation. `contextmenu` suppression prevents Android/iOS system menus from appearing on hold.
+- **Touch targets at 48px** — Both EDIT and DELETE buttons are 48×(50% card width), well above the 44px AAA minimum. Each has distinct color coding: EDIT in `--interactive-accent`, DELETE in `--text-error`.
+- **Dismiss listener cleanup** — The one-shot document-level dismiss listener is stored on the element and removed on re-render, preventing listener leaks across renders.
+- **Reduced motion support** — `@media (prefers-reduced-motion: reduce)` disables the strip slide animation and press scale.
+
+#### Changed
+- Desktop hover-reveal actions: no change (pencil + trash, `opacity: 0 → 1` on hover, 28×28px).
+- Tablet (`isTablet()`) routes to the desktop path — hover-reveal, not long-press.
+
+#### Fixed
+- Removed dead CSS rule `.is-mobile .mina-dw-entry-actions { opacity: 1; }` that was never wired and has been superseded by the long-press strip.
+
+
 ### Patch & Enhancement — Image rendering, paste stability, Enter behavior
 
 #### Added

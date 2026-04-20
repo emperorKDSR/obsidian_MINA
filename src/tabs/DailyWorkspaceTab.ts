@@ -273,11 +273,10 @@ export class DailyWorkspaceTab extends BaseTab {
                 });
             }
 
-            // Hover actions (desktop)
+            // Hover actions (desktop / tablet)
             if (!Platform.isMobile || isTablet()) {
                 const actionsEl = entryEl.createEl('div', { cls: 'mina-dw-entry-actions' });
 
-                // Edit
                 const editBtn = actionsEl.createEl('button', { cls: 'mina-dw-entry-action-btn', attr: { 'aria-label': 'Edit' } });
                 setIcon(editBtn, 'lucide-pencil');
                 editBtn.addEventListener('click', () => {
@@ -294,7 +293,6 @@ export class DailyWorkspaceTab extends BaseTab {
                     ).open();
                 });
 
-                // Delete
                 const delBtn = actionsEl.createEl('button', { cls: 'mina-dw-entry-action-btn', attr: { 'aria-label': 'Delete' } });
                 setIcon(delBtn, 'lucide-trash-2');
                 delBtn.style.color = 'var(--text-error)';
@@ -308,6 +306,56 @@ export class DailyWorkspaceTab extends BaseTab {
                         }
                     ).open();
                 });
+            }
+
+            // Long-press action strip (mobile phone only, not tablet)
+            if (Platform.isMobile && !isTablet()) {
+                const strip = entryEl.createEl('div', { cls: 'mina-dw-entry-lp-strip' });
+
+                const editBtn = strip.createEl('button', {
+                    cls: 'mina-dw-entry-lp-edit',
+                    attr: { 'aria-label': 'Edit thought' }
+                });
+                setIcon(editBtn, 'lucide-pencil');
+                editBtn.createEl('span', { text: 'EDIT' });
+
+                const delBtn = strip.createEl('button', {
+                    cls: 'mina-dw-entry-lp-delete',
+                    attr: { 'aria-label': 'Delete thought' }
+                });
+                setIcon(delBtn, 'lucide-trash-2');
+                delBtn.createEl('span', { text: 'DELETE' });
+
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deactivateEntry(entryEl);
+                    const ctxStr = entry.context?.map((c: string) => `#${c}`).join(' ') ?? '';
+                    new EditEntryModal(
+                        this.app, this.plugin,
+                        entry.body ?? entry.title ?? '',
+                        ctxStr, null, false,
+                        async (newText, newCtxStr) => {
+                            const ctxArr = newCtxStr ? parseContextString(newCtxStr) : [];
+                            await this.vault.editThought(entry.filePath, newText.replace(/<br>/g, '\n'), ctxArr);
+                            setTimeout(() => this.render(this.parentContainer), 500);
+                        }
+                    ).open();
+                });
+
+                delBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deactivateEntry(entryEl);
+                    new ConfirmModal(
+                        this.app,
+                        'Move this thought to trash?',
+                        async () => {
+                            await this.vault.deleteFile(entry.filePath, 'thoughts');
+                            setTimeout(() => this.render(this.parentContainer), 500);
+                        }
+                    ).open();
+                });
+
+                this.attachLongPress(entryEl, entries);
             }
         }
     }
@@ -544,6 +592,70 @@ export class DailyWorkspaceTab extends BaseTab {
         }
     }
 
+    // ── Long-Press Engine (mobile only) ──────────────────────────────────
+    private attachLongPress(entryEl: HTMLElement, container: HTMLElement) {
+        const HOLD_MS = 500;
+        const MOVE_THRESHOLD_PX = 8;
+        const PRESS_FEEDBACK_MS = 280;
+
+        let pressTimer: ReturnType<typeof setTimeout> | null = null;
+        let pressClass: ReturnType<typeof setTimeout> | null = null;
+        let startX = 0;
+        let startY = 0;
+
+        const activate = () => {
+            // Collapse any other open card first
+            container.querySelectorAll<HTMLElement>('.mina-dw-entry.is-lp-active').forEach(el => {
+                if (el !== entryEl) deactivateEntry(el);
+            });
+            entryEl.classList.remove('is-lp-pressing');
+            entryEl.classList.add('is-lp-active');
+            if ('vibrate' in navigator) navigator.vibrate(25);
+
+            // One-shot dismiss on tap-outside; short delay so the pointerup that ends
+            // the hold doesn't immediately trigger the dismiss listener.
+            setTimeout(() => {
+                const dismiss = (e: PointerEvent) => {
+                    if (!entryEl.contains(e.target as Node)) {
+                        deactivateEntry(entryEl);
+                        document.removeEventListener('pointerdown', dismiss, true);
+                    }
+                };
+                document.addEventListener('pointerdown', dismiss, { capture: true });
+                (entryEl as any)._lpDismiss = () =>
+                    document.removeEventListener('pointerdown', dismiss, true);
+            }, 60);
+        };
+
+        entryEl.addEventListener('pointerdown', (e: PointerEvent) => {
+            if (e.pointerType === 'mouse') return;
+            startX = e.clientX;
+            startY = e.clientY;
+            pressClass = setTimeout(() => entryEl.classList.add('is-lp-pressing'), PRESS_FEEDBACK_MS);
+            pressTimer = setTimeout(activate, HOLD_MS);
+        });
+
+        entryEl.addEventListener('pointermove', (e: PointerEvent) => {
+            if (!pressTimer) return;
+            if (Math.abs(e.clientX - startX) > MOVE_THRESHOLD_PX ||
+                Math.abs(e.clientY - startY) > MOVE_THRESHOLD_PX) {
+                clearTimeout(pressTimer); clearTimeout(pressClass!);
+                pressTimer = null;
+                entryEl.classList.remove('is-lp-pressing');
+            }
+        });
+
+        const cancel = () => {
+            clearTimeout(pressTimer!); clearTimeout(pressClass!);
+            pressTimer = null;
+            entryEl.classList.remove('is-lp-pressing');
+        };
+        entryEl.addEventListener('pointerup', cancel);
+        entryEl.addEventListener('pointercancel', cancel);
+        // Suppress Android/iOS system context menu on long-press
+        entryEl.addEventListener('contextmenu', (e) => e.preventDefault());
+    }
+
     private setupKeyboardShortcuts(root: HTMLElement, writingPane: HTMLElement) {
         const handler = (e: KeyboardEvent) => {
             const mod = Platform.isMacOS ? e.metaKey : e.ctrlKey;
@@ -569,5 +681,14 @@ export class DailyWorkspaceTab extends BaseTab {
 
         root.addEventListener('keydown', handler);
         root.setAttribute('tabindex', '-1');
+    }
+}
+
+// Module-level helper — called from event closures inside attachLongPress
+function deactivateEntry(el: HTMLElement) {
+    el.classList.remove('is-lp-active', 'is-lp-pressing');
+    if ((el as any)._lpDismiss) {
+        (el as any)._lpDismiss();
+        delete (el as any)._lpDismiss;
     }
 }
