@@ -4370,3 +4370,308 @@
     .mina-review-section-body { transition: none; }
     .mina-review-dirty-dot { animation: none; transform: scale(1); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HABITS TAB — v1.4.1
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Wrapper ─────────────────────────────────────────────────────────────── */
+.mina-habits-wrap {
+    display: flex;
+    flex-direction: column;
+    padding: 0 0 80px 0;
+    gap: 0;
+    overflow-y: auto;
+    height: 100%;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.mina-habits-header {
+    padding: 12px 14px 8px 14px;
+}
+.mina-tab-title {
+    font-size: 1.1em;
+    font-weight: 800;
+    margin: 4px 0 2px 0;
+    color: var(--text-normal);
+    letter-spacing: -0.02em;
+}
+.mina-tab-subtitle {
+    font-size: 0.78em;
+    color: var(--text-faint);
+    display: block;
+    margin-bottom: 4px;
+}
+
+/* ── Today Section ───────────────────────────────────────────────────────── */
+.mina-habits-today-section {
+    background: var(--background-secondary);
+    border-radius: 16px;
+    margin: 4px 10px;
+    padding: 12px 10px;
+    border: 1px solid var(--background-modifier-border-faint);
+}
+.mina-habits-today-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+}
+@media (min-width: 480px) {
+    .mina-habits-today-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 768px) {
+    .mina-habits-today-grid { grid-template-columns: repeat(4, 1fr); }
+}
+.mina-habits-today-btn {
+    min-height: 80px;
+    flex-direction: column;
+    gap: 4px;
+}
+.mina-habits-today-label {
+    white-space: normal !important;
+    word-break: break-word;
+    line-height: 1.2;
+    font-size: 0.7em;
+}
+
+/* ── Streak Leaderboard ──────────────────────────────────────────────────── */
+.mina-habits-leaderboard {
+    background: var(--background-secondary);
+    border-radius: 16px;
+    margin: 8px 10px;
+    padding: 0 0 10px 0;
+    border: 1px solid var(--background-modifier-border-faint);
+    overflow: hidden;
+}
+.mina-streak-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82em;
+}
+.mina-streak-table__head-row th {
+    padding: 6px 8px;
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--background-modifier-border-faint);
+    text-align: left;
+}
+.mina-streak-table__row {
+    border-bottom: 1px solid var(--background-modifier-border-faint);
+    transition: background 0.15s;
+}
+.mina-streak-table__row:last-child { border-bottom: none; }
+.mina-streak-table__row:hover { background: var(--background-primary-alt); }
+.mina-streak-cell--icon {
+    padding: 8px 4px 8px 10px;
+    font-size: 1.2em;
+    text-align: center;
+    width: 36px;
+}
+.mina-streak-cell--name {
+    padding: 8px 8px;
+}
+.mina-streak-name {
+    font-weight: 600;
+    color: var(--text-normal);
+    font-size: 0.9em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+    display: block;
+}
+.mina-streak-cell--current,
+.mina-streak-cell--longest,
+.mina-streak-cell--month-pct {
+    padding: 8px 6px;
+    text-align: center;
+    width: 52px;
+}
+.mina-streak-value,
+.mina-streak-pct {
+    font-size: 0.9em;
+    font-weight: 700;
+}
+
+/* ── Heatmap Section ─────────────────────────────────────────────────────── */
+.mina-habits-heatmap-section {
+    background: var(--background-secondary);
+    border-radius: 16px;
+    margin: 8px 10px;
+    padding: 12px 10px;
+    border: 1px solid var(--background-modifier-border-faint);
+}
+.mina-habits-heatmap-filter {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+.mina-habits-filter-pill {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.74em;
+    font-weight: 600;
+    border: 1px solid var(--background-modifier-border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    min-height: 30px;
+}
+.mina-habits-filter-pill.is-active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
+.mina-habits-heatmap-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.mina-habits-heatmap-month {
+    flex: 1;
+    text-align: center;
+    font-size: 0.82em;
+    font-weight: 700;
+    color: var(--text-normal);
+}
+.mina-habits-heatmap-nav {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    min-width: 32px;
+    min-height: 32px;
+    justify-content: center;
+    transition: background 0.15s;
+}
+.mina-habits-heatmap-nav:hover:not(:disabled) { background: var(--background-modifier-hover); }
+.mina-habits-heatmap-dow {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    margin-bottom: 3px;
+}
+.mina-habits-heatmap-dow-label {
+    font-size: 0.68em;
+    font-weight: 700;
+    color: var(--text-faint);
+    text-align: center;
+    text-transform: uppercase;
+}
+.mina-habits-heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+}
+.mina-habits-heatmap-cell {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    background: var(--background-primary-alt);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68em;
+    color: var(--text-faint);
+    font-weight: 500;
+    transition: background 0.15s;
+}
+.mina-habits-heatmap-cell.is-spacer {
+    background: transparent;
+}
+.mina-habits-heatmap-cell.is-done {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    font-weight: 700;
+}
+.mina-habits-heatmap-cell.is-partial {
+    background: color-mix(in srgb, var(--interactive-accent) 45%, transparent);
+    color: var(--text-normal);
+}
+.mina-habits-heatmap-cell.is-missed {
+    background: rgba(220, 50, 50, 0.12);
+    color: var(--text-error);
+}
+.mina-habits-heatmap-cell.is-today {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: -2px;
+    font-weight: 800;
+}
+.mina-habits-heatmap-cell.is-future {
+    opacity: 0.3;
+}
+
+/* ── Management Section ──────────────────────────────────────────────────── */
+.mina-habits-mgmt-section {
+    margin: 8px 10px 16px 10px;
+}
+.mina-habits-mgmt-row {
+    display: flex;
+    gap: 8px;
+}
+.mina-habits-mgmt-btn,
+.mina-habits-reset-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    border-radius: 10px;
+    font-size: 0.8em;
+    font-weight: 600;
+    border: 1px solid var(--background-modifier-border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.mina-habits-mgmt-btn:hover { background: var(--background-modifier-hover); }
+.mina-habits-reset-btn:hover {
+    background: rgba(220, 50, 50, 0.08);
+    color: var(--text-error);
+    border-color: var(--text-error);
+}
+
+/* ── Empty State ─────────────────────────────────────────────────────────── */
+.mina-habits-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 48px 24px;
+    text-align: center;
+}
+.mina-habits-empty-icon { font-size: 2.5em; }
+.mina-habits-empty-title {
+    font-size: 1em;
+    font-weight: 700;
+    color: var(--text-normal);
+}
+.mina-habits-empty-body {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    line-height: 1.5;
+    max-width: 280px;
+}
+.mina-habits-empty-btn {
+    margin-top: 8px;
+    padding: 10px 20px;
+    border-radius: 10px;
+}
+
+/* ── Desktop: 2-column layout ────────────────────────────────────────────── */
+@media (min-width: 768px) {
+    .mina-habits-wrap { padding-bottom: 40px; }
+    .mina-streak-name { max-width: 200px; }
+}

@@ -4,7 +4,41 @@ All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]
 
-## [1.4.0] - 2026-04-20
+## [1.4.1] - 2026-04-21
+### Feat — Habits Tab & Streak Engine (rm-2)
+
+New dedicated `HabitsTab` providing a full habit tracking dashboard with streak analytics.
+
+**Architecture:**
+- Scans vault habit history files (past 90 days) on tab open to compute per-habit streaks
+- `computeStreaks(habitId)` calculates: current streak, best streak (90-day window), this-week count, this-month count
+- Habit toggles reuse existing `plugin.toggleHabit()` and suppress vault-event re-renders via `_habitTogglePending`
+- Tab registered as `'habits'` in `view.ts` and accessible from Command Center navigation
+
+**Today Quick-Bar:**
+- Full-width 2-column grid (3-col tablet, 4-col desktop) for all active habits
+- Full habit names visible; reuses `mina-habit-quick-btn` ring animation and `is-done` / `just-done` states
+- Live progress bar and count label update on toggle; all-complete celebration class
+
+**Streak Leaderboard:**
+- Compact `<table>` ranked by current streak (highest first)
+- Columns: Icon | Habit | 🔥 Current | Best | Month%
+- Threshold color coding: 0=faint, 1–6=muted, 7–13=accent, 14–29=amber, 30+=red/bold
+
+**Monthly Heat-Map:**
+- 7-column ISO week grid with `< >` month navigation
+- Day cell states: `is-done` (accent), `is-partial` (semi-transparent, for "all habits" mode), `is-missed` (red-tint), `is-today` (outline), `is-future` (dimmed)
+- Habit filter pills to view any single habit or aggregate all
+- Day-of-week (M T W T F S S) header row
+
+**Management Row:**
+- ⚙ Manage Habits → opens `HabitConfigModal`
+- ↺ Reset Today → `ConfirmModal` guard, clears `completed[]` in today's frontmatter
+
+**Navigation:**
+- `Habits` entry added to ACTION cluster in Command Center footer (replaces Timeline which moved to MANAGEMENT)
+
+
 ### Feat — Structured Weekly Review (rm-1)
 
 Complete rewrite of `ReviewTab.ts` with vault-persisted structured reflection.
