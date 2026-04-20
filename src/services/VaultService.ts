@@ -53,14 +53,16 @@ export class VaultService {
         return `---\ntitle: "${safeTitle}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA\ncontext:\n${contextYaml}\ntags:\n${contextYaml}\npinned: ${pinned}\n${projectLine}---\n`;
     }
 
-    private buildTaskFrontmatter(title: string, created: string, modified: string, dayStr: string, status: string, due: string, contexts: string[], project?: string): string {
+    private buildTaskFrontmatter(title: string, created: string, modified: string, dayStr: string, status: string, due: string, contexts: string[], project?: string, recurrence?: string, recurrenceParentId?: string): string {
         // sec-006: Sanitize title and contexts before YAML embedding to prevent injection
         const safeTitle = this.sanitizeYamlString(title);
         const safeContexts = contexts.map(c => this.sanitizeContext(c));
         const contextYaml = safeContexts.length > 0 ? safeContexts.map(c => `  - ${c}`).join('\n') : '  []';
         const dueYaml = due ? `"[[${due}]]"` : '""';
         const projectLine = project ? `project: "${this.sanitizeYamlString(project)}"\n` : '';
-        return `---\ntitle: "${safeTitle}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA_TASKS\nstatus: ${status}\ndue: ${dueYaml}\ncontext:\n${contextYaml}\ntags:\n${contextYaml}\n${projectLine}---\n`;
+        const recurrenceLine = recurrence ? `recurrence: ${recurrence}\n` : '';
+        const parentLine = recurrenceParentId ? `recurrenceParentId: "${recurrenceParentId}"\n` : '';
+        return `---\ntitle: "${safeTitle}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA_TASKS\nstatus: ${status}\ndue: ${dueYaml}\ncontext:\n${contextYaml}\ntags:\n${contextYaml}\n${projectLine}${recurrenceLine}${parentLine}---\n`;
     }
 
     // sec-006: Strip characters that break YAML string values
@@ -142,7 +144,7 @@ export class VaultService {
         return await this.createFile(folder, filename, fm + text);
     }
 
-    async createTaskFile(text: string, contexts: string[], dueDate?: string, project?: string): Promise<TFile> {
+    async createTaskFile(text: string, contexts: string[], dueDate?: string, project?: string, opts?: { priority?: string; energy?: string; recurrence?: string; recurrenceParentId?: string }): Promise<TFile> {
         // arch-08: Normalize <br> → newline at service boundary
         text = text.replace(/<br>/g, '\n');
         const folder = this.settings.tasksFolder.trim() || '000 Bin/MINA V2 Tasks';
@@ -151,7 +153,7 @@ export class VaultService {
         const dayStr = this.formatDate(now);
         const title = this.extractTitle(text);
         const due = dueDate || '';
-        const fm = this.buildTaskFrontmatter(title, created, created, dayStr, 'open', due, contexts, project);
+        const fm = this.buildTaskFrontmatter(title, created, created, dayStr, 'open', due, contexts, project, opts?.recurrence, opts?.recurrenceParentId);
         const filename = this.generateFilename('task_');
         return await this.createFile(folder, filename, fm + text);
     }

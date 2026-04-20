@@ -1,19 +1,20 @@
-import { moment, setIcon } from 'obsidian';
+import { moment, setIcon, Notice } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from "../modals/EditEntryModal";
 import { ConfirmModal } from "../modals/ConfirmModal";
-import type { TaskEntry } from '../types';
-import { parseContextString } from '../utils';
+import type { TaskEntry, RecurrenceRule } from '../types';
+import { parseContextString, computeNextDue } from '../utils';
 
-type TaskViewMode = 'open' | 'not-due' | 'done' | 'waiting' | 'someday';
+type TaskViewMode = 'open' | 'not-due' | 'done' | 'waiting' | 'someday' | 'recurring';
 
 const MODES: { mode: TaskViewMode; label: string }[] = [
-    { mode: 'open',    label: 'Open' },
-    { mode: 'not-due', label: 'No Date' },
-    { mode: 'waiting', label: 'Waiting' },
-    { mode: 'someday', label: 'Someday' },
-    { mode: 'done',    label: 'Done' },
+    { mode: 'open',      label: 'Open' },
+    { mode: 'not-due',   label: 'No Date' },
+    { mode: 'waiting',   label: 'Waiting' },
+    { mode: 'someday',   label: 'Someday' },
+    { mode: 'recurring', label: '↻ Recurring' },
+    { mode: 'done',      label: 'Done' },
 ];
 
 export class TasksTab extends BaseTab {
@@ -48,9 +49,9 @@ export class TasksTab extends BaseTab {
         const addIcon = addBtn.createEl('span'); setIcon(addIcon, 'plus');
         addBtn.createSpan({ text: 'New' });
         addBtn.addEventListener('click', () => {
-            new EditEntryModal(this.app, this.plugin, '', '', moment().format('YYYY-MM-DD'), true, async (text, ctxs, due) => {
+            new EditEntryModal(this.app, this.plugin, '', '', moment().format('YYYY-MM-DD'), true, async (text, ctxs, due, _proj, recur) => {
                 if (!text.trim()) return;
-                await this.vault.createTaskFile(text, parseContextString(ctxs), due || undefined);
+                await this.vault.createTaskFile(text, parseContextString(ctxs), due || undefined, undefined, recur ? { recurrence: recur } : undefined);
                 this.renderTaskOverview(container);
             }, 'New Task').open();
         });
@@ -67,15 +68,16 @@ export class TasksTab extends BaseTab {
         // ── Segmented control ──
         const allTasks = Array.from(this.index.taskIndex.values());
         const counts: Record<TaskViewMode, number> = {
-            'open':    allTasks.filter(t => t.status === 'open').length,
-            'not-due': allTasks.filter(t => t.status === 'open' && (!t.due || t.due.trim() === "")).length,
-            'waiting': allTasks.filter(t => t.status === 'waiting').length,
-            'someday': allTasks.filter(t => t.status === 'someday').length,
-            'done':    allTasks.filter(t => t.status === 'done').length,
+            'open':      allTasks.filter(t => t.status === 'open').length,
+            'not-due':   allTasks.filter(t => t.status === 'open' && (!t.due || t.due.trim() === "")).length,
+            'waiting':   allTasks.filter(t => t.status === 'waiting').length,
+            'someday':   allTasks.filter(t => t.status === 'someday').length,
+            'recurring': allTasks.filter(t => !!t.recurrence).length,
+            'done':      allTasks.filter(t => t.status === 'done').length,
         };
         const segBar = wrap.createEl('div', { cls: 'mina-seg-bar' });
         MODES.forEach(({ mode, label }) => {
-            const btn = segBar.createEl('button', { cls: `mina-seg-btn${this.viewMode === mode ? ' is-active' : ''}` });
+            const btn = segBar.createEl('button', { cls: `mina-seg-btn${this.viewMode === mode ? ' is-active' : ''}`, attr: { 'data-mode': mode } });
             btn.createSpan({ text: label });
             if (counts[mode] > 0) btn.createEl('span', { text: String(counts[mode]), cls: 'mina-seg-count' });
             btn.addEventListener('click', () => { this.setMode(mode); this.renderTaskOverview(container); });
@@ -110,6 +112,9 @@ export class TasksTab extends BaseTab {
         } else if (this.viewMode === 'someday') {
             tasks = tasks.filter(t => t.status === 'someday');
             tasks.sort((a, b) => b.lastUpdate - a.lastUpdate);
+        } else if (this.viewMode === 'recurring') {
+            tasks = tasks.filter(t => !!t.recurrence);
+            tasks.sort((a, b) => b.lastUpdate - a.lastUpdate);
         } else {
             tasks = tasks.filter(t => t.status === 'done');
             tasks.sort((a, b) => b.lastUpdate - a.lastUpdate);
@@ -121,7 +126,9 @@ export class TasksTab extends BaseTab {
         if (tasks.length === 0) {
             const emptyMsgs: Record<TaskViewMode, string> = {
                 open: 'All clear ✓', 'not-due': 'No undated tasks.',
-                waiting: 'Nothing waiting.', someday: 'No someday items.', done: 'No completed tasks.'
+                waiting: 'Nothing waiting.', someday: 'No someday items.',
+                recurring: 'No recurring tasks. Set recurrence when creating a task.',
+                done: 'No completed tasks.'
             };
             this.renderEmptyState(this.listContainer, emptyMsgs[this.viewMode]);
             return;
@@ -139,14 +146,22 @@ export class TasksTab extends BaseTab {
             if (dueToday.length) this.renderGroup('Today', dueToday, false);
             if (upcoming.length) this.renderGroup('Upcoming', upcoming, false);
             if (noDate.length)   this.renderGroup('No Date', noDate, false);
+        } else if (this.viewMode === 'recurring') {
+            const order: RecurrenceRule[] = ['daily', 'weekly', 'biweekly', 'monthly'];
+            for (const rule of order) {
+                const group = tasks.filter(t => t.recurrence === rule);
+                if (group.length === 0) continue;
+                const label = rule.charAt(0).toUpperCase() + rule.slice(1);
+                this.renderGroup(`↻ ${label}`, group, false, 'recurring');
+            }
         } else {
             for (const task of tasks) this.renderRow(task, this.listContainer!);
         }
     }
 
-    private renderGroup(label: string, tasks: TaskEntry[], danger: boolean) {
+    private renderGroup(label: string, tasks: TaskEntry[], danger: boolean, modifier?: string) {
         if (!this.listContainer) return;
-        const group = this.listContainer.createEl('div', { cls: 'mina-task-group' });
+        const group = this.listContainer.createEl('div', { cls: `mina-task-group${modifier ? ' mina-task-group--' + modifier : ''}` });
         group.createEl('div', {
             text: label,
             cls: `mina-task-group-label${danger ? ' is-danger' : ''}`
@@ -180,6 +195,25 @@ export class TasksTab extends BaseTab {
             }
             this.view._taskTogglePending++;
             await this.vault.toggleTask(task.filePath, nextDone);
+
+            // rm-7: Recurrence spawn — create next instance when recurring task is completed
+            if (nextDone && task.recurrence && task.due) {
+                const nextDue = computeNextDue(task.due, task.recurrence);
+                await this.vault.createTaskFile(
+                    task.title,
+                    task.context,
+                    nextDue,
+                    task.project,
+                    {
+                        recurrence: task.recurrence,
+                        recurrenceParentId: task.filePath,
+                        priority: task.priority,
+                        energy: task.energy,
+                    }
+                );
+                new Notice(`↻ Next ${task.recurrence} task → ${nextDue}`, 3000);
+            }
+
             // Animate out
             const h = row.offsetHeight;
             row.style.overflow = 'hidden';
@@ -207,7 +241,7 @@ export class TasksTab extends BaseTab {
         });
 
         // Meta row
-        const hasMeta = (task.due && dueM?.isValid()) || task.priority || task.context.length > 0;
+        const hasMeta = (task.due && dueM?.isValid()) || task.priority || task.context.length > 0 || !!task.recurrence;
         if (hasMeta) {
             const meta = content.createEl('div', { cls: 'mina-task-meta' });
             if (task.due && dueM?.isValid()) {
@@ -215,6 +249,13 @@ export class TasksTab extends BaseTab {
                 meta.createEl('span', {
                     text: dateText,
                     cls: `mina-chip mina-chip--date${isOverdue ? ' is-overdue' : isToday ? ' is-today' : ''}`
+                });
+            }
+            if (task.recurrence) {
+                meta.createEl('span', {
+                    text: `↻ ${task.recurrence}`,
+                    cls: 'mina-chip mina-chip--recur',
+                    attr: { 'aria-label': `Repeats ${task.recurrence}`, title: `Repeats ${task.recurrence}` }
                 });
             }
             if (task.priority) {

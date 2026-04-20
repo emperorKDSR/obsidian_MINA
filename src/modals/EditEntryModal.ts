@@ -1,8 +1,9 @@
-import { App, Modal, Platform, Notice, moment } from 'obsidian';
+import { App, Modal, Platform, Notice, moment, setIcon } from 'obsidian';
 import MinaPlugin from '../main';
 import { isTablet, parseNaturalDate, parseContextString, attachInlineTriggers, attachMediaPasteHandler } from '../utils';
 import { FileSuggestModal } from './FileSuggestModal';
 import { ContextSuggestModal } from './ContextSuggestModal';
+import type { RecurrenceRule } from '../types';
 
 type CaptureMode = 'thought' | 'task';
 
@@ -12,11 +13,12 @@ export class EditEntryModal extends Modal {
     initialDueDate: string | null;
     isTask: boolean;
     plugin: MinaPlugin;
-    onSave: (newText: string, newContexts: string, newDueDate: string | null, project: string | null) => void;
+    onSave: (newText: string, newContexts: string, newDueDate: string | null, project: string | null, recurrence?: RecurrenceRule | null) => void;
     customTitle?: string;
     stayOpen: boolean;
 
     currentProject: string | null = null;
+    currentRecurrence: RecurrenceRule | null = null;
     classificationTimeout: ReturnType<typeof setTimeout> | null = null;
 
     private currentMode: CaptureMode;
@@ -31,7 +33,7 @@ export class EditEntryModal extends Modal {
         initialContext: string,
         initialDueDate: string | null,
         isTask: boolean,
-        onSave: (newText: string, newContexts: string, newDueDate: string | null, project: string | null) => void,
+        onSave: (newText: string, newContexts: string, newDueDate: string | null, project: string | null, recurrence?: RecurrenceRule | null) => void,
         customTitle?: string,
         stayOpen: boolean = false
     ) {
@@ -97,6 +99,8 @@ export class EditEntryModal extends Modal {
         const dateZone = dock.createDiv({ cls: `mina-mobile-date-zone${this.currentMode === 'task' ? ' is-visible' : ''}` });
         const { setDueDate } = this._buildDateStrip(dateZone);
         if (this.currentDueDate) setDueDate(this.currentDueDate);
+        const { setRecurrence: setRecurrenceMobile } = this._buildRecurStrip(dateZone);
+        if (this.currentRecurrence) setRecurrenceMobile(this.currentRecurrence);
 
         // 3. Chip strip
         const chipStrip = dock.createDiv({ cls: 'mina-mobile-chip-strip' });
@@ -152,7 +156,8 @@ export class EditEntryModal extends Modal {
             const text = textArea.value.replace(/\n/g, '<br>');
             const contexts = this.initialContexts.map(c => `#${c}`).join(' ');
             const due = this.currentMode === 'task' ? (this.currentDueDate ?? null) : null;
-            this.onSave(text, contexts, due, this.currentProject);
+            const recur = this.currentMode === 'task' ? this.currentRecurrence : null;
+            this.onSave(text, contexts, due, this.currentProject, recur);
             if (this.stayOpen) { textArea.value = ''; textArea.focus(); new Notice('Capture saved.'); }
             else this.close();
         };
@@ -243,6 +248,53 @@ export class EditEntryModal extends Modal {
         };
 
         return { setDueDate };
+    }
+
+    private _buildRecurStrip(container: HTMLElement, compact = false): { setRecurrence: (r: RecurrenceRule | null) => void } {
+        const strip = container.createDiv({ cls: `mina-recur-strip${compact ? ' mina-recur-strip--compact' : ''}` });
+        const iconWrap = strip.createDiv({ cls: 'mina-recur-icon' });
+        setIcon(iconWrap, 'repeat-2');
+
+        type ROption = { value: RecurrenceRule | null; label: string };
+        const OPTIONS: ROption[] = [
+            { value: null,       label: '—' },
+            { value: 'daily',    label: 'Daily' },
+            { value: 'weekly',   label: 'Weekly' },
+            { value: 'biweekly', label: 'Biweekly' },
+            { value: 'monthly',  label: 'Monthly' },
+        ];
+        const btnEls: HTMLButtonElement[] = [];
+        OPTIONS.forEach(({ value, label }) => {
+            const btn = strip.createEl('button', {
+                text: label,
+                cls: `mina-recur-btn${this.currentRecurrence === value ? ' is-active' : ''}`,
+                attr: { 'aria-pressed': String(this.currentRecurrence === value) }
+            }) as HTMLButtonElement;
+            btnEls.push(btn);
+            btn.addEventListener('click', () => {
+                this.currentRecurrence = value;
+                syncActive();
+                if ('vibrate' in navigator) navigator.vibrate(8);
+            });
+            btn.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') { e.preventDefault(); btnEls[btnEls.indexOf(btn) + 1]?.focus(); }
+                if (e.key === 'ArrowLeft')  { e.preventDefault(); btnEls[btnEls.indexOf(btn) - 1]?.focus(); }
+            });
+        });
+
+        const syncActive = () => {
+            btnEls.forEach((b, i) => {
+                const active = OPTIONS[i].value === this.currentRecurrence;
+                b.toggleClass('is-active', active);
+                b.setAttribute('aria-pressed', String(active));
+            });
+        };
+
+        const setRecurrence = (r: RecurrenceRule | null) => {
+            this.currentRecurrence = r;
+            syncActive();
+        };
+        return { setRecurrence };
     }
 
     /** ── INLINE TRIGGERS (@date, [[link, #tag, + checklist) ── */
@@ -349,6 +401,10 @@ export class EditEntryModal extends Modal {
         const dateZone = canvas.createDiv({ cls: `mina-mobile-date-zone${this.currentMode === 'task' ? ' is-visible' : ''}` });
         const { setDueDate } = this._buildDateStrip(dateZone);
         if (this.currentDueDate) setDueDate(this.currentDueDate);
+        // rm-7: Recurrence zone — below date strip, inside canvas
+        const recurZone = canvas.createDiv({ cls: `mina-recur-zone${this.currentMode === 'task' ? ' is-visible' : ''}` });
+        const { setRecurrence: setRecurrenceDesktop } = this._buildRecurStrip(recurZone, true);
+        if (this.currentRecurrence) setRecurrenceDesktop(this.currentRecurrence);
 
         // Dock
         const dock = contentEl.createEl('div', { cls: 'mina-edit-modal-dock' });
@@ -415,6 +471,8 @@ export class EditEntryModal extends Modal {
             thoughtBtn.toggleClass('is-active', mode === 'thought');
             taskBtn.toggleClass('is-active', mode === 'task');
             dateZone.toggleClass('is-visible', mode === 'task');
+            recurZone.toggleClass('is-visible', mode === 'task');
+            if (mode === 'thought') this.currentRecurrence = null;
             if (!this.stayOpen) saveBtn.textContent = saveLabel();
         };
         thoughtBtn.addEventListener('click', () => switchMode('thought'));
@@ -434,7 +492,8 @@ export class EditEntryModal extends Modal {
             const text = textArea.value.replace(/\n/g, '<br>');
             const contexts = this.initialContexts.map(c => `#${c}`).join(' ');
             const due = this.currentMode === 'task' ? (this.currentDueDate ?? null) : null;
-            this.onSave(text, contexts, due, this.currentProject);
+            const recur = this.currentMode === 'task' ? this.currentRecurrence : null;
+            this.onSave(text, contexts, due, this.currentProject, recur);
             if (this.stayOpen) { textArea.value = ''; textArea.focus(); new Notice('Capture saved.'); }
             else this.close();
         };

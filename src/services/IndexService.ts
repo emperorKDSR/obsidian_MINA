@@ -260,6 +260,8 @@ export class IndexService {
             project: fm.project || undefined,
             priority: fm.priority || undefined,
             energy: fm.energy || undefined,
+            recurrence: fm.recurrence || undefined,
+            recurrenceParentId: fm.recurrenceParentId || undefined,
         });
         if (!skipRebuild) this.rebuildCalculatedState();
     }
