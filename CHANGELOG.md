@@ -4,6 +4,17 @@ All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]
 
+## [1.5.8] - 2026-04-20
+### Feat — Monthly Review Navigation
+
+Monthly Review is now accessible directly from the Command Center navigation grid.
+
+**Changes:**
+- **Nav grid**: Added "Monthly" item to SYSTEM cluster (icon: `calendar-range`). Renamed "Review" → "Weekly" for clarity.
+- **MonthlyReviewTab**: Replaced 100% inline styles with proper CSS classes (`mina-monthly-*`). Uses `renderPageHeader()` and `renderEmptyState()` from BaseTab.
+- **CSS**: Added dedicated Monthly Review stylesheet block (~120 lines) with responsive breakpoint for small screens.
+- **HelpModal**: Expanded Monthly Review section with Navigation, Stats, Habit Adherence, Project Progress, and Focus entries.
+
 ## [1.5.7] - 2026-04-20
 ### Feat — Tablet UX Enhancements
 

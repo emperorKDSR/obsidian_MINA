@@ -6358,3 +6358,141 @@
 .mina-help-accordion-chevron { display: flex; color: var(--text-faint); flex-shrink: 0; }
 .mina-help-accordion-chevron svg { width: 16px; height: 16px; }
 .mina-help-accordion-body { padding: 4px 16px 16px; }
+/* ═══════════ Monthly Review Tab ═══════════ */
+.mina-monthly-wrap {
+    padding: 18px 16px 200px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+    flex-grow: 1;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+    background: var(--background-primary);
+}
+.mina-monthly-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+.mina-monthly-stat-card {
+    padding: 16px;
+    background: var(--background-secondary-alt);
+    border-radius: 12px;
+    border: 1px solid var(--background-modifier-border-faint);
+    text-align: center;
+}
+.mina-monthly-stat-value {
+    font-size: 1.8em;
+    font-weight: 900;
+    color: var(--interactive-accent);
+}
+.mina-monthly-stat-label {
+    font-size: 0.7em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    margin-top: 2px;
+}
+.mina-monthly-stat-sub {
+    font-size: 0.65em;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+.mina-monthly-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.mina-monthly-habit-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--background-secondary-alt);
+    border-radius: 10px;
+    border: 1px solid var(--background-modifier-border-faint);
+}
+.mina-monthly-habit-name {
+    font-size: 0.9em;
+    font-weight: 600;
+}
+.mina-monthly-habit-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+}
+.mina-monthly-habit-count {
+    font-size: 0.75em;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+.mina-monthly-habit-pct {
+    font-size: 0.65em;
+    font-weight: 600;
+}
+.mina-monthly-project-row {
+    padding: 12px 16px;
+    background: var(--background-secondary-alt);
+    border-radius: 10px;
+    border: 1px solid var(--background-modifier-border-faint);
+}
+.mina-monthly-project-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+.mina-monthly-project-name {
+    font-size: 0.85em;
+    font-weight: 700;
+}
+.mina-monthly-project-stat {
+    font-size: 0.75em;
+    color: var(--text-muted);
+}
+.mina-monthly-progress-track {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--background-modifier-border);
+}
+.mina-monthly-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--interactive-accent);
+    transition: width 0.3s;
+}
+.mina-monthly-focus {
+    padding: 20px;
+    background: var(--background-secondary-alt);
+    border-radius: 16px;
+    border: 1px solid var(--background-modifier-border-faint);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.mina-monthly-focus-title {
+    margin: 0;
+    font-size: 0.8em;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-normal);
+}
+.mina-monthly-goal-input {
+    width: 100%;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 0.95em;
+}
+
+/* Mobile: stack stat cards vertically on very small screens */
+@media (max-width: 380px) {
+    .mina-monthly-stats {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+}

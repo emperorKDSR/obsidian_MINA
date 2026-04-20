@@ -89,8 +89,11 @@ const SECTIONS: HelpSection[] = [
     {
         id: 'monthly-review', icon: 'lucide-calendar-range', title: 'Monthly Review', subtitle: 'Set and track monthly goals',
         items: [
-            { label: 'Monthly Goals', desc: 'Write up to 5 monthly goals. They appear on the Home screen monthly goal card.' },
-            { label: 'Reflection', desc: 'Log wins and lessons for the month. Saved in Reviews/Monthly/.' },
+            { label: 'Navigation', desc: 'Access from the SYSTEM cluster in Command Center, or from the monthly goals "Edit" button.' },
+            { label: 'Monthly Stats', desc: 'Auto-calculated tasks done, thoughts captured, and open tasks for the current month.' },
+            { label: 'Habit Adherence', desc: 'Shows completion rate per habit across the month with percentage color coding.' },
+            { label: 'Project Progress', desc: 'Visual progress bars for each project showing done/total ratio.' },
+            { label: 'Next Month\'s Focus', desc: 'Set up to 3 goals for the coming month. Persisted in settings.' },
         ]
     },
     {
