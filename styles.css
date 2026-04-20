@@ -4136,3 +4136,237 @@
     .mina-rec-dot { animation: none; opacity: 1; }
     .mina-voice-spinner { animation-duration: 2s; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   WEEKLY REVIEW TAB  (rm-1)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.mina-review-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mina-spacing, 20px);
+    padding: 18px 16px var(--mina-footer-clearance, 120px) 16px;
+    overflow-y: auto;
+    flex-grow: 1;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+    background: var(--background-primary);
+    max-width: var(--mina-content-max-width, 900px);
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    container-type: inline-size;
+    container-name: mina-review;
+}
+
+.mina-review-header { display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px; }
+.mina-review-nav-row { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+.mina-review-subtitle-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+.mina-review-week-label { font-size: 0.82em; font-weight: 700; color: var(--text-muted); letter-spacing: 0.02em; }
+.mina-review-week-chip {
+    font-size: 0.68em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;
+    padding: 2px 8px; border-radius: 20px;
+    background: rgba(var(--interactive-accent-rgb), 0.10);
+    color: var(--interactive-accent);
+}
+.mina-review-saved-badge {
+    font-size: 0.7em; font-weight: 600; color: var(--text-faint);
+    background: var(--background-secondary-alt);
+    border: 1px solid var(--background-modifier-border-faint);
+    border-radius: 6px; padding: 2px 8px;
+}
+.mina-review-dirty-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--interactive-accent);
+    display: inline-block; vertical-align: middle;
+    transform: scale(0);
+    animation: mina-dot-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes mina-dot-pop {
+    from { transform: scale(0); } to { transform: scale(1); }
+}
+
+.mina-review-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mina-spacing, 20px);
+}
+.mina-review-col--left,
+.mina-review-col--right {
+    display: flex; flex-direction: column; gap: 14px;
+}
+@container mina-review (min-width: 340px) {
+    .mina-review-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        align-items: start;
+    }
+}
+
+.mina-review-section {
+    background: var(--background-secondary-alt);
+    border: 1px solid var(--background-modifier-border-faint);
+    border-radius: 16px;
+    box-shadow: var(--mina-shadow, 0 2px 8px rgba(0,0,0,0.06));
+    overflow: hidden;
+}
+.mina-review-section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; cursor: pointer; user-select: none;
+    transition: background 0.15s;
+}
+.mina-review-section-header:active { background: rgba(var(--interactive-accent-rgb), 0.04); }
+.is-mobile .mina-review-section-header { padding: 16px; }
+.mina-review-section-header-left { display: flex; align-items: center; gap: 8px; flex: 1; }
+.mina-review-section-icon { font-size: 1.1em; line-height: 1; flex-shrink: 0; }
+.mina-review-section-title {
+    font-size: 0.68em; font-weight: 900; text-transform: uppercase;
+    letter-spacing: 0.14em; color: var(--text-normal);
+}
+.mina-review-section-toggle {
+    width: 16px; height: 16px; color: var(--text-faint); flex-shrink: 0;
+    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mina-review-section-body {
+    padding: 0 16px 16px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+    transition: opacity 0.18s ease;
+}
+
+.mina-review-textarea {
+    width: 100%; box-sizing: border-box;
+    min-height: 88px;
+    resize: none; overflow: hidden;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border-faint);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.92em; font-family: inherit;
+    color: var(--text-normal); line-height: 1.6;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.mina-review-textarea:focus {
+    border-color: var(--interactive-accent);
+    box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.12);
+    overflow-y: auto;
+}
+.is-desktop .mina-review-textarea { min-height: 56px; max-height: 240px; }
+
+.mina-review-focus-list { display: flex; flex-direction: column; gap: 8px; }
+.mina-review-focus-item { display: flex; align-items: center; gap: 8px; }
+.mina-review-focus-num {
+    width: 22px; height: 22px; min-width: 22px; border-radius: 50%;
+    background: rgba(var(--interactive-accent-rgb), 0.12);
+    color: var(--interactive-accent);
+    font-size: 0.68em; font-weight: 900;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.mina-review-input {
+    flex: 1; min-height: 44px; padding: 10px 12px;
+    border-radius: 10px; border: 1px solid var(--background-modifier-border-faint);
+    background: var(--background-primary); color: var(--text-normal);
+    font-size: 0.9em; font-weight: 500; outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+}
+.mina-review-input:focus {
+    border-color: var(--interactive-accent);
+    box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.12);
+}
+
+.mina-review-habit-highlight {
+    background: rgba(var(--interactive-accent-rgb), 0.04);
+    border: 1px solid rgba(var(--interactive-accent-rgb), 0.16);
+    border-radius: 8px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 12px;
+}
+.mina-review-habit-highlight-emoji { font-size: 1.6em; line-height: 1; flex-shrink: 0; }
+.mina-review-habit-highlight-info { display: flex; flex-direction: column; gap: 2px; }
+.mina-review-habit-name { font-weight: 700; font-size: 0.9em; color: var(--text-normal); }
+.mina-review-habit-streak { font-size: 0.78em; color: var(--text-muted); }
+.mina-review-habit-highlight--empty {
+    color: var(--text-faint); font-size: 0.85em; font-style: italic;
+    padding: 8px 4px;
+}
+
+.mina-review-save-row {
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: 12px; padding-top: 4px;
+}
+.mina-review-kbd-hint {
+    display: none;
+    font-size: 0.68em; font-weight: 700; color: var(--text-faint);
+    background: var(--background-secondary-alt);
+    border: 1px solid var(--background-modifier-border-faint);
+    border-radius: 6px; padding: 3px 8px; white-space: nowrap;
+}
+.is-desktop .mina-review-kbd-hint { display: inline-flex; align-items: center; }
+.mina-review-save-btn {
+    height: 36px; padding: 0 20px;
+    border-radius: 8px;
+    font-size: 0.8em; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 6px;
+    background: var(--interactive-accent); color: var(--text-on-accent);
+    border: none; cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s, background 0.2s;
+}
+.mina-review-save-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.mina-review-save-btn:active { transform: scale(0.97); }
+.mina-review-save-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.mina-review-save-btn.is-saved { background: var(--color-green, #4caf50); animation: mina-save-pop 0.32s ease; }
+.mina-review-save-btn.is-error { background: rgba(239, 68, 68, 0.9); }
+@keyframes mina-save-pop { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+
+.mina-review-prev-card {
+    background: var(--background-secondary-alt);
+    border: 1px solid var(--background-modifier-border-faint);
+    border-radius: 12px; overflow: hidden;
+    box-shadow: var(--mina-shadow, 0 2px 8px rgba(0,0,0,0.06));
+    opacity: 0.85;
+}
+.mina-review-prev-card__trigger {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; cursor: pointer; user-select: none;
+    transition: background 0.15s;
+}
+.mina-review-prev-card__trigger:hover { background: rgba(var(--interactive-accent-rgb), 0.04); }
+.mina-review-prev-card__left { display: flex; flex-direction: column; gap: 2px; }
+.mina-review-prev-week-chip { font-size: 0.75em; font-weight: 600; color: var(--text-muted); }
+.mina-review-prev-card__chevron {
+    width: 16px; height: 16px; color: var(--text-faint); flex-shrink: 0;
+    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mina-review-prev-card__body {
+    max-height: 600px; opacity: 1;
+    padding: 0 16px 16px;
+    transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease, padding 0.2s;
+}
+.mina-review-prev-card.is-collapsed .mina-review-prev-card__body {
+    max-height: 0; opacity: 0; overflow: hidden;
+    padding-top: 0; padding-bottom: 0;
+}
+.mina-review-prev-card.is-collapsed .mina-review-prev-card__chevron { transform: rotate(-90deg); }
+.mina-review-readonly-badge {
+    font-size: 0.58em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--text-faint);
+    background: var(--background-modifier-border-faint);
+    border-radius: 4px; padding: 2px 6px;
+    display: inline-block; margin-bottom: 10px;
+}
+.mina-review-prev-open-btn {
+    display: block; width: 100%; margin-top: 12px;
+    font-size: 0.8em;
+}
+.mina-review-prev-empty {
+    color: var(--text-faint); font-size: 0.85em; font-style: italic;
+    padding: 8px 0;
+}
+
+@media (prefers-reduced-motion) {
+    .mina-review-section-toggle,
+    .mina-review-prev-card__chevron,
+    .mina-review-section-body { transition: none; }
+    .mina-review-dirty-dot { animation: none; transform: scale(1); }
+}

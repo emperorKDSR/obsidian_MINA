@@ -381,4 +381,58 @@ export class VaultService {
         await this.app.vault.modify(file, current + record);
         new Notice(`Payment recorded for ${file.basename}. Next due: ${nextDueDate}`);
     }
+
+    /** Save a weekly review to Reviews/Weekly/YYYY-Www.md */
+    async saveWeeklyReview(weekId: string, dateRange: string, wins: string, lessons: string, focus: string[], habitHighlight: string): Promise<void> {
+        const folder = 'Reviews/Weekly';
+        const path = `${folder}/${weekId}.md`;
+        const now = this.formatDateTime(new Date());
+        const focusLines = focus.map((f, i) => `${i + 1}. ${f.trim()}`).join('\n');
+        const content = `---\nweek: "${weekId}"\ndate_range: "${dateRange}"\nsaved: "${now}"\n---\n\n# 🏆 Wins\n${wins.trim()}\n\n# 📚 Lessons\n${lessons.trim()}\n\n# 🎯 Focus\n${focusLines}\n\n# 💡 Habit Highlight\n${habitHighlight}\n`;
+        try {
+            await this.ensureFolder(folder);
+            const existing = this.app.vault.getAbstractFileByPath(path);
+            if (existing instanceof TFile) {
+                await this.app.vault.modify(existing, content);
+            } else {
+                await this.app.vault.create(path, content);
+            }
+        } catch (e) {
+            console.error('[MINA VaultService] saveWeeklyReview', e);
+            throw e;
+        }
+    }
+
+    /** Load a weekly review file and parse wins/lessons/focus sections */
+    async loadWeeklyReview(weekId: string): Promise<{ wins: string; lessons: string; focus: string[]; saved: string } | null> {
+        const path = `Reviews/Weekly/${weekId}.md`;
+        const file = this.app.vault.getAbstractFileByPath(path);
+        if (!(file instanceof TFile)) return null;
+        try {
+            const raw = await this.app.vault.read(file);
+            const body = raw.replace(/^---\n[\s\S]*?\n---\n/, '').trim();
+            const sections: Record<string, string> = {};
+            const parts = body.split(/^# /m);
+            for (const part of parts) {
+                const firstNewline = part.indexOf('\n');
+                if (firstNewline === -1) continue;
+                const heading = part.substring(0, firstNewline).replace(/[🏆📚🎯💡\s]+/g, ' ').trim().toLowerCase();
+                sections[heading] = part.substring(firstNewline + 1).trim();
+            }
+            const focusRaw = sections['focus'] || '';
+            const focus = focusRaw.split('\n').map(l => l.replace(/^\d+\.\s*/, '').trim()).filter(Boolean);
+            const cache = this.app.metadataCache.getFileCache(file);
+            const saved = cache?.frontmatter?.['saved'] || '';
+            return {
+                wins: sections['wins'] || '',
+                lessons: sections['lessons'] || '',
+                focus,
+                saved
+            };
+        } catch (e) {
+            console.error('[MINA VaultService] loadWeeklyReview', e);
+            return null;
+        }
+    }
 }
+

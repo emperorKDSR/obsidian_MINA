@@ -4,6 +4,26 @@ All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-04-20
+### Feat — Structured Weekly Review (rm-1)
+
+Complete rewrite of `ReviewTab.ts` with vault-persisted structured reflection.
+
+**Architecture:**
+- Weekly review files written to `Reviews/Weekly/YYYY-Www.md` (ISO week format)
+- Full vault persistence via `VaultService.saveWeeklyReview()` and `loadWeeklyReview()`
+- On tab open, existing review data is loaded and textareas pre-populated
+- Ctrl+Enter / ⌘+Enter keyboard shortcut to save from anywhere in the form
+
+**UI:**
+- 4 collapsible section cards: 🏆 Wins, 📚 Lessons, 🎯 Next Week's Focus (3 numbered slots), 💡 Habit Highlight (read-only, auto-computed)
+- Two-column layout on desktop via CSS container query (`@container mina-review (min-width: 340px)`)
+- Dirty indicator dot appears in header when unsaved changes exist
+- Save button: Default → Saving… → ✓ Saved (green spring animation) / ⚠ Save Failed
+- Section collapse state persisted in `sessionStorage` — survives tab switches
+- Previous Week card at bottom: collapsed by default, expands to render previous week's `.md` with `MarkdownRenderer`, "Open in Vault →" button
+- Auto-expanding textareas (same pattern as capture bar)
+
 ## [1.3.1] - 2026-04-20
 ### Fix — Data Integrity, Security & Stability
 
