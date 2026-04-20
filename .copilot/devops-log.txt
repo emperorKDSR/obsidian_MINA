@@ -47,3 +47,8 @@
 [2026-04-20T03:31:14+02:00] ROOT CAUSE: renderTimeline() read stale index because vault 'delete' event fires async/debounced; deleted entry remained visible
 [2026-04-20T03:31:14+02:00] FIX: manually call index.thoughtIndex.delete()/taskIndex.delete() before renderTimeline()
 [2026-04-20T03:31:14+02:00] FILES: src/tabs/TimelineTab.ts
+[2026-04-20T03:31:17+02:00] GIT: committed 876f0ff and pushed to origin/main
+[2026-04-20T03:33:52+02:00] FIX v1.0.8: Timeline delete still visible — root cause: deleteFile() renames to /trash/, not hard-delete
+[2026-04-20T03:33:52+02:00] isThoughtFile/isTaskFile returned true for trash paths (subfolder of main folder), re-indexing the file immediately after rename
+[2026-04-20T03:33:52+02:00] FIX: add !path.includes('/trash/') guard to isThoughtFile() and isTaskFile() in IndexService
+[2026-04-20T03:33:52+02:00] FILES: src/services/IndexService.ts

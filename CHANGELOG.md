@@ -2,6 +2,11 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.0.8] - 2026-04-20
+
+### Fixed
+- **Timeline — deleted entry re-appears after deletion** — `VaultService.deleteFile()` renames to a `/trash/` subfolder rather than hard-deleting, which fires a vault `'rename'` event. Because `/trash/` lives inside the thoughts/tasks folder, `isThoughtFile()` / `isTaskFile()` returned `true` for the trash path, causing the renamed file to be immediately re-indexed and re-appear in the timeline. Fix: exclude paths containing `/trash/` in `isThoughtFile()` and `isTaskFile()` in `IndexService`.
+
 ## [1.0.7] - 2026-04-20
 
 ### Fixed
