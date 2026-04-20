@@ -241,6 +241,30 @@ export class VaultService {
         }
     }
 
+    async setTaskDue(filePath: string, dueDate: string): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return;
+        try {
+            const content = await this.app.vault.read(file);
+            let updated = content.replace(/^due: .+$/m, `due: ${dueDate}`);
+            if (updated === content) updated = content.replace(/^(---\n[\s\S]*?)\n---/m, `$1\ndue: ${dueDate}\n---`);
+            const final = updated.replace(/^modified: .+$/m, `modified: ${this.formatDateTime(new Date())}`);
+            await this.app.vault.modify(file, final);
+        } catch (e) { console.error('[MINA VaultService]', e); new Notice(VaultService.toUserMessage(e)); }
+    }
+
+    async updateTaskTitle(filePath: string, newTitle: string): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return;
+        try {
+            const content = await this.app.vault.read(file);
+            let updated = content.replace(/^title: .+$/m, `title: "${newTitle.replace(/"/g, '\\"')}"`);
+            if (updated === content) updated = content.replace(/^(---\n[\s\S]*?)\n---/m, `$1\ntitle: "${newTitle.replace(/"/g, '\\"')}"\n---`);
+            const final = updated.replace(/^modified: .+$/m, `modified: ${this.formatDateTime(new Date())}`);
+            await this.app.vault.modify(file, final);
+        } catch (e) { console.error('[MINA VaultService]', e); new Notice(VaultService.toUserMessage(e)); }
+    }
+
     async deleteFile(filePath: string, type: 'thoughts' | 'tasks'): Promise<void> {
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return;

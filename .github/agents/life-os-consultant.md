@@ -7,7 +7,7 @@ tools:
   - list_directory
   - web_fetch
   - google_web_search
-model: gemini-2.0-pro-exp-02-05
+model: Claude Sonnet 4.6
 temperature: 0.7
 max_turns: 15
 ---

@@ -38,6 +38,7 @@ export class MinaView extends ItemView {
     _habitTogglePending: number = 0;      // > 0 = suppress vault-event re-renders
     _checklistTogglePending: number = 0;  // > 0 = suppress vault-event re-renders
     checklistOrder: string[] = [];        // persisted drag-reorder keys: "filePath:lineIndex"
+    checklistShowDone: boolean = true;    // persisted show/hide completed checklist items
     // key = "filePath:lineIndex", value = YYYY-MM-DD — keeps completed items visible for the day
     checklistCompletedToday: Map<string, { text: string; date: string }> = new Map();
     
@@ -91,7 +92,14 @@ export class MinaView extends ItemView {
         }
     }
 
-    async onOpen() { this.renderView(); }
+    async onOpen() {
+        // Hide Obsidian's view header (title bar inside leaf content)
+        const header = this.containerEl.children[0] as HTMLElement;
+        if (header) header.style.display = 'none';
+        this.renderView();
+    }
+
+    async onClose() {}
 
     renderView() {
         const container = this.containerEl.children[1] as HTMLElement;

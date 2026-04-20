@@ -5,7 +5,7 @@ tools:
   - read_file
   - grep_search
   - glob
-model: gemini-2.0-flash
+model: Claude Sonnet 4.6
 temperature: 0.1
 max_turns: 15
 ---

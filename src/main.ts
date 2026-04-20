@@ -34,24 +34,16 @@ export default class MinaPlugin extends Plugin {
             this.scanForContexts();
             
             // --- REACTIVE NERVE SYSTEM ---
+            // vault events: fast path for local writes (create/delete/rename)
             this.registerEvent(this.app.vault.on('create', async (f) => { 
                 if (this.index.isThoughtFile(f.path)) await this.index.indexThoughtFile(f as TFile);
                 else if (this.index.isTaskFile(f.path)) await this.index.indexTaskFile(f as TFile);
+                else if (f.path.startsWith((this.settings.habitsFolder || '000 Bin/MINA V2 Habits').replace(/\\/g, '/'))) await this.index.refreshHabitIndex();
                 this.notifyRefresh(); 
             }));
             
             this.registerEvent(this.app.vault.on('modify', async (f) => { 
-                if (this.index.isThoughtFile(f.path)) await this.index.indexThoughtFile(f as TFile);
-                else if (this.index.isTaskFile(f.path)) await this.index.indexTaskFile(f as TFile);
-                
-                const capFolder = this.settings.captureFolder.trim() || '000 Bin/MINA V2';
-                const capFile = this.settings.captureFilePath.trim() || 'Daily Capture.md';
-                const capPath = `${capFolder}/${capFile}`;
-                const habitsFolder = (this.settings.habitsFolder || '000 Bin/MINA V2 Habits').replace(/\\/g, '/');
-
-                if (f.path === capPath) await this.index.buildChecklistIndex();
-                else if (f.path.startsWith(habitsFolder)) await this.index.refreshHabitIndex();
-
+                await this._reindexFile(f as TFile);
                 this.notifyRefresh();
             }));
 
@@ -66,6 +58,13 @@ export default class MinaPlugin extends Plugin {
                 this.index.taskIndex.delete(oldPath);
                 if (this.index.isThoughtFile(f.path)) await this.index.indexThoughtFile(f as TFile);
                 else if (this.index.isTaskFile(f.path)) await this.index.indexTaskFile(f as TFile);
+                this.notifyRefresh();
+            }));
+
+            // metadataCache.changed: authoritative trigger for cloud-synced files
+            // (OneDrive/iCloud sync may not fire vault 'modify'/'create' reliably)
+            this.registerEvent(this.app.metadataCache.on('changed', async (file) => {
+                await this._reindexFile(file);
                 this.notifyRefresh();
             }));
         });
@@ -90,25 +89,9 @@ export default class MinaPlugin extends Plugin {
         addIcon(HOME_ICON_ID, HOME_ICON_SVG);
 
 		this.addRibbonIcon(HOME_ICON_ID, 'MINA Hub', () => { this.activateView('home', true); });
-		this.addRibbonIcon(DAILY_ICON_ID, 'Daily Summary', () => { this.activateView('home', true); });
-		this.addRibbonIcon(REVIEW_ICON_ID, 'Weekly Review', () => { this.activateView('review', true); });
-		this.addRibbonIcon(PROJECT_ICON_ID, 'Projects Mode', () => { this.activateView('projects', true); });
-		this.addRibbonIcon(SYNTHESIS_ICON_ID, 'Synthesis Mode', () => { this.activateView('synthesis', true); });
-		this.addRibbonIcon(COMPASS_ICON_ID, 'Quarterly Compass', () => { this.activateView('compass', true); });
-		this.addRibbonIcon(VOICE_ICON_ID, 'Voice Note Mode', () => { this.activateView('voice-note', true); });
-		this.addRibbonIcon(JOURNAL_ICON_ID, 'Journal Mode', () => { this.activateView('journal', true); });
-		this.addRibbonIcon(TASK_ICON_ID, 'Task Mode', () => { this.activateView('review-tasks', true); });
-		this.addRibbonIcon(PF_ICON_ID, 'Personal Finance', () => { this.activateView('pf', true); });
-		this.addRibbonIcon(SETTINGS_ICON_ID, 'MINA Settings', () => { this.activateView('settings', true); });
-		this.addRibbonIcon(AI_CHAT_ICON_ID, 'AI Mode', () => { this.activateView('mina-ai', true); });
-		this.addRibbonIcon(TIMELINE_ICON_ID, 'Timeline Mode', () => { this.activateView('timeline', true); });
-		this.addRibbonIcon(FOCUS_ICON_ID, 'Focus Mode', () => { this.activateView('focus', true); });
-		this.addRibbonIcon(GRUNDFOS_ICON_ID, 'Grundfos Mode', () => { this.activateView('grundfos', true); });
-		this.addRibbonIcon(MEMENTO_ICON_ID, 'Memento Mori', () => { this.activateView('memento-mori', true); });
 
         this.addCommand({ id: 'open-mina-home-mode', name: 'MINA: Open Command Center', icon: HOME_ICON_ID, callback: () => { this.activateView('home', true); } });
 
-        this.registerCustomModes();
 		this.addSettingTab(new MinaSettingTab(this.app, this));
         setTimeout(() => this.migrateLegacyTableData(), 2000);
 	}
@@ -164,13 +147,6 @@ export default class MinaPlugin extends Plugin {
         }
     }
 
-    registerCustomModes() {
-        for (const mode of this.settings.customModes) {
-            this.addRibbonIcon(mode.icon || 'pencil', mode.name, () => { this.activateView(mode.id, true); });
-            this.addCommand({ id: `open-mina-mode-${mode.id}`, name: mode.name, icon: mode.icon || 'pencil', callback: () => { this.activateView(mode.id, true); } });
-        }
-    }
-
     async scanForContexts() {
         const foundContexts = await this.index.scanForContexts();
         let newCtx = false;
@@ -193,6 +169,18 @@ export default class MinaPlugin extends Plugin {
         if (this.index) this.index.updateSettings(this.settings);
 	}
 
+    /** Re-indexes a single file based on its type. Called by both vault and metadataCache events. */
+    private async _reindexFile(file: TFile): Promise<void> {
+        const habitsFolder = (this.settings.habitsFolder || '000 Bin/MINA V2 Habits').replace(/\\/g, '/');
+        const capPath = `${this.settings.captureFolder.trim() || '000 Bin/MINA V2'}/${this.settings.captureFilePath.trim() || 'Daily Capture.md'}`;
+
+        if (this.index.isThoughtFile(file.path)) await this.index.indexThoughtFile(file);
+        else if (this.index.isTaskFile(file.path)) await this.index.indexTaskFile(file);
+
+        if (file.path.startsWith(habitsFolder)) await this.index.refreshHabitIndex();
+        else if (file.path === capPath) await this.index.buildChecklistIndex();
+    }
+
     notifyRefresh(): void {
         if (this._indexDebounceTimer) clearTimeout(this._indexDebounceTimer);
         this._indexDebounceTimer = setTimeout(() => {
@@ -205,7 +193,7 @@ export default class MinaPlugin extends Plugin {
                     view.renderView();
                 }
             }
-        }, 150);
+        }, 400); // 400ms: handles cloud-sync bursts and gives async indexing headroom
     }
 
     getProjects(): string[] {

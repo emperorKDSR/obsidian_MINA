@@ -99,9 +99,22 @@ export class IndexService {
         const file = this.app.vault.getAbstractFileByPath(path);
         this.habitStatusIndex = [];
         if (file instanceof TFile) {
-            const content = await this.app.vault.read(file);
-            const matches = content.match(/id:\s*([a-zA-Z0-9_-]+)/g);
-            if (matches) this.habitStatusIndex = matches.map(m => m.split(':')[1].trim());
+            // Primary: use metadataCache (fast, no file read)
+            const cache = this.app.metadataCache.getFileCache(file);
+            const completed = cache?.frontmatter?.['completed'];
+            if (Array.isArray(completed)) {
+                this.habitStatusIndex = completed.map(String);
+            } else {
+                // Fallback: parse the completed: [...] line directly (covers cache lag)
+                const content = await this.app.vault.read(file);
+                const match = content.match(/^completed:\s*\[([^\]]*)\]/m);
+                if (match) {
+                    this.habitStatusIndex = match[1]
+                        .split(',')
+                        .map(s => s.trim().replace(/['"]/g, ''))
+                        .filter(Boolean);
+                }
+            }
         }
     }
 

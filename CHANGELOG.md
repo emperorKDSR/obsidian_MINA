@@ -2,7 +2,7 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
-## [Unreleased]
+## [1.0.1] - 2026-04-20
 
 ### Added
 - **Checklist — Refresh button** — ↻ icon in CHECKLIST header re-indexes `thoughtChecklistIndex` from vault and re-renders the view on demand
@@ -16,6 +16,7 @@ All notable changes to MINA V2 will be documented in this file.
 - **CommandCenterTab — inline triggers** — `@word ` resolves to `[[YYYY-MM-DD]]` via NLP date parsing; `+` at line start inserts `- [ ] `; `[[` opens file suggester
 - **IndexService — YAML field fixes** — `context:` (singular) read correctly; `[[YYYY-MM-DD]]` wikilink strings stripped before date comparison
 - **Commands** — removed all plugin commands except "MINA: Open Command Center"
+- **Navigation** — removed all plugin ribbon icons except the Command Center entry
 
 ## [1.0.0] - 2026-04-19
 

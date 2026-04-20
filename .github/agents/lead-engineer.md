@@ -7,7 +7,7 @@ tools:
   - list_directory
   - glob
   - run_shell_command
-model: gemini-2.0-flash
+model: Claude Sonnet 4.6
 temperature: 0.1
 max_turns: 25
 ---
@@ -26,6 +26,7 @@ You must enforce these principles in every plan:
    - **UX/UI Consistency** (from the UX Auditor)
    - **Performance** (from the Optimization Auditor)
    - **Compliance** (from the Release Manager — now handled by `devops`)
+5. **Navigation Discipline**: Treat the Command Center as the primary ribbon entry point. Do not introduce additional plugin ribbon icons unless the user explicitly requests them.
 
 # Workflow
 1. **Design Consultation**: Before drafting a Technical Design Document, you MUST consult the **`ui-ux-designer`** to receive a visual blueprint and CSS standards for the feature.
