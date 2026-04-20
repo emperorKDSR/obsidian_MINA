@@ -3,6 +3,7 @@ import MinaPlugin from '../main';
 import { isTablet, parseNaturalDate, parseContextString, attachInlineTriggers, attachMediaPasteHandler } from '../utils';
 import { FileSuggestModal } from './FileSuggestModal';
 import { ContextSuggestModal } from './ContextSuggestModal';
+import { ProjectPickerModal } from './ProjectPickerModal';
 import type { RecurrenceRule } from '../types';
 
 type CaptureMode = 'thought' | 'task';
@@ -140,6 +141,46 @@ export class EditEntryModal extends Modal {
             });
             if (this.initialContexts.length === 0) {
                 chipStrip.createSpan({ text: '# to tag', cls: 'mina-chip-hint' });
+            }
+            // Project pill
+            const allProjects = Array.from(this.plugin.index.projectIndex.values())
+                .filter(p => p.status !== 'archived');
+            if (allProjects.length > 0 || this.currentProject) {
+                const openProjectPicker = () => {
+                    new ProjectPickerModal(this.app, allProjects, (picked) => {
+                        this.currentProject = picked ? picked.name : null;
+                        renderChips();
+                    }).open();
+                };
+                if (this.currentProject) {
+                    const proj = allProjects.find(p => p.name === this.currentProject || p.id === this.currentProject);
+                    const projPill = chipStrip.createEl('span', {
+                        cls: 'mina-mobile-chip mina-project-pill mina-project-pill--active'
+                    });
+                    if (proj?.color) {
+                        projPill.style.setProperty('--project-color', proj.color);
+                    }
+                    const dot = projPill.createEl('span', { cls: 'mina-project-pill-dot' });
+                    projPill.createEl('span', { text: this.currentProject, cls: 'mina-project-pill-name' });
+                    const xBtn = projPill.createEl('button', { text: '×', cls: 'mina-project-pill-x' });
+                    xBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.currentProject = null;
+                        renderChips();
+                    });
+                    projPill.addEventListener('click', (e) => {
+                        if ((e.target as HTMLElement).classList.contains('mina-project-pill-x')) return;
+                        openProjectPicker();
+                    });
+                } else {
+                    const projPill = chipStrip.createEl('button', {
+                        cls: 'mina-mobile-chip mina-project-pill mina-project-pill--empty',
+                        attr: { 'aria-label': 'Assign project' }
+                    });
+                    projPill.createEl('span', { text: '◈', cls: 'mina-project-pill-icon' });
+                    projPill.createEl('span', { text: 'Project', cls: 'mina-project-pill-label' });
+                    projPill.addEventListener('click', openProjectPicker);
+                }
             }
         };
         renderChips();
@@ -663,18 +704,45 @@ export class EditEntryModal extends Modal {
         };
         renderChips();
 
-        // Project chip
-        const projectArea = chipArea.createDiv();
+        // Project chip (desktop)
+        const projectArea = chipArea.createDiv('mina-proj-zone');
+        const allProjects = Array.from(this.plugin.index.projectIndex.values())
+            .filter(p => p.status !== 'archived');
         const updateProjectChip = (project: string | null) => {
             projectArea.empty();
-            if (!project) return;
-            const pChip = projectArea.createEl('span', {
-                text: `[${project}]`,
-                cls: 'mina-edit-modal-project-chip'
-            });
-            pChip.addEventListener('click', () => { this.currentProject = null; updateProjectChip(null); });
+            if (allProjects.length === 0 && !project) return;
+            const openProjPicker = () => {
+                new ProjectPickerModal(this.app, allProjects, (picked) => {
+                    this.currentProject = picked ? picked.name : null;
+                    updateProjectChip(this.currentProject);
+                }).open();
+            };
+            if (project) {
+                const proj = allProjects.find(p => p.name === project || p.id === project);
+                const pChip = projectArea.createEl('span', {
+                    cls: 'mina-edit-modal-project-chip mina-proj-chip--active'
+                });
+                if (proj?.color) pChip.style.setProperty('--project-color', proj.color);
+                const dot = pChip.createEl('span', { cls: 'mina-project-pill-dot' });
+                pChip.createEl('span', { text: project, cls: 'mina-proj-chip-name' });
+                const x = pChip.createEl('span', { text: '×', cls: 'mina-mobile-chip-x' });
+                x.addEventListener('click', (e) => { e.stopPropagation(); this.currentProject = null; updateProjectChip(null); });
+                pChip.addEventListener('click', (e) => {
+                    if ((e.target as HTMLElement).classList.contains('mina-mobile-chip-x')) return;
+                    openProjPicker();
+                });
+            } else {
+                const pickBtn = projectArea.createEl('button', {
+                    cls: 'mina-recur-btn mina-proj-pick-btn',
+                    attr: { 'aria-label': 'Assign project', title: 'Assign project' }
+                });
+                const icon = pickBtn.createEl('span');
+                setIcon(icon, 'folder');
+                pickBtn.createEl('span', { text: 'Project' });
+                pickBtn.addEventListener('click', openProjPicker);
+            }
         };
-        if (this.currentProject) updateProjectChip(this.currentProject);
+        updateProjectChip(this.currentProject);
 
         // Actions
         const actions = dock.createDiv({ cls: 'mina-capture-desktop-actions' });

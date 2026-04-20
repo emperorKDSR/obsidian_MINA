@@ -4,7 +4,19 @@ All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]
 
-## [1.5.2] - 2025-07-29
+## [1.5.3] - 2025-07-29
+### Feat — Edit Project + Manual Project Picker (F2)
+
+Projects are now fully editable from the Projects tab. Capture modal gains a manual project picker on both mobile (project pill in chip strip) and desktop (folder button in chip area).
+
+**Architecture:**
+- `EditProjectModal` (new): Bottom sheet on mobile, centered modal on desktop. Pre-fills all fields (name, goal, status, due, color). Calls `VaultService.updateProject()` on save. Swipe-to-dismiss on mobile.
+- `ProjectPickerModal` (new): `SuggestModal<ProjectEntry | null>` with search filter, colored dot indicators, status badges, and "clear" null option. Used by both mobile pill and desktop picker.
+- `ProjectsTab.renderCard()`: Added `.mina-project-card__header-actions` cluster with pencil `EditProjectModal` trigger. Hover-reveal on desktop, always-visible on mobile.
+- `EditEntryModal`: Mobile chip strip gains `mina-project-pill` (empty/active states, colored dot, dismiss ×). Desktop chip area gains `mina-proj-zone` with folder button or active chip.
+- CSS: `mina-edit-project-sheet`, `mina-epm-*`, `mina-project-card__edit-btn`, `mina-project-pill`, `mina-proj-zone`
+
+
 ### Feat — Task Metadata Write Path (F1)
 
 Priority, energy, and status fields are now fully writable from both the New Task and Edit Task flows. The `EditEntryModal` gains a metadata strip that renders on desktop (always-visible zone in the canvas) and mobile (horizontally-scrollable bottom dock bar).

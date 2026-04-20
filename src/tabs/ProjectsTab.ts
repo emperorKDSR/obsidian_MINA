@@ -2,6 +2,7 @@ import { moment, TFile, setIcon } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from './BaseTab';
 import { NewProjectModal } from '../modals/NewProjectModal';
+import { EditProjectModal } from '../modals/EditProjectModal';
 import type { ProjectEntry } from '../types';
 
 type ProjectFilter = 'all' | 'active' | 'on-hold' | 'completed';
@@ -100,6 +101,22 @@ export class ProjectsTab extends BaseTab {
         badge.addEventListener('click', (e) => {
             e.stopPropagation();
             this.openStatusPicker(badge, project, rootContainer);
+        });
+
+        // Header actions cluster (edit button)
+        const headerActions = nameLine.createDiv('mina-project-card__header-actions');
+        const editBtn = headerActions.createEl('button', {
+            cls: 'mina-project-card__edit-btn',
+            attr: { 'aria-label': `Edit ${project.name}`, title: 'Edit project' }
+        });
+        const editIcon = editBtn.createEl('span');
+        setIcon(editIcon, 'pencil');
+        editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            new EditProjectModal(this.app, this.vault, project, (updated) => {
+                this.index.projectIndex.set(updated.id, updated);
+                this.render(rootContainer);
+            }).open();
         });
 
         // Goal text
