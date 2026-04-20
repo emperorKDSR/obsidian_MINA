@@ -2,6 +2,12 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.2.1] - 2026-04-20
+### Patch — Daily Workspace inline edit
+
+#### Fixed
+- **Inline note editing in Daily Workspace** — clicking the ✏️ edit button on any entry now opens `EditEntryModal` directly within the workspace instead of navigating away to the Thoughts or Tasks review tab. Both thought and task entries are handled — the modal pre-fills text, contexts, and due date, saves back via `editThought()`/`editTask()`, and re-renders the workspace in place. Zero context-switching, no lost flow.
+
 ## [1.2.0] - 2026-04-20
 ### 🚀 Minor Release — Daily Workspace Tab
 
