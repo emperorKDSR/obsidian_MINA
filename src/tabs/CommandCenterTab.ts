@@ -2,7 +2,7 @@ import { moment, Platform, Notice, TFile, setIcon } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from '../modals/EditEntryModal';
-import { PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, SETTINGS_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID } from '../constants';
+import { PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, SETTINGS_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID, WORKSPACE_ICON_ID } from '../constants';
 import { parseContextString, parseNaturalDate, isTablet, attachInlineTriggers } from '../utils';
 import type { TaskEntry } from '../types';
 
@@ -1015,7 +1015,7 @@ export class CommandCenterTab extends BaseTab {
             });
         };
 
-        renderCluster('ACTION',     [{ label: 'Tasks',    icon: 'lucide-check-square-2', tab: 'review-tasks' }, { label: 'Finance', icon: PF_ICON_ID, tab: 'dues' }, { label: 'Timeline', icon: TIMELINE_ICON_ID, tab: 'timeline' }], 'mina-pillar-cluster--action');
+        renderCluster('ACTION',     [{ label: 'Tasks',    icon: 'lucide-check-square-2', tab: 'review-tasks' }, { label: 'Finance', icon: PF_ICON_ID, tab: 'dues' }, { label: 'Timeline', icon: TIMELINE_ICON_ID, tab: 'timeline' }, { label: 'Workspace', icon: WORKSPACE_ICON_ID, tab: 'daily-workspace' }], 'mina-pillar-cluster--action');
         renderCluster('MANAGEMENT', [{ label: 'Projects', icon: 'lucide-briefcase', tab: 'projects' }, { label: 'Synthesis', icon: SYNTHESIS_ICON_ID, tab: 'synthesis' }, { label: 'Journal', icon: JOURNAL_ICON_ID, tab: 'journal' }], 'mina-pillar-cluster--mgmt');
         renderCluster('SYSTEM',     [{ label: 'AI Chat',  icon: AI_CHAT_ICON_ID, tab: 'mina-ai' }, { label: 'Review', icon: REVIEW_ICON_ID, tab: 'review' }, { label: 'Settings', icon: SETTINGS_ICON_ID, tab: 'settings' }], 'mina-pillar-cluster--system');
     }

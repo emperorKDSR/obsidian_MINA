@@ -30,6 +30,9 @@ export class MinaView extends ItemView {
     activeMasterNote: TFile | null = null;
     isZenMode: boolean = false;
 
+    // Daily Workspace State
+    dailyWorkspaceDate: string = moment().format('YYYY-MM-DD');
+
     searchQuery: string = '';
 
     // Tasks state — persists across re-renders (viewMode survives vault events)
@@ -89,6 +92,7 @@ export class MinaView extends ItemView {
             case 'journal': return "Journal";
             case 'focus': return "Focus";
             case 'memento-mori': return "Memento Mori";
+            case 'daily-workspace': return "Daily Workspace";
             default: return "MINA";
         }
     }
@@ -143,6 +147,7 @@ export class MinaView extends ItemView {
         else if (tab === 'focus') import('./tabs/FocusTab').then(({ FocusTab }) => new FocusTab(this).render(container)).catch(loadErr);
         else if (tab === 'memento-mori') import('./tabs/MementoMoriTab').then(({ MementoMoriTab }) => new MementoMoriTab(this).render(container)).catch(loadErr);
         else if (tab === 'journal') import('./tabs/JournalTab').then(({ JournalTab }) => new JournalTab(this).render(container)).catch(loadErr);
+        else if (tab === 'daily-workspace') import('./tabs/DailyWorkspaceTab').then(({ DailyWorkspaceTab }) => new DailyWorkspaceTab(this).render(container)).catch(loadErr);
         else if (tab === 'habits') import('./tabs/HabitsTab').then(({ HabitsTab }) => new HabitsTab(this).render(container)).catch(loadErr);
         else if (tab === 'grundfos' || this.plugin.settings.customModes.some(m => m.id === tab)) {
             import('./tabs/ContextTab').then(({ ContextTab }) => new ContextTab(this).render(container, tab)).catch(loadErr);
