@@ -52,3 +52,4 @@
 [2026-04-20T03:33:52+02:00] isThoughtFile/isTaskFile returned true for trash paths (subfolder of main folder), re-indexing the file immediately after rename
 [2026-04-20T03:33:52+02:00] FIX: add !path.includes('/trash/') guard to isThoughtFile() and isTaskFile() in IndexService
 [2026-04-20T03:33:52+02:00] FILES: src/services/IndexService.ts
+[2026-04-20T03:33:55+02:00] GIT: v1.0.8 committed and pushed to origin/main
