@@ -2,6 +2,18 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.0.6] - 2026-04-20
+
+### Changed
+- **Timeline — full redesign** — complete architectural and visual overhaul of the Timeline tab:
+  - **Header bar**: Home icon + "TIMELINE" label + "+ NEW" accent FAB button for quick capture
+  - **Date carousel**: horizontal scroll with 75-day range (60 back, 14 forward); activity dots on dates with entries; TODAY pill with accent ring; active pill with accent fill; auto-scrolls to selected date on render
+  - **Entry feed**: vertical spine layout — left accent line with node dots per entry; cards distinguish THOUGHT (accent) vs TASK (amber) via colored left-border and type badge
+  - **Entry cards**: meta row (type badge + timestamp), body text rendered as Markdown, footer with due-date chip + context pills, hover-reveal Edit + Delete action buttons
+  - **Empty state**: centered glyph + message + ghost "Capture a thought" CTA
+  - **New entry capture**: "+ NEW" FAB and empty-state CTA both open the standard `EditEntryModal`
+  - All inline styles replaced with semantic CSS classes (`.mina-tl-*`); 323 lines of new CSS added to `styles.css`
+
 ## [1.0.5] - 2026-04-20
 
 ### Fixed
