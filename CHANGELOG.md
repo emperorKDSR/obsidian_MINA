@@ -4,6 +4,18 @@ All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]
 
+## [1.5.5] - 2026-04-20
+### Fix — Mobile Tab Navigation (no new window on tab switch)
+
+On mobile, switching between tabs no longer spawns a new Obsidian tab/window. Previously, `activateView()` always called `workspace.getLeaf('tab')` when the exact target tab wasn't already visible, causing a fresh tab to be opened on every navigation action.
+
+**Root cause:** `getLeaf('tab')` unconditionally creates a new leaf regardless of existing open MINA views.
+
+**Fix (`src/main.ts — activateView()`):**
+1. After the existing exact-match and dedicated-leaf lookups, a new mobile-only check scans `leaves` for any existing MINA leaf and reuses it (`leaves[0]`).
+2. If no MINA view exists at all, falls back to `workspace.getLeaf(false)` (reuse current pane) instead of `getLeaf('tab')`.
+3. Desktop behaviour is unchanged — still opens a dedicated `'window'` leaf.
+
 ## [1.5.4] - 2025-07-29
 ### Feat — Data-Driven Weekly Review (F3)
 
