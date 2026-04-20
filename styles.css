@@ -789,6 +789,161 @@
     .mina-syn-card.is-assign-flash   { animation: none; }
     .mina-syn-card.is-exiting        { transition: opacity 0.1s ease; }
 }
+
+/* ── Synthesis: Sheet header (replace inline styles) ─────────────────────── */
+.mina-syn-ctx-sheet-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+.mina-syn-ctx-sheet-title {
+    font-size: 0.75em;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    color: var(--text-faint);
+    text-transform: uppercase;
+}
+.mina-syn-ctx-sheet-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border-radius: 6px;
+    min-width: 32px;
+    min-height: 32px;
+    justify-content: center;
+}
+.mina-syn-ctx-sheet-close:hover { background: var(--background-modifier-hover); }
+.mina-syn-ctx-sheet-close .svg-icon { width: 16px; height: 16px; }
+.mina-syn-ctx-sheet-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ── Manage mode: taller sheet ────────────────────────────────────────────── */
+.mina-syn-ctx-sheet.is-manage {
+    max-height: 85%;
+}
+.mina-syn-sheet-ctx-list {
+    max-height: 55vh;
+}
+
+/* ── Assign mode: search + pills ─────────────────────────────────────────── */
+.mina-syn-sheet-search {
+    width: 100%;
+    box-sizing: border-box;
+}
+.mina-syn-sheet-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 4px 0;
+}
+.mina-syn-sheet-pills .mina-chip--ctx {
+    padding: 8px 14px;
+    font-size: 0.78em;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: all 0.15s;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+}
+.mina-syn-sheet-pills .mina-chip--ctx.is-active {
+    background: rgba(var(--interactive-accent-rgb), 0.18);
+    color: var(--interactive-accent);
+    border-color: var(--interactive-accent);
+}
+.mina-syn-sheet-hidden-note {
+    font-size: 0.7em;
+    color: var(--text-faint);
+    font-style: italic;
+    padding: 4px 0;
+}
+.mina-syn-sheet-also-process {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82em;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+.mina-syn-sheet-apply {
+    width: 100%;
+    padding: 12px;
+    font-size: 0.9em;
+}
+
+/* ── Tablet: touch-optimised Synthesis panel ─────────────────────────────── */
+.mina-syn-shell.is-tablet .mina-syn-ctx-panel {
+    flex-basis: 36%;
+    min-width: 220px;
+}
+/* Minimum 44px touch target for all context rows on tablet */
+.mina-syn-shell.is-tablet .mina-syn-ctx-row {
+    min-height: 44px;
+    padding: 10px 10px;
+}
+/* Action buttons always visible on touch — no hover required */
+.mina-syn-shell.is-tablet .mina-syn-ctx-row-eye,
+.mina-syn-shell.is-tablet .mina-syn-ctx-row-del {
+    opacity: 1;
+    pointer-events: auto;
+}
+/* Slightly larger icon touch targets on tablet */
+.mina-syn-shell.is-tablet .mina-syn-ctx-row-eye,
+.mina-syn-shell.is-tablet .mina-syn-ctx-row-del {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+}
+/* Bigger primer pill dismiss on tablet */
+.mina-syn-shell.is-tablet .mina-syn-ctx-primer-pill-dismiss {
+    min-width: 28px;
+    min-height: 28px;
+    font-size: 1.1em;
+}
+/* Card action buttons larger on tablet */
+.mina-syn-shell.is-tablet .mina-syn-card-btn {
+    padding: 9px 14px;
+    min-height: 40px;
+    font-size: 0.82em;
+}
+.mina-syn-shell.is-tablet .mina-syn-card-btn .svg-icon {
+    width: 14px;
+    height: 14px;
+}
+/* Add context button bigger on tablet */
+.mina-syn-shell.is-tablet .mina-syn-ctx-add-btn {
+    min-height: 44px;
+    padding: 10px 12px;
+}
+/* Done All button */
+.mina-syn-shell.is-tablet .mina-syn-feed-done-all {
+    padding: 9px 14px;
+    min-height: 40px;
+}
+/* Search input taller on tablet for easier tapping */
+.mina-syn-shell.is-tablet .mina-syn-ctx-search-input {
+    padding: 10px 12px;
+    font-size: 0.9em;
+}
+/* Segmented bar buttons taller on tablet */
+.mina-syn-shell.is-tablet .mina-seg-btn {
+    padding: 8px 14px;
+    min-height: 38px;
+}
+/* Hidden-toggle button taller on tablet */
+.mina-syn-shell.is-tablet .mina-syn-ctx-hidden-toggle {
+    min-height: 40px;
+    padding: 9px 12px;
+}
 /* ═══════════ AI Chat Tab (v1.8 Redesign) ═══════════ */.mina-ai-shell {    display: flex;    flex-direction: column;    height: 100%;    background: var(--background-primary);}.mina-ai-header {    padding: 14px 16px 12px;    border-bottom: 1px solid var(--background-modifier-border-faint);    display: flex;    align-items: center;    justify-content: space-between;    flex-shrink: 0;    gap: 12px;}.mina-ai-header-left {    display: flex;    align-items: center;    gap: 10px;}.mina-ai-title-group {    display: flex;    align-items: baseline;    gap: 8px;}.mina-ai-title {    margin: 0;    font-size: 1.2em;    font-weight: 900;    color: var(--text-normal);    letter-spacing: -0.02em;}.mina-ai-model-badge {    font-size: 0.6em;    font-weight: 700;    color: var(--interactive-accent);    background: rgba(var(--interactive-accent-rgb), 0.1);    padding: 2px 8px;    border-radius: 6px;    text-transform: uppercase;    letter-spacing: 0.05em;}.mina-ai-header-right {    display: flex;    align-items: center;    gap: 6px;}.mina-ai-toggle-btn {    display: flex;    align-items: center;    justify-content: center;    width: 32px;    height: 32px;    border-radius: 8px;    border: 1px solid var(--background-modifier-border);    background: transparent;    color: var(--text-muted);    cursor: pointer;    transition: all 0.15s;}.mina-ai-toggle-btn:hover {    background: var(--background-secondary-alt);    color: var(--text-normal);}.mina-ai-toggle-btn.is-active {    background: var(--interactive-accent);    color: var(--text-on-accent);    border-color: var(--interactive-accent);}.mina-ai-toggle-icon {    display: flex;    width: 16px;    height: 16px;}.mina-ai-toggle-icon svg {    width: 16px;    height: 16px;}.mina-ai-new-btn {    font-size: 0.7em;    font-weight: 700;    padding: 5px 12px;    border-radius: 8px;    border: 1px solid var(--background-modifier-border);    background: transparent;    color: var(--text-muted);    cursor: pointer;    transition: all 0.15s;}.mina-ai-new-btn:hover {    background: var(--background-secondary-alt);    color: var(--text-normal);}/* Messages Area */.mina-ai-messages {    flex-grow: 1;    overflow-y: auto;    padding: 20px 16px;    display: flex;    flex-direction: column;    gap: 12px;    -webkit-overflow-scrolling: touch;}.mina-ai-msg-row {    display: flex;    align-items: flex-start;    gap: 8px;}.mina-ai-msg-row.is-user {    justify-content: flex-end;}.mina-ai-msg-row.is-bot {    justify-content: flex-start;}.mina-ai-avatar {    width: 28px;    height: 28px;    border-radius: 50%;    background: linear-gradient(135deg, var(--interactive-accent), rgba(var(--interactive-accent-rgb), 0.6));    display: flex;    align-items: center;    justify-content: center;    flex-shrink: 0;    color: var(--text-on-accent);}.mina-ai-avatar svg {    width: 14px;    height: 14px;}/* Bubble overrides for new layout */.mina-ai-user-bubble {    align-self: flex-end;    background: var(--interactive-accent);    color: var(--text-on-accent);    border-radius: 18px 18px 4px 18px;    padding: 10px 16px;    max-width: 80%;    font-size: 0.9em;    line-height: 1.55;    word-break: break-word;}.mina-ai-bot-bubble {    align-self: flex-start;    background: var(--background-secondary-alt);    border: 1px solid var(--background-modifier-border-faint);    border-radius: 4px 18px 18px 18px;    padding: 10px 16px;    max-width: 85%;    font-size: 0.9em;    line-height: 1.55;    word-break: break-word;}.mina-ai-bot-bubble p:first-child { margin-top: 0; }.mina-ai-bot-bubble p:last-child { margin-bottom: 0; }/* Typing indicator */.mina-ai-typing {    display: flex;    align-items: center;    gap: 4px;    padding: 12px 18px;    min-height: 36px;}.mina-ai-dot {    width: 7px;    height: 7px;    border-radius: 50%;    background: var(--text-muted);    animation: mina-ai-bounce 1.4s infinite ease-in-out both;}.mina-ai-dot:nth-child(1) { animation-delay: 0s; }.mina-ai-dot:nth-child(2) { animation-delay: 0.16s; }.mina-ai-dot:nth-child(3) { animation-delay: 0.32s; }@keyframes mina-ai-bounce {    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }    40% { transform: scale(1); opacity: 1; }}/* Error */.mina-ai-error {    color: var(--text-error);    font-size: 0.8em;    padding: 8px 14px;    background: rgba(255, 50, 50, 0.08);    border-radius: 10px;    border: 1px solid rgba(255, 50, 50, 0.2);}/* Context bar (grounded files) */.mina-ai-context-bar {    padding: 6px 16px;    display: flex;    flex-wrap: wrap;    gap: 6px;    border-top: 1px solid var(--background-modifier-border-faint);    flex-shrink: 0;}.mina-ai-context-bar.is-empty { display: none; }.mina-ai-file-chip {    display: inline-flex;    align-items: center;    gap: 4px;    background: var(--background-secondary-alt);    border: 1px solid var(--background-modifier-border);    border-radius: 6px;    padding: 3px 8px;    font-size: 0.7em;    font-weight: 600;    color: var(--text-muted);}.mina-ai-chip-name { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.mina-ai-chip-remove {    cursor: pointer;    color: var(--text-faint);    font-size: 1.2em;    line-height: 1;    padding-left: 2px;}.mina-ai-chip-remove:hover { color: var(--text-error); }/* Input Area */.mina-ai-input-area {    padding: 12px 14px;    border-top: 1px solid var(--background-modifier-border-faint);    background: var(--background-primary);    flex-shrink: 0;    display: flex;    align-items: flex-end;    gap: 8px;}.mina-ai-attach-btn {    display: flex;    align-items: center;    justify-content: center;    width: 36px;    height: 36px;    border-radius: 50%;    border: none;    background: transparent;    color: var(--text-muted);    cursor: pointer;    flex-shrink: 0;    transition: color 0.15s;}.mina-ai-attach-btn:hover { color: var(--text-normal); }.mina-ai-attach-btn svg { width: 18px; height: 18px; }.mina-ai-textarea {    flex: 1;    min-height: 40px;    max-height: 200px;    border-radius: 20px;    border: 1px solid var(--background-modifier-border);    background: var(--background-secondary-alt);    color: var(--text-normal);    padding: 10px 16px;    font-size: 0.9em;    resize: none;    outline: none;    line-height: 1.4;    transition: border-color 0.15s;}.mina-ai-textarea:focus {    border-color: var(--interactive-accent);    box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.1);}.mina-ai-send-btn {    display: flex;    align-items: center;    justify-content: center;    width: 36px;    height: 36px;    border-radius: 50%;    border: none;    background: var(--interactive-accent);    color: var(--text-on-accent);    cursor: pointer;    flex-shrink: 0;    transition: all 0.15s;}.mina-ai-send-btn:hover { filter: brightness(1.1); transform: scale(1.05); }.mina-ai-send-btn.is-loading { opacity: 0.5; pointer-events: none; }.mina-ai-send-btn svg { width: 18px; height: 18px; }/* Welcome State */.mina-ai-welcome {    flex-grow: 1;    display: flex;    flex-direction: column;    align-items: center;    justify-content: center;    gap: 12px;    padding: 40px 24px;    text-align: center;}.mina-ai-welcome-icon {    width: 56px;    height: 56px;    border-radius: 50%;    background: linear-gradient(135deg, var(--interactive-accent), rgba(var(--interactive-accent-rgb), 0.5));    display: flex;    align-items: center;    justify-content: center;    color: var(--text-on-accent);}.mina-ai-welcome-icon svg { width: 28px; height: 28px; }.mina-ai-welcome-title {    margin: 0;    font-size: 1.2em;    font-weight: 800;    color: var(--text-normal);}.mina-ai-welcome-desc {    margin: 0;    font-size: 0.85em;    color: var(--text-muted);    max-width: 340px;    line-height: 1.5;}.mina-ai-suggestions {    display: flex;    flex-wrap: wrap;    gap: 8px;    justify-content: center;    margin-top: 8px;    max-width: 420px;}.mina-ai-suggestion-chip {    font-size: 0.75em;    font-weight: 600;    padding: 6px 14px;    border-radius: 20px;    border: 1px solid var(--background-modifier-border);    background: var(--background-secondary-alt);    color: var(--text-muted);    cursor: pointer;    transition: all 0.15s;}.mina-ai-suggestion-chip:hover {    background: var(--interactive-accent);    color: var(--text-on-accent);    border-color: var(--interactive-accent);}/* Mobile adjustments */.is-mobile .mina-ai-header {    padding: 12px 12px 10px;}.is-mobile .mina-ai-messages {    padding: 16px 12px;}.is-mobile .mina-ai-input-area {    padding: 10px 10px calc(10px + env(safe-area-inset-bottom));}.is-mobile .mina-ai-textarea {    font-size: 16px; /* Prevent iOS zoom */}.is-mobile .mina-ai-model-badge { display: none; }
 
 /* ═══════════════════════════════════════════════════════════════════
