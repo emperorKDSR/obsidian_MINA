@@ -49,6 +49,8 @@ export class MinaView extends ItemView {
     isRecording: boolean = false;
 
     private _baseTabDelegate: BaseTab;
+    // Managed current tab instance for lifecycle cleanup
+    private currentTab: BaseTab | null = null;
 
     constructor(leaf: WorkspaceLeaf, plugin: MinaPlugin) {
         super(leaf);
@@ -118,21 +120,33 @@ export class MinaView extends ItemView {
     private renderTab(container: HTMLElement) {
         // arch-04: Error boundaries on all dynamic imports — silent failures leave blank panels
         const loadErr = (e: any) => container.createEl('p', { text: `Failed to load tab: ${e.message}`, attr: { style: 'color: var(--text-error); padding: 20px;' } });
+        const instantiate = (promise: Promise<any>, name: string) => {
+            promise.then((mod: any) => {
+                try {
+                    if (this.currentTab && typeof (this.currentTab as any).onunload === 'function') (this.currentTab as any).onunload();
+                } catch (e) { console.warn('[MINA View] error during previous tab unload', e); }
+                const TabClass = mod[name];
+                const instance = new TabClass(this);
+                this.currentTab = instance;
+                instance.render(container);
+            }).catch(loadErr);
+        };
+
         const tab = this.activeTab;
-        if (tab === 'home' || tab === 'daily') import('./tabs/CommandCenterTab').then(({ CommandCenterTab }) => new CommandCenterTab(this).render(container)).catch(loadErr);
-        else if (tab === 'review-tasks') import('./tabs/TasksTab').then(({ TasksTab }) => new TasksTab(this).render(container)).catch(loadErr);
-        else if (tab === 'mina-ai') import('./tabs/AiTab').then(({ AiTab }) => new AiTab(this).render(container)).catch(loadErr);
-        else if (tab === 'dues') import('./tabs/DuesTab').then(({ DuesTab }) => new DuesTab(this).render(container)).catch(loadErr);
-        else if (tab === 'projects') import('./tabs/ProjectsTab').then(({ ProjectsTab }) => new ProjectsTab(this).render(container)).catch(loadErr);
-        else if (tab === 'synthesis') import('./tabs/SynthesisTab').then(({ SynthesisTab }) => new SynthesisTab(this).render(container)).catch(loadErr);
-        else if (tab === 'compass') import('./tabs/CompassTab').then(({ CompassTab }) => new CompassTab(this).render(container)).catch(loadErr);
-        else if (tab === 'review') import('./tabs/ReviewTab').then(({ ReviewTab }) => new ReviewTab(this).render(container)).catch(loadErr);
-        else if (tab === 'monthly-review') import('./tabs/MonthlyReviewTab').then(({ MonthlyReviewTab }) => new MonthlyReviewTab(this).render(container)).catch(loadErr);
-        else if (tab === 'voice-note') import('./tabs/VoiceTab').then(({ VoiceTab }) => new VoiceTab(this).render(container)).catch(loadErr);
-        else if (tab === 'settings') import('./tabs/SettingsTab').then(({ SettingsTab }) => new SettingsTab(this).render(container)).catch(loadErr);
-        else if (tab === 'timeline') import('./tabs/TimelineTab').then(({ TimelineTab }) => new TimelineTab(this).render(container)).catch(loadErr);
-        else if (tab === 'journal') import('./tabs/JournalTab').then(({ JournalTab }) => new JournalTab(this).render(container)).catch(loadErr);
-        else if (tab === 'daily-workspace') import('./tabs/DailyWorkspaceTab').then(({ DailyWorkspaceTab }) => new DailyWorkspaceTab(this).render(container)).catch(loadErr);
+        if (tab === 'home' || tab === 'daily') instantiate(import('./tabs/CommandCenterTab'), 'CommandCenterTab');
+        else if (tab === 'review-tasks') instantiate(import('./tabs/TasksTab'), 'TasksTab');
+        else if (tab === 'mina-ai') instantiate(import('./tabs/AiTab'), 'AiTab');
+        else if (tab === 'dues') instantiate(import('./tabs/DuesTab'), 'DuesTab');
+        else if (tab === 'projects') instantiate(import('./tabs/ProjectsTab'), 'ProjectsTab');
+        else if (tab === 'synthesis') instantiate(import('./tabs/SynthesisTab'), 'SynthesisTab');
+        else if (tab === 'compass') instantiate(import('./tabs/CompassTab'), 'CompassTab');
+        else if (tab === 'review') instantiate(import('./tabs/ReviewTab'), 'ReviewTab');
+        else if (tab === 'monthly-review') instantiate(import('./tabs/MonthlyReviewTab'), 'MonthlyReviewTab');
+        else if (tab === 'voice-note') instantiate(import('./tabs/VoiceTab'), 'VoiceTab');
+        else if (tab === 'settings') instantiate(import('./tabs/SettingsTab'), 'SettingsTab');
+        else if (tab === 'timeline') instantiate(import('./tabs/TimelineTab'), 'TimelineTab');
+        else if (tab === 'journal') instantiate(import('./tabs/JournalTab'), 'JournalTab');
+        else if (tab === 'daily-workspace') instantiate(import('./tabs/DailyWorkspaceTab'), 'DailyWorkspaceTab');
     }
 
     // Bridge methods to Services

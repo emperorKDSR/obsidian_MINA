@@ -240,5 +240,8 @@ export class BaseTab {
         this.hookInternalLinks(card, parent.filePath); this.hookImageZoom(card);
     }
 
+    // Default unload hook — override in tabs that allocate global resources
+    onunload(): void { /* no-op */ }
+
     render(container: HTMLElement, ...args: any[]): void {}
 }
