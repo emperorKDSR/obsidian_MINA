@@ -468,7 +468,6 @@ export class CommandCenterTab extends BaseTab {
 
         const section = parent.createEl('div', { cls: 'mina-section--hideable', attr: { style: 'display: flex; flex-direction: column; gap: 6px;' } });
         const labelRow = section.createEl('div', { cls: 'mina-section-label-row', attr: { style: 'cursor: pointer; user-select: none;' } });
-        labelRow.createEl('span', { text: 'TO DO', cls: 'mina-section-label' });
         if (totalCount > 0) {
             labelRow.createEl('span', { text: String(totalCount), cls: 'mina-section-label-count' });
         }
