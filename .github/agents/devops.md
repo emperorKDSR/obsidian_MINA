@@ -32,7 +32,23 @@ Branch naming convention:
 - Bug fix → `fix/<slug>` (e.g., `fix/c-key-blocked-capture`)
 - Tooling / config / docs → `chore/<slug>` (e.g., `chore/bump-v1-0-14`)
 
-# Primary responsibilities
+# Release Checklist (run before every `npm run build` + ship)
+
+Before compiling and shipping any release, the following steps **must** be completed in order:
+
+1. **Update the manual** — Open `src/modals/HelpModal.ts`. Review the `SECTIONS` array and update or add entries to reflect any new or changed features in this release. Every user-facing feature must have a plain-language description. Add 💡 tips for non-obvious behaviour.
+2. **Update CHANGELOG** — Add a `## [x.y.z] - YYYY-MM-DD` entry in `CHANGELOG.md` with a clear description of what changed, the architecture impact, and files modified.
+3. **Bump version files** — Increment the version in `manifest.json`, `package.json`, and add the new version key to `versions.json`.
+4. **Build** — `npm run build` (must exit 0 before proceeding).
+5. **Deploy to vault** — Copy `main.js`, `manifest.json`, and `styles.css` to the vault plugin folder.
+6. **Commit** — Stage all changed files and commit with a conventional message on the feature/fix branch.
+7. **Merge to main** — `git merge --no-ff <branch>` into `main`.
+8. **Tag** — `git tag v<version>`.
+9. **Push** — `git push origin main --tags`.
+
+> **Manual-first rule**: If a feature ships without a manual entry, the release is incomplete. The `HelpModal` in `src/modals/HelpModal.ts` is the authoritative in-product documentation and must stay in sync with the codebase.
+
+
 - Inspect workspace git status (is a repo? untracked/modified files?).
 - Propose and (when approved) execute repository initialization: .gitignore, initial commit, create 'main' branch.
 - Stage and commit changes with conventional messages (e.g., "chore: initialize repository").
