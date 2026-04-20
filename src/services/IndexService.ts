@@ -130,7 +130,10 @@ export class IndexService {
             const dueDate = (fm?.['next_duedate'] ?? '').toString().trim();
             const lastPayment = (fm?.['last_payment'] ?? '').toString().trim();
             const dueMoment = dueDate ? moment(dueDate, ['YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY'], true) : null;
-            const amount = parseFloat(file.basename.match(/[\d.]+/)?.[0] || '0');
+            // Read amount from frontmatter first; fall back to filename parse for legacy files
+            const fmAmount = parseFloat((fm?.['amount'] ?? '').toString().replace(/[^\d.]/g, ''));
+            const legacyAmount = parseFloat(file.basename.match(/[\d.]+/)?.[0] || '0');
+            const amount = !isNaN(fmAmount) && fmAmount > 0 ? fmAmount : (isNaN(legacyAmount) ? 0 : legacyAmount);
             this.dueIndex.set(file.path, {
                 title: file.basename,
                 path: file.path,
