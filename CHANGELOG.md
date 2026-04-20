@@ -2,6 +2,11 @@
 
 
 
+## [1.10.4] — Synthesis: Done All
+
+### ✨ Added
+- **Done All** button in the Mapped (with-context) feed — marks every visible mapped note as synthesized in one click; button only appears when "Mapped" filter is active
+
 ## [1.10.3] — Synthesis: Hide Contexts
 
 ### ✨ Changed

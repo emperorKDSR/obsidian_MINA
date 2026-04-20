@@ -447,6 +447,39 @@
     padding: 12px 16px 8px 16px;
 }
 
+/* ── Done All button ───────────────────────────────────────────────────────── */
+.mina-syn-feed-done-all {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(var(--interactive-accent-rgb), 0.4);
+    background: rgba(var(--interactive-accent-rgb), 0.07);
+    color: var(--interactive-accent);
+    font-size: 0.75em;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.12s ease, opacity 0.12s ease;
+    margin-left: auto;
+}
+.mina-syn-feed-done-all:hover {
+    background: rgba(var(--interactive-accent-rgb), 0.15);
+}
+.mina-syn-feed-done-all:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.mina-syn-feed-done-all .svg-icon {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+}
+.mina-syn-feed-done-all.is-hidden {
+    display: none;
+}
+
 .mina-syn-feed-ctx-echo {
     display: flex;
     align-items: center;

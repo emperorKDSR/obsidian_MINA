@@ -382,12 +382,30 @@ export class SynthesisTab extends BaseTab {
     private renderFeedPane(feed: HTMLElement, shell: HTMLElement, isPhone: boolean): void {
         const hdr = feed.createEl('div', { cls: 'mina-syn-feed-hdr' });
 
-        // ── Top row: home icon + segmented filter ─────────────────────────────
+        // ── Top row: home icon + segmented filter + Done All ────────────────
         const hdrTop = hdr.createEl('div', { cls: 'mina-syn-feed-hdr-top' });
         this.renderHomeIcon(hdrTop);
 
         const segBar = hdrTop.createEl('div', { cls: 'mina-seg-bar mina-syn-toggle-bar' });
         const feedScroll = feed.createEl('div', { cls: 'mina-syn-feed-scroll' });
+
+        // "Done All" — marks every Mapped note as synthesized
+        const doneAllBtn = hdrTop.createEl('button', {
+            cls: `mina-syn-feed-done-all${this.feedFilter === 'with-context' ? '' : ' is-hidden'}`,
+            attr: { title: 'Mark all mapped notes as Done' },
+        });
+        setIcon(doneAllBtn, 'check-check');
+        doneAllBtn.createEl('span', { text: 'Done All' });
+        doneAllBtn.addEventListener('click', async () => {
+            const thoughts = this.getFilteredThoughts(); // current filter = with-context
+            if (thoughts.length === 0) return;
+            doneAllBtn.disabled = true;
+            for (const t of thoughts) {
+                await this.vault.markAsSynthesized(t.filePath);
+            }
+            new Notice(`${thoughts.length} note${thoughts.length > 1 ? 's' : ''} marked as Done.`);
+            this.view.renderView();
+        });
 
         const FILTERS: Array<{ key: 'no-context' | 'with-context' | 'processed'; label: string }> = [
             { key: 'no-context',   label: 'Inbox' },
@@ -408,6 +426,9 @@ export class SynthesisTab extends BaseTab {
             btn.addEventListener('click', () => {
                 if (this.feedFilter === f.key) return;
                 this.feedFilter = f.key;
+
+                // Show/hide Done All based on active filter
+                doneAllBtn.classList.toggle('is-hidden', this.feedFilter !== 'with-context');
 
                 // Animate out, repopulate, animate in
                 feedScroll.addClass('is-switching');
