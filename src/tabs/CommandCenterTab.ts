@@ -68,6 +68,12 @@ export class CommandCenterTab extends BaseTab {
 
     // ── 1. Capture bar ──────────────────────────────────────────────────────
     private renderCaptureBar(parent: HTMLElement) {
+        const syncTextareaHeight = (textarea: HTMLTextAreaElement) => {
+            textarea.style.height = 'auto';
+            textarea.style.overflowY = 'hidden';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        };
+
         // ── Desktop / tablet path: inline expansion ──────────────────────────
         if (!Platform.isMobile || isTablet()) {
             let captureContexts: string[] = [];
@@ -143,7 +149,6 @@ export class CommandCenterTab extends BaseTab {
                 saveBtn.toggleClass('is-disabled', empty);
                 saveBtn.disabled = empty;
             };
-            textarea.addEventListener('input', refreshSave);
 
             // Inline smart triggers: @date, [[link, #tag, + checklist
             attachInlineTriggers(this.plugin.app, textarea, (d: string) => {
@@ -157,12 +162,20 @@ export class CommandCenterTab extends BaseTab {
                 }
             }, () => this.plugin.settings.contexts ?? []);
 
+            const refreshCaptureInput = () => {
+                refreshSave();
+                syncTextareaHeight(textarea);
+            };
+            textarea.addEventListener('input', refreshCaptureInput);
+
             // Collapse
             const collapse = () => {
                 this.view._capturePending = 0;
                 cap.removeClass('is-expanded');
                 captureContexts = []; captureDueDate = null;
                 textarea.value = '';
+                textarea.style.height = '';
+                textarea.style.overflowY = '';
                 switchMode('thought');
                 renderChips();
                 refreshSave();
@@ -173,7 +186,10 @@ export class CommandCenterTab extends BaseTab {
                 if (cap.hasClass('is-expanded')) return;
                 this.view._capturePending = 1;
                 cap.addClass('is-expanded');
-                setTimeout(() => textarea.focus(), 60);
+                setTimeout(() => {
+                    textarea.focus();
+                    syncTextareaHeight(textarea);
+                }, 60);
             };
 
             // Save
@@ -205,6 +221,8 @@ export class CommandCenterTab extends BaseTab {
                 if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSave(); }
                 if (e.key === 'Escape') collapse();
             });
+
+            syncTextareaHeight(textarea);
 
             // Click-outside to collapse
             const onOutside = (e: MouseEvent) => {
@@ -309,7 +327,6 @@ export class CommandCenterTab extends BaseTab {
             saveBtn.toggleClass('is-disabled', empty);
             saveBtn.disabled = empty;
         };
-        textarea.addEventListener('input', refreshSave);
 
         // Collapse
         const collapse = () => {
@@ -317,6 +334,8 @@ export class CommandCenterTab extends BaseTab {
             strip.removeClass('is-expanded');
             captureContexts = []; captureDueDate = null;
             textarea.value = '';
+            textarea.style.height = '';
+            textarea.style.overflowY = '';
             switchMode('thought');
             renderChips();
             refreshSave();
@@ -326,7 +345,10 @@ export class CommandCenterTab extends BaseTab {
         const expand = () => {
             this.view._capturePending = 1;
             strip.addClass('is-expanded');
-            setTimeout(() => textarea.focus(), 80);
+            setTimeout(() => {
+                textarea.focus();
+                syncTextareaHeight(textarea);
+            }, 80);
         };
 
         // Inline smart triggers: @date, [[link, #tag, + checklist
@@ -340,6 +362,12 @@ export class CommandCenterTab extends BaseTab {
                 this.plugin.settings.contexts.push(tag); // in-memory only; persisted on capture
             }
         }, () => this.plugin.settings.contexts ?? []);
+
+        const refreshCaptureInput = () => {
+            refreshSave();
+            syncTextareaHeight(textarea);
+        };
+        textarea.addEventListener('input', refreshCaptureInput);
 
         // Save
         const handleSave = async () => {
@@ -370,6 +398,8 @@ export class CommandCenterTab extends BaseTab {
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSave(); }
             if (e.key === 'Escape') collapse();
         });
+
+        syncTextareaHeight(textarea);
     }
 
     // ── 2. Habit quick-bar ──────────────────────────────────────────────────

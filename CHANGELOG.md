@@ -2,6 +2,14 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.1.2] - 2026-04-20
+### Patch - Command Center capture input auto-grows with note length
+
+#### Changed
+- **Command Center capture textarea** - the inline input now auto-resizes as you type so longer notes expand the input area instead of staying fixed-height
+- **Desktop and mobile capture flows** - both Command Center capture paths now share the same autosize behavior on open, input, trigger-driven text changes, and reset
+- **Capture shell height caps** - expanded desktop and mobile capture bodies now allow taller note input before clipping
+
 ## [1.1.1] - 2026-04-20
 ### Patch - EditEntryModal aligned with Command Center capture bar
 
