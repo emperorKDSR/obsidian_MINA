@@ -43,23 +43,26 @@ export class MonthlyReviewTab extends BaseTab {
 
         const allTasks = Array.from(this.index.taskIndex.values());
         const doneTasks = allTasks.filter(t => t.status === 'done' && t.modified >= monthStart && t.modified <= monthEnd);
+        // Denominator = tasks created or due this month (not entire vault history)
+        const monthTasks = allTasks.filter(t => (t.created >= monthStart && t.created <= monthEnd) || (t.due && t.due >= monthStart && t.due <= monthEnd));
+        const completionRate = monthTasks.length > 0 ? Math.round((doneTasks.length / monthTasks.length) * 100) : 0;
         const allOpen = allTasks.filter(t => t.status === 'open');
-        const completionRate = allTasks.length > 0 ? Math.round((doneTasks.length / allTasks.length) * 100) : 0;
 
         const allThoughts = Array.from(this.index.thoughtIndex.values());
         const monthThoughts = allThoughts.filter(t => t.created >= monthStart);
+        const processedThoughts = monthThoughts.filter(t => t.synthesized);
 
-        const statCard = (label: string, value: string | number, sub?: string) => {
+        const statCard = (label: string, value: string | number, sub?: string, subColor?: string) => {
             const card = statsRow.createEl('div', {
                 attr: { style: 'padding: 16px; background: var(--background-secondary-alt); border-radius: 12px; border: 1px solid var(--background-modifier-border-faint); text-align: center;' }
             });
             card.createEl('div', { text: String(value), attr: { style: 'font-size: 1.8em; font-weight: 900; color: var(--interactive-accent);' } });
             card.createEl('div', { text: label, attr: { style: 'font-size: 0.7em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-faint); margin-top: 2px;' } });
-            if (sub) card.createEl('div', { text: sub, attr: { style: 'font-size: 0.65em; color: var(--text-muted); margin-top: 2px;' } });
+            if (sub) card.createEl('div', { text: sub, attr: { style: `font-size: 0.65em; color: ${subColor || 'var(--text-muted)'}; margin-top: 2px;` } });
         };
 
-        statCard('Tasks Done', doneTasks.length, `${completionRate}% completion`);
-        statCard('Thoughts', monthThoughts.length, 'this month');
+        statCard('Tasks Done', doneTasks.length, `${completionRate}% this month`);
+        statCard('Thoughts', monthThoughts.length, `${processedThoughts.length} processed`);
         statCard('Open Tasks', allOpen.length, 'remaining');
 
         // 3. Habit Adherence — scan all daily files in the current month (QW-01)
