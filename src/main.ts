@@ -139,7 +139,7 @@ export default class MinaPlugin extends Plugin {
 
     async activateView(tabId?: string, isDedicated: boolean = false) {
         const { workspace } = this.app;
-        const targetTab = tabId || (isDedicated ? 'home' : 'review-thoughts');
+        const targetTab = tabId || 'home';
         const leaves = workspace.getLeavesOfType(VIEW_TYPE_MINA);
         let targetLeaf: WorkspaceLeaf | null = null;
         for (const leaf of leaves) {

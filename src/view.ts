@@ -16,17 +16,7 @@ export class MinaView extends ItemView {
     timelineScrollBody: HTMLElement;
     timelineCarousel: HTMLElement;
 
-    selectedContexts: string[] = [];
     collapsedThreads: Set<string> = new Set();
-    thoughtsFilterTodo: boolean = false;
-    thoughtsFilterDate: string = 'today';
-    thoughtsFilterDateStart: string = '';
-    thoughtsFilterDateEnd: string = '';
-    thoughtsFilterContext: string[] = [];
-    showPreviousThoughts: boolean = true;
-    showCaptureInThoughts: boolean = true;
-    thoughtsOffset: number = 0;
-    focusRowContainer: HTMLElement;
     activeMasterNote: TFile | null = null;
     isZenMode: boolean = false;
 
@@ -38,7 +28,7 @@ export class MinaView extends ItemView {
     // Tasks state — persists across re-renders (viewMode survives vault events)
     tasksViewMode: string = 'open';
     _taskTogglePending: number = 0;       // > 0 = suppress vault-event re-renders
-    _habitTogglePending: number = 0;      // > 0 = suppress vault-event re-renders
+    _habitTogglePending: number = 0;      // > 0 = suppress vault-event re-renders (CommandCenter habits)
     _checklistTogglePending: number = 0;  // > 0 = suppress vault-event re-renders
     _capturePending: number = 0;          // > 0 = capture bar is expanded; suppress re-renders
     checklistOrder: string[] = [];        // persisted drag-reorder keys: "filePath:lineIndex"
@@ -90,8 +80,6 @@ export class MinaView extends ItemView {
             case 'settings': return "Settings";
             case 'timeline': return "Timeline";
             case 'journal': return "Journal";
-            case 'focus': return "Focus";
-            case 'memento-mori': return "Memento Mori";
             case 'daily-workspace': return "Daily Workspace";
             default: return "MINA";
         }
@@ -132,7 +120,6 @@ export class MinaView extends ItemView {
         const loadErr = (e: any) => container.createEl('p', { text: `Failed to load tab: ${e.message}`, attr: { style: 'color: var(--text-error); padding: 20px;' } });
         const tab = this.activeTab;
         if (tab === 'home' || tab === 'daily') import('./tabs/CommandCenterTab').then(({ CommandCenterTab }) => new CommandCenterTab(this).render(container)).catch(loadErr);
-        else if (tab === 'review-thoughts') import('./tabs/ThoughtsTab').then(({ ThoughtsTab }) => new ThoughtsTab(this).render(container)).catch(loadErr);
         else if (tab === 'review-tasks') import('./tabs/TasksTab').then(({ TasksTab }) => new TasksTab(this).render(container)).catch(loadErr);
         else if (tab === 'mina-ai') import('./tabs/AiTab').then(({ AiTab }) => new AiTab(this).render(container)).catch(loadErr);
         else if (tab === 'dues') import('./tabs/DuesTab').then(({ DuesTab }) => new DuesTab(this).render(container)).catch(loadErr);
@@ -144,14 +131,8 @@ export class MinaView extends ItemView {
         else if (tab === 'voice-note') import('./tabs/VoiceTab').then(({ VoiceTab }) => new VoiceTab(this).render(container)).catch(loadErr);
         else if (tab === 'settings') import('./tabs/SettingsTab').then(({ SettingsTab }) => new SettingsTab(this).render(container)).catch(loadErr);
         else if (tab === 'timeline') import('./tabs/TimelineTab').then(({ TimelineTab }) => new TimelineTab(this).render(container)).catch(loadErr);
-        else if (tab === 'focus') import('./tabs/FocusTab').then(({ FocusTab }) => new FocusTab(this).render(container)).catch(loadErr);
-        else if (tab === 'memento-mori') import('./tabs/MementoMoriTab').then(({ MementoMoriTab }) => new MementoMoriTab(this).render(container)).catch(loadErr);
         else if (tab === 'journal') import('./tabs/JournalTab').then(({ JournalTab }) => new JournalTab(this).render(container)).catch(loadErr);
         else if (tab === 'daily-workspace') import('./tabs/DailyWorkspaceTab').then(({ DailyWorkspaceTab }) => new DailyWorkspaceTab(this).render(container)).catch(loadErr);
-        else if (tab === 'habits') import('./tabs/HabitsTab').then(({ HabitsTab }) => new HabitsTab(this).render(container)).catch(loadErr);
-        else if (tab === 'grundfos' || this.plugin.settings.customModes.some(m => m.id === tab)) {
-            import('./tabs/ContextTab').then(({ ContextTab }) => new ContextTab(this).render(container, tab)).catch(loadErr);
-        }
     }
 
     // Bridge methods to Services

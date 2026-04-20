@@ -2,6 +2,27 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.2.8] - 2026-04-20
+### Chore — Remove 5 orphaned tabs
+
+Deleted 5 tab files that had no entry point in the Command Center and were unreachable through normal navigation:
+
+| Removed Tab | Route Key | Reason |
+|---|---|---|
+| `ThoughtsTab.ts` | `review-thoughts` | Orphaned — no hub button; functionality superseded by Daily Workspace |
+| `MementoMoriTab.ts` | `memento-mori` | Orphaned — no hub button |
+| `FocusTab.ts` | `focus` | Orphaned — no hub button |
+| `HabitsTab.ts` | `habits` | Orphaned — no hub button; not registered in title switch |
+| `ContextTab.ts` | `grundfos` / custom modes catch-all | Orphaned — Grundfos-era legacy, superseded |
+
+**`view.ts` cleanup:**
+- Removed `getModeTitle()` cases for `review-thoughts`, `focus`, `memento-mori`
+- Removed `renderTab()` route branches for all 5 deleted tabs (including `grundfos`/`customModes` catch-all)
+- Removed orphaned view state properties: `thoughtsFilterTodo`, `thoughtsFilterDate`, `thoughtsFilterDateStart`, `thoughtsFilterDateEnd`, `thoughtsFilterContext`, `showPreviousThoughts`, `showCaptureInThoughts`, `thoughtsOffset`
+
+**`main.ts` cleanup:**
+- Default tab on open changed from `'review-thoughts'` → `'home'` (Command Center)
+
 ## [1.2.7] - 2026-04-20
 ### Feature — Mobile long-press edit/delete for thought cards
 
