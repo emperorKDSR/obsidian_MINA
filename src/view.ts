@@ -18,6 +18,8 @@ export class MinaView extends ItemView {
 
     collapsedThreads: Set<string> = new Set();
     activeMasterNote: TFile | null = null;
+    activeSynthesisContext: string | null = null;
+    synthesisFeedFilter: 'no-context' | 'with-context' | 'processed' = 'no-context';
     isZenMode: boolean = false;
 
     // Daily Workspace State

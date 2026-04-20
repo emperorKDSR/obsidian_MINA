@@ -352,6 +352,31 @@ export class VaultService {
         });
     }
 
+    /** Merge new context tags into a thought file. Pass replace=true to overwrite entirely. */
+    async assignContext(filePath: string, contexts: string[], replace = false): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return;
+        await this.app.fileManager.processFrontMatter(file, (fm) => {
+            const safeNew = contexts.map(c => this.sanitizeContext(c)).filter(Boolean);
+            const existing: string[] = replace ? [] : (Array.isArray(fm['context']) ? fm['context'].map(String) : []);
+            const merged = Array.from(new Set([...existing, ...safeNew]));
+            fm['context'] = merged;
+            fm['tags'] = merged;
+        });
+    }
+
+    /** Remove a single context tag from a thought file. */
+    async removeContext(filePath: string, ctx: string): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return;
+        await this.app.fileManager.processFrontMatter(file, (fm) => {
+            const existing: string[] = Array.isArray(fm['context']) ? fm['context'].map(String) : [];
+            const updated = existing.filter(c => c !== ctx);
+            fm['context'] = updated;
+            fm['tags'] = updated;
+        });
+    }
+
     async createVoiceSidecar(audioFilename: string, audioFolder: string, durationMs: number, transcript: string): Promise<void> {
         const baseName = audioFilename.replace(/\.[^.]+$/, '');
         const sidecarName = `${baseName}.md`;

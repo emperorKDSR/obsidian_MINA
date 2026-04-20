@@ -1,5 +1,16 @@
 # Changelog
 
+
+## [1.10.0] — Synthesis V2: Context-First Routing
+
+### ✨ New
+- **Synthesis Tab completely redesigned** — replaced "master note" paradigm with Context-First Routing
+- **Full-body thought cards** — no more 120-char truncation; full note content rendered inline with expand/collapse for long notes
+- **3-state feed filter** — Inbox (no context), Mapped (with context), Done (processed)
+- **Dual-pane layout** — Feed (340px left) + Canvas (right); context pill bar routes thoughts to #tags in frontmatter
+- **Drag-to-assign** — drag a thought card to the canvas to assign it to the active context
+- **Phone support** — single-pane with bottom nav Feed/Canvas toggle + bottom sheet for context assignment
+- **VaultService** — new `assignContext()` and `removeContext()` methods
 All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]

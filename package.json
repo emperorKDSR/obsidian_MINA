@@ -1,6 +1,6 @@
 {
   "name": "mina_v2",
-  "version": "1.9.2",
+  "version": "1.10.0",
   "description": "Mina: Quickly capture thoughts and tasks to a file.",
   "main": "main.js",
   "scripts": {
