@@ -2,8 +2,8 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
-## [1.1.3] - 2026-04-20
-### Feature - Daily Workspace Tab
+## [1.2.0] - 2026-04-20
+### 🚀 Minor Release — Daily Workspace Tab
 
 #### New Features
 - **Daily Workspace tab** — freeform daily capture space accessible from Command Center nav and command palette (`Open MINA Daily Workspace`)
