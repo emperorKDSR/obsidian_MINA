@@ -4,6 +4,26 @@ All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]
 
+## [1.5.6] - 2026-04-20
+### Feat — In-Plugin Manual (Help Modal)
+
+MINA now ships with a built-in **interactive manual** accessible from the `?` button in the Command Center header.
+
+**Design:**
+- Desktop: wide modal (~820px) with a **left sidebar** (all 17 modules listed with icons) and a scrollable **content pane**. Clicking a section loads its items instantly.
+- Mobile: full-screen modal with a **collapsible accordion** — each module expands in place, one at a time.
+- **Global search bar** on both layouts filters across all sections by label, description, or tip text.
+
+**Content (17 sections):**
+Command Center, Quick Capture, Tasks, Thoughts & Timeline, Habits, Projects, Finance (Dues), Weekly Review, Monthly Review, Compass, Synthesis, AI Chat, Voice Notes, Journal, Daily Workspace, Timeline, Settings.
+
+Each item has a plain-language description and where relevant a 💡 tip with practical advice.
+
+**Architecture:**
+- `src/modals/HelpModal.ts` (new): `Modal` subclass with `_renderDesktop()` / `_renderMobile()` / `_renderSectionContent()` / `_renderSearchResults()`. All content is static data (`SECTIONS` array) — zero vault reads.
+- `CommandCenterTab.renderHeader()`: Added `?` (circle-help) button next to Zen toggle. Opens `HelpModal`.
+- CSS: `mina-help-modal`, `mina-help-sidebar`, `mina-help-content`, `mina-help-item-card`, `mina-help-accordion-*`, `mina-help-search-*`
+
 ## [1.5.5] - 2026-04-20
 ### Fix — Mobile Tab Navigation (no new window on tab switch)
 

@@ -4,6 +4,7 @@ import { BaseTab } from "./BaseTab";
 import { PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, SETTINGS_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID, WORKSPACE_ICON_ID } from '../constants';
 import { parseContextString, parseNaturalDate, isTablet, attachInlineTriggers } from '../utils';
 import { HabitConfigModal } from '../modals/HabitConfigModal';
+import { HelpModal } from '../modals/HelpModal';
 
 export class CommandCenterTab extends BaseTab {
     private parentContainer: HTMLElement;
@@ -43,9 +44,19 @@ export class CommandCenterTab extends BaseTab {
             ns.createEl('span', { text: vision });
         }
         const zenSize = Platform.isMobile ? '48px' : '42px';
+        const btnSize = `width: ${zenSize}; height: ${zenSize}; min-width: ${zenSize};`;
+
+        // Help button
+        const helpBtn = headerRow.createEl('button', {
+            cls: 'mina-zen-btn',
+            attr: { title: 'Open manual', style: btnSize }
+        });
+        setIcon(helpBtn, 'lucide-circle-help');
+        helpBtn.addEventListener('click', () => { new HelpModal(this.app).open(); });
+
         const zenToggle = headerRow.createEl('button', {
             cls: `mina-zen-btn${this.view.isZenMode ? ' is-active' : ''}`,
-            attr: { title: this.view.isZenMode ? 'Exit Zen' : 'Enter Zen', style: `width: ${zenSize}; height: ${zenSize}; min-width: ${zenSize};` }
+            attr: { title: this.view.isZenMode ? 'Exit Zen' : 'Enter Zen', style: btnSize }
         });
         setIcon(zenToggle, 'lucide-target');
         zenToggle.addEventListener('click', () => {
