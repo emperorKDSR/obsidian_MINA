@@ -1,3 +1,8 @@
+## [1.10.7] - Habit Ring Fix
+
+### Fixed
+- **Habits**: Incomplete habit rings now display a clean, perfect track circle — removed stroke-linecap: round from the default (empty) fill state which was rendering a colored dot artifact at the top of the ring for every incomplete habit; stroke-linecap: round now applies only to the is-done state where the full arc is drawn
+
 ## [1.10.6] - Synthesis UX Polish
 
 ### Fixed
