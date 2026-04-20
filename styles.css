@@ -308,6 +308,81 @@
     height: 12px;
 }
 
+/* ── Eye (hide/unhide) button ──────────────────────────────────────────────── */
+.mina-syn-ctx-row-eye {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    border: none;
+    background: transparent;
+    color: var(--text-faint);
+    cursor: pointer;
+    padding: 0;
+    opacity: 0;
+    transition: opacity 0.12s ease, background 0.1s ease, color 0.1s ease;
+}
+.mina-syn-ctx-row:hover .mina-syn-ctx-row-eye {
+    opacity: 1;
+}
+.mina-syn-ctx-row-eye:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-muted);
+}
+.mina-syn-ctx-row-eye .svg-icon {
+    width: 12px;
+    height: 12px;
+}
+
+/* ── Hidden context row ────────────────────────────────────────────────────── */
+.mina-syn-ctx-row.is-ctx-hidden {
+    opacity: 0.45;
+    border-left-color: transparent !important;
+    cursor: default;
+}
+.mina-syn-ctx-row.is-ctx-hidden .mina-syn-ctx-row-dot {
+    border-style: dashed;
+}
+.mina-syn-ctx-row.is-ctx-hidden:hover {
+    background: var(--background-modifier-hover);
+}
+.mina-syn-ctx-row.is-ctx-hidden:hover .mina-syn-ctx-row-eye {
+    opacity: 1;
+}
+.mina-syn-ctx-row.is-ctx-hidden:hover .mina-syn-ctx-row-del {
+    opacity: 1;
+}
+
+/* ── Show-hidden toggle button ─────────────────────────────────────────────── */
+.mina-syn-ctx-hidden-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: var(--text-faint);
+    font-size: 0.72em;
+    font-weight: 600;
+    cursor: pointer;
+    border-top: 1px dashed var(--background-modifier-border-faint, var(--background-modifier-border));
+    transition: background 0.12s ease, color 0.12s ease;
+    flex-shrink: 0;
+}
+.mina-syn-ctx-hidden-toggle:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-muted);
+}
+.mina-syn-ctx-hidden-toggle .svg-icon {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+}
+
 .mina-syn-ctx-add-btn {
     display: flex;
     align-items: center;

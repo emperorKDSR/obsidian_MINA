@@ -21,6 +21,7 @@ export class MinaView extends ItemView {
     activeSynthesisContext: string | null = null;
     activeSynthesisContexts: string[] = [];
     synthesisFeedFilter: 'no-context' | 'with-context' | 'processed' = 'no-context';
+    synthesisShowHidden: boolean = false;
     isZenMode: boolean = false;
 
     // Daily Workspace State

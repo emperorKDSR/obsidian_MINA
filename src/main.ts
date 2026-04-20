@@ -183,6 +183,9 @@ export default class MinaPlugin extends Plugin {
         if (this.settings.contexts) {
             this.settings.contexts = this.settings.contexts.filter((c: any) => c && typeof c === 'string');
         }
+        if (!Array.isArray(this.settings.hiddenContexts)) {
+            this.settings.hiddenContexts = [];
+        }
         this.settingsInitialized = true;
 	}
 

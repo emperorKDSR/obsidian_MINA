@@ -26,6 +26,7 @@ export interface MinaSettings {
 	dateFormat: string;
     timeFormat: string;
     contexts: string[];
+    hiddenContexts: string[];
     selectedContexts: string[];
     geminiApiKey: string;
     geminiModel: string;

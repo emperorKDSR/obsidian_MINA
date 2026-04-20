@@ -138,6 +138,7 @@ export const DEFAULT_SETTINGS: MinaSettings = {
 	dateFormat: 'YYYY-MM-DD',
     timeFormat: 'HH:mm',
     contexts: [], 
+    hiddenContexts: [],
     selectedContexts: [],
     geminiApiKey: '',
     geminiModel: 'gemini-1.5-pro',

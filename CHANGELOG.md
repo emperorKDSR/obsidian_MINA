@@ -2,6 +2,14 @@
 
 
 
+## [1.10.3] — Synthesis: Hide Contexts
+
+### ✨ Changed
+- **Hide context** — eye-off icon appears on hover for each context row; clicking hides the context from the active list (stored in `hiddenContexts` settings)
+- **Reveal hidden** — "Show hidden (N)" toggle button at the bottom of the context list; hidden contexts are shown with muted/dashed style and cannot be primed
+- **Unhide** — eye icon on hidden rows restores them to the active list
+- Hiding a primed context automatically removes it from the current multi-select selection
+
 ## [1.10.2] — Synthesis Context Panel: Multi-Select, Search & Delete
 
 ### ✨ Changed

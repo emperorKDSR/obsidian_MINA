@@ -87,6 +87,9 @@ export class SynthesisTab extends BaseTab {
     // Convenience: first primed context (for backward-compat echo text)
     private get primedContext(): string | null { return this.primedContexts[0] ?? null; }
 
+    private get showHidden(): boolean { return this.view.synthesisShowHidden; }
+    private set showHidden(v: boolean) { this.view.synthesisShowHidden = v; }
+
     private get feedFilter(): 'no-context' | 'with-context' | 'processed' {
         return this.view.synthesisFeedFilter;
     }
@@ -228,6 +231,7 @@ export class SynthesisTab extends BaseTab {
     private buildContextList(list: HTMLElement, shell: HTMLElement): void {
         list.empty();
         const contexts = this.settings.contexts || [];
+        const hidden = new Set<string>(this.settings.hiddenContexts || []);
 
         if (contexts.length === 0) {
             const empty = list.createEl('div', { cls: 'mina-syn-ctx-empty' });
@@ -239,39 +243,35 @@ export class SynthesisTab extends BaseTab {
             });
         } else {
             const counts = this.getContextCounts();
-            // Sort alphabetically
             const sorted = [...contexts].sort((a, b) => a.localeCompare(b));
-            for (const ctx of sorted) {
-                const row = list.createEl('div', {
-                    cls: `mina-syn-ctx-row${this.primedContexts.includes(ctx) ? ' is-selected' : ''}`,
-                    attr: { 'data-ctx': ctx, tabindex: '0' },
+            const visible = sorted.filter((c) => !hidden.has(c));
+            const hiddenItems = sorted.filter((c) => hidden.has(c));
+
+            // Render visible contexts
+            for (const ctx of visible) {
+                this.renderContextRow(list, shell, ctx, false, counts[ctx] || 0);
+            }
+
+            // Show-hidden toggle footer (only if there are hidden contexts)
+            if (hiddenItems.length > 0) {
+                const toggleBtn = list.createEl('button', { cls: 'mina-syn-ctx-hidden-toggle' });
+                setIcon(toggleBtn, this.showHidden ? 'eye-off' : 'eye');
+                toggleBtn.createEl('span', {
+                    text: this.showHidden
+                        ? `Hide ${hiddenItems.length} hidden`
+                        : `Show hidden (${hiddenItems.length})`,
                 });
-                row.createEl('div', { cls: 'mina-syn-ctx-row-dot' });
-                row.createEl('span', { text: ctx, cls: 'mina-syn-ctx-row-name' });
-                row.createEl('span', {
-                    text: String(counts[ctx] || 0),
-                    cls: 'mina-syn-ctx-row-count',
+                toggleBtn.addEventListener('click', () => {
+                    this.showHidden = !this.showHidden;
+                    this.view.renderView();
                 });
 
-                // Delete button (hover-revealed via CSS)
-                const delBtn = row.createEl('button', {
-                    cls: 'mina-syn-ctx-row-del',
-                    attr: { title: `Remove context "${ctx}"`, 'aria-label': `Remove ${ctx}` },
-                });
-                setIcon(delBtn, 'trash-2');
-                delBtn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    await this.removeContextFromSettings(ctx, shell);
-                });
-
-                const onSelect = () => this.handleContextRowClick(ctx, shell);
-                row.addEventListener('click', onSelect);
-                row.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        onSelect();
+                // Render hidden contexts below the toggle (if revealed)
+                if (this.showHidden) {
+                    for (const ctx of hiddenItems) {
+                        this.renderContextRow(list, shell, ctx, true, counts[ctx] || 0);
                     }
-                });
+                }
             }
         }
 
@@ -280,6 +280,79 @@ export class SynthesisTab extends BaseTab {
         setIcon(addBtn, 'plus-circle');
         addBtn.createEl('span', { text: 'Add context', cls: 'mina-syn-ctx-add-label' });
         addBtn.addEventListener('click', () => this.openAddContextModal(shell));
+    }
+
+    private renderContextRow(
+        list: HTMLElement,
+        shell: HTMLElement,
+        ctx: string,
+        isHidden: boolean,
+        count: number,
+    ): void {
+        const isSelected = this.primedContexts.includes(ctx);
+        const row = list.createEl('div', {
+            cls: [
+                'mina-syn-ctx-row',
+                isSelected ? 'is-selected' : '',
+                isHidden ? 'is-ctx-hidden' : '',
+            ].filter(Boolean).join(' '),
+            attr: { 'data-ctx': ctx, tabindex: '0' },
+        });
+        row.createEl('div', { cls: 'mina-syn-ctx-row-dot' });
+        row.createEl('span', { text: ctx, cls: 'mina-syn-ctx-row-name' });
+        row.createEl('span', { text: String(count), cls: 'mina-syn-ctx-row-count' });
+
+        // Eye/eye-off toggle (hover-revealed)
+        const eyeBtn = row.createEl('button', {
+            cls: 'mina-syn-ctx-row-eye',
+            attr: {
+                title: isHidden ? `Unhide "${ctx}"` : `Hide "${ctx}"`,
+                'aria-label': isHidden ? `Unhide ${ctx}` : `Hide ${ctx}`,
+            },
+        });
+        setIcon(eyeBtn, isHidden ? 'eye' : 'eye-off');
+        eyeBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await this.toggleContextHidden(ctx, isHidden, shell);
+        });
+
+        // Delete button (hover-revealed)
+        const delBtn = row.createEl('button', {
+            cls: 'mina-syn-ctx-row-del',
+            attr: { title: `Remove context "${ctx}"`, 'aria-label': `Remove ${ctx}` },
+        });
+        setIcon(delBtn, 'trash-2');
+        delBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await this.removeContextFromSettings(ctx, shell);
+        });
+
+        const onSelect = () => {
+            if (!isHidden) this.handleContextRowClick(ctx, shell);
+        };
+        row.addEventListener('click', onSelect);
+        row.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); }
+        });
+    }
+
+    private async toggleContextHidden(
+        ctx: string,
+        currentlyHidden: boolean,
+        shell: HTMLElement,
+    ): Promise<void> {
+        if (!this.settings.hiddenContexts) this.settings.hiddenContexts = [];
+        if (currentlyHidden) {
+            this.settings.hiddenContexts = this.settings.hiddenContexts.filter((c) => c !== ctx);
+        } else {
+            if (!this.settings.hiddenContexts.includes(ctx)) {
+                this.settings.hiddenContexts.push(ctx);
+            }
+            // Remove from primed selection if it was selected
+            this.primedContexts = this.primedContexts.filter((c) => c !== ctx);
+        }
+        await this.plugin.saveSettings();
+        this.view.renderView();
     }
 
     private handleContextRowClick(ctx: string, shell: HTMLElement): void {
