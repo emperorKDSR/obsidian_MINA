@@ -2,6 +2,10 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.0.10] - 2026-04-21
+### Fixed
+- **Desktop capture bar — inline triggers** (`@date`, `[[`, `+`) now work correctly in the inline expand bar. Logic extracted from `EditEntryModal._attachInlineTriggers` into shared `attachInlineTriggers(app, textarea, setDueDate)` utility in `utils.ts`. Wired to the desktop expand textarea in `CommandCenterTab`. `@date` trigger also auto-switches capture mode to Task.
+
 ## [1.0.9] - 2026-04-21
 
 ### Changed

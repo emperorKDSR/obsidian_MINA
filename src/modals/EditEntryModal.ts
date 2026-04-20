@@ -1,6 +1,6 @@
 import { App, Modal, Platform, Notice, moment } from 'obsidian';
 import MinaPlugin from '../main';
-import { isTablet, parseNaturalDate, parseContextString } from '../utils';
+import { isTablet, parseNaturalDate, parseContextString, attachInlineTriggers } from '../utils';
 import { FileSuggestModal } from './FileSuggestModal';
 import { ContextSuggestModal } from './ContextSuggestModal';
 
@@ -320,48 +320,7 @@ export class EditEntryModal extends Modal {
 
     /** ── INLINE TRIGGERS (@date, [[link, + checklist) ── */
     private _attachInlineTriggers(textArea: HTMLTextAreaElement, setDueDate: (d: string) => void) {
-        textArea.addEventListener('input', () => {
-            const val = textArea.value;
-            const pos = textArea.selectionStart ?? val.length;
-            const before = val.substring(0, pos);
-
-            // @word<space> → NLP date
-            const atMatch = before.match(/@(\S+)\s$/);
-            if (atMatch) {
-                const parsed = parseNaturalDate(atMatch[1]);
-                if (parsed) {
-                    const removeFrom = pos - atMatch[0].length;
-                    const wikiDate = `[[${parsed}]] `;
-                    textArea.value = val.substring(0, removeFrom) + wikiDate + val.substring(pos);
-                    textArea.setSelectionRange(removeFrom + wikiDate.length, removeFrom + wikiDate.length);
-                    setDueDate(parsed);
-                    return;
-                }
-            }
-
-            // [[ → wiki-link insertion
-            if (before.endsWith('[[')) {
-                textArea.value = val.substring(0, pos - 2) + val.substring(pos);
-                const insertAt = pos - 2;
-                textArea.setSelectionRange(insertAt, insertAt);
-                new FileSuggestModal(this.app, (file) => {
-                    const link = `[[${file.basename}]]`;
-                    const cur = textArea.value;
-                    const curPos = textArea.selectionStart ?? insertAt;
-                    textArea.value = cur.substring(0, curPos) + link + cur.substring(curPos);
-                    textArea.setSelectionRange(curPos + link.length, curPos + link.length);
-                    textArea.focus();
-                }).open();
-                return;
-            }
-
-            // + at line start → checklist item
-            if (before.endsWith('\n+') || before === '+') {
-                const insertAt = pos - 1;
-                textArea.value = val.substring(0, insertAt) + '- [ ] ' + val.substring(pos);
-                textArea.setSelectionRange(insertAt + 6, insertAt + 6);
-            }
-        });
+        attachInlineTriggers(this.app, textArea, setDueDate);
     }
 
     /** ── SWIPE TO DISMISS ────────────────────────────── */

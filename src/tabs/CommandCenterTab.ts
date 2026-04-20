@@ -3,7 +3,7 @@ import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from '../modals/EditEntryModal';
 import { PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, SETTINGS_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID } from '../constants';
-import { parseContextString, parseNaturalDate, isTablet } from '../utils';
+import { parseContextString, parseNaturalDate, isTablet, attachInlineTriggers } from '../utils';
 import type { TaskEntry } from '../types';
 
 export class CommandCenterTab extends BaseTab {
@@ -68,29 +68,172 @@ export class CommandCenterTab extends BaseTab {
 
     // ── 1. Capture bar ──────────────────────────────────────────────────────
     private renderCaptureBar(parent: HTMLElement) {
-        // ── Desktop / tablet path: modal ─────────────────────────────────────
+        // ── Desktop / tablet path: inline expansion ──────────────────────────
         if (!Platform.isMobile || isTablet()) {
-            const openCapture = () => {
-                new EditEntryModal(this.app, this.plugin, '', '', null, false, async (text, ctxs) => {
-                    if (!text.trim()) return;
-                    await this.vault.createThoughtFile(text, parseContextString(ctxs));
-                }, 'Capture').open();
-            };
+            let captureContexts: string[] = [];
+            let captureDueDate: string | null = null;
+            let captureMode: 'thought' | 'task' = 'thought';
+
             const cap = parent.createEl('div', { cls: 'mina-capture-bar' });
-            const iconWrap = cap.createDiv({ cls: 'mina-capture-icon-wrap' });
+
+            // Collapsed header row
+            const collapsedRow = cap.createDiv({ cls: 'mina-capture-collapsed-row' });
+            const iconWrap = collapsedRow.createDiv({ cls: 'mina-capture-icon-wrap' });
             setIcon(iconWrap, 'lucide-plus');
-            cap.createEl('span', { text: "What's on your mind…", cls: 'mina-capture-placeholder' });
-            cap.createEl('span', { text: '⌘K', cls: 'mina-capture-kbd' });
-            cap.addEventListener('click', openCapture);
+            collapsedRow.createEl('span', { text: "What's on your mind…", cls: 'mina-capture-placeholder' });
+            collapsedRow.createEl('span', { text: '⌘K', cls: 'mina-capture-kbd' });
+
+            // Expansion body
+            const expandBody = cap.createDiv({ cls: 'mina-capture-expand-body' });
+            const textarea = expandBody.createEl('textarea', {
+                cls: 'mina-capture-inline-textarea',
+                attr: { placeholder: 'Capture thought…', rows: '3' }
+            }) as HTMLTextAreaElement;
+
+            // Due date zone (task mode only)
+            const dateZone = expandBody.createDiv({ cls: 'mina-mobile-date-zone' });
+            this._buildInlineDateStrip(dateZone, (d: string | null) => { captureDueDate = d; });
+
+            // Desktop dock: mode toggle | chips (flex) | actions
+            const dock = expandBody.createDiv({ cls: 'mina-capture-desktop-dock' });
+
+            const toggleBar = dock.createDiv({ cls: 'mina-seg-bar' });
+            const thoughtBtn = toggleBar.createEl('button', { text: '✦ THOUGHT', cls: 'mina-seg-btn is-active' });
+            const taskBtn = toggleBar.createEl('button', { text: '✓ TASK', cls: 'mina-seg-btn' });
+
+            const chipArea = dock.createDiv({ cls: 'mina-capture-desktop-chip-area' });
+            const chipStrip = chipArea.createDiv({ cls: 'mina-mobile-chip-strip' });
+            const tagPickerContainer = chipArea.createDiv({ cls: 'mina-capture-inline-tag-picker' });
+
+            const actionRow = dock.createDiv({ cls: 'mina-capture-desktop-actions' });
+            const cancelBtn = actionRow.createEl('button', { text: 'CANCEL', cls: 'mina-capture-inline-cancel' });
+            const saveBtn = actionRow.createEl('button', { text: 'CAPTURE', cls: 'mina-capture-inline-save is-disabled' }) as HTMLButtonElement;
+            saveBtn.disabled = true;
+
+            // Chip renderer
+            const renderChips = () => {
+                chipStrip.empty();
+                captureContexts.forEach(ctx => {
+                    const chip = chipStrip.createEl('span', { cls: 'mina-mobile-chip' });
+                    chip.createSpan({ text: `#${ctx}` });
+                    const x = chip.createSpan({ text: '×', cls: 'mina-mobile-chip-x' });
+                    x.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        captureContexts = captureContexts.filter(c => c !== ctx);
+                        renderChips();
+                    });
+                });
+                const addBtn = chipStrip.createEl('button', { text: '+', cls: 'mina-mobile-chip-add' });
+                addBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this._toggleInlineCaptureTagPicker(
+                        tagPickerContainer,
+                        this.plugin.settings.contexts ?? [],
+                        () => captureContexts,
+                        (ctx: string) => {
+                            if (!captureContexts.includes(ctx)) { captureContexts.push(ctx); renderChips(); }
+                        }
+                    );
+                });
+            };
+            renderChips();
+
+            // Mode switch
+            const switchMode = (mode: 'thought' | 'task') => {
+                captureMode = mode;
+                textarea.placeholder = mode === 'task' ? 'Execute intent…' : 'Capture thought…';
+                thoughtBtn.toggleClass('is-active', mode === 'thought');
+                taskBtn.toggleClass('is-active', mode === 'task');
+                dateZone.toggleClass('is-visible', mode === 'task');
+                saveBtn.textContent = mode === 'task' ? 'ADD TASK' : 'CAPTURE';
+            };
+            thoughtBtn.addEventListener('click', () => switchMode('thought'));
+            taskBtn.addEventListener('click', () => switchMode('task'));
+
+            // Save gate
+            const refreshSave = () => {
+                const empty = !textarea.value.trim();
+                saveBtn.toggleClass('is-disabled', empty);
+                saveBtn.disabled = empty;
+            };
+            textarea.addEventListener('input', refreshSave);
+
+            // Inline smart triggers: @date, [[link, + checklist
+            attachInlineTriggers(this.plugin.app, textarea, (d: string) => {
+                captureDueDate = d;
+                switchMode('task');
+            });
+
+            // Collapse
+            const collapse = () => {
+                cap.removeClass('is-expanded');
+                captureContexts = []; captureDueDate = null;
+                textarea.value = '';
+                switchMode('thought');
+                renderChips();
+                tagPickerContainer.removeClass('is-open');
+                tagPickerContainer.empty();
+                refreshSave();
+            };
+
+            // Expand
+            const expand = () => {
+                if (cap.hasClass('is-expanded')) return;
+                cap.addClass('is-expanded');
+                setTimeout(() => textarea.focus(), 60);
+            };
+
+            // Save
+            const handleSave = async () => {
+                const raw = textarea.value.trim();
+                if (!raw) return;
+                saveBtn.toggleClass('is-disabled', true);
+                saveBtn.disabled = true;
+                const text = raw.replace(/\n/g, '<br>');
+                const contexts = parseContextString(captureContexts.map(c => `#${c}`).join(' '));
+                const due = captureMode === 'task' ? captureDueDate ?? undefined : undefined;
+                try {
+                    if (captureMode === 'task') await this.vault.createTaskFile(text, contexts, due);
+                    else await this.vault.createThoughtFile(text, contexts);
+                    new Notice(captureMode === 'task' ? 'Task added ✓' : 'Thought captured ✓', 1200);
+                    collapse();
+                } catch {
+                    saveBtn.toggleClass('is-disabled', false);
+                    saveBtn.disabled = false;
+                    new Notice('Error saving — please try again', 2500);
+                }
+            };
+
+            collapsedRow.addEventListener('click', expand);
+            cancelBtn.addEventListener('click', collapse);
+            saveBtn.addEventListener('click', handleSave);
+            textarea.addEventListener('keydown', (e: KeyboardEvent) => {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSave(); }
+                if (e.key === 'Escape') collapse();
+            });
+
+            // Click-outside to collapse
+            const onOutside = (e: MouseEvent) => {
+                if (cap.hasClass('is-expanded') && !cap.contains(e.target as Node)) collapse();
+            };
+            parent.ownerDocument.addEventListener('mousedown', onOutside);
+
+            // ⌘K / C shortcut
             const onKey = (e: KeyboardEvent) => {
                 const active = document.activeElement;
                 const isTyping = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || (active as HTMLElement)?.isContentEditable;
                 if (isTyping) return;
-                if (e.key === 'c' || e.key === 'C') { e.preventDefault(); openCapture(); }
+                if (e.key === 'c' || e.key === 'C') { e.preventDefault(); expand(); }
             };
             parent.ownerDocument.addEventListener('keydown', onKey);
+
+            // Cleanup when removed from DOM
             const obs = new MutationObserver(() => {
-                if (!cap.isConnected) { parent.ownerDocument.removeEventListener('keydown', onKey); obs.disconnect(); }
+                if (!cap.isConnected) {
+                    parent.ownerDocument.removeEventListener('keydown', onKey);
+                    parent.ownerDocument.removeEventListener('mousedown', onOutside);
+                    obs.disconnect();
+                }
             });
             obs.observe(parent.ownerDocument.body, { childList: true, subtree: true });
             return;
@@ -934,21 +1077,18 @@ export class CommandCenterTab extends BaseTab {
         container.addClass('is-open');
         container.empty();
 
-        const searchRow = container.createDiv({ cls: 'mina-tag-picker-search-row' });
-        const searchInput = searchRow.createEl('input', {
-            type: 'text', cls: 'mina-tag-picker-search',
-            attr: { placeholder: 'Filter tags…' }
-        }) as HTMLInputElement;
+        // All existing tags as selectable pills (excluding already-selected)
         const grid = container.createDiv({ cls: 'mina-tag-picker-grid' });
-
-        const renderOptions = (query: string) => {
+        const renderGrid = () => {
             grid.empty();
-            const q = query.toLowerCase().trim();
             const selected = getSelected();
-            const filtered = allContexts
-                .filter(ctx => !selected.includes(ctx) && ctx.toLowerCase().includes(q))
-                .sort((a, b) => a.localeCompare(b));
-            filtered.forEach(ctx => {
+            const available = allContexts.filter(ctx => !selected.includes(ctx)).sort((a, b) => a.localeCompare(b));
+            if (available.length === 0 && allContexts.length > 0) {
+                grid.createEl('span', { text: 'All tags added.', cls: 'mina-tag-picker-empty' });
+            } else if (available.length === 0) {
+                grid.createEl('span', { text: 'No tags configured yet.', cls: 'mina-tag-picker-empty' });
+            }
+            available.forEach(ctx => {
                 const tag = grid.createEl('button', { text: `#${ctx}`, cls: 'mina-tag-picker-tag' });
                 tag.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -957,24 +1097,28 @@ export class CommandCenterTab extends BaseTab {
                     container.empty();
                 });
             });
-            if (q && !allContexts.some(ctx => ctx.toLowerCase() === q)) {
-                const createBtn = grid.createEl('button', { cls: 'mina-tag-picker-create' });
-                createBtn.createSpan({ text: '＋ ' });
-                createBtn.createSpan({ text: `Create "${query.trim()}"` });
-                createBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    onSelect(query.trim());
-                    container.removeClass('is-open');
-                    container.empty();
-                });
-            }
-            if (!filtered.length && !q) {
-                grid.createEl('span', { text: 'No tags configured.', cls: 'mina-tag-picker-empty' });
-            }
         };
+        renderGrid();
 
-        searchInput.addEventListener('input', () => renderOptions(searchInput.value));
-        renderOptions('');
-        setTimeout(() => searchInput.focus(), 60);
+        // New tag input row
+        const newRow = container.createDiv({ cls: 'mina-tag-picker-new-row' });
+        const newInput = newRow.createEl('input', {
+            type: 'text', cls: 'mina-tag-picker-new-input',
+            attr: { placeholder: 'New tag…' }
+        }) as HTMLInputElement;
+        const addBtn = newRow.createEl('button', { text: 'ADD', cls: 'mina-tag-picker-add-btn' });
+        const doAdd = () => {
+            const val = newInput.value.trim().replace(/^#/, '').toLowerCase();
+            if (!val) return;
+            onSelect(val);
+            container.removeClass('is-open');
+            container.empty();
+        };
+        addBtn.addEventListener('click', (e) => { e.stopPropagation(); doAdd(); });
+        newInput.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter') { e.preventDefault(); doAdd(); }
+            if (e.key === 'Escape') { container.removeClass('is-open'); container.empty(); }
+        });
+        setTimeout(() => newInput.focus(), 60);
     }
 }

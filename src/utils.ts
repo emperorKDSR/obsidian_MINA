@@ -1,5 +1,6 @@
-import { Platform, moment } from 'obsidian';
+import { App, Platform, moment } from 'obsidian';
 import * as chrono from 'chrono-node';
+import { FileSuggestModal } from './modals/FileSuggestModal';
 
 /** Convert any locale-specific digit characters to ASCII 0-9.
  *  Covers Arabic-Indic (٠-٩), Persian (۰-۹), Devanagari (०-९),
@@ -33,4 +34,59 @@ export function parseNaturalDate(text: string): string | null {
         return moment(date).format('YYYY-MM-DD');
     }
     return null;
+}
+
+/**
+ * Attach inline smart triggers to a capture textarea:
+ *   @word<space>  → NLP date parse → sets due date + inserts [[date]] wiki link
+ *   [[            → opens FileSuggestModal → inserts [[Note]] link
+ *   + at line start → converts to `- [ ] ` checklist item
+ */
+export function attachInlineTriggers(
+    app: App,
+    textArea: HTMLTextAreaElement,
+    setDueDate: (d: string) => void
+): void {
+    textArea.addEventListener('input', () => {
+        const val = textArea.value;
+        const pos = textArea.selectionStart ?? val.length;
+        const before = val.substring(0, pos);
+
+        // @word<space> → NLP date
+        const atMatch = before.match(/@(\S+)\s$/);
+        if (atMatch) {
+            const parsed = parseNaturalDate(atMatch[1]);
+            if (parsed) {
+                const removeFrom = pos - atMatch[0].length;
+                const wikiDate = `[[${parsed}]] `;
+                textArea.value = val.substring(0, removeFrom) + wikiDate + val.substring(pos);
+                textArea.setSelectionRange(removeFrom + wikiDate.length, removeFrom + wikiDate.length);
+                setDueDate(parsed);
+                return;
+            }
+        }
+
+        // [[ → wiki-link insertion via file picker
+        if (before.endsWith('[[')) {
+            textArea.value = val.substring(0, pos - 2) + val.substring(pos);
+            const insertAt = pos - 2;
+            textArea.setSelectionRange(insertAt, insertAt);
+            new FileSuggestModal(app, (file) => {
+                const link = `[[${file.basename}]]`;
+                const cur = textArea.value;
+                const curPos = textArea.selectionStart ?? insertAt;
+                textArea.value = cur.substring(0, curPos) + link + cur.substring(curPos);
+                textArea.setSelectionRange(curPos + link.length, curPos + link.length);
+                textArea.focus();
+            }).open();
+            return;
+        }
+
+        // + at line start → checklist item
+        if (before.endsWith('\n+') || before === '+') {
+            const insertAt = pos - 1;
+            textArea.value = val.substring(0, insertAt) + '- [ ] ' + val.substring(pos);
+            textArea.setSelectionRange(insertAt + 6, insertAt + 6);
+        }
+    });
 }
