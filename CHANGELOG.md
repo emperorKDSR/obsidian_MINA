@@ -4,6 +4,22 @@ All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]
 
+## [1.5.9] - 2026-04-20
+### Feat — Synthesis Tab Redesign
+
+Complete rewrite of the Synthesis tab replacing 100% inline styles with a proper CSS architecture.
+
+**Changes:**
+- **CSS-first**: All inline styles replaced with `.mina-synthesis-*` CSS classes (~200 lines).
+- **Search/Filter**: New filter input in sidebar header for instant thought searching.
+- **Count Badge**: Unprocessed thought count displayed as accent badge next to title.
+- **Improved Cards**: Timestamp ("2 hours ago"), title, body preview, and "✓ Process" button per card.
+- **Mark Processed**: Quick-process button to mark thoughts without synthesizing into a note.
+- **Drag Feedback**: Cards show `.is-dragging` state with scale transform.
+- **Proper Mobile Detection**: Uses `isTablet()` utility instead of `clientWidth < 600`.
+- **Responsive**: Phone gets full-width sidebar; tablet/desktop get split-pane (340px → 380px).
+- **HelpModal**: Updated Synthesis section with Inbox Feed, Drag & Drop, Quick Process documentation.
+
 ## [1.5.8] - 2026-04-20
 ### Feat — Monthly Review Navigation
 
