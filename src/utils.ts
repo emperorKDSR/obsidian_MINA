@@ -109,3 +109,94 @@ export function attachInlineTriggers(
         }
     });
 }
+
+/**
+ * Attach clipboard-paste and drag-drop handlers to a textarea.
+ * Saves image/file data to the vault and inserts an Obsidian ![[link]] at cursor.
+ *
+ * @param app             The Obsidian App instance
+ * @param textarea        The target textarea element
+ * @param getFolder       Callback returning the attachments folder path (e.g. '000 Bin/MINA V2 Attachments')
+ */
+export function attachMediaPasteHandler(
+    app: App,
+    textarea: HTMLTextAreaElement,
+    getFolder: () => string
+): void {
+    const saveFile = async (file: File): Promise<string | null> => {
+        try {
+            const folder = (getFolder() || '000 Bin/MINA V2 Attachments').trim();
+            if (!app.vault.getAbstractFileByPath(folder)) {
+                await app.vault.createFolder(folder);
+            }
+            const mimeToExt: Record<string, string> = {
+                'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif',
+                'image/webp': 'webp', 'image/svg+xml': 'svg',
+                'application/pdf': 'pdf',
+            };
+            const ext = mimeToExt[file.type] || (file.name.includes('.') ? file.name.split('.').pop()! : 'bin');
+            const ts = moment().format('YYYYMMDD_HHmmss');
+            const rand = Math.random().toString(36).substring(2, 6);
+            const filename = `attachment_${ts}_${rand}.${ext}`;
+            const buffer = await file.arrayBuffer();
+            await app.vault.createBinary(`${folder}/${filename}`, buffer);
+            return filename;
+        } catch (e) {
+            console.error('[MINA] Attachment save failed:', e);
+            return null;
+        }
+    };
+
+    const insertAtCursor = (link: string) => {
+        const start = textarea.selectionStart ?? textarea.value.length;
+        const end = textarea.selectionEnd ?? start;
+        textarea.value = textarea.value.substring(0, start) + link + textarea.value.substring(end);
+        textarea.setSelectionRange(start + link.length, start + link.length);
+        textarea.dispatchEvent(new Event('input'));
+    };
+
+    textarea.addEventListener('paste', async (e: ClipboardEvent) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        let handled = false;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].kind === 'file') {
+                e.preventDefault();
+                handled = true;
+                const file = items[i].getAsFile();
+                if (!file) continue;
+                const { Notice } = await import('obsidian');
+                const filename = await saveFile(file);
+                if (filename) {
+                    insertAtCursor(`![[${filename}]]`);
+                    new Notice(`📎 Saved: ${filename}`);
+                } else {
+                    new Notice('⚠ Failed to save attachment');
+                }
+            }
+        }
+        // Non-file paste (text) — let the browser handle it normally
+        if (!handled) return;
+    });
+
+    textarea.addEventListener('dragover', (e: DragEvent) => {
+        if (e.dataTransfer?.items && Array.from(e.dataTransfer.items).some(i => i.kind === 'file')) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+        }
+    });
+
+    textarea.addEventListener('drop', async (e: DragEvent) => {
+        const files = e.dataTransfer?.files;
+        if (!files || files.length === 0) return;
+        e.preventDefault();
+        const { Notice } = await import('obsidian');
+        for (let i = 0; i < files.length; i++) {
+            const filename = await saveFile(files[i]);
+            if (filename) {
+                insertAtCursor(`![[${filename}]]`);
+                new Notice(`📎 Saved: ${filename}`);
+            }
+        }
+    });
+}

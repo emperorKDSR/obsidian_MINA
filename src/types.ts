@@ -51,6 +51,7 @@ export interface MinaSettings {
     northStarGoals: string[];
     enableAutoClassification: boolean;
     lifeMission: string;
+    attachmentsFolder: string;
 }
 
 export interface Habit {

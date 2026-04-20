@@ -2,7 +2,7 @@ import { moment, Platform, Notice, setIcon, TFile } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from './BaseTab';
 import type { TaskEntry, ThoughtEntry } from '../types';
-import { isTablet, attachInlineTriggers, parseContextString } from '../utils';
+import { isTablet, attachInlineTriggers, parseContextString, attachMediaPasteHandler } from '../utils';
 import { EditEntryModal } from '../modals/EditEntryModal';
 import { ConfirmModal } from '../modals/ConfirmModal';
 
@@ -141,6 +141,9 @@ export class DailyWorkspaceTab extends BaseTab {
             syncHeight();
             refreshSave();
         });
+
+        // Media paste / drag-drop — saves to vault and inserts ![[filename]] at cursor
+        attachMediaPasteHandler(this.app, textarea, () => this.plugin.settings.attachmentsFolder);
 
         const actions = capture.createEl('div', { cls: 'mina-dw-capture-actions' });
 

@@ -1,6 +1,6 @@
 import { App, Modal, Platform, Notice, moment } from 'obsidian';
 import MinaPlugin from '../main';
-import { isTablet, parseNaturalDate, parseContextString, attachInlineTriggers } from '../utils';
+import { isTablet, parseNaturalDate, parseContextString, attachInlineTriggers, attachMediaPasteHandler } from '../utils';
 import { FileSuggestModal } from './FileSuggestModal';
 import { ContextSuggestModal } from './ContextSuggestModal';
 
@@ -164,6 +164,7 @@ export class EditEntryModal extends Modal {
 
         this._attachInlineTriggers(textArea, setDueDate);
         this._attachAutoClassify(textArea);
+        attachMediaPasteHandler(this.app, textArea, () => this.plugin.settings.attachmentsFolder);
 
         // Short delay — just enough for modal animation to start
         setTimeout(() => { textArea.focus(); textArea.setSelectionRange(textArea.value.length, textArea.value.length); }, 80);
@@ -449,6 +450,9 @@ export class EditEntryModal extends Modal {
             setDueDate(d);
             switchMode('task');
         });
+
+        // Media paste / drag-drop
+        attachMediaPasteHandler(this.app, textArea, () => this.plugin.settings.attachmentsFolder);
 
         // AI auto-classify
         if (this.plugin.settings.enableAutoClassification) {

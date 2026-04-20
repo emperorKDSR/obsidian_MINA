@@ -2,7 +2,16 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
-## [1.2.4] - 2026-04-20
+## [1.2.5] - 2026-04-20
+### Feature — Clipboard paste & drag-drop attachments in all capture inputs
+
+#### Added
+- **Paste images/files from clipboard** — In the Daily Workspace capture bar and the Edit Entry modal (both desktop and mobile), pasting an image (`Ctrl+V` / `Cmd+V`) now saves the file to the vault and inserts an Obsidian `![[filename]]` wiki-link at cursor. Works for PNG, JPEG, GIF, WebP, SVG, PDF, and any binary file type.
+- **Drag-and-drop files** — Dragging a file from the filesystem directly onto any of the above textareas triggers the same flow: save to vault → insert link.
+- **`attachmentsFolder` setting** — New setting (default: `000 Bin/MINA V2 Attachments`) controls where pasted/dropped files are saved. Exposed in the MINA Settings tab under "Storage & Capture".
+- **`attachMediaPasteHandler` utility** — Reusable `utils.ts` function that can be wired to any textarea for consistent attachment handling across the plugin.
+
+
 ### Patch — Task/thought folder collision fix & checkbox immediate feedback
 
 #### Fixed
