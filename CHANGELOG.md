@@ -2,6 +2,12 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.0.14] - 2026-04-21
+### Added
+- **Bill Overview — `is-soon` card status** — Bills due within 7 days now receive the `is-soon` CSS class (previously all future bills got `is-upcoming`). Cards with this status show a warning-amber left stripe and a 4% amber background tint for clear visual urgency differentiation.
+- **Bill Overview — card background tints** — Status-aware subtle background washes added: overdue → 4% red, due today → 4% accent, due soon (≤7d) → 4% amber. Inactive/upcoming cards retain neutral background.
+- **Bill Overview — RGB fallback tokens** — Added `--mina-bills-error-rgb: 239, 68, 68` and `--mina-bills-warning-rgb: 245, 158, 11` to `:root`. These ensure `rgba()` tints and stripe colors work correctly across all Obsidian themes regardless of whether `--text-error-rgb` / `--text-warning-rgb` are defined by the theme.
+
 ## [1.0.13] - 2026-04-20
 ### Fixed
 - **Desktop: letter 'C' blocked in capture textarea** — `onKey` document-level shortcut listener was intercepting every `C` keypress using `document.activeElement` (global scope), which could diverge from `parent.ownerDocument.activeElement` inside Obsidian's rendering context. Fixed by adding `if (cap.hasClass('is-expanded')) return` as the first guard — when the capture bar is already open, the shortcut never fires regardless of focus state.

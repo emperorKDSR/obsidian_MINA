@@ -16,116 +16,201 @@ export class DuesTab extends BaseTab {
 
     async renderDuesMode(container: HTMLElement) {
         container.empty();
-        
-        const wrap = container.createEl('div', {
-            attr: {
-                style: 'padding: var(--mina-spacing); display: flex; flex-direction: column; gap: 24px; overflow-y: auto; flex-grow: 1; min-height: 0; -webkit-overflow-scrolling: touch; background: var(--background-primary); max-width: 800px; margin: 0 auto;'
-            }
-        });
 
-        // 1. Header (Strategic)
-        const header = wrap.createEl('div', {
-            attr: { style: 'display: flex; flex-direction: column; gap: 14px;' }
-        });
+        // ── Outer scroll wrapper ──────────────────────────────────────────
+        const wrap = container.createEl('div', { cls: 'mina-bills-wrap' });
 
-        const navRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px; margin-bottom: -4px;' } });
+        // ── 1. Header ────────────────────────────────────────────────────
+        const header = wrap.createEl('div', { cls: 'mina-bills-header' });
+
+        const navRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px;' } });
         this.renderHomeIcon(navRow);
 
-        const titleRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
-        const titleStack = titleRow.createEl('div', { attr: { style: 'display: flex; flex-direction: column;' } });
-        titleStack.createEl('h2', {
-            text: 'Financial Ledger',
-            attr: { style: 'margin: 0; font-size: 1.6em; font-weight: 900; color: var(--text-normal); letter-spacing: -0.03em;' }
-        });
-        titleStack.createEl('span', { text: moment().format('MMMM YYYY'), attr: { style: 'font-size: 0.8em; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;' } });
+        const titleRow = header.createEl('div', { cls: 'mina-bills-title-row' });
+        const titleStack = titleRow.createEl('div', { cls: 'mina-bills-title-stack' });
+        titleStack.createEl('h2', { text: 'Bill Overview', cls: 'mina-bills-title' });
+        titleStack.createEl('span', { text: moment().format('MMMM YYYY'), cls: 'mina-bills-subtitle' });
 
-        const addBtn = titleRow.createEl('button', {
-            text: '+ New Entry',
-            attr: { style: 'background: var(--interactive-accent); color: var(--text-on-accent); border: none; border-radius: 8px; font-size: 0.65em; padding: 6px 14px; cursor: pointer; font-weight: 800; text-transform: uppercase; box-shadow: 0 4px 10px rgba(var(--interactive-accent-rgb), 0.2);' }
+        // Inline "+" — visible on desktop; FAB replaces it on mobile
+        const addBtnInline = titleRow.createEl('button', {
+            text: '+ New Bill',
+            cls: 'mina-bills-inline-add-btn'
         });
-        addBtn.addEventListener('click', () => { 
-            new NewDueModal(this.app, this.settings.pfFolder, () => this.renderDuesMode(container)).open(); 
+        addBtnInline.addEventListener('click', () => {
+            new NewDueModal(this.app, this.settings.pfFolder, () => this.renderDuesMode(container)).open();
         });
 
-        // 2. Segmented Toggle Bar
-        const filterBar = header.createEl('div', {
-            attr: { style: 'display: flex; gap: 4px; padding: 4px; background: var(--background-secondary-alt); border-radius: 12px; border: 1px solid var(--background-modifier-border-faint); width: fit-content;' }
-        });
+        // ── 2. Summary Strip ─────────────────────────────────────────────
+        const allEntries = this.buildEntries();
+        const today      = moment().startOf('day');
 
-        const renderTogglePill = (label: string, isActive: boolean, onClick: () => void) => {
-            const pill = filterBar.createEl('button', {
-                text: label,
-                attr: { style: `padding: 4px 14px; border-radius: 8px; border: none; font-size: 0.65em; font-weight: 800; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.05em; background: ${isActive ? 'var(--background-primary)' : 'transparent'}; color: ${isActive ? 'var(--interactive-accent)' : 'var(--text-muted)'}; box-shadow: ${isActive ? 'var(--mina-shadow)' : 'none'};` }
-            });
-            pill.addEventListener('click', onClick);
+        const activeEntries   = allEntries.filter(e => e.isActive);
+        const overdueEntries  = activeEntries.filter(e => e.dueMoment?.isValid() && e.dueMoment.isBefore(today));
+        const todayEntries    = activeEntries.filter(e => e.dueMoment?.isValid() && e.dueMoment.isSame(today, 'day'));
+        const upcomingEntries = activeEntries.filter(e => e.dueMoment?.isValid() && e.dueMoment.isAfter(today));
+        const totalMonthly    = activeEntries.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+
+        const summary = wrap.createEl('div', { cls: 'mina-bills-summary' });
+
+        const renderMetric = (value: string, label: string, mod = '') => {
+            const chip = summary.createEl('div', { cls: `mina-bills-metric-chip${mod ? ' ' + mod : ''}` });
+            chip.createEl('div', { text: value, cls: 'mina-bills-metric-value' });
+            chip.createEl('div', { text: label, cls: 'mina-bills-metric-label' });
         };
+        renderMetric(
+            overdueEntries.length.toString(), 'Overdue',
+            overdueEntries.length > 0 ? 'is-danger' : ''
+        );
+        renderMetric(
+            todayEntries.length.toString(), 'Due Today',
+            todayEntries.length > 0 ? 'is-accent' : ''
+        );
+        renderMetric(upcomingEntries.length.toString(), 'Upcoming');
+        renderMetric(
+            totalMonthly > 0
+                ? totalMonthly.toLocaleString()
+                : activeEntries.length.toString(),
+            totalMonthly > 0 ? 'Total / Mo' : 'Active Bills'
+        );
 
-        renderTogglePill('Active Obligations', !this.showAll, () => { this.showAll = false; this.renderDuesMode(container); });
-        renderTogglePill('All History', this.showAll, () => { this.showAll = true; this.renderDuesMode(container); });
+        // ── 3. Full-Width Filter Toggle ──────────────────────────────────
+        const toggleBar = wrap.createEl('div', { cls: 'mina-bills-toggle' });
 
-        // 3. Ledger Entries
-        const listContainer = wrap.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' } });
-        
-        const entries = this.buildEntries().filter(e => this.showAll || e.isActive);
-        const today = moment().startOf('day');
+        const mkToggleBtn = (label: string, isActive: boolean, onClick: () => void) => {
+            const btn = toggleBar.createEl('button', {
+                text: label,
+                cls: `mina-bills-toggle-btn${isActive ? ' is-active' : ''}`
+            });
+            btn.addEventListener('click', onClick);
+        };
+        mkToggleBtn('Active', !this.showAll, () => { this.showAll = false; this.renderDuesMode(container); });
+        mkToggleBtn('All History', this.showAll, () => { this.showAll = true; this.renderDuesMode(container); });
+
+        // ── 4. Bill Cards ────────────────────────────────────────────────
+        const entries       = allEntries.filter(e => this.showAll || e.isActive);
+        const listContainer = wrap.createEl('div', { cls: 'mina-bills-list' });
 
         if (entries.length === 0) {
-            listContainer.createEl('p', { text: 'No entries found.', attr: { style: 'color: var(--text-muted); text-align: center; margin-top: 40px; opacity: 0.5; font-style: italic;' } });
+            this.renderBillsEmptyState(listContainer, () => this.renderDuesMode(container));
         } else {
             entries.forEach(entry => {
                 const isOverdue = entry.dueMoment?.isValid() && entry.dueMoment.isBefore(today);
-                const isToday = entry.dueMoment?.isValid() && entry.dueMoment.isSame(today, 'day');
-                
-                const card = listContainer.createEl('div', { 
-                    cls: 'mina-card', 
-                    attr: { style: `display: flex; align-items: center; gap: 16px; padding: 16px; border-left: 4px solid ${isOverdue ? 'var(--text-error)' : isToday ? 'var(--interactive-accent)' : 'transparent'}; ${!entry.isActive ? 'opacity: 0.6;' : ''}` } 
+                const isToday   = entry.dueMoment?.isValid() && entry.dueMoment.isSame(today, 'day');
+                const isPaid    = !entry.isActive;
+                const daysUntil = (entry.dueMoment?.isValid() && !isOverdue && !isToday)
+                    ? entry.dueMoment.diff(today, 'days') : null;
+                const isSoon    = daysUntil !== null && daysUntil <= 7;
+
+                const statusClass = isOverdue ? 'is-overdue'
+                    : isToday   ? 'is-today'
+                    : isPaid    ? 'is-paid'
+                    : isSoon    ? 'is-soon'
+                    : 'is-upcoming';
+
+                // ── Card shell ───────────────────────────────────────────
+                const card = listContainer.createEl('div', {
+                    cls: `mina-bills-card ${statusClass}${isPaid ? ' is-inactive' : ''}`
                 });
 
-                // Status Dot
-                const dot = card.createDiv({
-                    attr: { style: `width: 8px; height: 8px; border-radius: 50%; background: ${isOverdue ? 'var(--text-error)' : isToday ? 'var(--interactive-accent)' : 'var(--text-faint)'}; opacity: ${entry.isActive ? '1' : '0.3'}; flex-shrink: 0;` }
-                });
-                if (entry.isActive && (isOverdue || isToday)) dot.style.boxShadow = `0 0 10px ${isOverdue ? 'var(--text-error)' : 'var(--interactive-accent)'}`;
+                // Left accent stripe
+                card.createEl('div', { cls: 'mina-bills-card-stripe' });
 
-                const info = card.createEl('div', { attr: { style: 'flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;' } });
-                const titleLink = info.createEl('a', {
-                    text: entry.title,
-                    attr: { style: 'font-size: 1em; font-weight: 800; color: var(--text-normal); text-decoration: none; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;' }
-                });
-                titleLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.plugin.app.workspace.openLinkText(entry.title, entry.path, Platform.isMobile ? 'tab' : 'window');
-                });
-                
-                info.createEl('span', { 
-                    text: entry.dueMoment?.isValid() ? `Due ${entry.dueMoment.fromNow()}` : 'No due date', 
-                    attr: { style: 'font-size: 0.7em; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;' } 
+                // Body — tap area → open vault file
+                const body = card.createEl('div', { cls: 'mina-bills-card-body' });
+                body.addEventListener('click', () => {
+                    this.plugin.app.workspace.openLinkText(
+                        entry.title, entry.path,
+                        Platform.isMobile ? 'tab' : 'window'
+                    );
                 });
 
-                // Monetary Amount (Monospace)
-                const amountMatch = entry.title.match(/[\d,.]+/);
-                if (amountMatch) {
-                    const amount = card.createEl('div', {
-                        text: amountMatch[0],
-                        attr: { style: 'font-family: var(--font-monospace); font-size: 1.1em; font-weight: 700; color: var(--text-normal); padding: 0 10px;' }
+                // Top row: name + amount
+                const topRow = body.createEl('div', { cls: 'mina-bills-card-top' });
+                topRow.createEl('span', { text: entry.title, cls: 'mina-bills-card-name' });
+
+                // Amount: prefer explicit field, fall back to regex extraction from title
+                const displayAmount = entry.amount != null
+                    ? entry.amount.toLocaleString()
+                    : (entry.title.match(/[\d,.]+/) ?? [])[0];
+                if (displayAmount) {
+                    topRow.createEl('span', { text: displayAmount, cls: 'mina-bills-card-amount' });
+                }
+
+                // Meta row: status badge + recurring tag + last payment
+                const meta = body.createEl('div', { cls: 'mina-bills-card-meta' });
+
+                if (isOverdue) {
+                    meta.createEl('span', { text: 'Overdue', cls: 'mina-bills-badge mina-bills-badge--overdue' });
+                } else if (isToday) {
+                    meta.createEl('span', { text: 'Due Today', cls: 'mina-bills-badge mina-bills-badge--today' });
+                } else if (isPaid) {
+                    meta.createEl('span', { text: 'Paid', cls: 'mina-bills-badge mina-bills-badge--paid' });
+                } else if (entry.dueMoment?.isValid()) {
+                    const label = daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil}d`;
+                    meta.createEl('span', { text: label, cls: 'mina-bills-badge mina-bills-badge--upcoming' });
+                }
+
+                if (entry.hasRecurring) {
+                    meta.createEl('span', { text: '↻ Recurring', cls: 'mina-bills-badge mina-bills-badge--recurring' });
+                }
+
+                if (entry.lastPayment) {
+                    meta.createEl('span', {
+                        text: `Paid ${moment(entry.lastPayment).fromNow()}`,
+                        cls: 'mina-bills-last-payment'
                     });
                 }
 
+                // Pay button — active recurring bills only
                 if (entry.hasRecurring && entry.isActive) {
-                    const payBtn = card.createEl('button', {
-                        attr: { style: 'background: var(--background-primary-alt); border: 1px solid var(--background-modifier-border-faint); border-radius: 8px; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--interactive-accent); transition: all 0.2s;' }
+                    const actions = card.createEl('div', { cls: 'mina-bills-card-actions' });
+                    const payBtn  = actions.createEl('button', {
+                        cls: 'mina-bills-pay-btn',
+                        attr: { 'aria-label': `Pay ${entry.title}`, title: 'Record payment' }
                     });
                     setIcon(payBtn, 'lucide-credit-card');
-                    payBtn.addEventListener('mouseenter', () => { payBtn.style.background = 'var(--interactive-accent)'; payBtn.style.color = 'var(--text-on-accent)'; payBtn.style.transform = 'scale(1.1)'; });
-                    payBtn.addEventListener('mouseleave', () => { payBtn.style.background = 'var(--background-primary-alt)'; payBtn.style.color = 'var(--interactive-accent)'; payBtn.style.transform = 'none'; });
-                    
-                    payBtn.addEventListener('click', () => {
+                    // Prevent card's tap-to-open from firing when the pay button is tapped
+                    payBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
                         const file = this.app.vault.getAbstractFileByPath(entry.path);
-                        if (file instanceof TFile) new PaymentModal(this.app, this.plugin, file, entry.dueDate, () => this.renderDuesMode(container)).open();
+                        if (file instanceof TFile) {
+                            new PaymentModal(
+                                this.app, this.plugin, file,
+                                entry.dueDate,
+                                () => this.renderDuesMode(container)
+                            ).open();
+                        }
                     });
                 }
             });
         }
+
+        // ── 5. FAB — mobile sticky bottom-right ─────────────────────────
+        // Rendered after the list so it stacks correctly in the flex column
+        const fab = wrap.createEl('button', {
+            cls: 'mina-bills-fab',
+            attr: { 'aria-label': 'Add new bill', title: 'New Bill' }
+        });
+        setIcon(fab, 'lucide-plus');
+        fab.addEventListener('click', () => {
+            new NewDueModal(this.app, this.settings.pfFolder, () => this.renderDuesMode(container)).open();
+        });
+    }
+
+    // ── Mobile Empty State ───────────────────────────────────────────────
+    private renderBillsEmptyState(parent: HTMLElement, onCta: () => void) {
+        const empty = parent.createEl('div', { cls: 'mina-bills-empty' });
+        empty.createEl('div', { cls: 'mina-bills-empty-icon', text: '📄' });
+        empty.createEl('p', {
+            text: this.showAll ? 'No bill history yet.' : 'No active bills.',
+            cls: 'mina-bills-empty-title'
+        });
+        empty.createEl('p', {
+            text: 'Track recurring payments, subscriptions, and dues — all in one place.',
+            cls: 'mina-bills-empty-body'
+        });
+        const cta = empty.createEl('button', { text: '+ Add your first bill', cls: 'mina-bills-empty-cta' });
+        cta.addEventListener('click', onCta);
     }
 
     private buildEntries(): DueEntry[] {
