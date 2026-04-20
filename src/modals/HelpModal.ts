@@ -115,12 +115,16 @@ const SECTIONS: HelpSection[] = [
         ]
     },
     {
-        id: 'ai', icon: 'lucide-sparkles', title: 'AI Chat', subtitle: 'Gemini-powered intelligence',
+        id: 'ai', icon: 'lucide-sparkles', title: 'AI Chat', subtitle: 'Gemini 2.5 Pro intelligence',
         items: [
-            { label: 'Chat', desc: 'Ask MINA anything — strategy, writing help, idea development, or note analysis.' },
-            { label: 'Ground on Notes', desc: 'Attach vault files to the conversation to give the AI context from your own knowledge base.' },
-            { label: 'Web Search', desc: 'Toggle web search on to let the AI pull current information from the internet.' },
-            { label: 'Setup', desc: 'Add your Gemini API key in Settings → AI. Free tier available at ai.google.dev.', tip: 'The Intelligence briefing on the Home screen also uses this key.' },
+            { label: 'Chat', desc: 'Ask MINA anything — strategy, writing help, idea development, or note analysis. Powered by Gemini 2.5 Pro.' },
+            { label: 'Keyboard', desc: 'Press Enter to send, Shift+Enter for a new line.', tip: 'The send button also works on mobile.' },
+            { label: 'Suggestion Chips', desc: 'On empty chat, tap a suggestion to prefill your prompt.' },
+            { label: 'Web Search', desc: 'Toggle the globe icon (🌐) in the header to let AI pull current information from the internet.' },
+            { label: 'Ground on Notes', desc: 'Attach vault files via the paperclip icon. File chips appear above the input — tap × to remove.' },
+            { label: 'Model Badge', desc: 'The active model is shown in the header. Change it in Settings (gear icon) → AI Configuration.' },
+            { label: 'New Chat', desc: 'Tap "+ New" to start a fresh conversation. Previous chats are auto-saved to vault.' },
+            { label: 'Setup', desc: 'Add your Gemini API key via the gear icon in the AI header. Free tier at ai.google.dev.', tip: 'Default model: gemini-2.5-pro. The Intelligence briefing on Home also uses this key.' },
         ]
     },
     {

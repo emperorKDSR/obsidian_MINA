@@ -1,7 +1,9 @@
 import { moment, Platform, TFile, Notice, MarkdownRenderer, setIcon } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from './BaseTab';
+import { AiSettingsModal } from '../modals/AiSettingsModal';
 import type { ChatMessage } from '../types';
+import { isTablet } from '../utils';
 
 export class AiTab extends BaseTab {
     constructor(view: MinaView) { super(view); }
@@ -59,104 +61,204 @@ export class AiTab extends BaseTab {
     async renderAiMode(container: HTMLElement) {
         container.empty();
 
-        // ai-09: Load most recent chat on first open (when history is empty and no session active)
+        // Load most recent chat on first open
         if (this.view.chatHistory.length === 0 && !this.view.currentChatFile) {
             await this.loadMostRecentChat();
         }
-        
-        const wrap = container.createEl('div', {
-            attr: {
-                style: 'display: flex; flex-direction: column; height: 100%; background: var(--background-primary);'
-            }
+
+        const wrap = container.createEl('div', { cls: 'mina-ai-shell' });
+
+        // ─── Header ───
+        const header = wrap.createEl('div', { cls: 'mina-ai-header' });
+        const headerLeft = header.createEl('div', { cls: 'mina-ai-header-left' });
+        this.renderHomeIcon(headerLeft);
+        const titleGroup = headerLeft.createEl('div', { cls: 'mina-ai-title-group' });
+        titleGroup.createEl('h2', { text: 'AI Chat', cls: 'mina-ai-title' });
+        const modelBadge = titleGroup.createEl('span', {
+            text: this.settings.geminiModel || 'gemini-2.5-pro',
+            cls: 'mina-ai-model-badge'
         });
 
-        // 1. Header
-        const header = wrap.createEl('div', {
-            attr: { style: 'padding: 16px 14px 10px 14px; border-bottom: 1px solid var(--background-modifier-border-faint); display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;' }
+        const headerRight = header.createEl('div', { cls: 'mina-ai-header-right' });
+
+        // Web Search toggle
+        const webToggle = headerRight.createEl('button', {
+            cls: `mina-ai-toggle-btn${this.view.webSearchEnabled ? ' is-active' : ''}`,
+            attr: { 'aria-label': 'Web Search' }
+        });
+        const webIcon = webToggle.createEl('span', { cls: 'mina-ai-toggle-icon' });
+        setIcon(webIcon, 'lucide-globe');
+        webToggle.addEventListener('click', () => {
+            this.view.webSearchEnabled = !this.view.webSearchEnabled;
+            webToggle.toggleClass('is-active', this.view.webSearchEnabled);
+            new Notice(this.view.webSearchEnabled ? 'Web search enabled' : 'Web search disabled');
         });
 
-        const navRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px; margin-bottom: -4px;' } });
-        this.renderHomeIcon(navRow);
-
-        const titleRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
-        titleRow.createEl('h2', { text: 'AI Chat', attr: { style: 'margin: 0; font-size: 1.4em; font-weight: 800; color: var(--text-normal); letter-spacing: -0.02em; line-height: 1.1;' } });
-
-        // ai-09: New Chat button resets session state
-        const newChatBtn = titleRow.createEl('button', {
-            text: 'New Chat',
-            attr: { style: 'background: transparent; border: 1px solid var(--background-modifier-border); color: var(--text-muted); border-radius: 8px; padding: 4px 12px; font-size: 0.7em; font-weight: 700; cursor: pointer;' }
+        // Settings gear
+        const settingsBtn = headerRight.createEl('button', {
+            cls: 'mina-ai-toggle-btn',
+            attr: { 'aria-label': 'AI Settings' }
         });
+        const settingsIcon = settingsBtn.createEl('span', { cls: 'mina-ai-toggle-icon' });
+        setIcon(settingsIcon, 'lucide-settings');
+        settingsBtn.addEventListener('click', () => {
+            new AiSettingsModal(this.app, this.plugin).open();
+        });
+
+        // New Chat
+        const newChatBtn = headerRight.createEl('button', { text: '+ New', cls: 'mina-ai-new-btn' });
         newChatBtn.addEventListener('click', () => {
             this.view.chatHistory = [];
             this.view.currentChatFile = null;
+            this.view.groundedFiles = [];
             this.renderAiMode(container);
         });
 
-        // 2. Chat History
-        const chatContainer = wrap.createEl('div', {
-            attr: { style: 'flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; -webkit-overflow-scrolling: touch;' }
-        });
-        this.view.chatContainer = chatContainer;
+        // ─── Chat Messages ───
+        const chatArea = wrap.createEl('div', { cls: 'mina-ai-messages' });
+        this.view.chatContainer = chatArea;
 
         const renderHistory = () => {
-            chatContainer.empty();
+            chatArea.empty();
+            if (this.view.chatHistory.length === 0) {
+                this.renderWelcomeState(chatArea);
+                return;
+            }
             this.view.chatHistory.forEach(msg => {
                 const isUser = msg.role === 'user';
-                const row = chatContainer.createEl('div', { attr: { style: `display: flex; flex-direction: column; align-items: ${isUser ? 'flex-end' : 'flex-start'}; gap: 4px;` } });
-                const bubble = row.createEl('div', {
-                    cls: isUser ? 'mina-ai-user-bubble' : 'mina-ai-bot-bubble',
-                    attr: { style: `max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 0.95em; line-height: 1.5; ${isUser ? 'background: var(--interactive-accent); color: var(--text-on-accent);' : 'background: var(--background-secondary-alt); color: var(--text-normal); border: 1px solid var(--background-modifier-border-faint);'}` }
-                });
+                const row = chatArea.createEl('div', { cls: `mina-ai-msg-row ${isUser ? 'is-user' : 'is-bot'}` });
+                if (!isUser) {
+                    const avatar = row.createEl('div', { cls: 'mina-ai-avatar' });
+                    setIcon(avatar, 'lucide-sparkles');
+                }
+                const bubble = row.createEl('div', { cls: isUser ? 'mina-ai-user-bubble' : 'mina-ai-bot-bubble' });
                 MarkdownRenderer.render(this.app, msg.text, bubble, '', this.view);
                 this.hookInternalLinks(bubble, '');
             });
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            chatArea.scrollTop = chatArea.scrollHeight;
         };
         renderHistory();
 
-        // 3. Input Area
-        const inputArea = wrap.createEl('div', {
-            attr: { style: 'padding: 14px; border-top: 1px solid var(--background-modifier-border-faint); background: var(--background-primary); flex-shrink: 0; display: flex; gap: 8px; align-items: flex-end;' }
+        // ─── Grounded Files Chips ───
+        const contextBar = wrap.createEl('div', { cls: `mina-ai-context-bar${this.view.groundedFiles.length > 0 ? '' : ' is-empty'}` });
+        if (this.view.groundedFiles.length > 0) {
+            this.view.groundedFiles.forEach((file, idx) => {
+                const chip = contextBar.createEl('span', { cls: 'mina-ai-file-chip' });
+                chip.createEl('span', { text: file.basename, cls: 'mina-ai-chip-name' });
+                const removeBtn = chip.createEl('span', { text: '×', cls: 'mina-ai-chip-remove' });
+                removeBtn.addEventListener('click', () => {
+                    this.view.groundedFiles.splice(idx, 1);
+                    this.renderAiMode(container);
+                });
+            });
+        }
+
+        // ─── Input Area ───
+        const inputArea = wrap.createEl('div', { cls: 'mina-ai-input-area' });
+
+        // Attach file button
+        const attachBtn = inputArea.createEl('button', { cls: 'mina-ai-attach-btn', attr: { 'aria-label': 'Attach vault file' } });
+        const attachIcon = attachBtn.createEl('span');
+        setIcon(attachIcon, 'lucide-paperclip');
+        attachBtn.addEventListener('click', () => {
+            // Open file suggester
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.style.display = 'none';
+            // Use Obsidian's internal file search instead
+            new Notice('Drag a file from your vault sidebar to attach it, or type @filename in the chat.');
         });
 
         const textArea = inputArea.createEl('textarea', {
-            attr: { placeholder: 'Ask M.I.N.A...', style: 'flex: 1; min-height: 44px; max-height: 200px; border-radius: 12px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary-alt); color: var(--text-normal); padding: 10px 14px; font-size: 0.95em; resize: none; outline: none;' }
+            cls: 'mina-ai-textarea',
+            attr: { placeholder: 'Ask MINA anything…', rows: '1' }
         });
 
-        const sendBtn = inputArea.createEl('button', {
-            text: 'Send',
-            attr: { style: 'flex-shrink: 0; background: var(--interactive-accent); color: var(--text-on-accent); border: none; padding: 8px 20px; border-radius: 8px; font-weight: 700; cursor: pointer;' }
+        // Auto-resize textarea
+        textArea.addEventListener('input', () => {
+            textArea.style.height = 'auto';
+            textArea.style.height = Math.min(textArea.scrollHeight, 200) + 'px';
         });
 
-        sendBtn.addEventListener('click', async () => {
+        // Enter to send, Shift+Enter for newline
+        textArea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        const sendBtn = inputArea.createEl('button', { cls: 'mina-ai-send-btn', attr: { 'aria-label': 'Send' } });
+        const sendIcon = sendBtn.createEl('span');
+        setIcon(sendIcon, 'lucide-arrow-up');
+
+        const sendMessage = async () => {
             const text = textArea.value.trim();
             if (!text || this.view.isAiLoading) return;
-            
+
             textArea.value = '';
+            textArea.style.height = 'auto';
             this.view.chatHistory.push({ role: 'user', text });
             renderHistory();
-            
+
             this.view.isAiLoading = true;
-            const thinking = chatContainer.createEl('div', { text: 'Thinking...', attr: { style: 'opacity: 0.5; font-size: 0.8em; margin-bottom: 10px;' } });
-            
+            sendBtn.addClass('is-loading');
+
+            // Show typing indicator
+            const typingRow = chatArea.createEl('div', { cls: 'mina-ai-msg-row is-bot' });
+            const typingAvatar = typingRow.createEl('div', { cls: 'mina-ai-avatar' });
+            setIcon(typingAvatar, 'lucide-sparkles');
+            const typingBubble = typingRow.createEl('div', { cls: 'mina-ai-bot-bubble mina-ai-typing' });
+            typingBubble.createEl('span', { cls: 'mina-ai-dot' });
+            typingBubble.createEl('span', { cls: 'mina-ai-dot' });
+            typingBubble.createEl('span', { cls: 'mina-ai-dot' });
+            chatArea.scrollTop = chatArea.scrollHeight;
+
             try {
                 const response = await this.ai.callGemini(text, this.view.groundedFiles, this.view.webSearchEnabled, this.view.chatHistory, this.index.thoughtIndex);
-                thinking.remove();
+                typingRow.remove();
                 this.view.chatHistory.push({ role: 'model', text: response });
                 renderHistory();
-                // ai-09: Persist chat history to vault after each exchange
                 this.saveChatHistory().catch(e => console.error('[MINA AiTab] save failed', e));
             } catch (e: any) {
-                // ai-11: Remove thinking div on error — was left as permanent "Thinking..." bubble
-                thinking.remove();
-                const errDiv = chatContainer.createEl('div', {
-                    text: `⚠ ${e.message}`,
-                    attr: { style: 'color: var(--text-error); font-size: 0.85em; padding: 8px 12px; background: rgba(255,50,50,0.1); border-radius: 8px; border: 1px solid var(--text-error);' }
-                });
-                setTimeout(() => errDiv.remove(), 8000);
+                typingRow.remove();
+                const errRow = chatArea.createEl('div', { cls: 'mina-ai-msg-row is-bot' });
+                errRow.createEl('div', { cls: 'mina-ai-error', text: `⚠ ${e.message}` });
+                chatArea.scrollTop = chatArea.scrollHeight;
+                setTimeout(() => errRow.remove(), 10000);
             } finally {
                 this.view.isAiLoading = false;
+                sendBtn.removeClass('is-loading');
             }
+        };
+
+        sendBtn.addEventListener('click', sendMessage);
+    }
+
+    private renderWelcomeState(container: HTMLElement) {
+        const welcome = container.createEl('div', { cls: 'mina-ai-welcome' });
+        const icon = welcome.createEl('div', { cls: 'mina-ai-welcome-icon' });
+        setIcon(icon, 'lucide-sparkles');
+        welcome.createEl('h3', { text: 'MINA Intelligence', cls: 'mina-ai-welcome-title' });
+        welcome.createEl('p', { text: 'Your personal AI grounded in your vault knowledge. Ask questions, get insights, or brainstorm ideas.', cls: 'mina-ai-welcome-desc' });
+
+        const suggestions = welcome.createEl('div', { cls: 'mina-ai-suggestions' });
+        const prompts = [
+            'What are my open tasks this week?',
+            'Summarize my recent thoughts',
+            'What should I focus on today?',
+            'Help me plan my next project'
+        ];
+        prompts.forEach(prompt => {
+            const chip = suggestions.createEl('button', { text: prompt, cls: 'mina-ai-suggestion-chip' });
+            chip.addEventListener('click', () => {
+                const textarea = container.closest('.mina-ai-shell')?.querySelector('.mina-ai-textarea') as HTMLTextAreaElement;
+                if (textarea) {
+                    textarea.value = prompt;
+                    textarea.dispatchEvent(new Event('input'));
+                    textarea.focus();
+                }
+            });
         });
     }
 }

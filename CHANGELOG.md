@@ -4,6 +4,28 @@ All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-04-20
+### Feat — AI Chat Redesign (Gemini 2.5 Pro)
+
+Complete redesign of the AI Chat interface with modern UX patterns and Gemini 2.5 Pro as the default model.
+
+**Changes:**
+- **New Layout**: Full CSS-class architecture replacing all inline styles. Clean `.mina-ai-*` namespace.
+- **Model Badge**: Active Gemini model displayed in header as styled pill badge.
+- **Web Search Toggle**: Globe icon button in header with active state indicator.
+- **Settings Access**: Gear icon in header opens AI Configuration modal directly.
+- **Welcome State**: Empty chat shows branded welcome with suggestion chips (4 preset prompts).
+- **AI Avatar**: Bot messages now have a gradient sparkle avatar for visual distinction.
+- **Typing Indicator**: Animated 3-dot bounce indicator replaces plain "Thinking…" text.
+- **Auto-resize Textarea**: Input grows with content up to 200px max height.
+- **Keyboard**: Enter to send, Shift+Enter for newline.
+- **Rounded Bubbles**: Updated border-radius (18px) for modern chat appearance.
+- **File Chips**: Grounded files shown as removable chips in a context bar above input.
+- **Error Display**: Styled error cards with auto-dismiss (10s).
+- **Mobile**: iOS zoom prevention (16px font), safe-area padding, hidden model badge.
+- **Default Model**: Changed from `gemini-1.5-pro` to `gemini-2.5-pro` across AiService and AiSettingsModal.
+- **HelpModal**: Expanded AI Chat documentation with 8 entries (Keyboard, Suggestions, Model Badge, etc.).
+
 ## [1.5.9] - 2026-04-20
 ### Feat — Synthesis Tab Redesign
 
