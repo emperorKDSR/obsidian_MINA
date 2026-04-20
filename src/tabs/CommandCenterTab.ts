@@ -3,6 +3,7 @@ import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, SETTINGS_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID, WORKSPACE_ICON_ID } from '../constants';
 import { parseContextString, parseNaturalDate, isTablet, attachInlineTriggers } from '../utils';
+import { HabitConfigModal } from '../modals/HabitConfigModal';
 
 export class CommandCenterTab extends BaseTab {
     private parentContainer: HTMLElement;
@@ -401,10 +402,16 @@ export class CommandCenterTab extends BaseTab {
 
     // ── 2. Habit quick-bar ──────────────────────────────────────────────────
     private renderHabitQuickBar(parent: HTMLElement) {
-        const habits = this.settings.habits || [];
+        const allHabits = this.settings.habits || [];
+        const habits = allHabits.filter(h => !h.archived);
         const section = parent.createEl('div', { cls: 'mina-habit-section' });
         const labelRow = section.createEl('div', { cls: 'mina-section-label-row' });
         labelRow.createEl('span', { text: 'HABITS', cls: 'mina-section-label' });
+
+        // ⚙ config button (QW-02)
+        const gearBtn = labelRow.createEl('button', { cls: 'mina-habit-config-btn', attr: { 'aria-label': 'Configure habits' } });
+        gearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+        gearBtn.addEventListener('click', () => { new HabitConfigModal(this.plugin.app, this.plugin).open(); });
 
         if (habits.length === 0) {
             section.createEl('span', { text: 'No habits configured — add them in Settings.', attr: { style: 'font-size: 0.8em; color: var(--text-faint); font-style: italic;' } });
@@ -421,14 +428,27 @@ export class CommandCenterTab extends BaseTab {
 
         const progressBarWrap = section.createEl('div', { cls: 'mina-habit-progress-bar' });
         const progressBarFill = progressBarWrap.createEl('div', { cls: 'mina-habit-progress-fill' });
-        progressBarFill.style.width = `${habits.length > 0 ? (doneCount / habits.length) * 100 : 0}%`;
 
+        const updateProgress = (count: number) => {
+            progressBarFill.style.width = `${habits.length > 0 ? (count / habits.length) * 100 : 0}%`;
+            // QW-05: all-complete celebration
+            if (count === habits.length && habits.length > 0) {
+                bar.addClass('all-complete');
+                progressBarFill.addClass('all-complete');
+            } else {
+                bar.removeClass('all-complete');
+                progressBarFill.removeClass('all-complete');
+            }
+        };
+        updateProgress(doneCount);
+
+        const maxNameLen = Platform.isMobile ? 11 : 13; // QW-03: extended from 9
         for (const habit of habits) {
             const done = completedToday.has(habit.id);
             const btn = bar.createEl('button', { cls: `mina-habit-quick-btn${done ? ' is-done' : ''}`, attr: { title: habit.name } });
             btn.insertAdjacentHTML('afterbegin', '<svg class="mina-habit-ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="mina-habit-ring-track" cx="18" cy="18" r="15.9"/><circle class="mina-habit-ring-fill" cx="18" cy="18" r="15.9"/></svg>');
             btn.createEl('span', { text: habit.icon || '●', cls: 'mina-habit-quick-icon' });
-            btn.createEl('span', { text: habit.name.substring(0, 9), cls: 'mina-habit-quick-label' });
+            btn.createEl('span', { text: habit.name.substring(0, maxNameLen), cls: 'mina-habit-quick-label' });
             if (!Platform.isMobile) btn.createEl('div', { cls: 'mina-habit-tooltip', text: habit.name });
 
             btn.addEventListener('click', async () => {
@@ -438,7 +458,7 @@ export class CommandCenterTab extends BaseTab {
                 doneCount = nowDone ? doneCount - 1 : doneCount + 1;
                 const clamped = Math.max(0, Math.min(habits.length, doneCount));
                 countEl.textContent = `${clamped}/${habits.length}`;
-                progressBarFill.style.width = `${habits.length > 0 ? (clamped / habits.length) * 100 : 0}%`;
+                updateProgress(clamped);
                 this.view._habitTogglePending++;
                 await this.plugin.toggleHabit(today, habit.id);
                 setTimeout(() => { this.view._habitTogglePending = Math.max(0, this.view._habitTogglePending - 1); }, 350);

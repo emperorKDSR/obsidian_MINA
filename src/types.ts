@@ -58,6 +58,7 @@ export interface Habit {
     id: string;
     name: string;
     icon: string; // e.g. "💧", "🧘"
+    archived?: boolean;
 }
 
 export interface CustomMode {

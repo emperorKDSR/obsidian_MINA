@@ -35,11 +35,15 @@ export class HabitConfigModal extends Modal {
         const renderHabits = () => {
             body.empty();
             
-            if (this.plugin.settings.habits.length === 0) {
+            const activeHabits = this.plugin.settings.habits.filter(h => !h.archived);
+            const archivedHabits = this.plugin.settings.habits.filter(h => h.archived);
+
+            if (activeHabits.length === 0 && archivedHabits.length === 0) {
                 body.createEl('p', { text: 'No habits defined yet.', attr: { style: 'color: var(--text-muted); font-size: 0.85em; text-align: center; font-style: italic;' } });
             }
 
             this.plugin.settings.habits.forEach((habit, index) => {
+                if (habit.archived) return; // archived rendered below
                 const row = body.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--background-modifier-border-faint);' } });
                 
                 const iconInp = row.createEl('input', { type: 'text', attr: { value: habit.icon, placeholder: 'Icon', style: 'width: 40px; text-align: center; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 4px; padding: 4px;' } });
@@ -48,13 +52,31 @@ export class HabitConfigModal extends Modal {
                 const nameInp = row.createEl('input', { type: 'text', attr: { value: habit.name, placeholder: 'Habit Name', style: 'flex: 1; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 4px; padding: 4px 8px;' } });
                 nameInp.addEventListener('change', async () => { habit.name = nameInp.value; await this.plugin.saveSettings(); });
 
-                const delBtn = row.createEl('button', { text: '×', attr: { style: 'background: transparent; border: none; color: var(--text-error); font-weight: 700; cursor: pointer; font-size: 1.2em;' } });
-                delBtn.addEventListener('click', async () => {
-                    this.plugin.settings.habits.splice(index, 1);
+                // Archive button (QW-06) — preserves historical data
+                const archBtn = row.createEl('button', { attr: { title: 'Archive habit', style: 'background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.8em; padding: 4px 6px; border-radius: 4px;' } });
+                archBtn.innerHTML = '📦';
+                archBtn.addEventListener('click', async () => {
+                    habit.archived = true;
                     await this.plugin.saveSettings();
                     renderHabits();
                 });
             });
+
+            if (archivedHabits.length > 0) {
+                body.createEl('p', { text: 'ARCHIVED', attr: { style: 'font-size: 0.7em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-faint); margin: 12px 0 6px;' } });
+                this.plugin.settings.habits.forEach((habit) => {
+                    if (!habit.archived) return;
+                    const row = body.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px; padding-bottom: 8px; opacity: 0.6;' } });
+                    row.createEl('span', { text: `${habit.icon || '●'} ${habit.name}`, attr: { style: 'flex: 1; font-size: 0.85em; color: var(--text-muted);' } });
+                    const restoreBtn = row.createEl('button', { attr: { title: 'Restore habit', style: 'background: transparent; border: none; color: var(--interactive-accent); cursor: pointer; font-size: 0.75em; font-weight: 700;' } });
+                    restoreBtn.textContent = 'Restore';
+                    restoreBtn.addEventListener('click', async () => {
+                        habit.archived = false;
+                        await this.plugin.saveSettings();
+                        renderHabits();
+                    });
+                });
+            }
 
             const addRow = body.createEl('div', { attr: { style: 'margin-top: 10px;' } });
             const addBtn = addRow.createEl('button', { 

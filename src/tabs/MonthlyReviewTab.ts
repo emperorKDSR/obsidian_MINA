@@ -1,4 +1,4 @@
-import { moment } from 'obsidian';
+import { moment, TFile } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from './BaseTab';
 
@@ -62,21 +62,37 @@ export class MonthlyReviewTab extends BaseTab {
         statCard('Thoughts', monthThoughts.length, 'this month');
         statCard('Open Tasks', allOpen.length, 'remaining');
 
-        // 3. Habit Adherence
+        // 3. Habit Adherence — scan all daily files in the current month (QW-01)
         const habitsSection = wrap.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 10px;' } });
         habitsSection.createEl('h3', { text: 'Habit Adherence', attr: { style: 'margin: 0; font-size: 0.75em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint);' } });
 
-        const habits = this.settings.habits || [];
+        const habits = (this.settings.habits || []).filter(h => !h.archived);
         if (habits.length === 0) {
             habitsSection.createEl('p', { text: 'No habits configured. Add habits in Settings → Habits.', attr: { style: 'color: var(--text-muted); font-size: 0.85em; font-style: italic;' } });
         } else {
             const daysInMonth = now.daysInMonth();
-            const completedToday = this.index.habitStatusIndex;
+            // Count completions per habit by reading each day's frontmatter
+            const folder = (this.settings.habitsFolder || '000 Bin/MINA V2 Habits').trim();
+            const habitCounts = new Map<string, number>(habits.map(h => [h.id, 0]));
+            for (let d = 1; d <= now.date(); d++) {
+                const dateStr = now.clone().date(d).format('YYYY-MM-DD');
+                const file = this.plugin.app.vault.getAbstractFileByPath(`${folder}/${dateStr}.md`);
+                if (!(file instanceof TFile)) continue;
+                const cache = this.plugin.app.metadataCache.getFileCache(file);
+                const completed: string[] = Array.isArray(cache?.frontmatter?.['completed'])
+                    ? cache.frontmatter['completed'].map(String) : [];
+                for (const id of completed) {
+                    if (habitCounts.has(id)) habitCounts.set(id, (habitCounts.get(id) ?? 0) + 1);
+                }
+            }
             for (const habit of habits) {
+                const done = habitCounts.get(habit.id) ?? 0;
+                const pct = now.date() > 0 ? Math.round((done / now.date()) * 100) : 0;
                 const row = habitsSection.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--background-secondary-alt); border-radius: 10px; border: 1px solid var(--background-modifier-border-faint);' } });
                 row.createEl('span', { text: `${habit.icon || '•'} ${habit.name}`, attr: { style: 'font-size: 0.9em; font-weight: 600;' } });
-                const done = completedToday.includes(habit.id) ? 1 : 0;
-                row.createEl('span', { text: `${done}/${daysInMonth}`, attr: { style: 'font-size: 0.75em; color: var(--text-muted); font-weight: 700;' } });
+                const right = row.createEl('span', { attr: { style: 'display: flex; flex-direction: column; align-items: flex-end; gap: 1px;' } });
+                right.createEl('span', { text: `${done}/${daysInMonth}`, attr: { style: 'font-size: 0.75em; color: var(--text-muted); font-weight: 700;' } });
+                right.createEl('span', { text: `${pct}%`, attr: { style: `font-size: 0.65em; font-weight: 600; color: ${pct >= 80 ? 'var(--color-green)' : pct >= 50 ? 'var(--interactive-accent)' : 'var(--text-faint)'};` } });
             }
         }
 

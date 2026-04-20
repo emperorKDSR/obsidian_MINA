@@ -926,6 +926,13 @@
 /* Habit progress micro-bar */
 .mina-habit-progress-bar { height: 3px; border-radius: 2px; background: var(--background-modifier-border-faint); overflow: hidden; margin-top: 2px; }
 .mina-habit-progress-fill { height: 100%; background: var(--interactive-accent); border-radius: 2px; transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1); }
+.mina-habit-progress-fill.all-complete { background: var(--color-green, #4caf50); animation: mina-habit-complete-pulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.mina-habit-quick-bar.all-complete .mina-habit-quick-btn.is-done { border-color: var(--color-green, #4caf50); }
+@keyframes mina-habit-complete-pulse { 0% { opacity: 1; } 30% { opacity: 0.5; transform: scaleY(1.5); } 100% { opacity: 1; transform: scaleY(1); } }
+
+/* Habit gear config button (QW-02) */
+.mina-habit-config-btn { background: transparent; border: none; color: var(--text-faint); cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-left: auto; opacity: 0.6; transition: opacity 0.15s, color 0.15s; }
+.mina-habit-config-btn:hover { opacity: 1; color: var(--interactive-accent); }
 
 /* Habit tooltip */
 .mina-habit-tooltip { position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%) translateY(4px); white-space: nowrap; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 6px; padding: 4px 8px; font-size: 0.68em; font-weight: 700; color: var(--text-normal); box-shadow: 0 4px 12px rgba(0,0,0,0.12); pointer-events: none; opacity: 0; transition: opacity 0.15s, transform 0.15s; z-index: 100; }

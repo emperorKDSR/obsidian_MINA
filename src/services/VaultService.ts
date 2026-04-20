@@ -325,20 +325,21 @@ export class VaultService {
     }
 
     async toggleHabit(date: string, habitId: string): Promise<void> {
-        const folder = this.settings.habitsFolder.trim() || '000 Bin/MINA V2 Habits';
+        const folder = (this.settings.habitsFolder.trim() || '000 Bin/MINA V2 Habits').replace(/\\/g, '/');
         const path = `${folder}/${date}.md`;
-        let completedIds = await this.getHabitStatus(date);
-        completedIds = completedIds.includes(habitId) ? completedIds.filter(id => id !== habitId) : [...completedIds, habitId];
-
-        const idsYaml = completedIds.length > 0 ? `['${completedIds.join("', '")}']` : '[]';
-        const content = `---\ndate: ${date}\ncompleted: ${idsYaml}\n---\n\n# Habits for ${date}\n`;
-
-        const file = this.app.vault.getAbstractFileByPath(path);
-        if (file instanceof TFile) await this.app.vault.modify(file, content);
-        else {
+        let file = this.app.vault.getAbstractFileByPath(path) as TFile | null;
+        if (!(file instanceof TFile)) {
             await this.ensureFolder(folder);
-            await this.app.vault.create(path, content);
+            file = await this.app.vault.create(path, `---\ndate: ${date}\ncompleted: []\n---\n\n# Habits — ${date}\n`);
         }
+        // Use processFrontMatter to surgically update only the completed array,
+        // preserving any notes or body content already written to this file.
+        await this.app.fileManager.processFrontMatter(file, (fm) => {
+            const current: string[] = Array.isArray(fm['completed']) ? fm['completed'].map(String) : [];
+            fm['completed'] = current.includes(habitId)
+                ? current.filter(id => id !== habitId)
+                : [...current, habitId];
+        });
     }
 
     async markAsSynthesized(filePath: string): Promise<void> {

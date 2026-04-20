@@ -3,7 +3,15 @@
 All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]
-### Feat — Voice Memo Management
+### Fix — Habits Tracker Critical Bugs & Quick Wins
+- **QW-04 (Critical)**: Fixed `toggleHabit` data-loss bug — rewrote to use `processFrontMatter` instead of overwriting the entire file. Body notes and existing content are now preserved on every toggle.
+- **QW-01 (Critical)**: Fixed `MonthlyReviewTab` habit adherence — now scans all daily habit files for the current month via metadataCache instead of using today-only `habitStatusIndex`. Shows real `done/total` with a colour-coded % adherence badge.
+- **QW-02**: Added ⚙ gear icon button to the HABITS label row — taps open `HabitConfigModal` directly from the Command Center.
+- **QW-03**: Extended habit name truncation from 9 → 13 chars on desktop, 11 on mobile.
+- **QW-05**: All-complete celebration — progress bar turns green and pulses when every habit for the day is checked off.
+- **QW-06**: Archive flag on habits — delete replaced with 📦 archive; archived habits are hidden from the quick-bar but preserved in settings. Archived habits can be restored from `HabitConfigModal`.
+- **Type**: Added `archived?: boolean` to `Habit` interface in `types.ts`.
+
 - **Voice nav button**: Added "Voice" entry to the SYSTEM cluster in the Command Center navigation footer — direct access without the command palette
 - **Delete voice memo**: Each clip in the RECENT CLIPS list now has a trash icon button; tapping it opens a confirm dialog and moves both the audio file and its sidecar `.md` to the Obsidian trash
 - **Clip actions row**: Buttons grouped into a dedicated `mina-clip-actions` flex container with consistent spacing and touch targets
