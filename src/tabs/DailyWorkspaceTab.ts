@@ -197,10 +197,12 @@ export class DailyWorkspaceTab extends BaseTab {
 
             try {
                 if (captureMode === 'task') {
-                    await this.vault.createTaskFile(raw, captureContexts, captureDueDate || '');
+                    const newFile = await this.vault.createTaskFile(raw, captureContexts, captureDueDate || '');
+                    await this.index.indexTaskFile(newFile);
                     new Notice('✓ Task added');
                 } else {
-                    await this.vault.createThoughtFile(raw, captureContexts);
+                    const newFile = await this.vault.createThoughtFile(raw, captureContexts);
+                    await this.index.indexThoughtFile(newFile);
                     new Notice('✦ Thought captured');
                 }
                 textarea.value = '';
@@ -209,8 +211,8 @@ export class DailyWorkspaceTab extends BaseTab {
                 textarea.style.height = '';
                 switchMode('thought');
                 refreshSave();
-                // Re-render entries
-                setTimeout(() => this.render(this.parentContainer), 200);
+                // Re-render entries — index already updated above, no setTimeout needed
+                this.render(this.parentContainer);
             } catch (e) {
                 new Notice('Failed to save — check console');
                 console.error('[MINA DW] Save error:', e);
@@ -379,10 +381,16 @@ export class DailyWorkspaceTab extends BaseTab {
                 const text = addInput.value.trim();
                 addInput.value = '';
                 addInput.disabled = true;
-                await this.vault.createTaskFile(text, []);
-                new Notice('✓ Task added');
-                addInput.disabled = false;
-                setTimeout(() => this.render(this.parentContainer), 500);
+                try {
+                    const newFile = await this.vault.createTaskFile(text, []);
+                    // Eagerly index the new file so the task list updates immediately
+                    // without waiting for the vault-event → metadataCache → notifyRefresh chain
+                    await this.index.indexTaskFile(newFile);
+                    new Notice('✓ Task added');
+                    this.render(this.parentContainer);
+                } finally {
+                    addInput.disabled = false;
+                }
             }
         });
 
