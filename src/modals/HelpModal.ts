@@ -11,6 +11,7 @@ const SECTIONS: HelpSection[] = [
             { label: 'Zen Mode 🎯', desc: 'Tap the target icon to collapse all navigation and enter deep focus. Tap again to exit.', tip: 'Best used when you only want to see your goals and capture bar.' },
             { label: 'Intelligence Card', desc: 'Live snapshot: open tasks, habits completed, unprocessed thoughts, and total dues. Hit "SYNTHESIZE BRIEFING" to get an AI strategy summary.', tip: 'Requires a Gemini API key configured in Settings → AI.' },
             { label: 'Weekly & Monthly Goals', desc: 'Your active goals shown at a glance. Tap "Edit" to update them in the Review tabs.' },
+            { label: 'Tablet Experience', desc: 'On tablets (iPad, etc.), MINA automatically upgrades to a desktop-like layout: inline capture bar, horizontal habit bar, expanded goals and navigation, sidebar manual, and hover effects.', tip: 'Tablet is detected when the device short-edge is ≥768px.' },
         ]
     },
     {
@@ -170,7 +171,7 @@ export class HelpModal extends Modal {
         modalEl.addClass('mina-help-modal');
         contentEl.empty();
 
-        if (Platform.isMobile) {
+        if (Platform.isMobile && !this._isTablet()) {
             this._renderMobile(contentEl);
         } else {
             this._renderDesktop(contentEl);
@@ -179,6 +180,10 @@ export class HelpModal extends Modal {
 
     onClose() {
         this.contentEl.empty();
+    }
+
+    private _isTablet(): boolean {
+        return Platform.isMobile && Math.min(screen.width, screen.height) >= 768;
     }
 
     // ── Desktop: sidebar + content pane ───────────────────────────────────

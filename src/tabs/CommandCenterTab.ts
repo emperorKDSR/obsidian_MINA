@@ -43,18 +43,21 @@ export class CommandCenterTab extends BaseTab {
             ns.createEl('span', { text: '★', cls: 'mina-cc-northstar-star' });
             ns.createEl('span', { text: vision });
         }
-        const zenSize = Platform.isMobile ? '48px' : '42px';
+        const isPhone = Platform.isMobile && !isTablet();
+        const zenSize = isPhone ? '48px' : '42px';
         const btnSize = `width: ${zenSize}; height: ${zenSize}; min-width: ${zenSize};`;
 
-        // Help button
-        const helpBtn = headerRow.createEl('button', {
+        // Right-side button cluster (help + zen)
+        const btnCluster = headerRow.createEl('div', { attr: { style: 'display:flex; align-items:center; gap:4px; flex-shrink:0;' } });
+
+        const helpBtn = btnCluster.createEl('button', {
             cls: 'mina-zen-btn',
             attr: { title: 'Open manual', style: btnSize }
         });
         setIcon(helpBtn, 'lucide-circle-help');
         helpBtn.addEventListener('click', () => { new HelpModal(this.app).open(); });
 
-        const zenToggle = headerRow.createEl('button', {
+        const zenToggle = btnCluster.createEl('button', {
             cls: `mina-zen-btn${this.view.isZenMode ? ' is-active' : ''}`,
             attr: { title: this.view.isZenMode ? 'Exit Zen' : 'Enter Zen', style: btnSize }
         });
@@ -434,7 +437,7 @@ export class CommandCenterTab extends BaseTab {
         let doneCount = habits.filter(h => completedToday.has(h.id)).length;
         const countEl = labelRow.createEl('span', { cls: 'mina-section-label-count', text: `${doneCount}/${habits.length}` });
 
-        const barCls = Platform.isMobile ? 'mina-habit-grid' : 'mina-habit-quick-bar';
+        const barCls = (Platform.isMobile && !isTablet()) ? 'mina-habit-grid' : 'mina-habit-quick-bar';
         const bar = section.createEl('div', { cls: barCls });
 
         const progressBarWrap = section.createEl('div', { cls: 'mina-habit-progress-bar' });
@@ -453,14 +456,14 @@ export class CommandCenterTab extends BaseTab {
         };
         updateProgress(doneCount);
 
-        const maxNameLen = Platform.isMobile ? 11 : 13; // QW-03: extended from 9
+        const maxNameLen = (Platform.isMobile && !isTablet()) ? 11 : 13; // QW-03: extended from 9
         for (const habit of habits) {
             const done = completedToday.has(habit.id);
             const btn = bar.createEl('button', { cls: `mina-habit-quick-btn${done ? ' is-done' : ''}`, attr: { title: habit.name } });
             btn.insertAdjacentHTML('afterbegin', '<svg class="mina-habit-ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="mina-habit-ring-track" cx="18" cy="18" r="15.9"/><circle class="mina-habit-ring-fill" cx="18" cy="18" r="15.9"/></svg>');
             btn.createEl('span', { text: habit.icon || '●', cls: 'mina-habit-quick-icon' });
             btn.createEl('span', { text: habit.name.substring(0, maxNameLen), cls: 'mina-habit-quick-label' });
-            if (!Platform.isMobile) btn.createEl('div', { cls: 'mina-habit-tooltip', text: habit.name });
+            if (!Platform.isMobile || isTablet()) btn.createEl('div', { cls: 'mina-habit-tooltip', text: habit.name });
 
             btn.addEventListener('click', async () => {
                 const nowDone = btn.hasClass('is-done');
@@ -484,7 +487,7 @@ export class CommandCenterTab extends BaseTab {
         const header = card.createEl('div', { cls: 'mina-goal-card-header' });
         header.createEl('span', { text: 'WEEKLY', cls: 'mina-goal-card-title' });
         const editBtn = header.createEl('button', { text: 'Edit', cls: 'mina-goal-edit-btn',
-            attr: { style: `padding: ${Platform.isMobile ? '10px 12px' : '2px 4px'}; min-height: ${Platform.isMobile ? '44px' : 'auto'};` }
+            attr: { style: `padding: ${Platform.isMobile && !isTablet() ? '10px 12px' : '2px 4px'}; min-height: ${Platform.isMobile && !isTablet() ? '44px' : 'auto'};` }
         });
         editBtn.addEventListener('click', () => { this.view.activeTab = 'review'; this.view.renderView(); });
 
@@ -517,11 +520,11 @@ export class CommandCenterTab extends BaseTab {
         const header = card.createEl('div', { cls: 'mina-goal-card-header' });
         header.createEl('span', { text: 'MONTHLY', cls: 'mina-goal-card-title' });
 
-        let isExpanded = !Platform.isMobile;
+        let isExpanded = !Platform.isMobile || isTablet();
         const listEl = card.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 4px;' } });
         if (!isExpanded) listEl.style.display = 'none';
 
-        if (Platform.isMobile) {
+        if (Platform.isMobile && !isTablet()) {
             const countSpan = header.createEl('span', { text: String(goals.length), attr: { style: 'font-size: 0.72em; font-weight: 700; color: var(--text-faint); margin-left: auto;' } });
             const chevron = header.createDiv({ attr: { style: 'color: var(--text-faint); margin-left: 6px;' } });
             setIcon(chevron, 'chevron-right');
@@ -650,8 +653,9 @@ export class CommandCenterTab extends BaseTab {
 
     private renderTacticalRow(parent: HTMLElement, text: string, done: boolean, onToggle: () => void) {
         const row = parent.createEl('div', { cls: `mina-tactical-row${done ? ' is-done' : ''}`, attr: { style: 'cursor: default;' } });
-        const cbWrap = row.createDiv({ attr: { style: `padding: ${Platform.isMobile ? '12px' : '4px'}; cursor: pointer;` } });
-        if (Platform.isMobile) (row as HTMLElement).style.minHeight = '48px';
+        const isPhone = Platform.isMobile && !isTablet();
+        const cbWrap = row.createDiv({ attr: { style: `padding: ${isPhone ? '12px' : '4px'}; cursor: pointer;` } });
+        if (isPhone) (row as HTMLElement).style.minHeight = '48px';
         const cb = cbWrap.createDiv({ cls: 'mina-tactical-checkbox' });
         if (done) setIcon(cb, 'lucide-check');
         cbWrap.addEventListener('click', (e) => { e.stopPropagation(); onToggle(); });
@@ -663,7 +667,7 @@ export class CommandCenterTab extends BaseTab {
 
         const renderCluster = (title: string, items: {label: string, icon: string, tab: string}[], modifierCls: string) => {
             const wrap = nav.createEl('div', { cls: 'mina-nav-cluster-wrap' });
-            const isCollapsibleOnMobile = Platform.isMobile && modifierCls !== 'mina-pillar-cluster--action';
+            const isCollapsibleOnMobile = Platform.isMobile && !isTablet() && modifierCls !== 'mina-pillar-cluster--action';
             let isExpanded = !isCollapsibleOnMobile;
 
             const headerRow = wrap.createEl('div', { attr: { style: `display: flex; align-items: center; justify-content: space-between;${isCollapsibleOnMobile ? ' cursor: pointer; min-height: 44px;' : ''}` } });
