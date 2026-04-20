@@ -5027,3 +5027,126 @@
     }
     .mina-project-card__goal { -webkit-line-clamp: 3; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   rm-7: RECURRING TASKS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Recurrence chip (task row meta) ── */
+.mina-chip--recur {
+    background: rgba(245, 158, 11, 0.09);
+    color: #d97706;
+    letter-spacing: 0.01em;
+}
+.theme-dark .mina-chip--recur {
+    background: rgba(245, 158, 11, 0.13);
+    color: #fbbf24;
+}
+
+/* ── Recurrence zone (collapsible) ── */
+.mina-recur-zone {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 220ms cubic-bezier(0.4,0,0.2,1), opacity 180ms ease;
+}
+.mina-recur-zone.is-visible {
+    max-height: 60px;
+    opacity: 1;
+}
+
+/* ── Recurrence strip ── */
+.mina-recur-strip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 0 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.mina-recur-strip::-webkit-scrollbar { display: none; }
+
+/* ── Recurrence icon anchor ── */
+.mina-recur-icon {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--text-faint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 2px;
+}
+.mina-recur-icon .svg-icon { width: 14px; height: 14px; }
+
+/* ── Recurrence pill buttons ── */
+.mina-recur-btn {
+    flex-shrink: 0;
+    height: 28px;
+    padding: 0 12px;
+    border: 1.5px solid var(--background-modifier-border-faint);
+    border-radius: 14px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+}
+.mina-recur-btn:hover {
+    border-color: rgba(245, 158, 11, 0.5);
+    color: #d97706;
+    background: rgba(245, 158, 11, 0.06);
+}
+.mina-recur-btn:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
+}
+.mina-recur-btn.is-active {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.45);
+    color: #d97706;
+}
+.theme-dark .mina-recur-btn.is-active {
+    background: rgba(245, 158, 11, 0.16);
+    border-color: rgba(251, 191, 36, 0.4);
+    color: #fbbf24;
+}
+.mina-recur-btn:first-of-type.is-active {
+    background: transparent;
+    border-color: var(--background-modifier-border);
+    color: var(--text-faint);
+}
+.mina-recur-btn:active { transform: scale(0.96); }
+
+/* ── Recurring seg-bar amber tint ── */
+.mina-seg-btn[data-mode="recurring"].is-active { color: #d97706; }
+.theme-dark .mina-seg-btn[data-mode="recurring"].is-active { color: #fbbf24; }
+
+/* ── Recurring task group label ── */
+.mina-task-group--recurring .mina-task-group-label { color: #d97706; }
+.theme-dark .mina-task-group--recurring .mina-task-group-label { color: #fbbf24; }
+
+/* ── Recurring row left stripe ── */
+.mina-task-group--recurring .mina-task-row {
+    border-left: 2px solid rgba(245, 158, 11, 0.3);
+    padding-left: 10px;
+    border-radius: 0 9px 9px 0;
+}
+.mina-task-group--recurring .mina-task-row:hover {
+    border-left-color: rgba(245, 158, 11, 0.65);
+}
+
+/* ── Mobile overrides ── */
+.is-mobile .mina-recur-btn {
+    height: 36px;
+    padding: 0 14px;
+    font-size: 0.78em;
+    min-width: 56px;
+}
+.is-mobile .mina-recur-zone.is-visible { max-height: 72px; }

@@ -4,7 +4,27 @@ All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]
 
-## [1.5.0] - 2025-07-28
+## [1.5.1] - 2025-07-28
+### Feat — Recurring Tasks (rm-7)
+
+Recurring task support with auto-spawn on completion, `↻ Recurring` filter segment, and full recurrence editing in `EditEntryModal`.
+
+**Architecture:**
+- New `RecurrenceRule` type: `'daily' | 'weekly' | 'biweekly' | 'monthly'`
+- `TaskEntry.recurrence?: RecurrenceRule` + `TaskEntry.recurrenceParentId?: string`
+- `computeNextDue(currentDue, rule)` utility in `utils.ts`
+- `IndexService` parses `fm.recurrence` + `fm.recurrenceParentId` from task frontmatter
+- `VaultService.createTaskFile()` extended with optional `opts.recurrence` + `opts.recurrenceParentId`
+- `EditEntryModal._buildRecurStrip()` — recur zone in mobile (inside date zone) and desktop (sibling canvas zone)
+
+**UX:**
+- `↻ Recurring` segment (amber) in TasksTab filter bar — groups tasks by frequency (daily/weekly/biweekly/monthly)
+- On task completion: auto-spawns next occurrence with `computeNextDue`, displays `Notice` confirmation
+- `mina-chip--recur` badge on recurring task rows across all views
+- Recur strip: 4 frequency buttons (44px mobile, 28px desktop) with amber active state
+- Done task preserved as audit log; next task inherits all context/project fields
+
+## [1.5.0]- 2025-07-28
 ### Feat — Project Lifecycle Entities (rm-6)
 
 New vault-entity-backed `ProjectsTab` replacing the tag-based grid, providing a full project management dashboard with card list, inline expansion, status management, and color coding.

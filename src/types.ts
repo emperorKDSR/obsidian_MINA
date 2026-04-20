@@ -119,7 +119,11 @@ export interface TaskEntry {
     project?: string;       // associated project name
     priority?: 'high' | 'medium' | 'low';
     energy?: 'high' | 'medium' | 'low';
+    recurrence?: RecurrenceRule;
+    recurrenceParentId?: string;
 }
+
+export type RecurrenceRule = 'daily' | 'weekly' | 'biweekly' | 'monthly';
 
 export interface DueEntry { 
     title: string; 
