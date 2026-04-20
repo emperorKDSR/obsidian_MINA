@@ -161,30 +161,32 @@ export class VaultService {
         newText = newText.replace(/<br>/g, '\n');
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return;
-        
         try {
-            const content = await this.app.vault.read(file);
-            const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
-            if (!fmMatch) return;
-            
-            const oldFm = fmMatch[1];
-            // sec-008: Escape key to prevent RegExp injection (defensive — keys are currently hardcoded)
-            const escKey = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const get = (key: string) => { const m = oldFm.match(new RegExp(`^${escKey(key)}: (.+)$`, 'm')); return m ? m[1].trim() : ''; };
-            
-            const created = get('created') || this.formatDateTime(new Date());
-            const pinned = get('pinned') === 'true';
-            const project = get('project')?.replace(/^"|"$/g, '');
-            
             const now = new Date();
+            const nowStr = this.formatDateTime(now);
+            const dayStr = this.formatDate(now);
             const title = this.extractTitle(newText);
-            const newFm = this.buildFrontmatter(title, created, this.formatDateTime(now), this.formatDate(now), contexts, pinned, project);
-            
-            const bodyWithComments = content.slice(fmMatch[0].length);
-            const replyIdx = bodyWithComments.indexOf('\n## [[');
-            const bodyToSave = replyIdx !== -1 ? newText + bodyWithComments.slice(replyIdx) : newText;
-            
-            await this.app.vault.modify(file, newFm + bodyToSave);
+            const safeContexts = contexts.map(c => this.sanitizeContext(c));
+
+            // Step 1: update all FM fields safely via Obsidian API
+            await this.app.fileManager.processFrontMatter(file, (fm) => {
+                fm['title'] = this.sanitizeYamlString(title);
+                fm['modified'] = nowStr;
+                fm['day'] = `[[${dayStr}]]`;
+                fm['context'] = safeContexts;
+                fm['tags'] = safeContexts;
+                // preserve existing created, pinned, project
+            });
+
+            // Step 2: update body text, preserving comment/reply section
+            const content = await this.app.vault.read(file);
+            const fmEnd = content.indexOf('\n---\n', 3);
+            if (fmEnd === -1) return;
+            const afterFm = content.slice(fmEnd + 5);
+            const replyIdx = afterFm.indexOf('\n## [[');
+            const bodyToSave = replyIdx !== -1 ? newText + afterFm.slice(replyIdx) : newText;
+            const newContent = content.slice(0, fmEnd + 5) + bodyToSave;
+            await this.app.vault.modify(file, newContent);
         } catch (e) {
             console.error('[MINA VaultService]', e);
             new Notice(VaultService.toUserMessage(e));
@@ -196,27 +198,28 @@ export class VaultService {
         newText = newText.replace(/<br>/g, '\n');
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return;
-        
         try {
-            const content = await this.app.vault.read(file);
-            const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
-            if (!fmMatch) return;
-            
-            const oldFm = fmMatch[1];
-            // sec-008: Escape key to prevent RegExp injection (defensive — keys are currently hardcoded)
-            const escKey = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const get = (key: string) => { const m = oldFm.match(new RegExp(`^${escKey(key)}: (.+)$`, 'm')); return m ? m[1].trim() : ''; };
-            
-            const created = get('created') || this.formatDateTime(new Date());
-            const status = get('status') || 'open';
-            const project = get('project')?.replace(/^"|"$/g, '');
-            const due = dueDate ?? (oldFm.match(/^due: "?\[?\[?([\d-]*)\]?\]?"?$/m)?.[1] || '');
-            
             const now = new Date();
+            const nowStr = this.formatDateTime(now);
+            const dayStr = this.formatDate(now);
             const title = this.extractTitle(newText);
-            const newFm = this.buildTaskFrontmatter(title, created, this.formatDateTime(now), this.formatDate(now), status, due, contexts, project);
-            
-            await this.app.vault.modify(file, newFm + newText + '\n');
+            const safeContexts = contexts.map(c => this.sanitizeContext(c));
+
+            // Step 1: update FM fields safely via Obsidian API — preserves status, created, project
+            await this.app.fileManager.processFrontMatter(file, (fm) => {
+                fm['title'] = this.sanitizeYamlString(title);
+                fm['modified'] = nowStr;
+                fm['day'] = `[[${dayStr}]]`;
+                fm['context'] = safeContexts;
+                fm['tags'] = safeContexts;
+                if (dueDate !== undefined) fm['due'] = dueDate ? `[[${dueDate}]]` : '';
+            });
+
+            // Step 2: update body text
+            const content = await this.app.vault.read(file);
+            const fmEnd = content.indexOf('\n---\n', 3);
+            if (fmEnd === -1) return;
+            await this.app.vault.modify(file, content.slice(0, fmEnd + 5) + newText + '\n');
         } catch (e) {
             console.error('[MINA VaultService]', e);
             new Notice(VaultService.toUserMessage(e));
@@ -226,15 +229,11 @@ export class VaultService {
     async toggleTask(filePath: string, done: boolean): Promise<void> {
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return;
-        
         try {
-            const content = await this.app.vault.read(file);
-            const newStatus = done ? 'done' : 'open';
-            let updated = content.replace(/^status: (open|done)$/m, `status: ${newStatus}`);
-            if (updated === content) updated = content.replace(/^(---\n[\s\S]*?)\n---/m, `$1\nstatus: ${newStatus}\n---`);
-            
-            const final = updated.replace(/^modified: .+$/m, `modified: ${this.formatDateTime(new Date())}`);
-            await this.app.vault.modify(file, final);
+            await this.app.fileManager.processFrontMatter(file, (fm) => {
+                fm['status'] = done ? 'done' : 'open';
+                fm['modified'] = this.formatDateTime(new Date());
+            });
         } catch (e) {
             console.error('[MINA VaultService]', e);
             new Notice(VaultService.toUserMessage(e));
@@ -245,11 +244,10 @@ export class VaultService {
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return;
         try {
-            const content = await this.app.vault.read(file);
-            let updated = content.replace(/^due: .+$/m, `due: ${dueDate}`);
-            if (updated === content) updated = content.replace(/^(---\n[\s\S]*?)\n---/m, `$1\ndue: ${dueDate}\n---`);
-            const final = updated.replace(/^modified: .+$/m, `modified: ${this.formatDateTime(new Date())}`);
-            await this.app.vault.modify(file, final);
+            await this.app.fileManager.processFrontMatter(file, (fm) => {
+                fm['due'] = dueDate ? `[[${dueDate}]]` : '';
+                fm['modified'] = this.formatDateTime(new Date());
+            });
         } catch (e) { console.error('[MINA VaultService]', e); new Notice(VaultService.toUserMessage(e)); }
     }
 
@@ -257,11 +255,10 @@ export class VaultService {
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return;
         try {
-            const content = await this.app.vault.read(file);
-            let updated = content.replace(/^title: .+$/m, `title: "${newTitle.replace(/"/g, '\\"')}"`);
-            if (updated === content) updated = content.replace(/^(---\n[\s\S]*?)\n---/m, `$1\ntitle: "${newTitle.replace(/"/g, '\\"')}"\n---`);
-            const final = updated.replace(/^modified: .+$/m, `modified: ${this.formatDateTime(new Date())}`);
-            await this.app.vault.modify(file, final);
+            await this.app.fileManager.processFrontMatter(file, (fm) => {
+                fm['title'] = this.sanitizeYamlString(newTitle);
+                fm['modified'] = this.formatDateTime(new Date());
+            });
         } catch (e) { console.error('[MINA VaultService]', e); new Notice(VaultService.toUserMessage(e)); }
     }
 
