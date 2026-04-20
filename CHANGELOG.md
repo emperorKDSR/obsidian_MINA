@@ -1,6 +1,16 @@
 # Changelog
 
 
+
+## [1.10.1] — Synthesis Desktop Layout V2.1
+
+### ✨ Changed
+- **Synthesis desktop layout redesigned** — new 1/3 + 2/3 split: contexts on left, feed on right
+- **Left context panel**: scrollable list of all #contexts with radio-select (single prime), count badges, and sticky "Add context" button
+- **Primer strip**: shows the currently selected context; mirrors in a feed echo strip on the right
+- **Dynamic assign button**: dashed when nothing primed → solid accent "Assign to {ctx}" when primed → green checkmark if already assigned
+- **Attention shake**: clicking Assign without a context primed shakes the context panel as a prompt
+- **DOM-surgical priming**: selecting a context updates all buttons in-place without re-rendering the feed
 ## [1.10.0] — Synthesis V2: Context-First Routing
 
 ### ✨ New
