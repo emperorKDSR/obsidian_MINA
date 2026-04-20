@@ -35,11 +35,15 @@ export default class MinaPlugin extends Plugin {
             
             // --- REACTIVE NERVE SYSTEM ---
             // vault events: fast path for local writes (create/delete/rename)
-            this.registerEvent(this.app.vault.on('create', async (f) => { 
-                if (this.index.isThoughtFile(f.path)) await this.index.indexThoughtFile(f as TFile);
-                else if (this.index.isTaskFile(f.path)) await this.index.indexTaskFile(f as TFile);
-                else if (f.path.startsWith((this.settings.habitsFolder || '000 Bin/MINA V2 Habits').replace(/\\/g, '/'))) await this.index.refreshHabitIndex();
-                this.notifyRefresh(); 
+            this.registerEvent(this.app.vault.on('create', async (f) => {
+                // Only refresh when the created file actually affects indexed state.
+                // Attachment/voice/binary files must NOT trigger a re-render — doing so
+                // wipes any open capture textarea (vault create fires when paste saves an image).
+                let shouldRefresh = false;
+                if (this.index.isThoughtFile(f.path)) { await this.index.indexThoughtFile(f as TFile); shouldRefresh = true; }
+                else if (this.index.isTaskFile(f.path)) { await this.index.indexTaskFile(f as TFile); shouldRefresh = true; }
+                else if (f.path.startsWith((this.settings.habitsFolder || '000 Bin/MINA V2 Habits').replace(/\\/g, '/'))) { await this.index.refreshHabitIndex(); shouldRefresh = true; }
+                if (shouldRefresh) this.notifyRefresh();
             }));
             
             this.registerEvent(this.app.vault.on('modify', async (f) => { 

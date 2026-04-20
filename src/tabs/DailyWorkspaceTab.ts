@@ -64,8 +64,8 @@ export class DailyWorkspaceTab extends BaseTab {
         // Keyboard shortcuts hint (desktop only)
         if (!Platform.isMobile || isTablet()) {
             const actions = header.createEl('div', { cls: 'mina-dw-header-actions' });
-            const kbd = actions.createEl('kbd', { text: '⌘N', cls: 'mina-dw-kbd' });
-            kbd.setAttribute('title', 'Focus capture');
+            const kbd = actions.createEl('kbd', { text: '⌘↵ to capture', cls: 'mina-dw-kbd' });
+            kbd.setAttribute('title', 'Ctrl+Enter / Cmd+Enter to save capture');
         }
     }
 
@@ -226,7 +226,8 @@ export class DailyWorkspaceTab extends BaseTab {
 
         saveBtn.addEventListener('click', handleSave);
         textarea.addEventListener('keydown', (e: KeyboardEvent) => {
-            if (e.key === 'Enter' && !e.shiftKey && textarea.value.trim()) {
+            // Ctrl+Enter / Cmd+Enter → save; plain Enter = line break (consistent with EditEntryModal)
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && textarea.value.trim()) {
                 e.preventDefault();
                 handleSave();
             }
