@@ -155,7 +155,11 @@ export default class MinaPlugin extends Plugin {
                 }
             }
         }
-        if (!targetLeaf) targetLeaf = Platform.isMobile ? (isTablet() ? workspace.getLeaf(false) : workspace.getLeaf('tab')) : workspace.getLeaf('window');
+        // On mobile, reuse any existing MINA leaf rather than opening a new tab
+        if (!targetLeaf && Platform.isMobile && leaves.length > 0) {
+            targetLeaf = leaves[0];
+        }
+        if (!targetLeaf) targetLeaf = Platform.isMobile ? workspace.getLeaf(false) : workspace.getLeaf('window');
         if (targetLeaf) {
             await targetLeaf.setViewState({ type: VIEW_TYPE_MINA, active: true, state: { activeTab: targetTab, isDedicated } });
             workspace.revealLeaf(targetLeaf);
