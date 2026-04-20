@@ -113,7 +113,13 @@ export class MonthlyReviewTab extends BaseTab {
         const focusSection = wrap.createEl('div', { cls: 'mina-monthly-focus' });
         focusSection.createEl('h3', { text: 'Next Month\'s Focus', cls: 'mina-monthly-focus-title' });
 
-        const goals = this.settings.monthlyGoals || [];
+        const monthId = now.format('YYYY-MM');
+        // Load from MD file first (source of truth), fallback to settings
+        const savedGoals = await this.vault.loadMonthlyGoals(monthId);
+        const goals = savedGoals ?? (this.settings.monthlyGoals || []);
+        // Sync settings if MD had fresher data
+        if (savedGoals) { this.settings.monthlyGoals = savedGoals; }
+
         for (let i = 0; i < 3; i++) {
             const val = goals[i] || '';
             const inp = focusSection.createEl('input', {
@@ -126,6 +132,7 @@ export class MonthlyReviewTab extends BaseTab {
                 newGoals[i] = inp.value;
                 this.settings.monthlyGoals = newGoals;
                 await this.plugin.saveSettings();
+                await this.vault.saveMonthlyGoals(monthId, newGoals);
             });
         }
     }

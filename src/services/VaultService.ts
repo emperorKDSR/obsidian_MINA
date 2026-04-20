@@ -475,6 +475,86 @@ export class VaultService {
         return content.slice(yamlEnd + 4).trim();
     }
 
+    /** Save monthly goals to Reviews/Monthly/YYYY-MM.md */
+    async saveMonthlyGoals(monthId: string, goals: string[]): Promise<void> {
+        const folder = 'Reviews/Monthly';
+        const path = `${folder}/${monthId}.md`;
+        const now = this.formatDateTime(new Date());
+        const goalLines = goals.map((g, i) => `${i + 1}. ${(g || '').trim()}`).join('\n');
+        const content = `---\nmonth: "${monthId}"\nsaved: "${now}"\n---\n\n# 📅 ${monthId} — Monthly Focus\n\n## Next Month's Goals\n${goalLines}\n`;
+        try {
+            await this.ensureFolder(folder);
+            const existing = this.app.vault.getAbstractFileByPath(path);
+            if (existing instanceof TFile) {
+                await this.app.vault.modify(existing, content);
+            } else {
+                await this.app.vault.create(path, content);
+            }
+        } catch (e) {
+            console.error('[MINA VaultService] saveMonthlyGoals', e);
+            throw e;
+        }
+    }
+
+    /** Load monthly goals from Reviews/Monthly/YYYY-MM.md */
+    async loadMonthlyGoals(monthId: string): Promise<string[] | null> {
+        const path = `Reviews/Monthly/${monthId}.md`;
+        const file = this.app.vault.getAbstractFileByPath(path);
+        if (!(file instanceof TFile)) return null;
+        try {
+            const raw = await this.app.vault.read(file);
+            const body = raw.replace(/^---\n[\s\S]*?\n---\n/, '').trim();
+            const goalsMatch = body.match(/## Next Month's Goals\n([\s\S]*?)(?:\n##|$)/);
+            if (!goalsMatch) return null;
+            return goalsMatch[1].trim().split('\n').map(l => l.replace(/^\d+\.\s*/, '').trim()).filter((_, i) => i < 3);
+        } catch (e) {
+            console.error('[MINA VaultService] loadMonthlyGoals', e);
+            return null;
+        }
+    }
+
+    /** Save Compass data to Reviews/Compass/YYYY-Qx.md */
+    async saveCompassData(quarterId: string, northStarGoals: string[], lifeMission: string): Promise<void> {
+        const folder = 'Reviews/Compass';
+        const path = `${folder}/${quarterId}.md`;
+        const now = this.formatDateTime(new Date());
+        const goalLines = northStarGoals.map((g, i) => `${i + 1}. ${(g || '').trim()}`).join('\n');
+        const content = `---\nquarter: "${quarterId}"\nsaved: "${now}"\n---\n\n# 🧭 Quarterly Compass — ${quarterId}\n\n## ✨ North Star Goals\n${goalLines}\n\n## 🌟 Life Mission\n${lifeMission.trim()}\n`;
+        try {
+            await this.ensureFolder(folder);
+            const existing = this.app.vault.getAbstractFileByPath(path);
+            if (existing instanceof TFile) {
+                await this.app.vault.modify(existing, content);
+            } else {
+                await this.app.vault.create(path, content);
+            }
+        } catch (e) {
+            console.error('[MINA VaultService] saveCompassData', e);
+            throw e;
+        }
+    }
+
+    /** Load Compass data from Reviews/Compass/YYYY-Qx.md */
+    async loadCompassData(quarterId: string): Promise<{ northStarGoals: string[]; lifeMission: string } | null> {
+        const path = `Reviews/Compass/${quarterId}.md`;
+        const file = this.app.vault.getAbstractFileByPath(path);
+        if (!(file instanceof TFile)) return null;
+        try {
+            const raw = await this.app.vault.read(file);
+            const body = raw.replace(/^---\n[\s\S]*?\n---\n/, '').trim();
+            const goalsMatch = body.match(/## ✨ North Star Goals\n([\s\S]*?)(?:\n##|$)/);
+            const missionMatch = body.match(/## 🌟 Life Mission\n([\s\S]*?)(?:\n##|$)/);
+            const northStarGoals = goalsMatch
+                ? goalsMatch[1].trim().split('\n').map(l => l.replace(/^\d+\.\s*/, '').trim()).filter((_, i) => i < 3)
+                : [];
+            const lifeMission = missionMatch ? missionMatch[1].trim() : '';
+            return { northStarGoals, lifeMission };
+        } catch (e) {
+            console.error('[MINA VaultService] loadCompassData', e);
+            return null;
+        }
+    }
+
     /** Load a weekly review file and parse wins/lessons/focus sections */
     async loadWeeklyReview(weekId: string): Promise<{ wins: string; lessons: string; focus: string[]; saved: string } | null> {
         const path = `Reviews/Weekly/${weekId}.md`;

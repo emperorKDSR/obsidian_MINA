@@ -44,9 +44,19 @@ export class CompassTab extends BaseTab {
 
         northStarSection.createEl('h3', { text: '✨ North Star Goals', attr: { style: 'margin: 0; font-size: 0.9em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--interactive-accent);' } });
 
-        const goals = this.settings.northStarGoals || [];
+        const quarterId = `${new Date().getFullYear()}-Q${Math.floor((new Date().getMonth() + 3) / 3)}`;
+        // Load from MD file first (source of truth), fallback to settings
+        const savedCompass = await this.vault.loadCompassData(quarterId);
+        const goals = savedCompass?.northStarGoals ?? (this.settings.northStarGoals || []);
+        let currentMission = savedCompass?.lifeMission ?? (this.settings.lifeMission || '');
+        if (savedCompass) {
+            this.settings.northStarGoals = savedCompass.northStarGoals;
+            this.settings.lifeMission = savedCompass.lifeMission;
+        }
+
+        const currentGoals = [...goals];
         for (let i = 0; i < 3; i++) {
-            const val = goals[i] || '';
+            const val = currentGoals[i] || '';
             const inp = northStarSection.createEl('input', {
                 type: 'text',
                 attr: { 
@@ -56,10 +66,10 @@ export class CompassTab extends BaseTab {
                 }
             });
             inp.addEventListener('change', async () => {
-                const newGoals = [...(this.settings.northStarGoals || [])];
-                newGoals[i] = inp.value;
-                this.settings.northStarGoals = newGoals;
+                currentGoals[i] = inp.value;
+                this.settings.northStarGoals = [...currentGoals];
                 await this.plugin.saveSettings();
+                await this.vault.saveCompassData(quarterId, currentGoals, currentMission);
                 new Notice('Vision updated');
             });
         }
@@ -83,7 +93,7 @@ export class CompassTab extends BaseTab {
         statCard('Projects', projectCount.toString(), 'Active Objectives');
         statCard('Velocity', tasksCompleted.toString(), 'Total Tasks Done');
 
-        // 4. Mission Statement — editable, backed by settings.lifeMission (ux-p3-mission)
+        // 4. Mission Statement — editable, backed by MD file + settings.lifeMission
         const missionWrap = wrap.createEl('div', {
             attr: { style: 'margin-top: 10px; display: flex; flex-direction: column; gap: 10px;' }
         });
@@ -95,10 +105,12 @@ export class CompassTab extends BaseTab {
                 style: 'width: 100%; min-height: 110px; resize: vertical; background: var(--background-primary-alt); border: 1px solid var(--background-modifier-border); border-left: 4px solid var(--interactive-accent); border-radius: 12px; padding: 16px; font-size: 0.9em; line-height: 1.6; color: var(--text-normal); font-style: italic; font-family: inherit;'
             }
         });
-        missionTextarea.value = this.settings.lifeMission || '';
+        missionTextarea.value = currentMission;
         missionTextarea.addEventListener('change', async () => {
-            this.settings.lifeMission = missionTextarea.value;
+            currentMission = missionTextarea.value;
+            this.settings.lifeMission = currentMission;
             await this.plugin.saveSettings();
+            await this.vault.saveCompassData(quarterId, currentGoals, currentMission);
             new Notice('Mission saved');
         });
     }
