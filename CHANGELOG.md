@@ -1,3 +1,10 @@
+## [1.10.8] - Habit Theme Alignment
+
+### Fixed
+- **Habits**: Habit button background now uses ar(--background-primary) (was --background-secondary-alt) so it matches the active Obsidian theme naturally across light, dark, and custom themes
+- **Habits**: Border changed to 1px var(--background-modifier-border) (was faint) for a cleaner, theme-consistent appearance
+- **Habits**: Hover state now uses ar(--background-modifier-hover) — the standard Obsidian interactive hover token — instead of a hard-coded accent tint
+
 ## [1.10.7] - Habit Ring Fix
 
 ### Fixed
