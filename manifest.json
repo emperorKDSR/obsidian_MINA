@@ -1,7 +1,7 @@
 {
 	"id": "mina_v2",
 	"name": "MINA V2",
-	"version": "1.5.2",
+	"version": "1.5.3",
 	"minAppVersion": "0.15.0",
 	"description": "Quickly capture thoughts and tasks to a file.",
 	"author": "K",

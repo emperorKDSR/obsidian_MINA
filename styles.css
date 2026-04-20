@@ -5326,3 +5326,580 @@
 
 /* Hide mobile meta bar on desktop; hide meta zone on mobile */
 .is-mobile .mina-meta-zone { display: none !important; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   F2 — EDIT PROJECT MODAL + MANUAL PROJECT PICKER
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── Mobile: Edit Project Sheet ─── */
+/* ── Card Header Actions (edit + toggle in one row) ───── */
+.mina-project-card__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.mina-project-card__edit-btn {
+    /* Touch target wrapper — 44×44px minimum */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--text-faint);
+    opacity: 0;                          /* hidden on desktop — hover reveals */
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Desktop: reveal on card hover */
+.mina-project-card:hover .mina-project-card__edit-btn {
+    opacity: 0.55;
+}
+.mina-project-card__edit-btn:hover {
+    opacity: 1 !important;
+    background: var(--background-modifier-hover);
+    color: var(--interactive-accent);
+}
+
+/* Mobile: always visible, moderate opacity */
+.is-mobile .mina-project-card__edit-btn {
+    opacity: 0.45;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: var(--background-secondary-alt);
+    color: var(--text-faint);
+}
+.is-mobile .mina-project-card__edit-btn:active {
+    opacity: 1;
+    background: var(--background-modifier-border-faint);
+    color: var(--interactive-accent);
+    transform: scale(0.93);
+}
+
+/* Icon sizing */
+.mina-project-card__edit-btn .svg-icon {
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+}
+
+/* Also migrate toggle-btn into header-actions on mobile */
+.is-mobile .mina-project-card__toggle-row {
+    display: none;   /* hide standalone toggle row — button moves into header */
+}
+/* The toggle btn re-appears inside header-actions on mobile via TS logic */
+.is-mobile .mina-project-card__toggle-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: var(--background-secondary-alt);
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ─── Project Pill (mobile capture chip strip) ─── */
+/* ══════════════════════════════════════════════════
+   PROJECT PILL (in capture chip strip)
+   ══════════════════════════════════════════════════ */
+
+/* Base pill inherits .mina-mobile-chip layout:
+   min-height: 44px, border-radius: 12px, padding: 0 14px */
+
+.mina-project-pill {
+    /* Distinct from context chips: use outline border instead of filled */
+    background: transparent;
+    border-color: var(--background-modifier-border);
+    color: var(--text-muted);
+    gap: 6px;
+    cursor: pointer;
+    max-width: 160px;             /* prevent very long names from dominating strip */
+}
+
+/* ── Empty / unassigned state ── */
+.mina-project-pill--empty {
+    border-style: dashed;
+    border-color: var(--text-faint);
+    opacity: 0.75;
+}
+.mina-project-pill--empty:active {
+    opacity: 1;
+    border-color: var(--interactive-accent);
+    color: var(--interactive-accent);
+    background: rgba(var(--interactive-accent-rgb), 0.06);
+}
+.mina-project-pill-icon {
+    font-size: 0.9em;
+    opacity: 0.7;
+    flex-shrink: 0;
+    line-height: 1;
+}
+.mina-project-pill-label {
+    font-size: 0.7em;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+/* ── Active / assigned state ── */
+.mina-project-pill--active {
+    background: rgba(var(--project-color-rgb, 99, 102, 241), 0.08);
+    border-color: var(--project-color, var(--interactive-accent));
+    border-style: solid;
+    color: var(--project-color, var(--interactive-accent));
+    opacity: 1;
+    max-width: 180px;
+}
+/* JS sets --project-color on element style; we derive RGB for bg alpha.
+   Engineering note: set both --project-color and a matching --project-color-rgb
+   (e.g. "99, 102, 241") on the element's style attribute at assignment time. */
+
+.mina-project-pill-dot {
+    width: 8px;
+    height: 8px;
+    min-width: 8px;
+    border-radius: 50%;
+    background: var(--project-color, var(--interactive-accent));
+    flex-shrink: 0;
+}
+.mina-project-pill-name {
+    font-size: 0.7em;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80px;             /* spec: max 80px */
+    flex: 1;
+    min-width: 0;
+}
+.mina-project-pill-x {
+    /* Dismiss button within chip — 28×28px visual, 44×44px touch via negative margin */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 28px;
+    margin: -8px -10px -8px 0;   /* expand touch area without breaking layout */
+    padding: 8px 10px 8px 4px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-size: 1.1em;
+    opacity: 0.7;
+    cursor: pointer;
+    border-radius: 0 10px 10px 0;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.15s, background 0.15s;
+}
+.mina-project-pill-x:active {
+    opacity: 1;
+    background: rgba(var(--project-color-rgb, 99, 102, 241), 0.15);
+}
+
+/* AI-assigned pill: subtle pulse to draw attention once */
+.mina-project-pill--ai-assigned {
+    animation: mina-pill-ai-pulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes mina-pill-ai-pulse {
+    0%   { transform: scale(0.85); opacity: 0; }
+    60%  { transform: scale(1.06); }
+    100% { transform: scale(1);    opacity: 1; }
+}
+
+/* ─── Project Picker Sheet (mobile) ─── */
+/* ══════════════════════════════════════════════════
+   PROJECT PICKER SHEET
+   ══════════════════════════════════════════════════ */
+
+.mina-pps-sheet {
+    /* Sheet geometry — shallower than edit sheet (50vh) */
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: 100vw !important;
+    height: min(50vh, 440px) !important;
+    max-height: 50vh !important;
+    border-radius: 24px 24px 0 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    background: var(--background-primary) !important;
+    box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.28) !important;
+    border: 1px solid var(--background-modifier-border-faint) !important;
+    border-bottom: none !important;
+    animation: mina-sheet-enter 300ms cubic-bezier(0.32, 0.72, 0, 1) both;
+    display: flex !important;
+    flex-direction: column !important;
+    z-index: 1001;              /* above EditEntryModal backdrop */
+    touch-action: pan-y;
+}
+@supports not (height: 1dvh) {
+    .mina-pps-sheet { height: min(50vh, 440px) !important; }
+}
+.mina-pps-sheet.is-exiting {
+    animation: mina-sheet-exit 220ms cubic-bezier(0.4, 0, 1, 1) both !important;
+}
+
+/* Sheet Header */
+.mina-pps-header {
+    flex-shrink: 0;
+    padding: 4px 20px 10px;
+    border-bottom: 1px solid var(--background-modifier-border-faint);
+}
+.mina-pps-title {
+    margin: 0;
+    font-size: 0.78em;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-faint);
+    line-height: 1.2;
+}
+
+/* Search Input Row */
+.mina-pps-search-wrap {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--background-modifier-border-faint);
+    background: var(--background-secondary-alt);
+}
+.mina-pps-search-icon {
+    color: var(--text-faint);
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+.mina-pps-search-icon .svg-icon { width: 16px; height: 16px; }
+.mina-pps-search {
+    flex: 1;
+    min-height: 44px;
+    border: none;
+    background: transparent;
+    color: var(--text-normal);
+    font-size: 1em;         /* ≥16px prevents iOS zoom */
+    outline: none;
+    padding: 0;
+    -webkit-appearance: none;
+    appearance: none;
+}
+.mina-pps-search::placeholder { color: var(--text-faint); }
+.mina-pps-search::-webkit-search-cancel-button { display: none; }
+
+/* Scrollable Project List */
+.mina-pps-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 0 max(16px, env(safe-area-inset-bottom));
+}
+
+/* Project List Item */
+.mina-pps-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 20px;
+    min-height: 52px;         /* ≥44px touch target with visual breathing room */
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.12s;
+    border-bottom: 1px solid var(--background-modifier-border-faint);
+    position: relative;
+}
+.mina-pps-item:last-child { border-bottom: none; }
+.mina-pps-item:active,
+.mina-pps-item.is-selected {
+    background: var(--background-secondary-alt);
+}
+/* Accent left-border on active selection (mirrors project card color-bar) */
+.mina-pps-item.is-selected::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    background: var(--project-color, var(--interactive-accent));
+    border-radius: 0 2px 2px 0;
+}
+.mina-pps-item-dot {
+    width: 10px;
+    height: 10px;
+    min-width: 10px;
+    border-radius: 50%;
+    background: var(--project-color, var(--interactive-accent));
+    flex-shrink: 0;
+}
+.mina-pps-item-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.92em;
+    font-weight: 700;
+    color: var(--text-normal);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.01em;
+}
+.mina-pps-item-badge {
+    flex-shrink: 0;
+    height: 20px;
+    padding: 0 8px;
+    border-radius: 10px;
+    font-size: 0.6em;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+}
+/* Reuse status color tokens */
+.mina-pps-item-badge--active   { background: rgba(16,185,129,0.12); color: #10b981; }
+.mina-pps-item-badge--on-hold  { background: rgba(245,158,11,0.12); color: #d97706; }
+.mina-pps-item-badge--completed { background: rgba(99,102,241,0.12); color: #6366f1; }
+.theme-dark .mina-pps-item-badge--active   { color: #34d399; }
+.theme-dark .mina-pps-item-badge--on-hold  { color: #fbbf24; }
+.theme-dark .mina-pps-item-badge--completed { color: #a5b4fc; }
+
+/* Empty State */
+.mina-pps-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 32px 24px;
+    text-align: center;
+}
+.mina-pps-empty-icon {
+    font-size: 2em;
+    opacity: 0.25;
+    line-height: 1;
+}
+.mina-pps-empty-msg {
+    margin: 0;
+    font-size: 0.82em;
+    color: var(--text-faint);
+    line-height: 1.5;
+    max-width: 240px;
+}
+
+/* Mobile status picker overrides:
+   On mobile, status picker options need bigger touch targets */
+.is-mobile .mina-status-picker__opt {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    font-size: 0.82em;
+}
+
+/* ─── Desktop: Project Card Edit Button ─── */
+/* ── Project card edit button ────────────────────────────────────────────── */
+.mina-project-card__edit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-faint);
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    /* hover-reveal: opacity 0 at rest, 1 on card hover */
+    opacity: 0;
+    transition: opacity 0.18s ease, background 0.12s ease, color 0.12s ease;
+    /* push to the far right of the name-line — after status badge */
+    margin-left: auto;
+}
+
+.mina-project-card:hover .mina-project-card__edit-btn {
+    opacity: 1;
+}
+
+.mina-project-card__edit-btn:hover {
+    background: var(--background-modifier-hover);
+    color: var(--interactive-accent);
+}
+
+.mina-project-card__edit-btn:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
+    opacity: 1; /* always visible when focused via keyboard */
+}
+
+.mina-project-card__edit-btn .svg-icon {
+    width: 13px;
+    height: 13px;
+}
+
+/* ─── Desktop: Project Picker Zone ─── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   EDIT PROJECT MODAL — scoped overrides on top of mina-new-project-modal
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Header area — subtle differentiation for edit context */
+.mina-edit-project-modal .mina-modal-title {
+    font-size: 1.05em;
+    font-weight: 800;
+    color: var(--text-normal);
+    letter-spacing: -0.02em;
+    margin: 0 0 6px 0;
+}
+
+/* ── ID read-only row ───────────────────────────────────────────────────── */
+.mina-edit-project-id-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.mina-edit-project-id-lbl {
+    font-size: 0.62em;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-faint);
+    flex-shrink: 0;
+}
+
+.mina-edit-project-id-val {
+    font-family: var(--font-monospace);
+    font-size: 0.72em;
+    color: var(--text-faint);
+    background: var(--background-primary-alt);
+    border: 1px solid var(--background-modifier-border-faint);
+    border-radius: 5px;
+    padding: 2px 8px;
+    user-select: all;          /* allow copy, prevent accidental edit */
+    cursor: text;
+    letter-spacing: 0.02em;
+    line-height: 1.6;
+}
+
+/* ── Body scroll container ──────────────────────────────────────────────── */
+.mina-new-project-modal-body {
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    /* max-height allows scroll when window is short */
+    max-height: calc(80vh - 160px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--background-modifier-border) transparent;
+}
+
+/* ── Field groups (shared with NewProjectModal) ─────────────────────────── */
+/* These classes already exist — this section confirms expected values       */
+.mina-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.mina-field-label {
+    font-size: 0.68em;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-faint);
+}
+.mina-field-input {
+    padding: 9px 12px;
+    border-radius: var(--mina-radius-sm);
+    border: 1.5px solid var(--background-modifier-border-faint);
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: 0.9em;
+    outline: none;
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+    width: 100%;
+}
+.mina-field-input:focus {
+    border-color: var(--interactive-accent);
+}
+.mina-field-textarea {
+    padding: 9px 12px;
+    border-radius: var(--mina-radius-sm);
+    border: 1.5px solid var(--background-modifier-border-faint);
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: 0.9em;
+    outline: none;
+    resize: vertical;
+    min-height: 72px;
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+    width: 100%;
+    font-family: inherit;
+}
+.mina-field-textarea:focus {
+    border-color: var(--interactive-accent);
+}
+
+/* ── Footer (shared via mina-modal-footer) ──────────────────────────────── */
+/* mina-modal-footer already exists — no override needed                     */
+
+/* ── Btn aliases (if project modal uses mina-btn variants) ──────────────── */
+/* These may already exist; add if missing:                                   */
+.mina-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 20px;
+    border-radius: var(--mina-radius-sm);
+    font-size: 0.82em;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+}
+.mina-btn--primary {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+.mina-btn--primary:hover { opacity: 0.88; }
+.mina-btn--ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--background-modifier-border);
+}
+.mina-btn--ghost:hover {
+    border-color: var(--background-modifier-border);
+    color: var(--text-normal);
+}
+.mina-btn--danger {
+    background: rgba(239,68,68,0.10);
+    color: var(--text-error);
+    border: 1px solid rgba(239,68,68,0.2);
+}
+.mina-btn--danger:hover { background: rgba(239,68,68,0.18); }
+.mina-btn--sm { padding: 5px 12px; font-size: 0.72em; }
