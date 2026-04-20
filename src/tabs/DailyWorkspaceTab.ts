@@ -260,9 +260,9 @@ export class DailyWorkspaceTab extends BaseTab {
                 cls: 'mina-dw-entry-time'
             });
 
-            // Body
+            // Body — renders text and ![[image]] embeds
             const bodyEl = entryEl.createEl('div', { cls: 'mina-dw-entry-body' });
-            bodyEl.setText(entry.body || entry.title);
+            this.renderEntryBody(bodyEl, entry.body || entry.title);
 
             // Context tags
             if (entry.context && entry.context.length > 0) {
@@ -309,6 +309,37 @@ export class DailyWorkspaceTab extends BaseTab {
                 });
             }
         }
+    }
+
+    // ── Entry Body Renderer (text + ![[image]] embeds) ───────────────────
+    private renderEntryBody(container: HTMLElement, body: string) {
+        const IMAGE_EXTS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'avif']);
+        // Split on ![[...]] tokens, preserving the separators
+        const parts = body.split(/(!\[\[[^\]]+\]\])/g);
+        parts.forEach(part => {
+            const embedMatch = part.match(/^!\[\[(.+?)\]\]$/);
+            if (embedMatch) {
+                const linkPath = embedMatch[1];
+                const ext = linkPath.split('.').pop()?.toLowerCase() ?? '';
+                if (IMAGE_EXTS.has(ext)) {
+                    // Resolve via metadataCache so relative/absolute paths both work
+                    const file = this.app.metadataCache.getFirstLinkpathDest(linkPath, '');
+                    if (file) {
+                        const img = container.createEl('img', { cls: 'mina-dw-entry-img' });
+                        img.src = this.app.vault.getResourcePath(file);
+                        img.alt = file.name;
+                    } else {
+                        // File not indexed yet — show placeholder
+                        container.createEl('span', { text: `[image: ${linkPath}]`, cls: 'mina-dw-entry-img-placeholder' });
+                    }
+                } else {
+                    // Non-image embed — render as styled inline link text
+                    container.createEl('span', { text: `[[${linkPath}]]`, cls: 'mina-dw-entry-wikilink' });
+                }
+            } else if (part) {
+                container.createEl('span', { text: part });
+            }
+        });
     }
 
     // ── Task Panel (Sidebar / Full Panel) ────────────────────────────────

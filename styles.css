@@ -3187,6 +3187,34 @@
     white-space: pre-wrap;
 }
 
+.mina-dw-entry-body span {
+    white-space: pre-wrap;
+}
+
+.mina-dw-entry-img {
+    display: block;
+    max-width: 100%;
+    max-height: 320px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 10px;
+    margin: 8px 0;
+    background: var(--background-secondary);
+}
+
+.mina-dw-entry-img-placeholder {
+    display: inline-block;
+    font-size: 0.8em;
+    color: var(--text-faint);
+    font-style: italic;
+}
+
+.mina-dw-entry-wikilink {
+    color: var(--link-color);
+    font-size: 0.85em;
+}
+
 .mina-dw-entry-tags {
     display: flex;
     gap: 6px;
