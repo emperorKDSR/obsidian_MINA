@@ -3,18 +3,29 @@
 All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]
-### Fix — Habits Tracker Critical Bugs & Quick Wins
-- **QW-04 (Critical)**: Fixed `toggleHabit` data-loss bug — rewrote to use `processFrontMatter` instead of overwriting the entire file. Body notes and existing content are now preserved on every toggle.
-- **QW-01 (Critical)**: Fixed `MonthlyReviewTab` habit adherence — now scans all daily habit files for the current month via metadataCache instead of using today-only `habitStatusIndex`. Shows real `done/total` with a colour-coded % adherence badge.
-- **QW-02**: Added ⚙ gear icon button to the HABITS label row — taps open `HabitConfigModal` directly from the Command Center.
-- **QW-03**: Extended habit name truncation from 9 → 13 chars on desktop, 11 on mobile.
-- **QW-05**: All-complete celebration — progress bar turns green and pulses when every habit for the day is checked off.
-- **QW-06**: Archive flag on habits — delete replaced with 📦 archive; archived habits are hidden from the quick-bar but preserved in settings. Archived habits can be restored from `HabitConfigModal`.
-- **Type**: Added `archived?: boolean` to `Habit` interface in `types.ts`.
 
-- **Voice nav button**: Added "Voice" entry to the SYSTEM cluster in the Command Center navigation footer — direct access without the command palette
-- **Delete voice memo**: Each clip in the RECENT CLIPS list now has a trash icon button; tapping it opens a confirm dialog and moves both the audio file and its sidecar `.md` to the Obsidian trash
-- **Clip actions row**: Buttons grouped into a dedicated `mina-clip-actions` flex container with consistent spacing and touch targets
+## [1.3.1] - 2026-04-20
+### Fix — Data Integrity, Security & Stability
+
+**rm-3: Monthly Review Denominator Fix**
+- Completion rate now uses tasks created/due *this month* as denominator — no longer inflated by entire vault history
+- Thoughts stat card now shows "X captured / Y processed" for a real throughput metric
+
+**rm-4: processFrontMatter Migration (Data Integrity)**
+- `editThought`, `editTask`, `toggleTask`, `setTaskDue`, `updateTaskTitle` all migrated to `app.fileManager.processFrontMatter`
+- Eliminates all string-based YAML regex manipulation — multiline values, special characters and quoted strings can no longer corrupt frontmatter
+- Preserves `created`, `pinned`, `project`, `status`, `energy` fields automatically on every edit
+
+**rm-5: DueEntry Amount from Frontmatter**
+- Financial obligation amounts now read from `amount` frontmatter field (not parsed from filename)
+- Renaming a due file no longer corrupts its amount
+- Graceful legacy fallback: files without frontmatter `amount` still parse from filename
+
+**rm-8: VoiceTab MediaStream / RAF / AudioContext Leak Fix**
+- Added `activeStream` field — stream tracks always stopped in error path and on tab switch
+- `processRecording` wrapped in try/catch — failed transcription no longer orphans state on `'processing'`
+- `cleanup()` now nulls `mediaRecorder` after stop, preventing double-stop errors on iOS
+- Prevents battery drain and microphone lockout on mobile
 
 ## [1.3.0] - 2026-04-20
 ### Feat — 5-State Voice Capture Redesign
