@@ -1722,12 +1722,12 @@
 }
 
 .mina-capture-inline-canvas {
-    padding: 14px 16px 8px 16px;
+    padding: 8px 12px 8px 12px;
     background: transparent;
 }
 .mina-capture-inline-textarea {
     width: 100%;
-    min-height: 96px;
+    min-height: 72px;
     font-size: 1.06em;
     line-height: 1.65;
     font-family: 'Calibri', var(--font-text), sans-serif;
@@ -1776,6 +1776,11 @@
     font-size: 0.73em;
     -webkit-tap-highlight-color: transparent;
 }
+.mina-capture-inline-toggle .mina-seg-btn.is-active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    box-shadow: 0 2px 8px rgba(var(--interactive-accent-rgb), 0.35);
+}
 
 .mina-capture-inline-tag-picker {
     max-height: 0;
@@ -1814,7 +1819,7 @@
 }
 .mina-capture-inline-cancel:active { border-color: var(--background-modifier-border); color: var(--text-normal); }
 .mina-capture-inline-save {
-    flex: 2;
+    flex: 1;
     min-height: 44px;
     background: var(--interactive-accent);
     color: var(--text-on-accent);

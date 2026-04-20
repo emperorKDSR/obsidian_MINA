@@ -2,6 +2,16 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.0.13] - 2026-04-20
+### Fixed
+- **Desktop: letter 'C' blocked in capture textarea** — `onKey` document-level shortcut listener was intercepting every `C` keypress using `document.activeElement` (global scope), which could diverge from `parent.ownerDocument.activeElement` inside Obsidian's rendering context. Fixed by adding `if (cap.hasClass('is-expanded')) return` as the first guard — when the capture bar is already open, the shortcut never fires regardless of focus state.
+
+### Changed
+- **Capture input — reduced padding** — `.mina-capture-inline-canvas` padding reduced from `14px 16px` to `8px 12px`; textarea `min-height` reduced from 96px to 72px; textarea `padding-top` set to `0` for a tighter, denser input area
+- **Capture toggle — accent color on both desktop & mobile** — `.mina-capture-inline-toggle .mina-seg-btn.is-active` uses `var(--interactive-accent)` background. Desktop `toggleBar` now also carries the `mina-capture-inline-toggle` class so the accent rule applies consistently across both layouts
+- **Cancel / Capture buttons — equal size** — both buttons now use `flex: 1` (previously `flex: 1` / `flex: 2`), rendering as identical-width pills in the action row
+- **Removed `# to tag` hint** — chip strip no longer shows the static hint text when no tags are selected; strip is simply empty until a tag is added via `#` trigger
+
 ## [1.0.12] - 2026-04-20
 ### Changed
 - **Capture textarea — Calibri font** — `font-family` on `.mina-capture-inline-textarea` changed from `var(--font-text)` to `'Calibri', var(--font-text), sans-serif` for both desktop and mobile capture bars

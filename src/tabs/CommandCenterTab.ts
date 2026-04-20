@@ -97,7 +97,7 @@ export class CommandCenterTab extends BaseTab {
             // Desktop dock: mode toggle | chips (flex) | actions
             const dock = expandBody.createDiv({ cls: 'mina-capture-desktop-dock' });
 
-            const toggleBar = dock.createDiv({ cls: 'mina-seg-bar' });
+            const toggleBar = dock.createDiv({ cls: 'mina-seg-bar mina-capture-inline-toggle' });
             const thoughtBtn = toggleBar.createEl('button', { text: '✦ THOUGHT', cls: 'mina-seg-btn is-active' });
             const taskBtn = toggleBar.createEl('button', { text: '✓ TASK', cls: 'mina-seg-btn' });
 
@@ -109,13 +109,9 @@ export class CommandCenterTab extends BaseTab {
             const saveBtn = actionRow.createEl('button', { text: 'CAPTURE', cls: 'mina-capture-inline-save is-disabled' }) as HTMLButtonElement;
             saveBtn.disabled = true;
 
-            // Chip renderer
             const renderChips = () => {
                 chipStrip.empty();
-                if (captureContexts.length === 0) {
-                    chipStrip.createEl('span', { text: '# to tag', cls: 'mina-chip-hint' });
-                    return;
-                }
+                if (captureContexts.length === 0) return;
                 captureContexts.forEach(ctx => {
                     const chip = chipStrip.createEl('span', { cls: 'mina-mobile-chip' });
                     chip.createSpan({ text: `#${ctx}` });
@@ -218,7 +214,8 @@ export class CommandCenterTab extends BaseTab {
 
             // ⌘K / C shortcut
             const onKey = (e: KeyboardEvent) => {
-                const active = document.activeElement;
+                if (cap.hasClass('is-expanded')) return;
+                const active = parent.ownerDocument.activeElement;
                 const isTyping = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || (active as HTMLElement)?.isContentEditable;
                 if (isTyping) return;
                 if (e.key === 'c' || e.key === 'C') { e.preventDefault(); expand(); }
@@ -274,10 +271,7 @@ export class CommandCenterTab extends BaseTab {
 
         const renderChips = () => {
             chipStrip.empty();
-            if (captureContexts.length === 0) {
-                chipStrip.createEl('span', { text: '# to tag', cls: 'mina-chip-hint' });
-                return;
-            }
+            if (captureContexts.length === 0) return;
             captureContexts.forEach(ctx => {
                 const chip = chipStrip.createEl('span', { cls: 'mina-mobile-chip' });
                 chip.createSpan({ text: `#${ctx}` });
