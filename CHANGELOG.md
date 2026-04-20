@@ -2,6 +2,21 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.1.3] - 2026-04-20
+### Feature - Daily Workspace Tab
+
+#### New Features
+- **Daily Workspace tab** — freeform daily capture space accessible from Command Center nav and command palette (`Open MINA Daily Workspace`)
+- **Split-pane layout (desktop)** — writing surface with sticky capture bar on the left, task sidebar (overdue/today/upcoming) on the right via container queries
+- **Toggle-pane layout (mobile)** — WRITE | TASKS segmented toggle with persistent task peek bar at bottom
+- **Capture bar** — auto-expanding textarea for quick thought/task capture with Thought/Task mode toggle, inline triggers (@date, [[link, #tag)
+- **Chronological entry list** — daily thoughts and tasks rendered with timestamps, tags, and hover action buttons
+- **Task sidebar** — open tasks grouped by overdue, today, and upcoming sections with inline checkbox completion
+- **Task peek bar (mobile)** — always-visible bottom bar showing next actionable task with one-tap completion
+- **Date navigation** — arrow-based day navigation with Today shortcut button
+- **Keyboard shortcuts** — Ctrl+N (new capture), Ctrl+T (toggle panels), Escape (cancel)
+- **Storage** — reuses existing MINA V2 folder via VaultService (no new directories)
+
 ## [1.1.2] - 2026-04-20
 ### Patch - Command Center capture input auto-grows with note length
 
