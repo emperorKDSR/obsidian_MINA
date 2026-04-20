@@ -1,6 +1,7 @@
 import { App, Modal, setIcon, Platform } from 'obsidian';
 import type MinaPlugin from '../main';
 import { isTablet } from '../utils';
+import { VIEW_TYPE_MINA } from '../constants';
 
 interface SearchResult {
     type: 'thought' | 'task' | 'due' | 'project' | 'habit';
@@ -48,6 +49,7 @@ export class SearchModal extends Modal {
     private resultEls: HTMLElement[] = [];
     private allResults: SearchResult[] = [];
     private panelEl: HTMLElement;
+    private viewportResizeHandler: (() => void) | null = null;
 
     constructor(app: App, plugin: MinaPlugin) {
         super(app);
@@ -55,26 +57,64 @@ export class SearchModal extends Modal {
     }
 
     onOpen() {
-        const { modalEl, contentEl } = this;
+        const { modalEl } = this;
+        const isPhone = Platform.isMobile && !isTablet();
+
         modalEl.empty();
         modalEl.addClass('mina-search-overlay');
 
-        this.panelEl = modalEl.createEl('div', { cls: 'mina-search-panel', attr: { role: 'dialog', 'aria-modal': 'true', 'aria-label': 'MINA Global Search' } });
+        if (isPhone) {
+            modalEl.addClass('mina-search-phone');
+            document.body.addClass('mina-search-phone-open');
+        }
+
+        this.panelEl = modalEl.createEl('div', {
+            cls: 'mina-search-panel',
+            attr: { role: 'dialog', 'aria-modal': 'true', 'aria-label': 'MINA Global Search' }
+        });
 
         // Input row
         const inputRow = this.panelEl.createEl('div', { cls: 'mina-search-input-row' });
-        const iconEl = inputRow.createEl('span', { cls: 'mina-search-icon' });
-        setIcon(iconEl, 'lucide-search');
+
+        if (isPhone) {
+            const backBtn = inputRow.createEl('span', { cls: 'mina-search-back-btn' });
+            setIcon(backBtn, 'lucide-arrow-left');
+            backBtn.addEventListener('click', () => this.closeWithAnimation());
+        } else {
+            const iconEl = inputRow.createEl('span', { cls: 'mina-search-icon' });
+            setIcon(iconEl, 'lucide-search');
+        }
+
         this.inputEl = inputRow.createEl('input', {
             cls: 'mina-search-input',
-            attr: { type: 'text', placeholder: 'Search across all of MINA…', autocomplete: 'off', spellcheck: 'false' }
+            attr: {
+                type: 'text',
+                placeholder: isPhone ? 'Search MINA…' : 'Search across all of MINA…',
+                autocomplete: 'off',
+                spellcheck: 'false',
+                ...(isPhone ? { style: 'font-size:16px' } : {})
+            }
         });
-        const kbdHint = inputRow.createEl('span', { cls: 'mina-search-kbd-hint', text: 'ESC' });
+
+        if (isPhone) {
+            const clearBtn = inputRow.createEl('span', { cls: 'mina-search-clear-btn' });
+            setIcon(clearBtn, 'lucide-x-circle');
+            clearBtn.addEventListener('click', () => {
+                this.inputEl.value = '';
+                this.onQueryChange();
+                this.inputEl.focus();
+            });
+        } else {
+            inputRow.createEl('span', { cls: 'mina-search-kbd-hint', text: 'ESC' });
+        }
 
         // Scope bar
         this.scopeBar = this.panelEl.createEl('div', { cls: 'mina-search-scope-bar', attr: { role: 'tablist' } });
         for (const scope of SCOPES) {
-            const btn = this.scopeBar.createEl('button', { cls: `mina-search-scope-btn${scope.id === this.activeScope ? ' is-active' : ''}`, attr: { 'data-scope': scope.id } });
+            const btn = this.scopeBar.createEl('button', {
+                cls: `mina-search-scope-btn${scope.id === this.activeScope ? ' is-active' : ''}`,
+                attr: { 'data-scope': scope.id }
+            });
             btn.createEl('span', { text: scope.label });
             btn.createEl('span', { cls: 'mina-search-scope-count', text: '0' });
             btn.addEventListener('click', () => this.setScope(scope.id));
@@ -83,12 +123,10 @@ export class SearchModal extends Modal {
         // Body
         this.bodyEl = this.panelEl.createEl('div', { cls: 'mina-search-body', attr: { role: 'listbox', 'aria-live': 'polite' } });
 
-        // Footer (desktop only)
+        // Footer (desktop / tablet only)
         if (!Platform.isMobile || isTablet()) {
             const footer = this.panelEl.createEl('div', { cls: 'mina-search-footer' });
-            const hints = [
-                ['↑↓', 'Navigate'], ['↵', 'Open'], ['ESC', 'Close']
-            ];
+            const hints: [string, string][] = [['↑↓', 'Navigate'], ['↵', 'Open'], ['ESC', 'Close']];
             hints.forEach(([key, label], i) => {
                 if (i > 0) footer.createEl('div', { cls: 'mina-search-footer-divider' });
                 const hint = footer.createEl('div', { cls: 'mina-search-footer-hint' });
@@ -100,24 +138,89 @@ export class SearchModal extends Modal {
         // Events
         this.inputEl.addEventListener('input', () => this.onQueryChange());
         this.inputEl.addEventListener('keydown', (e) => this.onKeydown(e));
-        modalEl.addEventListener('click', (e) => {
-            if (e.target === modalEl) this.closeWithAnimation();
-        });
 
-        // Render initial state
+        if (!isPhone) {
+            modalEl.addEventListener('click', (e) => {
+                if (e.target === modalEl) this.closeWithAnimation();
+            });
+        }
+
+        if (isPhone) {
+            this.attachSwipeToDismiss();
+            this.attachKeyboardCompensation();
+        }
+
         this.renderInitialState();
-
-        // Focus input
-        setTimeout(() => this.inputEl.focus(), 50);
+        setTimeout(() => this.inputEl.focus(), 80);
     }
 
     onClose() {
         this.modalEl.removeClass('mina-search-overlay');
+        this.modalEl.removeClass('mina-search-phone');
+        document.body.removeClass('mina-search-phone-open');
+        if (this.viewportResizeHandler && window.visualViewport) {
+            window.visualViewport.removeEventListener('resize', this.viewportResizeHandler);
+            this.viewportResizeHandler = null;
+        }
     }
 
     private closeWithAnimation() {
         this.modalEl.addClass('is-closing');
-        setTimeout(() => this.close(), 160);
+        setTimeout(() => this.close(), 185);
+    }
+
+    private attachSwipeToDismiss() {
+        let startY = 0;
+        let currentY = 0;
+        let isDragging = false;
+
+        this.panelEl.addEventListener('touchstart', (e: TouchEvent) => {
+            if ((e.target as HTMLElement).closest('.mina-search-body')) return;
+            startY = e.touches[0].clientY;
+            isDragging = true;
+        }, { passive: true });
+
+        this.panelEl.addEventListener('touchmove', (e: TouchEvent) => {
+            if (!isDragging) return;
+            currentY = e.touches[0].clientY;
+            const delta = currentY - startY;
+            if (delta > 0) {
+                const resistance = delta < 80 ? delta : 80 + (delta - 80) * 0.3;
+                this.panelEl.style.transform = `translateY(${resistance}px)`;
+                this.panelEl.style.transition = 'none';
+            }
+        }, { passive: true });
+
+        this.panelEl.addEventListener('touchend', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            const delta = currentY - startY;
+            if (delta > 80) {
+                this.closeWithAnimation();
+            } else {
+                this.panelEl.addClass('mina-search-snapping-back');
+                this.panelEl.style.transform = '';
+                this.panelEl.style.transition = '';
+                setTimeout(() => {
+                    if (this.panelEl) this.panelEl.removeClass('mina-search-snapping-back');
+                }, 320);
+            }
+            currentY = 0; startY = 0;
+        });
+    }
+
+    private attachKeyboardCompensation() {
+        if (!window.visualViewport) return;
+        const adjust = () => {
+            const keyboardHeight = window.innerHeight - (window.visualViewport!.height);
+            if (keyboardHeight > 50) {
+                this.bodyEl.style.paddingBottom = `${keyboardHeight + 24}px`;
+            } else {
+                this.bodyEl.style.paddingBottom = '';
+            }
+        };
+        this.viewportResizeHandler = adjust;
+        window.visualViewport.addEventListener('resize', adjust);
     }
 
     private setScope(scopeId: string) {
@@ -172,13 +275,16 @@ export class SearchModal extends Modal {
 
     private activateResult(result: SearchResult) {
         this.close();
-        // Navigate to the target tab
-        const leaves = this.app.workspace.getLeavesOfType('mina-view');
-        if (leaves.length > 0) {
-            const view = leaves[0].view as any;
-            view.activeTab = result.tabId;
-            view.renderView();
-        }
+        // Use setTimeout to let the modal fully close before re-rendering the view
+        setTimeout(() => {
+            const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MINA);
+            if (leaves.length > 0) {
+                const view = leaves[0].view as any;
+                this.app.workspace.setActiveLeaf(leaves[0], { focus: true });
+                view.activeTab = result.tabId;
+                view.renderView();
+            }
+        }, 50);
     }
 
     private performSearch(query: string) {
@@ -346,12 +452,15 @@ export class SearchModal extends Modal {
             btn.createEl('span', { cls: 'mina-search-quickjump-label', text: tab.label });
             btn.addEventListener('click', () => {
                 this.close();
-                const leaves = this.app.workspace.getLeavesOfType('mina-view');
-                if (leaves.length > 0) {
-                    const view = leaves[0].view as any;
-                    view.activeTab = tab.id;
-                    view.renderView();
-                }
+                setTimeout(() => {
+                    const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MINA);
+                    if (leaves.length > 0) {
+                        const view = leaves[0].view as any;
+                        this.app.workspace.setActiveLeaf(leaves[0], { focus: true });
+                        view.activeTab = tab.id;
+                        view.renderView();
+                    }
+                }, 50);
             });
         }
 
