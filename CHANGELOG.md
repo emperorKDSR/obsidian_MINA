@@ -4,6 +4,11 @@ All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.2] - 2026-04-20
+### Fix — Search Modal Centered Layout
+Center the Global Search overlay vertically in the window (desktop/tablet).
+Changed overlay from top-aligned (lign-items: flex-start + padding-top: 14vh) to fully centered (lign-items: center). The panel now sits at the visual midpoint of the screen for a cleaner, more natural feel.
+
 ## [1.9.1] - 2026-04-21
 ### Fix — Search Navigation + Mobile Search Redesign
 

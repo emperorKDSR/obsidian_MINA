@@ -46,9 +46,9 @@
     inset: 0;
     z-index: 9000;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
-    padding-top: 14vh;
+
     background: rgba(0, 0, 0, 0.45);
     animation: mina-search-overlay-in 0.18s ease both;
 }
@@ -395,7 +395,7 @@
 /* ── Small tablet (500–767px): tighten the centered panel ────────── */
 @media (min-width: 500px) and (max-width: 767px) {
     .mina-search-panel { max-width: calc(100vw - 48px); margin: 0 24px; }
-    .mina-search-overlay { padding-top: 10vh; }
+    .mina-search-panel { max-width: calc(100vw - 48px); margin: 0 24px; }
 }
 
 /* ── Touch devices: fat tap targets everywhere ───────────────────── */
