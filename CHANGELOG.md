@@ -2,7 +2,18 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
-## [1.2.5] - 2026-04-20
+## [1.2.6] - 2026-04-20
+### Patch & Enhancement — Image rendering, paste stability, Enter behavior
+
+#### Added
+- **Embedded images render inline** — Thought entries in the Daily Workspace now render `![[filename.png]]` as `<img>` elements using `app.vault.getResourcePath()`. Supports PNG, JPG, GIF, WebP, SVG, BMP, AVIF. Non-image embeds render as styled `[[link]]` text. Files not yet indexed fall back to an italic `[image: name]` placeholder. CSS: `.mina-dw-entry-img` (max-height 320px, rounded), `.mina-dw-entry-wikilink`, `.mina-dw-entry-img-placeholder`.
+
+#### Fixed
+- **Paste no longer wipes the capture textarea** — `vault.on('create')` was unconditionally calling `notifyRefresh()` for every file created, including attachment binaries saved by the paste handler. This triggered a full tab re-render that cleared the textarea mid-edit. `notifyRefresh()` in the `create` handler is now gated: only fires when the created file is an indexed type (thought / task / habit).
+- **Plain Enter is now a line break** — Capture bar previously saved on plain `Enter`, making it impossible to paste or type multi-line content without accidentally saving. Changed to `Ctrl+Enter` / `Cmd+Enter` to capture (consistent with EditEntryModal). Header hint updated to `⌘↵ to capture`.
+- **`Notice` static import in paste handler** — `await import('obsidian')` is a dynamic import; esbuild treats `obsidian` as external so it resolves to an empty shim at runtime, silently breaking the handler. Fixed by moving `Notice` to the static top-level import in `utils.ts`. Pre-scan of clipboard items is now done synchronously before any `await` so `e.preventDefault()` fires before the browser consumes the event.
+
+
 ### Feature — Clipboard paste & drag-drop attachments in all capture inputs
 
 #### Added
