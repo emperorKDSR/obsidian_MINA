@@ -107,9 +107,11 @@ const SECTIONS: HelpSection[] = [
     {
         id: 'synthesis', icon: 'lucide-git-merge', title: 'Synthesis', subtitle: 'Process thoughts into permanent knowledge',
         items: [
-            { label: 'Inbox', desc: 'Unprocessed thoughts appear in the left panel. Read them and decide what to do with each.' },
-            { label: 'Master Notes', desc: 'Merge related thoughts into a single durable note. The thought is then marked as synthesised.' },
-            { label: 'Zero-Inbox Goal', desc: 'The goal is to keep your inbox empty by regularly processing ideas into notes.', tip: 'Weekly Review is the perfect time to clear your thought inbox.' },
+            { label: 'Inbox Feed', desc: 'Unprocessed thoughts appear in the sidebar with count badge. Use the search filter to find specific thoughts.' },
+            { label: 'Drag & Drop', desc: 'Drag a thought card onto the canvas to synthesize it into your Master Note. It\'s automatically marked as processed.' },
+            { label: 'Quick Process', desc: 'Tap "✓ Process" on any card to mark it as processed without synthesizing.' },
+            { label: 'Master Notes', desc: 'Create new insight notes with "+ New Insight". Merged thoughts are linked via wiki-links.' },
+            { label: 'Zero-Inbox Goal', desc: 'Keep your inbox empty by regularly processing ideas.', tip: 'Weekly Review is the perfect time to clear your thought inbox.' },
         ]
     },
     {

@@ -6496,3 +6496,257 @@
         gap: 8px;
     }
 }
+/* ═══════════ Synthesis Tab ═══════════ */
+.mina-synthesis-shell {
+    display: flex;
+    height: 100%;
+    overflow: hidden;
+    background: var(--background-primary);
+}
+.mina-synthesis-sidebar {
+    width: 380px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--background-modifier-border-faint);
+    background: var(--background-primary);
+}
+.mina-synthesis-sidebar.is-hidden { display: none; }
+.mina-synthesis-side-header {
+    padding: 20px 16px;
+    border-bottom: 1px solid var(--background-modifier-border-faint);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.mina-synthesis-side-title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.mina-synthesis-side-title {
+    margin: 0;
+    font-size: 0.85em;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-faint);
+}
+.mina-synthesis-count-badge {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    font-size: 0.6em;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 10px;
+    min-width: 20px;
+    text-align: center;
+}
+.mina-synthesis-search-wrap {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--background-modifier-border-faint);
+}
+.mina-synthesis-search {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 0.85em;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-secondary-alt);
+    color: var(--text-normal);
+}
+.mina-synthesis-search:focus {
+    border-color: var(--interactive-accent);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.15);
+}
+.mina-synthesis-side-scroll {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    -webkit-overflow-scrolling: touch;
+}
+.mina-synthesis-side-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    opacity: 0.4;
+    gap: 12px;
+    font-size: 0.85em;
+    font-weight: 700;
+}
+.mina-synthesis-side-empty span:first-child { font-size: 2em; }
+.mina-synthesis-thought-card {
+    cursor: grab;
+    padding: 14px 16px;
+    background: var(--background-primary-alt);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.mina-synthesis-thought-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.mina-synthesis-thought-card.is-dragging {
+    opacity: 0.5;
+    transform: scale(0.97);
+}
+.mina-synthesis-thought-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.mina-synthesis-thought-time {
+    font-size: 0.65em;
+    color: var(--text-faint);
+    font-weight: 600;
+}
+.mina-synthesis-thought-title {
+    font-size: 0.85em;
+    font-weight: 800;
+    color: var(--text-normal);
+    margin-bottom: 4px;
+}
+.mina-synthesis-thought-body {
+    font-size: 0.75em;
+    color: var(--text-muted);
+    line-height: 1.5;
+    opacity: 0.8;
+}
+.mina-synthesis-thought-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+.mina-synthesis-process-btn {
+    font-size: 0.65em;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.mina-synthesis-process-btn:hover {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
+.mina-synthesis-main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--background-primary);
+}
+.mina-synthesis-main.is-hidden { display: none; }
+.mina-synthesis-main-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--background-modifier-border-faint);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--background-primary);
+}
+.mina-synthesis-back-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.4em;
+    cursor: pointer;
+    margin-right: 12px;
+    color: var(--text-normal);
+}
+.mina-synthesis-title-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.mina-synthesis-canvas-title {
+    margin: 0;
+    font-size: 1.4em;
+    font-weight: 900;
+    color: var(--text-normal);
+    letter-spacing: -0.02em;
+}
+.mina-synthesis-canvas-badge {
+    font-size: 0.7em;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--interactive-accent);
+}
+.mina-synthesis-actions {
+    display: flex;
+    gap: 10px;
+}
+.mina-synthesis-new-btn {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 8px;
+    font-size: 0.65em;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-weight: 800;
+    text-transform: uppercase;
+    transition: all 0.2s;
+}
+.mina-synthesis-new-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+.mina-synthesis-canvas {
+    flex-grow: 1;
+    padding: 32px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+.mina-insight-content {
+    line-height: 1.7;
+    font-size: 1.1em;
+    color: var(--text-normal);
+    max-width: 800px;
+}
+.mina-synthesis-empty {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.2;
+    flex-direction: column;
+    gap: 14px;
+}
+.mina-synthesis-empty-icon { font-size: 4em; }
+.mina-synthesis-empty-text {
+    font-weight: 800;
+    font-size: 1.1em;
+    letter-spacing: 0.05em;
+}
+
+/* Synthesis mobile: sidebar takes full width */
+.is-mobile .mina-synthesis-sidebar {
+    width: 100%;
+    border-right: none;
+}
+.is-mobile .mina-synthesis-canvas {
+    padding: 16px;
+}
+.is-mobile .mina-synthesis-main-header {
+    padding: 16px;
+}
+
+/* Synthesis tablet/desktop: 2-column */
+@media (min-width: 768px) {
+    .mina-synthesis-sidebar { width: 340px; }
+    .mina-synthesis-canvas { padding: 32px 40px; }
+}
+@media (min-width: 1024px) {
+    .mina-synthesis-sidebar { width: 380px; }
+}
