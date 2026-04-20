@@ -2,6 +2,21 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.1.1] - 2026-04-20
+### Patch - EditEntryModal aligned with Command Center capture bar
+
+#### Changed
+- **EditEntryModal desktop layout** - rewrote the desktop path to use semantic CSS classes instead of inline styles so it matches the Command Center capture surface
+- **Edit modal textareas** - both mobile and desktop paths now use Calibri to align with the capture bar input styling
+- **Mode toggle active state** - mobile float and desktop modal toggles now use the accent-filled active treatment
+- **Mobile action row** - Cancel and Capture now share the same pill shape and equal sizing
+- **Desktop modal workflow** - added the Thought/Task segmented toggle to desktop and switched due-date controls to the shared `_buildDateStrip()` flow
+- **Desktop save behavior** - save button disable/enable behavior now mirrors the mobile modal
+- **Mobile chip strip** - removed the inline `+` tag picker from the modal and restored the `# to tag` empty hint when no contexts are selected
+
+#### Removed
+- **Inline modal tag picker** - deleted the unused `_toggleInlineTagPicker()` mobile helper and the matching `.mina-tag-picker-*` CSS block
+
 ## [1.1.0] - 2026-04-20
 ### 🚀 Minor Release — Bill Overview & Capture Bar Overhaul
 

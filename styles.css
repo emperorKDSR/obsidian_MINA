@@ -879,6 +879,14 @@
     padding: 0;
 }
 
+/* Edit Modal: desktop chip compact density */
+.mina-capture-desktop-chip-area .mina-mobile-chip {
+    min-height: 26px;
+    height: 26px;
+    padding: 0 10px;
+    font-size: 0.68em;
+}
+
 /* Mobile capture FAB */
 .mina-capture-fab { display: none; }
 .is-mobile .mina-capture-fab { display: flex; align-items: center; gap: 10px; position: sticky; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 100; background: var(--interactive-accent); color: var(--text-on-accent); border: none; border-radius: 28px; padding: 14px 24px; min-height: 52px; box-shadow: 0 4px 20px rgba(0,0,0,0.25), 0 2px 6px rgba(0,0,0,0.15); font-size: 0.92em; font-weight: 700; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; white-space: nowrap; }
@@ -1482,6 +1490,101 @@
 }
 
 /* ═══════════════════════════════════════════════════════════ */
+/* MINA EDIT MODAL (desktop / tablet)                          */
+/* ═══════════════════════════════════════════════════════════ */
+
+.mina-edit-modal {
+    width: 650px !important;
+    max-width: 95vw !important;
+    border-radius: 20px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: var(--background-primary) !important;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.4) !important;
+    border: 1px solid var(--background-modifier-border-faint) !important;
+}
+.mina-edit-modal.is-tablet {
+    width: 80vw !important;
+    max-width: 80vw !important;
+}
+
+.mina-edit-modal-canvas {
+    padding: 28px 32px 16px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.mina-edit-modal-textarea {
+    width: 100%;
+    min-height: 120px;
+    font-size: 1.25em;
+    line-height: 1.5;
+    font-family: 'Calibri', var(--font-text), sans-serif;
+    border: none !important;
+    background: transparent;
+    color: var(--text-normal);
+    resize: none;
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    padding: 0;
+    display: block;
+    box-sizing: border-box;
+}
+.mina-edit-modal-textarea:focus,
+.mina-edit-modal-textarea:focus-visible,
+.mina-edit-modal-textarea:active {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+.mina-edit-modal-textarea::placeholder { color: var(--text-faint); }
+/* Belt-and-suspenders: kill Obsidian's global focus ring inside edit modal */
+.mina-edit-modal textarea,
+.mina-edit-modal textarea:focus,
+.mina-edit-modal textarea:focus-visible {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.mina-edit-modal-canvas .mina-date-shortcut-btn { min-height: 28px; height: 28px; }
+.mina-edit-modal-canvas .mina-date-display { font-size: 0.8em; }
+
+.mina-edit-modal-dock {
+    padding: 10px 32px;
+    background: var(--background-secondary-alt);
+    border-top: 1px solid var(--background-modifier-border-faint);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.mina-edit-modal-dock .mina-seg-btn {
+    min-height: 32px;
+    font-size: 0.72em;
+}
+.mina-edit-modal-dock .mina-seg-btn.is-active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    box-shadow: 0 2px 8px rgba(var(--interactive-accent-rgb), 0.35);
+}
+
+.mina-edit-modal-project-chip {
+    display: inline-block;
+    font-size: 0.65em;
+    font-weight: 900;
+    color: var(--interactive-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.mina-edit-modal-project-chip:hover { opacity: 0.7; }
+
+/* ═══════════════════════════════════════════════════════════ */
 /* MINA FLOATING INPUT MODAL (mobile)                          */
 /* ═══════════════════════════════════════════════════════════ */
 
@@ -1541,9 +1644,9 @@
 .mina-float-textarea {
     width: 100%;
     min-height: 110px;
-    font-size: 1.12em;
+    font-size: 1.06em;
     line-height: 1.65;
-    font-family: var(--font-text);
+    font-family: 'Calibri', var(--font-text), sans-serif;
     border: none !important;
     background: transparent;
     color: var(--text-normal);
@@ -1590,9 +1693,14 @@
 /* Mode toggle inside float */
 .mina-float-toggle { margin-bottom: 2px; }
 .mina-float-toggle .mina-seg-btn {
-    min-height: 38px;
+    min-height: 40px;
     font-size: 0.73em;
     -webkit-tap-highlight-color: transparent;
+}
+.mina-float-toggle .mina-seg-btn.is-active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    box-shadow: 0 2px 8px rgba(var(--interactive-accent-rgb), 0.35);
 }
 
 /* Action row */
@@ -1602,35 +1710,47 @@
     align-items: center;
 }
 .mina-float-cancel-btn {
+    flex: 1;
+    min-width: 0;
     background: transparent;
-    border: none;
-    color: var(--text-faint);
+    border: 1.5px solid var(--background-modifier-border-faint);
+    border-radius: 10px;
+    color: var(--text-muted);
     font-size: 0.78em;
-    font-weight: 600;
-    padding: 0 12px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0 14px;
     min-height: 44px;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
-    flex-shrink: 0;
+    transition: border-color 0.15s, color 0.15s;
+}
+.mina-float-cancel-btn:active {
+    border-color: var(--background-modifier-border);
+    color: var(--text-normal);
 }
 .mina-float-save-btn {
     flex: 1;
+    min-width: 0;
     min-height: 44px;
     background: var(--interactive-accent);
     color: var(--text-on-accent);
     border: none;
-    border-radius: 12px;
+    border-radius: 10px;
     font-size: 0.78em;
     font-weight: 900;
     letter-spacing: 0.06em;
+    text-transform: uppercase;
     cursor: pointer;
     box-shadow: 0 4px 16px rgba(var(--interactive-accent-rgb), 0.35);
-    transition: transform 0.1s, opacity 0.15s;
+    transition: transform 0.1s ease, opacity 0.15s ease;
     -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 .mina-float-save-btn:active { transform: scale(0.97); }
 .mina-float-save-btn.is-disabled,
-.mina-float-save-btn:disabled { opacity: 0.35; pointer-events: none; }
+.mina-float-save-btn:disabled { opacity: 0.35; pointer-events: none; box-shadow: none; }
 
 /* ═══════════════════════════════════════════════════════════ */
 /* MINA INLINE CAPTURE STRIP (Command Center, above habits)    */
@@ -1842,143 +1962,6 @@
     pointer-events: none;
     box-shadow: none;
 }
-
-/* ═══════════════════════════════════════════════════════════ */
-/* MINA INLINE TAG PICKER                                      */
-/* ═══════════════════════════════════════════════════════════ */
-
-.mina-float-tag-picker {
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    transition: max-height 220ms cubic-bezier(0.4, 0, 0.2, 1), opacity 180ms ease;
-}
-.mina-float-tag-picker.is-open {
-    max-height: 240px;
-    opacity: 1;
-    overflow: visible;
-}
-
-.mina-tag-picker-search-row {
-    padding-bottom: 8px;
-}
-.mina-tag-picker-search {
-    width: 100%;
-    padding: 8px 12px;
-    border-radius: 10px;
-    border: 1.5px solid var(--background-modifier-border-faint);
-    background: var(--background-primary);
-    color: var(--text-normal);
-    font-size: 0.85em;
-    outline: none;
-    box-sizing: border-box;
-}
-.mina-tag-picker-search:focus {
-    border-color: var(--interactive-accent);
-}
-
-.mina-tag-picker-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    max-height: 140px;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 2px;
-}
-
-.mina-tag-picker-tag {
-    display: inline-flex;
-    align-items: center;
-    min-height: 34px;
-    padding: 0 12px;
-    border-radius: 10px;
-    border: 1.5px solid var(--background-modifier-border-faint);
-    background: var(--background-secondary-alt);
-    color: var(--text-muted);
-    font-size: 0.72em;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.08s;
-    user-select: none;
-}
-.mina-tag-picker-tag:active {
-    background: var(--interactive-accent);
-    color: var(--text-on-accent);
-    border-color: var(--interactive-accent);
-    transform: scale(0.96);
-}
-
-.mina-tag-picker-create {
-    display: inline-flex;
-    align-items: center;
-    min-height: 34px;
-    padding: 0 12px;
-    border-radius: 10px;
-    border: 1.5px dashed var(--interactive-accent);
-    background: transparent;
-    color: var(--interactive-accent);
-    font-size: 0.72em;
-    font-weight: 700;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    transition: background 0.12s, transform 0.08s;
-}
-.mina-tag-picker-create:active {
-    background: rgba(var(--interactive-accent-rgb), 0.12);
-    transform: scale(0.96);
-}
-
-.mina-tag-picker-empty {
-    font-size: 0.78em;
-    color: var(--text-faint);
-    font-style: italic;
-    padding: 4px 0;
-}
-
-/* New tag input row */
-.mina-tag-picker-new-row {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--background-modifier-border-faint);
-}
-.mina-tag-picker-new-input {
-    flex: 1;
-    min-width: 0;
-    padding: 6px 10px;
-    border-radius: 8px;
-    border: 1.5px solid var(--background-modifier-border-faint);
-    background: var(--background-primary);
-    color: var(--text-normal);
-    font-size: 0.82em;
-    outline: none;
-    box-sizing: border-box;
-    transition: border-color 0.15s;
-}
-.mina-tag-picker-new-input:focus { border-color: var(--interactive-accent); }
-.mina-tag-picker-new-input::placeholder { color: var(--text-faint); }
-.mina-tag-picker-add-btn {
-    flex-shrink: 0;
-    padding: 6px 12px;
-    border-radius: 8px;
-    border: none;
-    background: var(--interactive-accent);
-    color: var(--text-on-accent);
-    font-size: 0.72em;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    cursor: pointer;
-    transition: opacity 0.15s;
-    -webkit-tap-highlight-color: transparent;
-}
-.mina-tag-picker-add-btn:hover { opacity: 0.88; }
-.mina-tag-picker-add-btn:active { transform: scale(0.96); }
 
 /* ── TIMELINE TAB ──────────────────────────────────────────────────── */
 .mina-tl-wrap {
