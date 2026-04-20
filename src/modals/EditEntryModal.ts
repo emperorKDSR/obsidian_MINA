@@ -100,7 +100,6 @@ export class EditEntryModal extends Modal {
 
         // 3. Chip strip
         const chipStrip = dock.createDiv({ cls: 'mina-mobile-chip-strip' });
-        const tagPickerContainer = dock.createDiv({ cls: 'mina-float-tag-picker' });
 
         const renderChips = () => {
             chipStrip.empty();
@@ -114,13 +113,9 @@ export class EditEntryModal extends Modal {
                     renderChips();
                 });
             });
-            const addBtn = chipStrip.createEl('button', { text: '+', cls: 'mina-mobile-chip-add' });
-            addBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this._toggleInlineTagPicker(tagPickerContainer, addBtn, this.plugin.settings.contexts, () => this.initialContexts, (ctx) => {
-                    if (!this.initialContexts.includes(ctx)) { this.initialContexts.push(ctx); renderChips(); }
-                });
-            });
+            if (this.initialContexts.length === 0) {
+                chipStrip.createSpan({ text: '# to tag', cls: 'mina-chip-hint' });
+            }
         };
         renderChips();
 
@@ -172,75 +167,6 @@ export class EditEntryModal extends Modal {
 
         // Short delay — just enough for modal animation to start
         setTimeout(() => { textArea.focus(); textArea.setSelectionRange(textArea.value.length, textArea.value.length); }, 80);
-    }
-
-    /** ── INLINE TAG PICKER (mobile, inside dock) ─────── */
-    private _toggleInlineTagPicker(
-        container: HTMLElement,
-        triggerBtn: HTMLElement,
-        allContexts: string[],
-        getSelected: () => string[],
-        onSelect: (ctx: string) => void
-    ) {
-        // Toggle: close if already open
-        if (container.hasClass('is-open')) {
-            container.removeClass('is-open');
-            container.empty();
-            return;
-        }
-        container.addClass('is-open');
-        container.empty();
-
-        // Search input
-        const searchRow = container.createDiv({ cls: 'mina-tag-picker-search-row' });
-        const searchInput = searchRow.createEl('input', {
-            type: 'text',
-            cls: 'mina-tag-picker-search',
-            attr: { placeholder: 'Filter tags…' }
-        }) as HTMLInputElement;
-
-        // Tag grid
-        const grid = container.createDiv({ cls: 'mina-tag-picker-grid' });
-
-        const renderOptions = (query: string) => {
-            grid.empty();
-            const q = query.toLowerCase().trim();
-            const selected = getSelected();
-            const filtered = allContexts
-                .filter(ctx => !selected.includes(ctx) && ctx.toLowerCase().includes(q))
-                .sort((a, b) => a.localeCompare(b));
-
-            filtered.forEach(ctx => {
-                const tag = grid.createEl('button', { text: `#${ctx}`, cls: 'mina-tag-picker-tag' });
-                tag.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    onSelect(ctx);
-                    container.removeClass('is-open');
-                    container.empty();
-                });
-            });
-
-            // "Create new" option if query doesn't match exactly
-            if (q && !allContexts.some(ctx => ctx.toLowerCase() === q)) {
-                const createBtn = grid.createEl('button', { cls: 'mina-tag-picker-create' });
-                createBtn.createSpan({ text: '＋ ' });
-                createBtn.createSpan({ text: `Create "${query.trim()}"` });
-                createBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    onSelect(query.trim());
-                    container.removeClass('is-open');
-                    container.empty();
-                });
-            }
-
-            if (!filtered.length && !q) {
-                grid.createEl('span', { text: 'No tags configured.', cls: 'mina-tag-picker-empty' });
-            }
-        };
-
-        searchInput.addEventListener('input', () => renderOptions(searchInput.value));
-        renderOptions('');
-        setTimeout(() => searchInput.focus(), 60);
     }
 
     /** ── DATE SHORTCUT STRIP ─────────────────────────── */
@@ -407,58 +333,55 @@ export class EditEntryModal extends Modal {
     /** ── DESKTOP / TABLET PATH ───────────────────────── */
     private _renderDesktop(contentEl: HTMLElement, modalEl: HTMLElement) {
         modalEl.addClass('mina-clean-modal');
-        modalEl.style.width = '650px';
-        modalEl.style.maxWidth = '95vw';
-        modalEl.style.borderRadius = '20px';
-        modalEl.style.padding = '0';
-        modalEl.style.overflow = 'hidden';
-        modalEl.style.background = 'var(--background-primary)';
-        modalEl.style.boxShadow = '0 30px 60px rgba(0,0,0,0.4)';
-        modalEl.style.border = '1px solid var(--background-modifier-border-faint)';
-
-        if (Platform.isMobile) {
-            // Tablet: centered card (not full-screen sheet)
-            const w = isTablet() ? '80vw' : '95vw';
-            modalEl.style.width = w;
-            modalEl.style.maxWidth = w;
-        }
+        modalEl.addClass('mina-edit-modal');
+        if (Platform.isMobile && isTablet()) modalEl.addClass('is-tablet');
 
         // Canvas
-        const canvas = contentEl.createEl('div', {
-            attr: { style: 'padding: 32px 32px 10px 32px; display: flex; flex-direction: column; gap: 16px;' }
-        });
+        const canvas = contentEl.createEl('div', { cls: 'mina-edit-modal-canvas' });
         const textArea = canvas.createEl('textarea', {
             text: this.initialText,
-            attr: {
-                placeholder: this.isTask ? 'Execute intent...' : 'Capture thought...',
-                style: 'width: 100%; min-height: 200px; font-size: 1.25em; line-height: 1.5; font-family: var(--font-text); border: none; background: transparent; color: var(--text-normal); resize: none; outline: none; padding: 0;'
-            }
-        });
-        textArea.focus();
+            cls: 'mina-edit-modal-textarea',
+            attr: { placeholder: this.currentMode === 'task' ? 'Execute intent…' : 'Capture thought…' }
+        }) as HTMLTextAreaElement;
+
+        // Date zone in canvas (collapsible, consistent with mobile)
+        const dateZone = canvas.createDiv({ cls: `mina-mobile-date-zone${this.currentMode === 'task' ? ' is-visible' : ''}` });
+        const { setDueDate } = this._buildDateStrip(dateZone);
+        if (this.currentDueDate) setDueDate(this.currentDueDate);
 
         // Dock
-        const dock = contentEl.createEl('div', {
-            attr: { style: 'padding: 12px 32px; background: var(--background-secondary-alt); border-top: 1px solid var(--background-modifier-border-faint); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;' }
-        });
-        const leftDock = dock.createDiv({ attr: { style: 'display: flex; align-items: center; gap: 12px; flex-grow: 1;' } });
+        const dock = contentEl.createEl('div', { cls: 'mina-edit-modal-dock' });
 
-        // Context chips
-        const chipContainer = leftDock.createDiv({ attr: { style: 'display: flex; gap: 6px; flex-wrap: wrap;' } });
+        // Mode toggle
+        const toggleBar = dock.createDiv({ cls: 'mina-seg-bar mina-capture-inline-toggle' });
+        const thoughtBtn = toggleBar.createEl('button', {
+            text: '✦ THOUGHT',
+            cls: `mina-seg-btn${this.currentMode === 'thought' ? ' is-active' : ''}`
+        });
+        const taskBtn = toggleBar.createEl('button', {
+            text: '✓ TASK',
+            cls: `mina-seg-btn${this.currentMode === 'task' ? ' is-active' : ''}`
+        });
+
+        // Chip area
+        const chipArea = dock.createDiv({ cls: 'mina-capture-desktop-chip-area' });
+        const chipStrip = chipArea.createDiv({ cls: 'mina-mobile-chip-strip' });
+
         const renderChips = () => {
-            chipContainer.empty();
+            chipStrip.empty();
             this.initialContexts.forEach(ctx => {
-                const chip = chipContainer.createEl('span', {
-                    text: `#${ctx}`,
-                    attr: { style: 'font-size: 0.65em; font-weight: 800; padding: 3px 10px; border-radius: 8px; background: var(--background-primary); color: var(--text-muted); border: 1px solid var(--background-modifier-border-faint); text-transform: uppercase; cursor: pointer; transition: all 0.2s;' }
+                const chip = chipStrip.createEl('span', { cls: 'mina-mobile-chip' });
+                chip.createSpan({ text: `#${ctx}` });
+                const x = chip.createSpan({ text: '×', cls: 'mina-mobile-chip-x' });
+                x.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.initialContexts = this.initialContexts.filter(c => c !== ctx);
+                    renderChips();
                 });
-                chip.addEventListener('click', () => { this.initialContexts = this.initialContexts.filter(c => c !== ctx); renderChips(); });
             });
-            const addBtn = chipContainer.createEl('button', {
-                text: '+',
-                attr: { style: 'background: transparent; border: 1px dashed var(--text-faint); color: var(--text-faint); border-radius: 8px; width: 24px; height: 24px; font-size: 0.8em; cursor: pointer;' }
-            });
+            const addBtn = chipStrip.createEl('button', { text: '+', cls: 'mina-mobile-chip-add' });
             addBtn.addEventListener('click', () => {
-                new ContextSuggestModal(this.app, this.plugin.settings.contexts, async (ctx) => {
+                new ContextSuggestModal(this.app, this.plugin.settings.contexts ?? [], async (ctx) => {
                     if (!this.initialContexts.includes(ctx)) { this.initialContexts.push(ctx); renderChips(); }
                 }).open();
             });
@@ -466,63 +389,68 @@ export class EditEntryModal extends Modal {
         renderChips();
 
         // Project chip
-        const projectArea = leftDock.createDiv();
+        const projectArea = chipArea.createDiv();
         const updateProjectChip = (project: string | null) => {
             projectArea.empty();
             if (!project) return;
             const pChip = projectArea.createEl('span', {
                 text: `[${project}]`,
-                attr: { style: 'font-size: 0.65em; font-weight: 900; color: var(--interactive-accent); text-transform: uppercase; letter-spacing: 0.05em;' }
+                cls: 'mina-edit-modal-project-chip'
             });
             pChip.addEventListener('click', () => { this.currentProject = null; updateProjectChip(null); });
         };
         if (this.currentProject) updateProjectChip(this.currentProject);
 
-        // Date picker (tasks only)
-        let dateInput: HTMLInputElement | null = null;
-        if (this.isTask) {
-            dateInput = leftDock.createEl('input', {
-                type: 'date',
-                value: this.initialDueDate || moment().format('YYYY-MM-DD'),
-                attr: { style: 'font-size: 0.7em; background: transparent; border: none; color: var(--text-faint); cursor: pointer;' }
-            });
-        }
-
         // Actions
-        const rightDock = dock.createDiv({ attr: { style: 'display: flex; gap: 8px;' } });
-        const cancelBtn = rightDock.createEl('button', { text: 'CANCEL', attr: { style: 'background: transparent; border: none; color: var(--text-faint); font-size: 0.65em; font-weight: 900; padding: 8px 12px; cursor: pointer;' } });
-        cancelBtn.addEventListener('click', () => this.close());
-        const saveBtn = rightDock.createEl('button', {
-            text: this.stayOpen ? 'ADD' : 'SAVE',
-            attr: { style: 'background: var(--interactive-accent); color: var(--text-on-accent); border: none; padding: 6px 20px; border-radius: 8px; font-size: 0.7em; font-weight: 900; cursor: pointer; box-shadow: 0 4px 15px rgba(var(--interactive-accent-rgb), 0.3);' }
-        });
+        const actions = dock.createDiv({ cls: 'mina-capture-desktop-actions' });
+        const saveLabel = () => this.stayOpen ? 'ADD' : (this.currentMode === 'task' ? 'ADD TASK' : 'SAVE');
+        const cancelBtn = actions.createEl('button', { text: 'CANCEL', cls: 'mina-capture-inline-cancel' });
+        const saveBtn = actions.createEl('button', { text: saveLabel(), cls: 'mina-capture-inline-save' }) as HTMLButtonElement;
+
+        // Mode switch
+        const switchMode = (mode: CaptureMode) => {
+            this.currentMode = mode;
+            textArea.placeholder = mode === 'task' ? 'Execute intent…' : 'Capture thought…';
+            thoughtBtn.toggleClass('is-active', mode === 'thought');
+            taskBtn.toggleClass('is-active', mode === 'task');
+            dateZone.toggleClass('is-visible', mode === 'task');
+            if (!this.stayOpen) saveBtn.textContent = saveLabel();
+        };
+        thoughtBtn.addEventListener('click', () => switchMode('thought'));
+        taskBtn.addEventListener('click', () => switchMode('task'));
+
+        // Save gate
+        const refreshSave = () => {
+            const empty = !textArea.value.trim();
+            saveBtn.toggleClass('is-disabled', empty);
+            saveBtn.disabled = empty;
+        };
+        textArea.addEventListener('input', refreshSave);
+        refreshSave();
 
         const handleSave = () => {
             if (!textArea.value.trim()) return;
             const text = textArea.value.replace(/\n/g, '<br>');
             const contexts = this.initialContexts.map(c => `#${c}`).join(' ');
-            const due = dateInput ? dateInput.value : null;
+            const due = this.currentMode === 'task' ? (this.currentDueDate ?? null) : null;
             this.onSave(text, contexts, due, this.currentProject);
             if (this.stayOpen) { textArea.value = ''; textArea.focus(); new Notice('Capture saved.'); }
             else this.close();
         };
+        cancelBtn.addEventListener('click', () => this.close());
         saveBtn.addEventListener('click', handleSave);
         textArea.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSave(); }
             if (e.key === 'Escape') this.close();
         });
 
-        // Desktop inline triggers (setDueDate flashes the dateInput)
-        const setDueDateDesktop = (d: string) => {
-            if (dateInput) {
-                dateInput.value = d;
-                dateInput.style.color = 'var(--interactive-accent)';
-                setTimeout(() => { if (dateInput) dateInput.style.color = ''; }, 1500);
-            }
-        };
-        this._attachInlineTriggers(textArea, setDueDateDesktop);
+        // Inline triggers — date shortcut sets due date and auto-switches to task mode
+        this._attachInlineTriggers(textArea, (d: string) => {
+            setDueDate(d);
+            switchMode('task');
+        });
 
-        // AI auto-classify (desktop only — updates project chip)
+        // AI auto-classify
         if (this.plugin.settings.enableAutoClassification) {
             textArea.addEventListener('input', () => {
                 if (this.classificationTimeout) clearTimeout(this.classificationTimeout);
@@ -539,6 +467,8 @@ export class EditEntryModal extends Modal {
                 }, 1500);
             });
         }
+
+        setTimeout(() => { textArea.focus(); textArea.setSelectionRange(textArea.value.length, textArea.value.length); }, 80);
     }
 
     onClose() {
