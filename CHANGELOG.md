@@ -4,7 +4,23 @@ All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]
 
-## [1.8.0] - 2026-04-20
+## [1.9.0] - 2026-04-20
+### Feat — Global Search / Spotlight
+
+Unified cross-domain search overlay — find anything across all MINA data types from a single entry point.
+
+**Changes:**
+- **Search Overlay**: Floating panel (desktop) / bottom sheet (mobile) triggered by 🔍 header icon or `Mod+Shift+F` shortcut.
+- **Cross-Domain Results**: Searches Thoughts, Tasks, Dues, Projects, and Habits simultaneously using IndexService in-memory indices (zero-latency, no file I/O).
+- **Scope Filters**: Horizontal pill bar filters results by type (All / Thoughts / Tasks / Dues / Projects / Habits) with live counts.
+- **Result Cards**: Type-coded icons (purple=thought, accent=task, amber=due, green=project, red=habit), title with match highlighting, preview text, and date/status metadata.
+- **Quick Jump Grid**: When search is empty, shows a 3×2 grid to instantly navigate to any tab.
+- **Keyboard Navigation**: ↑↓ navigate, Enter opens, Esc closes, Tab cycles scope filters.
+- **Responsive**: Desktop centered panel (620px), tablet adapted (90vw), phone bottom sheet (92dvh) with safe-area insets.
+- **Obsidian Command**: Registered as `MINA: Global Search` in command palette.
+- **Help Manual**: New Global Search section added to in-plugin manual.
+
+
 ### Feat — AI Chat Redesign (Gemini 2.5 Pro)
 
 Complete redesign of the AI Chat interface with modern UX patterns and Gemini 2.5 Pro as the default model.

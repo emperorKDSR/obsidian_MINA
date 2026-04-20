@@ -12,6 +12,18 @@ const SECTIONS: HelpSection[] = [
             { label: 'Intelligence Card', desc: 'Live snapshot: open tasks, habits completed, unprocessed thoughts, and total dues. Hit "SYNTHESIZE BRIEFING" to get an AI strategy summary.', tip: 'Requires a Gemini API key configured in Settings → AI.' },
             { label: 'Weekly & Monthly Goals', desc: 'Your active goals shown at a glance. Tap "Edit" to update them in the Review tabs.' },
             { label: 'Tablet Experience', desc: 'On tablets (iPad, etc.), MINA automatically upgrades to a desktop-like layout: inline capture bar, horizontal habit bar, expanded goals and navigation, sidebar manual, and hover effects.', tip: 'Tablet is detected when the device short-edge is ≥768px.' },
+            { label: 'Global Search 🔍', desc: 'Tap the search icon (before Help) or press Mod+Shift+F to open Global Search. Instantly find anything across Thoughts, Tasks, Dues, Projects, and Habits.', tip: 'Also available via Obsidian command palette: "MINA: Global Search".' },
+        ]
+    },
+    {
+        id: 'search', icon: 'lucide-search', title: 'Global Search', subtitle: 'Find anything across MINA instantly',
+        items: [
+            { label: 'Opening Search', desc: 'Tap the 🔍 icon in the Command Center header, or press Mod+Shift+F. On mobile, tap the search icon in the header.' },
+            { label: 'Scope Filters', desc: 'Use the pill buttons (All / Thoughts / Tasks / Dues / Projects / Habits) to narrow results to a specific type. Counts update live as you type.' },
+            { label: 'Keyboard Navigation', desc: '↑↓ arrow keys move through results. Enter opens the focused item. Escape closes the overlay.', tip: 'Typing always returns focus to the input — you never lose your place.' },
+            { label: 'Quick Jump', desc: 'When search is empty, a Quick Jump grid lets you instantly navigate to any tab — Timeline, Tasks, Dues, Projects, Habits, or Journal.' },
+            { label: 'Match Highlighting', desc: 'Your query is highlighted wherever it matches result titles, making it easy to confirm relevance at a glance.' },
+            { label: 'Result Types', desc: 'Each result shows a colour-coded icon (purple=thought, accent=task, amber=due, green=project, red=habit), title, preview, and date/status.' },
         ]
     },
     {

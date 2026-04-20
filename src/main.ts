@@ -8,6 +8,7 @@ import { MinaSettingTab } from './settings';
 import { AiService } from './services/AiService';
 import { VaultService } from './services/VaultService';
 import { IndexService } from './services/IndexService';
+import { SearchModal } from './modals/SearchModal';
 
 export default class MinaPlugin extends Plugin {
 	settings: MinaSettings;
@@ -97,6 +98,7 @@ export default class MinaPlugin extends Plugin {
 
         this.addCommand({ id: 'open-mina-home-mode', name: 'MINA: Open Command Center', icon: HOME_ICON_ID, callback: () => { this.activateView('home', true); } });
         this.addCommand({ id: 'open-mina-daily-workspace', name: 'MINA: Open Daily Workspace', icon: WORKSPACE_ICON_ID, callback: () => { this.activateView('daily-workspace', false); } });
+        this.addCommand({ id: 'mina-global-search', name: 'MINA: Global Search', icon: 'lucide-search', hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'f' }], callback: () => { new SearchModal(this.app, this).open(); } });
 
 		this.addSettingTab(new MinaSettingTab(this.app, this));
         setTimeout(() => this.migrateLegacyTableData(), 2000);

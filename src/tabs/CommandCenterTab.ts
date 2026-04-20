@@ -5,6 +5,7 @@ import { PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, SETTING
 import { parseContextString, parseNaturalDate, isTablet, attachInlineTriggers } from '../utils';
 import { HabitConfigModal } from '../modals/HabitConfigModal';
 import { HelpModal } from '../modals/HelpModal';
+import { SearchModal } from '../modals/SearchModal';
 
 export class CommandCenterTab extends BaseTab {
     private parentContainer: HTMLElement;
@@ -47,8 +48,15 @@ export class CommandCenterTab extends BaseTab {
         const zenSize = isPhone ? '48px' : '42px';
         const btnSize = `width: ${zenSize}; height: ${zenSize}; min-width: ${zenSize};`;
 
-        // Right-side button cluster (help + zen)
+        // Right-side button cluster (search + help + zen)
         const btnCluster = headerRow.createEl('div', { attr: { style: 'display:flex; align-items:center; gap:4px; flex-shrink:0;' } });
+
+        const searchBtn = btnCluster.createEl('button', {
+            cls: 'mina-zen-btn',
+            attr: { title: 'Global Search  Mod+Shift+F', style: btnSize }
+        });
+        setIcon(searchBtn, 'lucide-search');
+        searchBtn.addEventListener('click', () => { new SearchModal(this.app, this.plugin).open(); });
 
         const helpBtn = btnCluster.createEl('button', {
             cls: 'mina-zen-btn',
