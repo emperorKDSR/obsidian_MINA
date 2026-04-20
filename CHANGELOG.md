@@ -1,4 +1,4 @@
-## [1.10.9] - Compass in Command Center
+## [1.11.0] - Compass in Command Center
 
 ### Added
 - **Command Center**: Compass now appears in the SYSTEM cluster nav grid — tap/click to open the Quarterly Compass directly from the hub; uses the existing compass icon already registered in the plugin
