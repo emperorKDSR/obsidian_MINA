@@ -53,3 +53,11 @@
 [2026-04-20T03:33:52+02:00] FIX: add !path.includes('/trash/') guard to isThoughtFile() and isTaskFile() in IndexService
 [2026-04-20T03:33:52+02:00] FILES: src/services/IndexService.ts
 [2026-04-20T03:33:55+02:00] GIT: v1.0.8 committed and pushed to origin/main
+[2026-04-20T04:00:16+02:00] FEATURE v1.0.9: Timeline spotlight carousel, swipe nav, infinite vertical scroll
+[2026-04-20T04:00:16+02:00] FEAT: 5-item perspective spotlight carousel replaces flat date strip (center=accent pill, +/-1 at 0.9 scale, +/-2 at 0.76 scale)
+[2026-04-20T04:00:16+02:00] FEAT: Pointer Events swipe/drag navigation — velocity-based day jumping (1-4 days), touch + mouse unified
+[2026-04-20T04:00:16+02:00] FEAT: Infinite vertical scroll — IntersectionObserver sentinels top/bottom, active-day carousel sync, scroll-position-preserving prepend
+[2026-04-20T04:00:16+02:00] FIX: Duplicate CSS block removed from styles.css; orphaned old class body removed from TimelineTab.ts
+[2026-04-20T04:00:16+02:00] FIX: Carousel scrolls out of view — .mina-tl-wrap switched to position:absolute;inset:0;overflow:hidden; .mina-tl-feed gains min-height:0 (flexbox scroll constraint fix)
+[2026-04-20T04:00:16+02:00] FILES: src/tabs/TimelineTab.ts (full rewrite), styles.css (timeline block replaced)
+[2026-04-20T04:00:16+02:00] DEPLOYED to: C:\Users\57092\OneDrive\wFiles\1 Obsidian\K0000\K0000\.obsidian\plugins\mina_v2
