@@ -2,6 +2,13 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.2.2] - 2026-04-20
+### Patch — Daily Workspace quick-add refresh & delete entries
+
+#### Fixed
+- **Quick-add task auto-refresh** — adding a task via the Quick Add input now clears the field immediately, disables it while saving, and re-renders the task list after 500ms (up from 200ms) to give IndexService time to pick up the new file. The task reliably appears in the sidebar after Enter.
+- **Delete entries from workspace** — a 🗑 delete button now appears on hover alongside the edit pencil for every thought and task entry. Tapping it opens a confirmation prompt; on confirm the file is moved to trash and the entry list re-renders in place. No tab navigation required.
+
 ## [1.2.1] - 2026-04-20
 ### Patch — Daily Workspace inline edit
 

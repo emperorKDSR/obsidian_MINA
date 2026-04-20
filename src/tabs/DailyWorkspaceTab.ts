@@ -4,6 +4,7 @@ import { BaseTab } from './BaseTab';
 import type { TaskEntry, ThoughtEntry } from '../types';
 import { isTablet, attachInlineTriggers, parseContextString } from '../utils';
 import { EditEntryModal } from '../modals/EditEntryModal';
+import { ConfirmModal } from '../modals/ConfirmModal';
 
 export class DailyWorkspaceTab extends BaseTab {
     private parentContainer: HTMLElement;
@@ -281,6 +282,8 @@ export class DailyWorkspaceTab extends BaseTab {
             // Hover actions (desktop) + mobile long-press
             if (!Platform.isMobile || isTablet()) {
                 const actionsEl = entryEl.createEl('div', { cls: 'mina-dw-entry-actions' });
+
+                // Edit
                 const editBtn = actionsEl.createEl('button', { cls: 'mina-dw-entry-action-btn', attr: { 'aria-label': 'Edit' } });
                 setIcon(editBtn, 'lucide-pencil');
                 editBtn.addEventListener('click', () => {
@@ -299,7 +302,23 @@ export class DailyWorkspaceTab extends BaseTab {
                             } else {
                                 await this.vault.editThought(entry.filePath, newText.replace(/<br>/g, '\n'), ctxArr);
                             }
-                            setTimeout(() => this.render(this.parentContainer), 200);
+                            setTimeout(() => this.render(this.parentContainer), 500);
+                        }
+                    ).open();
+                });
+
+                // Delete
+                const delBtn = actionsEl.createEl('button', { cls: 'mina-dw-entry-action-btn', attr: { 'aria-label': 'Delete' } });
+                setIcon(delBtn, 'lucide-trash-2');
+                delBtn.style.color = 'var(--text-error)';
+                delBtn.addEventListener('click', () => {
+                    const isTask = item.type === 'task';
+                    new ConfirmModal(
+                        this.app,
+                        `Move this ${isTask ? 'task' : 'thought'} to trash?`,
+                        async () => {
+                            await this.vault.deleteFile(item.entry.filePath, isTask ? 'tasks' : 'thoughts');
+                            setTimeout(() => this.render(this.parentContainer), 500);
                         }
                     ).open();
                 });
@@ -357,10 +376,13 @@ export class DailyWorkspaceTab extends BaseTab {
         }) as HTMLInputElement;
         addInput.addEventListener('keydown', async (e: KeyboardEvent) => {
             if (e.key === 'Enter' && addInput.value.trim()) {
-                await this.vault.createTaskFile(addInput.value.trim(), [], '');
-                new Notice('✓ Task added');
+                const text = addInput.value.trim();
                 addInput.value = '';
-                setTimeout(() => this.render(this.parentContainer), 200);
+                addInput.disabled = true;
+                await this.vault.createTaskFile(text, []);
+                new Notice('✓ Task added');
+                addInput.disabled = false;
+                setTimeout(() => this.render(this.parentContainer), 500);
             }
         });
 
