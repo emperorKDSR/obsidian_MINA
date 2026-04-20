@@ -13,6 +13,7 @@ export class VoiceTab extends BaseTab {
 
     // Recording fields
     private mediaRecorder: MediaRecorder | null = null;
+    private activeStream: MediaStream | null = null; // stored for cleanup
     private audioChunks: Blob[] = [];
     private timerInterval: number | null = null;
     private recordingStartTime: number = 0;
@@ -322,10 +323,12 @@ export class VoiceTab extends BaseTab {
 
     private async startRecording() {
         this.haptic('light');
+        let stream: MediaStream | null = null;
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            this.activeStream = stream;
 
-            // AudioContext for waveform
+            // AudioContext for waveform — failures here must not leak the stream
             try {
                 const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
                 if (AudioCtx) {
@@ -348,14 +351,22 @@ export class VoiceTab extends BaseTab {
 
             this.mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) this.audioChunks.push(e.data); };
             this.mediaRecorder.onstop = async () => {
-                stream.getTracks().forEach(t => t.stop());
+                // Always stop tracks in onstop — the definitive cleanup point for normal flow
+                this.activeStream?.getTracks().forEach(t => t.stop());
+                this.activeStream = null;
                 this.stopWaveform();
                 if (this.timerInterval) { clearInterval(this.timerInterval); this.timerInterval = null; }
                 const blob = new Blob(this.audioChunks, { type: mimeType || 'audio/webm' });
                 const durationMs = Date.now() - this.recordingStartTime;
                 this.view.isRecording = false;
                 this.setState('processing');
-                await this.processRecording(blob, ext, durationMs);
+                try {
+                    await this.processRecording(blob, ext, durationMs);
+                } catch (e: any) {
+                    console.error('[MINA VoiceTab] processRecording', e);
+                    new Notice('Recording saved but could not process. Check console.');
+                    this.setState('idle');
+                }
             };
 
             this.mediaRecorder.start();
@@ -363,6 +374,10 @@ export class VoiceTab extends BaseTab {
             this.recordingStartTime = Date.now();
             this.setState('recording');
         } catch (e: any) {
+            // Ensure stream is released on any startup error
+            stream?.getTracks().forEach(t => t.stop());
+            this.activeStream = null;
+            this.stopWaveform();
             console.error('[MINA VoiceTab] mic access', e);
             const friendly = (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError')
                 ? 'Microphone access denied — allow permission in your OS settings.'
@@ -588,9 +603,13 @@ export class VoiceTab extends BaseTab {
         }
         this.stopWaveform();
         if (this.timerInterval) { clearInterval(this.timerInterval); this.timerInterval = null; }
+        // Stop active MediaStream tracks (e.g. if tab switched mid-recording)
+        this.activeStream?.getTracks().forEach(t => t.stop());
+        this.activeStream = null;
         if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
-            this.mediaRecorder.stop();
+            try { this.mediaRecorder.stop(); } catch { /* already stopped */ }
         }
+        this.mediaRecorder = null;
         this.view.isRecording = false;
     }
 
