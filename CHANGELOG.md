@@ -2,7 +2,41 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
-## [1.0.14] - 2026-04-21
+## [1.1.0] - 2026-04-20
+### 🚀 Minor Release — Bill Overview & Capture Bar Overhaul
+
+#### New Features
+- **Bill Overview (Finance Tab redesign)** — complete rebuild of the Financial Ledger into a dedicated "Bill Overview" experience:
+  - **Summary strip** — 4 live metric chips (Overdue, Due Today, Upcoming, Total/Mo) with danger/accent tinting when counts are non-zero
+  - **Smart status cards** — each bill card carries a 4px left stripe and 4% background tint keyed to status: `is-overdue` (red), `is-today` (accent), `is-soon` (amber, ≤7d), `is-upcoming` (neutral), `is-inactive` (desaturated)
+  - **Status badges** — inline pill badges per card: `OVERDUE`, `DUE TODAY`, `In Xd / Tomorrow`, `↻ Recurring`, `PAID`
+  - **Active/All History toggle** — full-width segmented pill on mobile, compact fit-content on desktop via container query
+  - **FAB (mobile) / inline "+ New Bill" (desktop)** — CSS-only visibility swap using Obsidian's `.is-mobile` / `.is-desktop` body classes; FAB respects `env(safe-area-inset-bottom)` for iOS home indicator
+  - **Tap-to-open** — card body opens the vault note directly (`Platform.isMobile ? 'tab' : 'window'`); pay button isolated with `e.stopPropagation()` and a 60×60px invisible tap zone via `::before`
+  - **Empty state** — copy adapts to Active vs All History filter mode; CTA opens `NewDueModal`
+  - **CSS container queries** (`@container mina-bills`) — layout responds to Obsidian panel width, not viewport — 2→4 column summary, full→fit-content toggle, 2→1 line bill name clamp
+  - **RGB fallback tokens** — `--mina-bills-error-rgb` and `--mina-bills-warning-rgb` added to `:root`; Obsidian themes are not guaranteed to expose `--text-error-rgb` / `--text-warning-rgb`
+  - **Mobile-first touch UX** — 44px minimum tap targets throughout; CSS-only ripple on `:active::after`; `-webkit-tap-highlight-color: transparent`; `scale(0.91)` press feedback on pay button; no `mouseenter`/`mouseleave` hover-only states
+
+- **`#` tag trigger in capture bar** — typing `#` in the capture textarea opens a native `SuggestModal` (`ContextSuggestModal`) pre-filtered by typed text, identical UX to Obsidian's `[[` link trigger. `+ Create "#tag"` option available for new tags. Replaces the broken inline DOM-based pill panel.
+
+- **Timeline infinite scroll** — feed loads stacked day sections; `IntersectionObserver` sentinels auto-load ±2 days on scroll; spotlight carousel syncs to currently visible day; prepend preserves scroll position.
+
+- **Timeline perspective carousel** — 5-item header carousel with scale/opacity depth; center item 72px accent; swipe/drag navigation with velocity-based day jumping (Pointer Events API, `touch-action: pan-y`).
+
+#### Fixed
+- **Desktop: letter 'C' blocked in capture textarea** — `onKey` shortcut guard now checks `cap.hasClass('is-expanded')` first; when bar is open no shortcut ever fires
+- **Capture re-render suppression** — `_capturePending` flag prevents `notifyRefresh()` from wiping the DOM during active capture
+- **Tag autocomplete null crash** — `null` entries in `settings.contexts` no longer crash `getSuggestions()`
+- **Timeline — frozen carousel header** — `mina-tl-wrap` uses `position: absolute; inset: 0` + `min-height: 0` on feed flex child
+- **Timeline — deleted entry re-appears** — trash-renamed files excluded from `isThoughtFile()` / `isTaskFile()` path guards
+
+#### Changed
+- Capture textarea font → Calibri; padding reduced; `min-height` 72px
+- Cancel + Capture buttons → equal `flex: 1` size; accent color on active mode toggle
+- `# to tag` static hint removed from chip strip
+
+
 ### Added
 - **Bill Overview — `is-soon` card status** — Bills due within 7 days now receive the `is-soon` CSS class (previously all future bills got `is-upcoming`). Cards with this status show a warning-amber left stripe and a 4% amber background tint for clear visual urgency differentiation.
 - **Bill Overview — card background tints** — Status-aware subtle background washes added: overdue → 4% red, due today → 4% accent, due soon (≤7d) → 4% amber. Inactive/upcoming cards retain neutral background.
