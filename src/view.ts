@@ -79,6 +79,7 @@ export class MinaView extends ItemView {
             case 'review': return "Weekly Review";
             case 'monthly-review': return "Monthly Review";
             case 'voice-note': return "Voice Notes";
+            case 'habits': return "Habits";
             case 'settings': return "Settings";
             case 'timeline': return "Timeline";
             case 'journal': return "Journal";
@@ -143,6 +144,7 @@ export class MinaView extends ItemView {
         else if (tab === 'review') instantiate(import('./tabs/ReviewTab'), 'ReviewTab');
         else if (tab === 'monthly-review') instantiate(import('./tabs/MonthlyReviewTab'), 'MonthlyReviewTab');
         else if (tab === 'voice-note') instantiate(import('./tabs/VoiceTab'), 'VoiceTab');
+        else if (tab === 'habits') instantiate(import('./tabs/HabitsTab'), 'HabitsTab');
         else if (tab === 'settings') instantiate(import('./tabs/SettingsTab'), 'SettingsTab');
         else if (tab === 'timeline') instantiate(import('./tabs/TimelineTab'), 'TimelineTab');
         else if (tab === 'journal') instantiate(import('./tabs/JournalTab'), 'JournalTab');
