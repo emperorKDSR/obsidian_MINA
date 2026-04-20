@@ -239,12 +239,14 @@ export class IndexService {
 
     isThoughtFile(path: string): boolean {
         const folder = (this.settings.thoughtsFolder || '000 Bin/MINA V2').trim();
-        return path.startsWith(folder) && path.endsWith('.md') && !path.includes('/trash/');
+        // Use folder + '/' to prevent prefix collision with sibling folders
+        // e.g. '000 Bin/MINA V2' must NOT match '000 Bin/MINA V2 Tasks/...'
+        return path.startsWith(folder + '/') && path.endsWith('.md') && !path.includes('/trash/');
     }
 
     isTaskFile(path: string): boolean {
         const folder = (this.settings.tasksFolder || '000 Bin/MINA V2 Tasks').trim();
-        return path.startsWith(folder) && path.endsWith('.md') && !path.includes('/trash/');
+        return path.startsWith(folder + '/') && path.endsWith('.md') && !path.includes('/trash/');
     }
 
     getProjects(): string[] {

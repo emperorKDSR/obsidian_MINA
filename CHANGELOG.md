@@ -2,7 +2,14 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
-## [1.2.3] - 2026-04-20
+## [1.2.4] - 2026-04-20
+### Patch — Task/thought folder collision fix & checkbox immediate feedback
+
+#### Fixed
+- **Quick-add task no longer creates a phantom thought** — Root cause: `isThoughtFile()` used a bare `path.startsWith(folder)` check. Since `thoughtsFolder` (`'000 Bin/MINA V2'`) is a string prefix of `tasksFolder` (`'000 Bin/MINA V2 Tasks'`), every task file path returned `true` for `isThoughtFile`. The vault `create` event therefore called `indexThoughtFile` for new task files, adding them to `thoughtIndex` and making them appear in the left writing panel. Fixed by appending a trailing `/` to the folder prefix in both `isThoughtFile` and `isTaskFile`.
+- **Checkbox completes task immediately** — `toggleTask` writes the file but `metadataCache` updates asynchronously. The previous 200ms `setTimeout` re-render saw stale index data and re-rendered the task as still open. Fixed by directly mutating the `taskIndex` entry's `status` and `modified` fields right after `toggleTask` resolves, followed by `rebuildCalculatedState()` and a synchronous re-render. Same fix applied to the mobile peek-bar checkbox.
+
+
 ### Patch — Daily Workspace quick-add reliability & panel separation
 
 #### Fixed

@@ -410,7 +410,14 @@ export class DailyWorkspaceTab extends BaseTab {
                 try {
                     const isDone = task.status !== 'done';
                     await this.vault.toggleTask(task.filePath, isDone);
-                    setTimeout(() => this.render(this.parentContainer), 200);
+                    // Directly mutate index — metadataCache update is async, re-render immediately
+                    const entry = this.index.taskIndex.get(task.filePath);
+                    if (entry) {
+                        entry.status = isDone ? 'done' : 'open';
+                        entry.modified = moment().format('YYYY-MM-DD HH:mm:ss');
+                    }
+                    this.index.rebuildCalculatedState();
+                    this.render(this.parentContainer);
                 } finally {
                     this.view._taskTogglePending--;
                 }
@@ -447,8 +454,14 @@ export class DailyWorkspaceTab extends BaseTab {
             this.view._taskTogglePending++;
             try {
                 await this.vault.toggleTask(nextTask.filePath, true);
+                const entry = this.index.taskIndex.get(nextTask.filePath);
+                if (entry) {
+                    entry.status = 'done';
+                    entry.modified = moment().format('YYYY-MM-DD HH:mm:ss');
+                }
+                this.index.rebuildCalculatedState();
                 new Notice('✓ Done');
-                setTimeout(() => this.render(this.parentContainer), 200);
+                this.render(this.parentContainer);
             } finally {
                 this.view._taskTogglePending--;
             }
