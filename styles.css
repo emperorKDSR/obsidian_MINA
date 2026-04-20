@@ -3622,3 +3622,482 @@
     }
     .mina-dw-writing { scroll-behavior: auto; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VOICE TAB — 5-State Machine UI  (v2.0 — Cross-Platform Redesign)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Shell & Stage ── */
+.mina-voice-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--background-primary);
+    overflow: hidden;
+    position: relative;
+}
+.mina-voice-header {
+    padding: 16px 16px 10px 16px;
+    border-bottom: 1px solid var(--background-modifier-border-faint);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.mina-voice-stage {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px;
+    gap: 20px;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.mina-voice-status {
+    font-size: 0.9em;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-align: center;
+}
+
+/* ── Mic / Stop Button ── */
+.mina-mic-btn {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    border: 1.5px solid var(--background-modifier-border);
+    background: var(--background-secondary-alt);
+    color: var(--interactive-accent);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+    transition: transform 0.1s ease, background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    flex-shrink: 0;
+}
+.mina-mic-btn:active { transform: scale(0.94); }
+.mina-mic-btn .svg-icon { width: 32px; height: 32px; }
+.mina-mic-btn.is-recording {
+    background: #e74c3c;
+    color: #ffffff;
+    border-color: transparent;
+    animation: mina-mic-pulse-ring 2s ease-in-out infinite;
+}
+@keyframes mina-mic-pulse-ring {
+    0%, 100% { box-shadow: 0 0 0 10px rgba(231,76,60,0.16), 0 0 0 20px rgba(231,76,60,0.08); }
+    50%       { box-shadow: 0 0 0 14px rgba(231,76,60,0.22), 0 0 0 28px rgba(231,76,60,0.10); }
+}
+
+/* ── Waveform canvas ── */
+.mina-waveform-wrap {
+    width: 100%;
+    opacity: 0;
+    transition: opacity 0.22s ease;
+}
+.mina-waveform-wrap.is-live { opacity: 1; }
+.mina-waveform-canvas {
+    width: 100%;
+    height: 80px;
+    border-radius: 12px;
+    display: block;
+}
+
+/* ── CSS fallback bars (also used as idle placeholder) ── */
+.mina-wave-bars {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 80px;
+    width: 100%;
+}
+.mina-wave-bar {
+    width: 5px;
+    border-radius: 3px;
+    background: var(--interactive-accent);
+    animation: mina-bar-pulse 0.5s ease-in-out infinite alternate;
+    transform-origin: center;
+}
+.mina-wave-bar:nth-child(1) { height: 14px; animation-duration: 0.45s; animation-delay: 0s; }
+.mina-wave-bar:nth-child(2) { height: 22px; animation-duration: 0.52s; animation-delay: 0.1s; }
+.mina-wave-bar:nth-child(3) { height: 36px; animation-duration: 0.40s; animation-delay: 0.05s; }
+.mina-wave-bar:nth-child(4) { height: 28px; animation-duration: 0.58s; animation-delay: 0.15s; }
+.mina-wave-bar:nth-child(5) { height: 18px; animation-duration: 0.50s; animation-delay: 0.08s; }
+.mina-wave-bar:nth-child(6) { height: 32px; animation-duration: 0.44s; animation-delay: 0.12s; }
+.mina-wave-bar:nth-child(7) { height: 16px; animation-duration: 0.56s; animation-delay: 0.03s; }
+@keyframes mina-bar-pulse {
+    from { transform: scaleY(0.25); opacity: 0.45; }
+    to   { transform: scaleY(1.00); opacity: 1.00; }
+}
+.mina-wave-bars.is-idle .mina-wave-bar {
+    opacity: 0.18;
+    animation-play-state: paused;
+    transform: scaleY(0.4);
+}
+
+/* ── Timer + REC indicator ── */
+.mina-voice-timer-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.mina-voice-timer-row.is-visible { opacity: 1; }
+.mina-rec-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-error, #e74c3c);
+    animation: mina-rec-blink 1s ease-in-out infinite;
+}
+@keyframes mina-rec-blink { 0%,100% { opacity: 1; } 50% { opacity: 0.18; } }
+.mina-rec-label {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.16em;
+    color: var(--text-error, #e74c3c);
+    text-transform: uppercase;
+}
+.mina-voice-timer {
+    font-family: var(--font-monospace);
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text-normal);
+    transition: color 0.3s;
+}
+.mina-voice-timer.is-long { color: var(--text-error, #e74c3c); }
+
+/* ── Processing ── */
+.mina-voice-spinner {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid var(--background-modifier-border);
+    border-top-color: var(--interactive-accent);
+    animation: mina-spin 0.8s linear infinite;
+}
+@keyframes mina-spin { to { transform: rotate(360deg); } }
+.mina-processing-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-normal);
+    text-align: center;
+}
+.mina-processing-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* ── Review State ── */
+.mina-vs-reviewing {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+    gap: 10px;
+    width: 100%;
+}
+.mina-transcript-section-label {
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text-faint);
+}
+.mina-source-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border-faint);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-monospace);
+    color: var(--text-faint);
+    cursor: pointer;
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mina-source-badge .svg-icon { width: 11px; height: 11px; flex-shrink: 0; }
+.mina-transcript-card {
+    background: var(--background-secondary-alt);
+    border: 1px solid var(--background-modifier-border-faint);
+    border-radius: 16px;
+    padding: 14px 16px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.mina-transcript-card:focus-within {
+    border-color: var(--interactive-accent);
+    box-shadow: 0 0 0 3px rgba(var(--interactive-accent-rgb, 124,58,237), 0.10);
+}
+.mina-transcript-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 120px;
+    max-height: calc(100dvh - 340px);
+    background: transparent;
+    border: none;
+    resize: none;
+    font-size: 16px; /* 16px minimum on iOS to prevent auto-zoom */
+    line-height: 1.6;
+    color: var(--text-normal);
+    font-family: inherit;
+    outline: none;
+    padding: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.mina-edit-hint {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--text-faint);
+    transition: opacity 0.3s;
+}
+.mina-edit-hint .svg-icon { width: 11px; height: 11px; }
+.mina-edit-hint.is-hidden { opacity: 0; pointer-events: none; }
+
+/* ── CTA Strip ── */
+.mina-voice-cta {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    background: var(--background-primary);
+    border-top: 1px solid var(--background-modifier-border-faint);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+}
+.mina-voice-cta.is-visible { transform: translateY(0); }
+
+.mina-cta-thought {
+    flex: 1;
+    height: 56px;
+    min-height: 56px;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    transition: transform 0.1s ease, opacity 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+.mina-cta-thought:active { transform: scale(0.96); opacity: 0.88; }
+.mina-cta-thought-icon { font-size: 16px; line-height: 1; }
+
+.mina-cta-task {
+    flex: 1;
+    height: 56px;
+    min-height: 56px;
+    background: transparent;
+    color: var(--interactive-accent);
+    border: 1.5px solid var(--interactive-accent);
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    transition: background 0.15s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+.mina-cta-task:active { background: rgba(124,58,237,0.10); transform: scale(0.96); }
+.mina-cta-task-icon { font-size: 16px; line-height: 1; }
+
+.mina-cta-discard {
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    min-height: 56px;
+    flex-shrink: 0;
+    background: transparent;
+    color: var(--text-error, #e74c3c);
+    border: 1.5px solid var(--text-error, #e74c3c);
+    border-radius: 16px;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+.mina-cta-discard:active { background: rgba(231,76,60,0.12); transform: scale(0.96); }
+
+/* ── Toast ── */
+.mina-voice-toast {
+    position: absolute;
+    bottom: calc(env(safe-area-inset-bottom, 16px) + 80px);
+    left: 50%;
+    transform: translateX(-50%) translateY(16px);
+    opacity: 0;
+    background: var(--background-secondary-alt);
+    border: 1px solid var(--background-modifier-border-faint);
+    border-radius: 12px;
+    padding: 11px 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-normal);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 100;
+    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.22s ease;
+}
+.mina-voice-toast.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.mina-voice-toast.is-dismissing {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* ── Clips Section ── */
+.mina-voice-clips-section {
+    width: 100%;
+    border-top: 1px solid var(--background-modifier-border-faint);
+    padding-top: 16px;
+    margin-top: 8px;
+}
+.mina-voice-clips-label {
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text-faint);
+    margin-bottom: 10px;
+    padding: 0 4px;
+}
+.mina-voice-clips-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 280px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.mina-clip-row {
+    min-height: 52px;
+    padding: 0 12px;
+    background: var(--background-secondary-alt);
+    border: 1px solid var(--background-modifier-border-faint);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+.mina-clip-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-normal);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+.mina-clip-transcribe-btn {
+    height: 44px; /* critical fix: was ~28px on mobile */
+    min-width: 88px;
+    padding: 0 14px;
+    background: transparent;
+    border: 1.5px solid var(--interactive-accent);
+    color: var(--interactive-accent);
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: background 0.15s, transform 0.1s;
+}
+.mina-clip-transcribe-btn:active { background: rgba(124,58,237,0.10); transform: scale(0.96); }
+.mina-clip-transcribe-btn:disabled { opacity: 0.5; pointer-events: none; }
+
+/* ── Desktop overrides (≥768px) ── */
+@media (min-width: 768px) {
+    .mina-mic-btn { width: 80px; height: 80px; }
+    .mina-voice-timer { font-size: 30px; }
+    .mina-voice-cta {
+        position: static;
+        transform: none !important;
+        border-top: none;
+        padding: 12px 0 0 0;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+    .mina-voice-cta.is-visible { transform: none !important; }
+    .mina-transcript-textarea { max-height: 300px; font-size: 14px; }
+    .mina-voice-clips-list { max-height: 200px; }
+}
+
+/* ── XS screens (≤340px) ── */
+@media (max-width: 340px) {
+    .mina-mic-btn { width: 80px; height: 80px; }
+    .mina-voice-timer { font-size: 28px; }
+    .mina-cta-thought, .mina-cta-task { height: 52px; font-size: 11px; }
+    .mina-cta-discard { width: 52px; height: 52px; }
+    .mina-cta-thought-icon, .mina-cta-task-icon { display: none; }
+}
+
+/* ── Large mobile (481–767px) ── */
+@media (min-width: 481px) and (max-width: 767px) {
+    .mina-mic-btn { width: 96px; height: 96px; }
+    .mina-voice-timer { font-size: 40px; }
+    .mina-cta-thought, .mina-cta-task { height: 60px; font-size: 14px; flex-direction: row; gap: 8px; }
+    .mina-cta-discard { width: 60px; height: 60px; }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+    .mina-wave-bar { animation: none; height: 8px; }
+    .mina-mic-btn.is-recording { animation: none; }
+    .mina-rec-dot { animation: none; opacity: 1; }
+    .mina-voice-spinner { animation-duration: 2s; }
+}

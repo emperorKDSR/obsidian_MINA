@@ -2,6 +2,53 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.3.0] - 2026-04-20
+### Feat — 5-State Voice Capture Redesign
+
+Complete rewrite of the Voice tab as a best-in-class, cross-platform voice capture system.
+
+**State Machine Architecture:**
+- Replaced the single-screen UI with a 5-state DOM machine: `idle → recording → processing → reviewing → confirmed`
+- `data-voice-state` attribute drives CSS visibility — zero JS DOM thrashing on transitions
+
+**New Features:**
+- **Auto-transcription**: Recording automatically transcribes after stopping — no manual Transcribe step needed
+- **Inline Review state**: Editable transcript card with source badge (tap to play audio) — no modal interruption
+- **Dual CTA routing**: Save as Thought (💭) or Create Task (✓) directly from review state
+- **Sidecar `.md` files**: Each recording now saves a metadata file alongside the audio (duration, transcript, created)
+- **Live waveform**: Real-time AudioContext FFT canvas during recording; 7-bar CSS animation fallback
+- **Keyboard shortcuts** (desktop): `Space` = record/stop, `T` = save thought, `K` = create task, `Esc` = discard — suppressed when textarea focused
+- **Long-press mic** (500ms): Start recording immediately without releasing touch
+- **Swipe-left transcript**: Discard with rubber-band visual feedback (>80px, <400ms)
+- **Swipe-up CTA strip**: Opens full EditEntryModal for power users who need context/due-date tagging
+- **Haptic feedback** (`navigator.vibrate`) on all state transitions — graceful no-op on iOS
+
+**Mobile UX Fixes:**
+- Transcribe button: **28px → 44px** (was below minimum touch target)
+- Mic button: 88×88px (up from 120×120px monolithic style — now proper 88px with accessibility sizing)
+- CTA strip: sticky bottom with `env(safe-area-inset-bottom)` — safe for iPhone notch/home indicator
+- Timer: monospace 36px, live REC dot with blink animation
+- Tablet guard: `isTablet()` → skips inline CTA, routes to EditEntryModal
+
+**CSS additions (~250 lines):**
+- `.mina-voice-shell`, `.mina-voice-stage`, `.mina-voice-header`
+- `.mina-mic-btn` + `.is-recording` + `@keyframes mina-mic-pulse-ring`
+- `.mina-wave-bars`, `.mina-wave-bar` + `@keyframes mina-bar-pulse` (+ `.is-idle` paused state)
+- `.mina-waveform-canvas`, `.mina-waveform-wrap.is-live`
+- `.mina-voice-timer-row`, `.mina-rec-dot`, `.mina-rec-label`, `.mina-voice-timer`
+- `.mina-voice-spinner` + `@keyframes mina-spin`
+- `.mina-vs-reviewing`, `.mina-transcript-card`, `.mina-transcript-textarea` (16px iOS zoom fix)
+- `.mina-source-badge`, `.mina-edit-hint`
+- `.mina-voice-cta`, `.mina-cta-thought`, `.mina-cta-task`, `.mina-cta-discard`
+- `.mina-voice-toast` + spring entrance animation
+- `.mina-clip-row`, `.mina-clip-transcribe-btn` (44px height fix)
+- Breakpoint overrides: XS ≤340px, LG 481–767px, desktop ≥768px
+- `@media (prefers-reduced-motion)` block
+
+**Clips panel:**
+- 8 clips shown (was 10) — cleaner in sidebar
+- Transcribing from clips now routes to the Review state (not EditEntryModal directly)
+
 ## [1.2.8] - 2026-04-20
 ### Chore — Remove 5 orphaned tabs
 

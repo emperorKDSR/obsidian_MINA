@@ -120,3 +120,12 @@ export interface DueEntry {
 }
 
 export type FileOrCreate = TFile | string;
+
+export type VoiceState = 'idle' | 'recording' | 'processing' | 'reviewing' | 'confirmed';
+
+export interface ReviewData {
+    transcript: string;
+    clipFile: TFile | null;
+    durationMs: number;
+    clipFileName: string;
+}
