@@ -3,6 +3,7 @@ import MinaPlugin from '../main';
 import { isTablet, parseNaturalDate, parseContextString, attachInlineTriggers, attachMediaPasteHandler } from '../utils';
 import { FileSuggestModal } from './FileSuggestModal';
 import { ContextSuggestModal } from './ContextSuggestModal';
+import { ProjectPickerModal } from './ProjectPickerModal';
 import type { RecurrenceRule } from '../types';
 
 type CaptureMode = 'thought' | 'task';
@@ -13,12 +14,24 @@ export class EditEntryModal extends Modal {
     initialDueDate: string | null;
     isTask: boolean;
     plugin: MinaPlugin;
-    onSave: (newText: string, newContexts: string, newDueDate: string | null, project: string | null, recurrence?: RecurrenceRule | null) => void;
+    onSave: (
+        newText: string,
+        newContexts: string,
+        newDueDate: string | null,
+        project: string | null,
+        recurrence?: RecurrenceRule | null,
+        priority?: 'high' | 'medium' | 'low' | null,
+        energy?: 'high' | 'medium' | 'low' | null,
+        status?: 'open' | 'waiting' | 'someday'
+    ) => void;
     customTitle?: string;
     stayOpen: boolean;
 
     currentProject: string | null = null;
     currentRecurrence: RecurrenceRule | null = null;
+    currentPriority: 'high' | 'medium' | 'low' | null = null;
+    currentEnergy: 'high' | 'medium' | 'low' | null = null;
+    currentStatus: 'open' | 'waiting' | 'someday' = 'open';
     classificationTimeout: ReturnType<typeof setTimeout> | null = null;
 
     private currentMode: CaptureMode;
@@ -33,7 +46,16 @@ export class EditEntryModal extends Modal {
         initialContext: string,
         initialDueDate: string | null,
         isTask: boolean,
-        onSave: (newText: string, newContexts: string, newDueDate: string | null, project: string | null, recurrence?: RecurrenceRule | null) => void,
+        onSave: (
+            newText: string,
+            newContexts: string,
+            newDueDate: string | null,
+            project: string | null,
+            recurrence?: RecurrenceRule | null,
+            priority?: 'high' | 'medium' | 'low' | null,
+            energy?: 'high' | 'medium' | 'low' | null,
+            status?: 'open' | 'waiting' | 'someday'
+        ) => void,
         customTitle?: string,
         stayOpen: boolean = false
     ) {
@@ -120,8 +142,55 @@ export class EditEntryModal extends Modal {
             if (this.initialContexts.length === 0) {
                 chipStrip.createSpan({ text: '# to tag', cls: 'mina-chip-hint' });
             }
+            // Project pill
+            const allProjects = Array.from(this.plugin.index.projectIndex.values())
+                .filter(p => p.status !== 'archived');
+            if (allProjects.length > 0 || this.currentProject) {
+                const openProjectPicker = () => {
+                    new ProjectPickerModal(this.app, allProjects, (picked) => {
+                        this.currentProject = picked ? picked.name : null;
+                        renderChips();
+                    }).open();
+                };
+                if (this.currentProject) {
+                    const proj = allProjects.find(p => p.name === this.currentProject || p.id === this.currentProject);
+                    const projPill = chipStrip.createEl('span', {
+                        cls: 'mina-mobile-chip mina-project-pill mina-project-pill--active'
+                    });
+                    if (proj?.color) {
+                        projPill.style.setProperty('--project-color', proj.color);
+                    }
+                    const dot = projPill.createEl('span', { cls: 'mina-project-pill-dot' });
+                    projPill.createEl('span', { text: this.currentProject, cls: 'mina-project-pill-name' });
+                    const xBtn = projPill.createEl('button', { text: '×', cls: 'mina-project-pill-x' });
+                    xBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.currentProject = null;
+                        renderChips();
+                    });
+                    projPill.addEventListener('click', (e) => {
+                        if ((e.target as HTMLElement).classList.contains('mina-project-pill-x')) return;
+                        openProjectPicker();
+                    });
+                } else {
+                    const projPill = chipStrip.createEl('button', {
+                        cls: 'mina-mobile-chip mina-project-pill mina-project-pill--empty',
+                        attr: { 'aria-label': 'Assign project' }
+                    });
+                    projPill.createEl('span', { text: '◈', cls: 'mina-project-pill-icon' });
+                    projPill.createEl('span', { text: 'Project', cls: 'mina-project-pill-label' });
+                    projPill.addEventListener('click', openProjectPicker);
+                }
+            }
         };
         renderChips();
+
+        // 3b. Meta bar (priority / energy / status) — task-only, collapsible
+        const metaBar = dock.createDiv({ cls: `mina-task-meta-bar${this.currentMode === 'task' ? ' is-visible' : ''}` });
+        const { setPriority, setEnergy, setStatus } = this._buildMetaStrip(metaBar, false);
+        if (this.currentPriority) setPriority(this.currentPriority);
+        if (this.currentEnergy) setEnergy(this.currentEnergy);
+        if (this.currentStatus !== 'open') setStatus(this.currentStatus);
 
         // 4. Action row
         const actionRow = dock.createDiv({ cls: 'mina-float-action-row' });
@@ -137,6 +206,11 @@ export class EditEntryModal extends Modal {
             thoughtBtn.toggleClass('is-active', mode === 'thought');
             taskBtn.toggleClass('is-active', mode === 'task');
             dateZone.toggleClass('is-visible', mode === 'task');
+            metaBar.toggleClass('is-visible', mode === 'task');
+            if (mode === 'thought') {
+                this.currentPriority = null; this.currentEnergy = null; this.currentStatus = 'open';
+                setPriority(null); setEnergy(null); setStatus('open');
+            }
             if (!this.stayOpen) saveBtn.textContent = saveLabel();
         };
         thoughtBtn.addEventListener('click', () => switchMode('thought'));
@@ -157,7 +231,10 @@ export class EditEntryModal extends Modal {
             const contexts = this.initialContexts.map(c => `#${c}`).join(' ');
             const due = this.currentMode === 'task' ? (this.currentDueDate ?? null) : null;
             const recur = this.currentMode === 'task' ? this.currentRecurrence : null;
-            this.onSave(text, contexts, due, this.currentProject, recur);
+            const priority = this.currentMode === 'task' ? this.currentPriority : null;
+            const energy = this.currentMode === 'task' ? this.currentEnergy : null;
+            const status = this.currentMode === 'task' ? this.currentStatus : 'open';
+            this.onSave(text, contexts, due, this.currentProject, recur, priority, energy, status);
             if (this.stayOpen) { textArea.value = ''; textArea.focus(); new Notice('Capture saved.'); }
             else this.close();
         };
@@ -297,6 +374,181 @@ export class EditEntryModal extends Modal {
         return { setRecurrence };
     }
 
+    /** ── TASK META STRIP (Priority · Energy · Status) ── */
+    private _buildMetaStrip(container: HTMLElement, compact: boolean): {
+        setPriority: (v: 'high' | 'medium' | 'low' | null) => void;
+        setEnergy:   (v: 'high' | 'medium' | 'low' | null) => void;
+        setStatus:   (v: 'open' | 'waiting' | 'someday')   => void;
+    } {
+        const strip = container.createDiv({ cls: 'mina-meta-strip' });
+
+        const priValues:    Array<'low' | 'medium' | 'high'> = ['low', 'medium', 'high'];
+        const priLabels:    Record<string, string>            = { low: '!', medium: '!!', high: '!!!' };
+        const energyValues: Array<'low' | 'medium' | 'high'> = ['low', 'medium', 'high'];
+        const energyLabels: Record<string, string>            = { low: '🌙', medium: '〰', high: '⚡' };
+        const statusValues: Array<'waiting' | 'someday'>      = ['waiting', 'someday'];
+
+        const priBtns:    HTMLButtonElement[] = [];
+        const energyBtns: HTMLButtonElement[] = [];
+        const statusBtns: HTMLButtonElement[] = [];
+
+        // Sync helpers — declared before button creation; arrays populated below via push()
+        const syncPriority = () => {
+            priBtns.forEach(b => {
+                const active = b.getAttribute('data-priority') === this.currentPriority;
+                b.toggleClass('is-active', active);
+                b.setAttribute('aria-pressed', String(active));
+            });
+        };
+        const syncEnergy = () => {
+            energyBtns.forEach(b => {
+                const active = b.getAttribute('data-energy') === this.currentEnergy;
+                b.toggleClass('is-active', active);
+                b.setAttribute('aria-pressed', String(active));
+            });
+        };
+        const syncStatus = () => {
+            statusBtns.forEach(b => {
+                const active = b.getAttribute('data-status') === this.currentStatus;
+                b.toggleClass('is-active', active);
+                b.setAttribute('aria-pressed', String(active));
+            });
+        };
+
+        if (compact) {
+            // ── Desktop: 3 labelled rows ──────────────────────
+
+            // Priority row
+            const priRow = strip.createDiv({ cls: 'mina-meta-row', attr: { 'data-row': 'priority' } });
+            const priIcon = priRow.createDiv({ cls: 'mina-meta-icon' });
+            setIcon(priIcon, 'flag');
+            priValues.forEach(val => {
+                const btn = priRow.createEl('button', {
+                    text: priLabels[val],
+                    cls: 'mina-meta-btn mina-meta-btn--pri',
+                    attr: { 'data-priority': val, 'aria-pressed': 'false', 'aria-label': `Priority: ${val}` }
+                }) as HTMLButtonElement;
+                priBtns.push(btn);
+                btn.addEventListener('click', () => {
+                    if ('vibrate' in navigator) navigator.vibrate(8);
+                    this.currentPriority = this.currentPriority === val ? null : val;
+                    syncPriority();
+                });
+                btn.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowRight') { e.preventDefault(); priBtns[priBtns.indexOf(btn) + 1]?.focus(); }
+                    if (e.key === 'ArrowLeft')  { e.preventDefault(); priBtns[priBtns.indexOf(btn) - 1]?.focus(); }
+                });
+            });
+
+            // Energy row
+            const energyRow = strip.createDiv({ cls: 'mina-meta-row', attr: { 'data-row': 'energy' } });
+            const energyIcon = energyRow.createDiv({ cls: 'mina-meta-icon' });
+            setIcon(energyIcon, 'zap');
+            energyValues.forEach(val => {
+                const btn = energyRow.createEl('button', {
+                    text: energyLabels[val],
+                    cls: 'mina-meta-btn mina-meta-btn--energy',
+                    attr: { 'data-energy': val, 'aria-pressed': 'false', 'aria-label': `Energy: ${val}` }
+                }) as HTMLButtonElement;
+                energyBtns.push(btn);
+                btn.addEventListener('click', () => {
+                    if ('vibrate' in navigator) navigator.vibrate(8);
+                    this.currentEnergy = this.currentEnergy === val ? null : val;
+                    syncEnergy();
+                });
+                btn.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowRight') { e.preventDefault(); energyBtns[energyBtns.indexOf(btn) + 1]?.focus(); }
+                    if (e.key === 'ArrowLeft')  { e.preventDefault(); energyBtns[energyBtns.indexOf(btn) - 1]?.focus(); }
+                });
+            });
+
+            // Status row
+            const statusRow = strip.createDiv({ cls: 'mina-meta-row', attr: { 'data-row': 'status' } });
+            const statusIcon = statusRow.createDiv({ cls: 'mina-meta-icon' });
+            setIcon(statusIcon, 'circle-dot');
+            const statusLabelsCompact: Record<string, string> = { waiting: 'WAITING', someday: 'SOMEDAY' };
+            statusValues.forEach(val => {
+                const btn = statusRow.createEl('button', {
+                    text: statusLabelsCompact[val],
+                    cls: 'mina-meta-btn mina-meta-btn--status',
+                    attr: { 'data-status': val, 'aria-pressed': 'false', 'aria-label': `Status: ${val}` }
+                }) as HTMLButtonElement;
+                statusBtns.push(btn);
+                btn.addEventListener('click', () => {
+                    if ('vibrate' in navigator) navigator.vibrate(8);
+                    this.currentStatus = this.currentStatus === val ? 'open' : val;
+                    syncStatus();
+                });
+                btn.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowRight') { e.preventDefault(); statusBtns[statusBtns.indexOf(btn) + 1]?.focus(); }
+                    if (e.key === 'ArrowLeft')  { e.preventDefault(); statusBtns[statusBtns.indexOf(btn) - 1]?.focus(); }
+                });
+            });
+
+        } else {
+            // ── Mobile: flat horizontal scrollable ───────────
+
+            // Priority section
+            strip.createEl('span', { text: 'PRI', cls: 'mina-meta-label' });
+            priValues.forEach(val => {
+                const btn = strip.createEl('button', {
+                    text: priLabels[val],
+                    cls: 'mina-meta-btn mina-meta-btn--pri',
+                    attr: { 'data-priority': val, 'aria-pressed': 'false', 'aria-label': `Priority: ${val}` }
+                }) as HTMLButtonElement;
+                priBtns.push(btn);
+                btn.addEventListener('click', () => {
+                    if ('vibrate' in navigator) navigator.vibrate(8);
+                    this.currentPriority = this.currentPriority === val ? null : val;
+                    syncPriority();
+                });
+            });
+
+            strip.createEl('span', { cls: 'mina-meta-divider' });
+
+            // Energy section
+            strip.createEl('span', { text: 'NRG', cls: 'mina-meta-label' });
+            energyValues.forEach(val => {
+                const btn = strip.createEl('button', {
+                    text: energyLabels[val],
+                    cls: 'mina-meta-btn mina-meta-btn--energy',
+                    attr: { 'data-energy': val, 'aria-pressed': 'false', 'aria-label': `Energy: ${val}` }
+                }) as HTMLButtonElement;
+                energyBtns.push(btn);
+                btn.addEventListener('click', () => {
+                    if ('vibrate' in navigator) navigator.vibrate(8);
+                    this.currentEnergy = this.currentEnergy === val ? null : val;
+                    syncEnergy();
+                });
+            });
+
+            strip.createEl('span', { cls: 'mina-meta-divider' });
+
+            // Status section
+            strip.createEl('span', { text: 'STATUS', cls: 'mina-meta-label' });
+            const statusLabelsMobile: Record<string, string> = { waiting: '⏳ WAIT', someday: '☁ SMDY' };
+            statusValues.forEach(val => {
+                const btn = strip.createEl('button', {
+                    text: statusLabelsMobile[val],
+                    cls: 'mina-meta-btn mina-meta-btn--status',
+                    attr: { 'data-status': val, 'aria-pressed': 'false', 'aria-label': `Status: ${val}` }
+                }) as HTMLButtonElement;
+                statusBtns.push(btn);
+                btn.addEventListener('click', () => {
+                    if ('vibrate' in navigator) navigator.vibrate(8);
+                    this.currentStatus = this.currentStatus === val ? 'open' : val;
+                    syncStatus();
+                });
+            });
+        }
+
+        const setPriority = (v: 'high' | 'medium' | 'low' | null) => { this.currentPriority = v; syncPriority(); };
+        const setEnergy   = (v: 'high' | 'medium' | 'low' | null) => { this.currentEnergy   = v; syncEnergy();   };
+        const setStatus   = (v: 'open' | 'waiting' | 'someday')   => { this.currentStatus   = v; syncStatus();   };
+
+        return { setPriority, setEnergy, setStatus };
+    }
+
     /** ── INLINE TRIGGERS (@date, [[link, #tag, + checklist) ── */
     private _attachInlineTriggers(textArea: HTMLTextAreaElement, setDueDate: (d: string) => void) {
         attachInlineTriggers(
@@ -406,6 +658,13 @@ export class EditEntryModal extends Modal {
         const { setRecurrence: setRecurrenceDesktop } = this._buildRecurStrip(recurZone, true);
         if (this.currentRecurrence) setRecurrenceDesktop(this.currentRecurrence);
 
+        // Meta zone — priority / energy / status (desktop compact 3-row layout)
+        const metaZone = canvas.createDiv({ cls: `mina-meta-zone${this.currentMode === 'task' ? ' is-visible' : ''}` });
+        const { setPriority, setEnergy, setStatus } = this._buildMetaStrip(metaZone, true);
+        if (this.currentPriority) setPriority(this.currentPriority);
+        if (this.currentEnergy) setEnergy(this.currentEnergy);
+        if (this.currentStatus !== 'open') setStatus(this.currentStatus);
+
         // Dock
         const dock = contentEl.createEl('div', { cls: 'mina-edit-modal-dock' });
 
@@ -445,18 +704,45 @@ export class EditEntryModal extends Modal {
         };
         renderChips();
 
-        // Project chip
-        const projectArea = chipArea.createDiv();
+        // Project chip (desktop)
+        const projectArea = chipArea.createDiv('mina-proj-zone');
+        const allProjects = Array.from(this.plugin.index.projectIndex.values())
+            .filter(p => p.status !== 'archived');
         const updateProjectChip = (project: string | null) => {
             projectArea.empty();
-            if (!project) return;
-            const pChip = projectArea.createEl('span', {
-                text: `[${project}]`,
-                cls: 'mina-edit-modal-project-chip'
-            });
-            pChip.addEventListener('click', () => { this.currentProject = null; updateProjectChip(null); });
+            if (allProjects.length === 0 && !project) return;
+            const openProjPicker = () => {
+                new ProjectPickerModal(this.app, allProjects, (picked) => {
+                    this.currentProject = picked ? picked.name : null;
+                    updateProjectChip(this.currentProject);
+                }).open();
+            };
+            if (project) {
+                const proj = allProjects.find(p => p.name === project || p.id === project);
+                const pChip = projectArea.createEl('span', {
+                    cls: 'mina-edit-modal-project-chip mina-proj-chip--active'
+                });
+                if (proj?.color) pChip.style.setProperty('--project-color', proj.color);
+                const dot = pChip.createEl('span', { cls: 'mina-project-pill-dot' });
+                pChip.createEl('span', { text: project, cls: 'mina-proj-chip-name' });
+                const x = pChip.createEl('span', { text: '×', cls: 'mina-mobile-chip-x' });
+                x.addEventListener('click', (e) => { e.stopPropagation(); this.currentProject = null; updateProjectChip(null); });
+                pChip.addEventListener('click', (e) => {
+                    if ((e.target as HTMLElement).classList.contains('mina-mobile-chip-x')) return;
+                    openProjPicker();
+                });
+            } else {
+                const pickBtn = projectArea.createEl('button', {
+                    cls: 'mina-recur-btn mina-proj-pick-btn',
+                    attr: { 'aria-label': 'Assign project', title: 'Assign project' }
+                });
+                const icon = pickBtn.createEl('span');
+                setIcon(icon, 'folder');
+                pickBtn.createEl('span', { text: 'Project' });
+                pickBtn.addEventListener('click', openProjPicker);
+            }
         };
-        if (this.currentProject) updateProjectChip(this.currentProject);
+        updateProjectChip(this.currentProject);
 
         // Actions
         const actions = dock.createDiv({ cls: 'mina-capture-desktop-actions' });
@@ -472,7 +758,12 @@ export class EditEntryModal extends Modal {
             taskBtn.toggleClass('is-active', mode === 'task');
             dateZone.toggleClass('is-visible', mode === 'task');
             recurZone.toggleClass('is-visible', mode === 'task');
-            if (mode === 'thought') this.currentRecurrence = null;
+            metaZone.toggleClass('is-visible', mode === 'task');
+            if (mode === 'thought') {
+                this.currentRecurrence = null;
+                this.currentPriority = null; this.currentEnergy = null; this.currentStatus = 'open';
+                setPriority(null); setEnergy(null); setStatus('open');
+            }
             if (!this.stayOpen) saveBtn.textContent = saveLabel();
         };
         thoughtBtn.addEventListener('click', () => switchMode('thought'));
@@ -493,7 +784,10 @@ export class EditEntryModal extends Modal {
             const contexts = this.initialContexts.map(c => `#${c}`).join(' ');
             const due = this.currentMode === 'task' ? (this.currentDueDate ?? null) : null;
             const recur = this.currentMode === 'task' ? this.currentRecurrence : null;
-            this.onSave(text, contexts, due, this.currentProject, recur);
+            const priority = this.currentMode === 'task' ? this.currentPriority : null;
+            const energy = this.currentMode === 'task' ? this.currentEnergy : null;
+            const status = this.currentMode === 'task' ? this.currentStatus : 'open';
+            this.onSave(text, contexts, due, this.currentProject, recur, priority, energy, status);
             if (this.stayOpen) { textArea.value = ''; textArea.focus(); new Notice('Capture saved.'); }
             else this.close();
         };
