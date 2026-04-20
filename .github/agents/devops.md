@@ -71,7 +71,31 @@ Before compiling and shipping any release, the following steps **must** be compl
 
 # Logging & reporting
 - Append full command details and results to .copilot/devops-log.txt.
-- After each operation, report a concise summary (<=6 lines) to the user and update SQL todos accordingly.
+- After each operation, update SQL todos accordingly.
+
+## 📦 Ship Report (mandatory after every release)
+
+After every successful build + deploy + push, output a structured **Ship Report** using this exact template:
+
+```
+**v<version> shipped** ✅
+
+### Fixes / Features
+- **<Area>**: <what changed and why>
+- ...
+
+### DevOps
+- Branch: `<feature-branch>` → merged to `main`
+- Tag: `v<version>`
+- Pushed: `main` + `v<version>` tag to `<remote>`
+- Deployed to vault plugin folder
+```
+
+Rules:
+- The **Fixes / Features** section mirrors the CHANGELOG entry for this release — one bullet per logical change, using bold area labels (e.g. **Mobile**, **Tablet**, **Finance**, **AI**).
+- The **DevOps** section is always present and always lists branch, tag, push target, and deploy confirmation.
+- Keep each bullet to a single concise sentence — enough to understand *what* changed without reading the diff.
+- This report is the final output of every release cycle. Nothing ships silently.
 
 # Safety
 - If git is missing, report and provide remediation steps.
