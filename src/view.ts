@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, moment, TFile, Platform } from 'obsidian';
+import { ItemView, WorkspaceLeaf, moment, TFile, Platform, ViewStateResult } from 'obsidian';
 import { VIEW_TYPE_MINA, KATANA_ICON_ID } from './constants';
 import type MinaPlugin from './main';
 import { BaseTab } from './tabs/BaseTab';
@@ -100,6 +100,19 @@ export class MinaView extends ItemView {
     }
 
     async onClose() {}
+
+    /** Persist activeTab + isDedicated so Obsidian can restore the window on reload. */
+    getState(): Record<string, unknown> {
+        return { activeTab: this.activeTab, isDedicated: this.isDedicated };
+    }
+
+    /** Called by Obsidian after setViewState() — apply activeTab/isDedicated then re-render. */
+    async setState(state: any, result: ViewStateResult): Promise<void> {
+        if (state?.activeTab) this.activeTab = state.activeTab;
+        if (state?.isDedicated !== undefined) this.isDedicated = state.isDedicated;
+        await super.setState(state, result);
+        this.renderView();
+    }
 
     renderView() {
         const container = this.containerEl.children[1] as HTMLElement;

@@ -32,3 +32,7 @@
 [2026-04-20T03:02:16+02:00] RELEASE v1.0.4: navigation buttons open new window on desktop
 [2026-04-20T03:02:16+02:00] FILES CHANGED: src/main.ts (activateView exact-match), src/tabs/CommandCenterTab.ts (nav click -> activateView)
 [2026-04-20T03:02:16+02:00] DEPLOYED to: C:\Users\57092\OneDrive\wFiles\1 Obsidian\K0000\K0000\.obsidian\plugins\mina_v2
+[2026-04-20T03:02:19+02:00] GIT: committed d481f97 and pushed to origin/main
+[2026-04-20T03:15:51+02:00] FIX v1.0.5: MinaView.setState/getState added — new window now opens correct tab
+[2026-04-20T03:15:51+02:00] ROOT CAUSE: setViewState() calls setState() on the view; MinaView had no override so activeTab was never applied, causing new windows to always render 'home'
+[2026-04-20T03:15:51+02:00] FILES CHANGED: src/view.ts (added getState, setState overrides)

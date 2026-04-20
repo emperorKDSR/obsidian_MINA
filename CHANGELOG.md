@@ -2,6 +2,11 @@
 
 All notable changes to MINA V2 will be documented in this file.
 
+## [1.0.5] - 2026-04-20
+
+### Fixed
+- **Navigation — new window renders correct tab** — `MinaView` now overrides `getState()` and `setState()` so Obsidian correctly applies `activeTab` and `isDedicated` when a new window leaf is created via `setViewState()`; previously the new window always rendered the Command Center (home) regardless of which button was clicked
+
 ## [1.0.4] - 2026-04-20
 
 ### Changed
