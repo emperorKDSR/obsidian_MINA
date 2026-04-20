@@ -81,8 +81,11 @@ export class SynthesisTab extends BaseTab {
      * Both fields delegate to existing view.ts fields so they survive
      * view.renderView() calls (which always instantiate a fresh tab instance).
      */
-    private get primedContext(): string | null { return this.view.activeSynthesisContext; }
-    private set primedContext(v: string | null) { this.view.activeSynthesisContext = v; }
+    // Multi-select: array of primed contexts, backed by view state for re-render survival
+    private get primedContexts(): string[] { return this.view.activeSynthesisContexts; }
+    private set primedContexts(v: string[]) { this.view.activeSynthesisContexts = v; }
+    // Convenience: first primed context (for backward-compat echo text)
+    private get primedContext(): string | null { return this.primedContexts[0] ?? null; }
 
     private get feedFilter(): 'no-context' | 'with-context' | 'processed' {
         return this.view.synthesisFeedFilter;
@@ -157,13 +160,30 @@ export class SynthesisTab extends BaseTab {
 
         // ── Primer strip ──────────────────────────────────────────────────────
         const primer = panel.createEl('div', {
-            cls: `mina-syn-ctx-primer${this.primedContext ? ' is-primed' : ''}`,
+            cls: `mina-syn-ctx-primer${this.primedContexts.length > 0 ? ' is-primed' : ''}`,
         });
         this.buildPrimer(primer, shell);
+
+        // ── Search input ──────────────────────────────────────────────────────
+        const searchWrap = panel.createEl('div', { cls: 'mina-syn-ctx-search' });
+        const searchInput = searchWrap.createEl('input', {
+            type: 'text',
+            cls: 'mina-syn-ctx-search-input',
+            attr: { placeholder: 'Search…', spellcheck: 'false' },
+        });
 
         // ── Context list ──────────────────────────────────────────────────────
         const list = panel.createEl('div', { cls: 'mina-syn-ctx-list' });
         this.buildContextList(list, shell);
+
+        // Live filter
+        searchInput.addEventListener('input', () => {
+            const q = searchInput.value.toLowerCase().trim();
+            list.querySelectorAll<HTMLElement>('.mina-syn-ctx-row').forEach((row) => {
+                const name = (row.dataset.ctx || '').toLowerCase();
+                row.style.display = !q || name.includes(q) ? '' : 'none';
+            });
+        });
     }
 
     /**
@@ -172,25 +192,28 @@ export class SynthesisTab extends BaseTab {
      */
     private buildPrimer(primer: HTMLElement, shell: HTMLElement): void {
         primer.empty();
-        primer.className = `mina-syn-ctx-primer${this.primedContext ? ' is-primed' : ''}`;
+        const hasAny = this.primedContexts.length > 0;
+        primer.className = `mina-syn-ctx-primer${hasAny ? ' is-primed' : ''}`;
 
         primer.createEl('span', { text: 'PRIME:', cls: 'mina-syn-ctx-primer-label' });
 
-        if (this.primedContext) {
-            const pill = primer.createEl('div', { cls: 'mina-syn-ctx-primer-pill' });
-            pill.createEl('div', { cls: 'mina-syn-ctx-primer-pill-dot' });
-            pill.createEl('span', { text: this.primedContext });
-
-            const dismiss = pill.createEl('button', {
-                cls: 'mina-syn-ctx-primer-pill-dismiss',
-                attr: { title: 'Deselect', 'aria-label': 'Deselect context' },
-            });
-            dismiss.textContent = '×';
-            dismiss.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.primedContext = null;
-                this.syncAllPrimingStates(shell);
-            });
+        if (hasAny) {
+            const pillsWrap = primer.createEl('div', { cls: 'mina-syn-ctx-primer-pills' });
+            for (const ctx of this.primedContexts) {
+                const pill = pillsWrap.createEl('div', { cls: 'mina-syn-ctx-primer-pill' });
+                pill.createEl('div', { cls: 'mina-syn-ctx-primer-pill-dot' });
+                pill.createEl('span', { text: ctx });
+                const dismiss = pill.createEl('button', {
+                    cls: 'mina-syn-ctx-primer-pill-dismiss',
+                    attr: { title: `Deselect ${ctx}`, 'aria-label': `Deselect ${ctx}` },
+                });
+                dismiss.textContent = '×';
+                dismiss.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.primedContexts = this.primedContexts.filter((c) => c !== ctx);
+                    this.syncAllPrimingStates(shell);
+                });
+            }
         } else {
             primer.createEl('span', {
                 text: 'None selected',
@@ -216,9 +239,11 @@ export class SynthesisTab extends BaseTab {
             });
         } else {
             const counts = this.getContextCounts();
-            for (const ctx of contexts) {
+            // Sort alphabetically
+            const sorted = [...contexts].sort((a, b) => a.localeCompare(b));
+            for (const ctx of sorted) {
                 const row = list.createEl('div', {
-                    cls: `mina-syn-ctx-row${this.primedContext === ctx ? ' is-selected' : ''}`,
+                    cls: `mina-syn-ctx-row${this.primedContexts.includes(ctx) ? ' is-selected' : ''}`,
                     attr: { 'data-ctx': ctx, tabindex: '0' },
                 });
                 row.createEl('div', { cls: 'mina-syn-ctx-row-dot' });
@@ -226,6 +251,17 @@ export class SynthesisTab extends BaseTab {
                 row.createEl('span', {
                     text: String(counts[ctx] || 0),
                     cls: 'mina-syn-ctx-row-count',
+                });
+
+                // Delete button (hover-revealed via CSS)
+                const delBtn = row.createEl('button', {
+                    cls: 'mina-syn-ctx-row-del',
+                    attr: { title: `Remove context "${ctx}"`, 'aria-label': `Remove ${ctx}` },
+                });
+                setIcon(delBtn, 'trash-2');
+                delBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    await this.removeContextFromSettings(ctx, shell);
                 });
 
                 const onSelect = () => this.handleContextRowClick(ctx, shell);
@@ -247,9 +283,23 @@ export class SynthesisTab extends BaseTab {
     }
 
     private handleContextRowClick(ctx: string, shell: HTMLElement): void {
-        // Toggle: click same row again → deselect
-        this.primedContext = this.primedContext === ctx ? null : ctx;
+        // Multi-select: toggle in/out of primedContexts array
+        if (this.primedContexts.includes(ctx)) {
+            this.primedContexts = this.primedContexts.filter((c) => c !== ctx);
+        } else {
+            this.primedContexts = [...this.primedContexts, ctx];
+        }
         this.syncAllPrimingStates(shell);
+    }
+
+    private async removeContextFromSettings(ctx: string, shell: HTMLElement): Promise<void> {
+        const idx = this.settings.contexts.indexOf(ctx);
+        if (idx === -1) return;
+        this.settings.contexts.splice(idx, 1);
+        // Remove from primed selection if present
+        this.primedContexts = this.primedContexts.filter((c) => c !== ctx);
+        await this.plugin.saveSettings();
+        this.view.renderView();
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -319,22 +369,24 @@ export class SynthesisTab extends BaseTab {
      */
     private buildCtxEcho(echo: HTMLElement): void {
         echo.empty();
-        echo.className = `mina-syn-feed-ctx-echo${this.primedContext ? ' is-primed' : ''}`;
+        const hasAny = this.primedContexts.length > 0;
+        echo.className = `mina-syn-feed-ctx-echo${hasAny ? ' is-primed' : ''}`;
 
-        if (this.primedContext) {
+        if (hasAny) {
             echo.createEl('span', { text: '←', cls: 'mina-syn-feed-echo-label' });
             const pill = echo.createEl('span', { cls: 'mina-syn-feed-echo-pill' });
-            pill.createEl('span', {
-                attr: { style: 'font-size:0.5em; opacity:0.8; margin-right:2px;' },
-            }).textContent = '●';
-            pill.appendText(` ${this.primedContext}`);
+            const label =
+                this.primedContexts.length === 1
+                    ? this.primedContexts[0]
+                    : `${this.primedContexts.length} contexts`;
+            pill.appendText(` ${label}`);
             echo.createEl('span', {
                 text: '✓ ready to assign',
                 cls: 'mina-syn-feed-echo-ready',
             });
         } else {
             echo.createEl('span', {
-                text: '← Select a context to prime assignment',
+                text: '← Select contexts to prime assignment',
                 cls: 'mina-syn-feed-echo-label',
             });
         }
@@ -452,19 +504,22 @@ export class SynthesisTab extends BaseTab {
         if (!thought.synthesized) {
             const actions = card.createEl('div', { cls: 'mina-syn-card-actions' });
 
-            // ── Assign button — visual state driven by primedContext ──────────
-            const isAlreadyAssigned =
-                !!this.primedContext && thought.context.includes(this.primedContext);
+            // ── Assign button — visual state driven by primedContexts ─────────
+            const assignedAll =
+                this.primedContexts.length > 0 &&
+                this.primedContexts.every((c) => thought.context.includes(c));
 
             let assignCls = 'mina-syn-card-btn mina-syn-card-btn--assign';
-            if (isAlreadyAssigned)      assignCls += ' is-assigned';
-            else if (this.primedContext) assignCls += ' is-primed';
+            if (assignedAll)                          assignCls += ' is-assigned';
+            else if (this.primedContexts.length > 0) assignCls += ' is-primed';
 
-            const assignLabel = isAlreadyAssigned
-                ? `✓ ${this.primedContext}`
-                : this.primedContext
-                    ? `Assign to ${this.primedContext}`
-                    : 'Assign…';
+            const assignLabel = assignedAll
+                ? '✓ Assigned'
+                : this.primedContexts.length === 1
+                    ? `Assign to ${this.primedContexts[0]}`
+                    : this.primedContexts.length > 1
+                        ? `Assign to ${this.primedContexts.length} contexts`
+                        : 'Assign…';
 
             const assignBtn = actions.createEl('button', { cls: assignCls });
             setIcon(assignBtn, 'tag');
@@ -475,11 +530,13 @@ export class SynthesisTab extends BaseTab {
             assignBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (isPhone) {
-                    // Open the bottom sheet for phone context selection
                     this.openContextSheet(shell, thought);
-                } else if (this.primedContext && !isAlreadyAssigned) {
-                    this.doAssign(thought, card, shell);
-                } else if (!this.primedContext) {
+                } else if (this.primedContexts.length > 0) {
+                    const alreadyAll = this.primedContexts.every((c) =>
+                        thought.context.includes(c),
+                    );
+                    if (!alreadyAll) this.doAssign(thought, card, shell);
+                } else {
                     // Shake the context panel to prompt selection
                     const ctxPanel = shell.querySelector(
                         '.mina-syn-ctx-panel',
@@ -489,7 +546,6 @@ export class SynthesisTab extends BaseTab {
                         setTimeout(() => ctxPanel.classList.remove('is-attention'), 300);
                     }
                 }
-                // isAlreadyAssigned → do nothing; cursor:default handles UX
             });
 
             // ── Mark Done button ──────────────────────────────────────────────
@@ -515,12 +571,12 @@ export class SynthesisTab extends BaseTab {
         card: HTMLElement,
         shell: HTMLElement,
     ): Promise<void> {
-        if (!this.primedContext) return;
-        const ctx = this.primedContext; // capture before any async
+        if (this.primedContexts.length === 0) return;
+        const ctxs = [...this.primedContexts]; // capture snapshot
 
         // 1. Flash animation + vault write (in parallel)
         card.classList.add('is-assign-flash');
-        await this.vault.assignContext(thought.filePath, [ctx], false);
+        await this.vault.assignContext(thought.filePath, ctxs, false);
 
         // 2. After flash duration, remove flash + start exit (if Inbox filter)
         setTimeout(() => {
@@ -558,7 +614,10 @@ export class SynthesisTab extends BaseTab {
     private syncAllPrimingStates(shell: HTMLElement): void {
         // 1. Context rows
         shell.querySelectorAll<HTMLElement>('.mina-syn-ctx-row').forEach((row) => {
-            row.classList.toggle('is-selected', row.dataset.ctx === this.primedContext);
+            row.classList.toggle(
+                'is-selected',
+                this.primedContexts.includes(row.dataset.ctx || ''),
+            );
         });
 
         // 2. Primer strip
@@ -578,20 +637,23 @@ export class SynthesisTab extends BaseTab {
             );
             if (!thought) return;
 
-            const isAlreadyAssigned =
-                !!this.primedContext && thought.context.includes(this.primedContext);
+            const assignedAll =
+                this.primedContexts.length > 0 &&
+                this.primedContexts.every((c) => thought.context.includes(c));
 
             btn.classList.remove('is-primed', 'is-assigned');
-            if (isAlreadyAssigned)       btn.classList.add('is-assigned');
-            else if (this.primedContext)  btn.classList.add('is-primed');
+            if (assignedAll)                          btn.classList.add('is-assigned');
+            else if (this.primedContexts.length > 0) btn.classList.add('is-primed');
 
             const labelEl = btn.querySelector('span');
             if (labelEl) {
-                labelEl.textContent = isAlreadyAssigned
-                    ? `✓ ${this.primedContext}`
-                    : this.primedContext
-                        ? `Assign to ${this.primedContext}`
-                        : 'Assign…';
+                labelEl.textContent = assignedAll
+                    ? '✓ Assigned'
+                    : this.primedContexts.length === 1
+                        ? `Assign to ${this.primedContexts[0]}`
+                        : this.primedContexts.length > 1
+                            ? `Assign to ${this.primedContexts.length} contexts`
+                            : 'Assign…';
             }
         });
     }
@@ -633,7 +695,9 @@ export class SynthesisTab extends BaseTab {
                 await this.plugin.saveSettings();
             }
             // Prime the new context and do a full re-render (list must show it)
-            this.primedContext = name;
+            if (!this.primedContexts.includes(name)) {
+                this.primedContexts = [...this.primedContexts, name];
+            }
             this.view.renderView();
         }).open();
     }

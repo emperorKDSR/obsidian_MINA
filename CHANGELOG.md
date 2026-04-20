@@ -2,6 +2,14 @@
 
 
 
+## [1.10.2] — Synthesis Context Panel: Multi-Select, Search & Delete
+
+### ✨ Changed
+- **Multi-select contexts** — click multiple contexts in the left panel to prime them all; assign button reads "Assign to N contexts" and writes all selected contexts at once
+- **Alphabetical sorting** — context list is now always sorted A→Z
+- **Context search** — search input above the list; filters rows in real-time without re-rendering
+- **Delete context** — trash icon appears on hover for each context row; removes it from the global contexts list and clears it from any active selection
+
 ## [1.10.1] — Synthesis Desktop Layout V2.1
 
 ### ✨ Changed

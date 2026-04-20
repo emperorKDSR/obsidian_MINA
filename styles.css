@@ -168,6 +168,40 @@
     font-style: italic;
 }
 
+.mina-syn-ctx-primer-pills {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+    flex-wrap: wrap;
+    row-gap: 4px;
+}
+
+/* ── Context search ───────────────────────────────────────────────────────── */
+.mina-syn-ctx-search {
+    padding: 6px 10px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--background-modifier-border-faint, var(--background-modifier-border));
+}
+.mina-syn-ctx-search-input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-modifier-form-field, var(--background-primary));
+    color: var(--text-normal);
+    font-size: 0.8em;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+.mina-syn-ctx-search-input:focus {
+    border-color: rgba(var(--interactive-accent-rgb), 0.5);
+    background: var(--background-primary);
+}
+
 .mina-syn-ctx-list {
     flex: 1;
     overflow-y: auto;
@@ -244,6 +278,34 @@
 .mina-syn-ctx-row.is-selected .mina-syn-ctx-row-count {
     color: var(--interactive-accent);
     opacity: 0.7;
+}
+
+.mina-syn-ctx-row-del {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    border: none;
+    background: transparent;
+    color: var(--text-faint);
+    cursor: pointer;
+    padding: 0;
+    opacity: 0;
+    transition: opacity 0.12s ease, background 0.1s ease, color 0.1s ease;
+}
+.mina-syn-ctx-row:hover .mina-syn-ctx-row-del {
+    opacity: 1;
+}
+.mina-syn-ctx-row-del:hover {
+    background: rgba(var(--text-error-rgb, 220, 60, 60), 0.12);
+    color: var(--text-error);
+}
+.mina-syn-ctx-row-del .svg-icon {
+    width: 12px;
+    height: 12px;
 }
 
 .mina-syn-ctx-add-btn {
