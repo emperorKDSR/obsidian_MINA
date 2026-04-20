@@ -816,7 +816,7 @@
     margin-top: 0;
 }
 .mina-capture-bar.is-expanded .mina-capture-expand-body {
-    max-height: 420px;
+    max-height: 68vh;
     opacity: 1;
     margin-top: 12px;
 }
@@ -1836,7 +1836,7 @@
                 opacity     260ms ease 40ms;
 }
 .mina-mobile-capture-strip.is-expanded .mina-capture-expand-body {
-    max-height: 900px;
+    max-height: 75vh;
     opacity: 1;
     overflow: visible;
 }
@@ -1848,6 +1848,7 @@
 .mina-capture-inline-textarea {
     width: 100%;
     min-height: 72px;
+    overflow-y: hidden;
     font-size: 1.06em;
     line-height: 1.65;
     font-family: 'Calibri', var(--font-text), sans-serif;
