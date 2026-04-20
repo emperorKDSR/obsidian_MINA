@@ -159,7 +159,7 @@ export default class MinaPlugin extends Plugin {
     async scanForContexts() {
         const foundContexts = await this.index.scanForContexts();
         let newCtx = false;
-        foundContexts.forEach(c => { if (!this.settings.contexts.includes(c)) { this.settings.contexts.push(c); newCtx = true; } });
+        foundContexts.forEach(c => { if (c && typeof c === 'string' && !this.settings.contexts.includes(c)) { this.settings.contexts.push(c); newCtx = true; } });
         if (newCtx) await this.saveSettings();
     }
 
@@ -167,6 +167,10 @@ export default class MinaPlugin extends Plugin {
 		const loadedData = await this.loadData();
         this.settings = Object.assign({}, DEFAULT_SETTINGS);
         if (loadedData) Object.assign(this.settings, loadedData);
+        // Sanitize: remove null/non-string entries that can creep in from malformed YAML frontmatter
+        if (this.settings.contexts) {
+            this.settings.contexts = this.settings.contexts.filter((c: any) => c && typeof c === 'string');
+        }
         this.settingsInitialized = true;
 	}
 
@@ -198,7 +202,7 @@ export default class MinaPlugin extends Plugin {
                 const view = leaf.view as MinaView;
                 if (view && typeof view.renderView === 'function') {
                     // Don't re-render while the user is mid-toggle — let optimistic UI stand
-                    if (view._taskTogglePending > 0 || view._habitTogglePending > 0 || view._checklistTogglePending > 0) continue;
+                    if (view._taskTogglePending > 0 || view._habitTogglePending > 0 || view._checklistTogglePending > 0 || view._capturePending > 0) continue;
                     view.renderView();
                 }
             }

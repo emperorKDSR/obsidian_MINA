@@ -318,9 +318,18 @@ export class EditEntryModal extends Modal {
         return { setDueDate };
     }
 
-    /** ── INLINE TRIGGERS (@date, [[link, + checklist) ── */
+    /** ── INLINE TRIGGERS (@date, [[link, #tag, + checklist) ── */
     private _attachInlineTriggers(textArea: HTMLTextAreaElement, setDueDate: (d: string) => void) {
-        attachInlineTriggers(this.app, textArea, setDueDate);
+        attachInlineTriggers(
+            this.app, textArea, setDueDate,
+            (tag: string) => {
+                if (!this.plugin.settings.contexts) this.plugin.settings.contexts = [];
+                if (!this.plugin.settings.contexts.includes(tag)) {
+                    this.plugin.settings.contexts.push(tag);
+                }
+            },
+            () => this.plugin.settings.contexts ?? []
+        );
     }
 
     /** ── SWIPE TO DISMISS ────────────────────────────── */

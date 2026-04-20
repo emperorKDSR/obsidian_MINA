@@ -103,7 +103,6 @@ export class CommandCenterTab extends BaseTab {
 
             const chipArea = dock.createDiv({ cls: 'mina-capture-desktop-chip-area' });
             const chipStrip = chipArea.createDiv({ cls: 'mina-mobile-chip-strip' });
-            const tagPickerContainer = chipArea.createDiv({ cls: 'mina-capture-inline-tag-picker' });
 
             const actionRow = dock.createDiv({ cls: 'mina-capture-desktop-actions' });
             const cancelBtn = actionRow.createEl('button', { text: 'CANCEL', cls: 'mina-capture-inline-cancel' });
@@ -113,6 +112,10 @@ export class CommandCenterTab extends BaseTab {
             // Chip renderer
             const renderChips = () => {
                 chipStrip.empty();
+                if (captureContexts.length === 0) {
+                    chipStrip.createEl('span', { text: '# to tag', cls: 'mina-chip-hint' });
+                    return;
+                }
                 captureContexts.forEach(ctx => {
                     const chip = chipStrip.createEl('span', { cls: 'mina-mobile-chip' });
                     chip.createSpan({ text: `#${ctx}` });
@@ -122,18 +125,6 @@ export class CommandCenterTab extends BaseTab {
                         captureContexts = captureContexts.filter(c => c !== ctx);
                         renderChips();
                     });
-                });
-                const addBtn = chipStrip.createEl('button', { text: '+', cls: 'mina-mobile-chip-add' });
-                addBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this._toggleInlineCaptureTagPicker(
-                        tagPickerContainer,
-                        this.plugin.settings.contexts ?? [],
-                        () => captureContexts,
-                        (ctx: string) => {
-                            if (!captureContexts.includes(ctx)) { captureContexts.push(ctx); renderChips(); }
-                        }
-                    );
                 });
             };
             renderChips();
@@ -158,27 +149,33 @@ export class CommandCenterTab extends BaseTab {
             };
             textarea.addEventListener('input', refreshSave);
 
-            // Inline smart triggers: @date, [[link, + checklist
+            // Inline smart triggers: @date, [[link, #tag, + checklist
             attachInlineTriggers(this.plugin.app, textarea, (d: string) => {
                 captureDueDate = d;
                 switchMode('task');
-            });
+            }, (tag: string) => {
+                if (!captureContexts.includes(tag)) { captureContexts.push(tag); renderChips(); }
+                if (!this.plugin.settings.contexts) this.plugin.settings.contexts = [];
+                if (!this.plugin.settings.contexts.includes(tag)) {
+                    this.plugin.settings.contexts.push(tag); // in-memory only; persisted on capture
+                }
+            }, () => this.plugin.settings.contexts ?? []);
 
             // Collapse
             const collapse = () => {
+                this.view._capturePending = 0;
                 cap.removeClass('is-expanded');
                 captureContexts = []; captureDueDate = null;
                 textarea.value = '';
                 switchMode('thought');
                 renderChips();
-                tagPickerContainer.removeClass('is-open');
-                tagPickerContainer.empty();
                 refreshSave();
             };
 
             // Expand
             const expand = () => {
                 if (cap.hasClass('is-expanded')) return;
+                this.view._capturePending = 1;
                 cap.addClass('is-expanded');
                 setTimeout(() => textarea.focus(), 60);
             };
@@ -195,6 +192,7 @@ export class CommandCenterTab extends BaseTab {
                 try {
                     if (captureMode === 'task') await this.vault.createTaskFile(text, contexts, due);
                     else await this.vault.createThoughtFile(text, contexts);
+                    await this.plugin.saveSettings(); // persist any new contexts added during capture
                     new Notice(captureMode === 'task' ? 'Task added ✓' : 'Thought captured ✓', 1200);
                     collapse();
                 } catch {
@@ -271,12 +269,15 @@ export class CommandCenterTab extends BaseTab {
         const dateZone = dock.createDiv({ cls: 'mina-mobile-date-zone' });
         this._buildInlineDateStrip(dateZone, (d: string | null) => { captureDueDate = d; });
 
-        // 3. Chip strip + tag picker
+        // 3. Chip strip
         const chipStrip = dock.createDiv({ cls: 'mina-mobile-chip-strip' });
-        const tagPickerContainer = dock.createDiv({ cls: 'mina-capture-inline-tag-picker' });
 
         const renderChips = () => {
             chipStrip.empty();
+            if (captureContexts.length === 0) {
+                chipStrip.createEl('span', { text: '# to tag', cls: 'mina-chip-hint' });
+                return;
+            }
             captureContexts.forEach(ctx => {
                 const chip = chipStrip.createEl('span', { cls: 'mina-mobile-chip' });
                 chip.createSpan({ text: `#${ctx}` });
@@ -286,18 +287,6 @@ export class CommandCenterTab extends BaseTab {
                     captureContexts = captureContexts.filter(c => c !== ctx);
                     renderChips();
                 });
-            });
-            const addBtn = chipStrip.createEl('button', { text: '+', cls: 'mina-mobile-chip-add' });
-            addBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this._toggleInlineCaptureTagPicker(
-                    tagPickerContainer,
-                    this.plugin.settings.contexts ?? [],
-                    () => captureContexts,
-                    (ctx: string) => {
-                        if (!captureContexts.includes(ctx)) { captureContexts.push(ctx); renderChips(); }
-                    }
-                );
             });
         };
         renderChips();
@@ -330,21 +319,33 @@ export class CommandCenterTab extends BaseTab {
 
         // Collapse
         const collapse = () => {
+            this.view._capturePending = 0;
             strip.removeClass('is-expanded');
             captureContexts = []; captureDueDate = null;
             textarea.value = '';
             switchMode('thought');
             renderChips();
-            tagPickerContainer.removeClass('is-open');
-            tagPickerContainer.empty();
             refreshSave();
         };
 
         // Expand
         const expand = () => {
+            this.view._capturePending = 1;
             strip.addClass('is-expanded');
             setTimeout(() => textarea.focus(), 80);
         };
+
+        // Inline smart triggers: @date, [[link, #tag, + checklist
+        attachInlineTriggers(this.plugin.app, textarea, (d: string) => {
+            captureDueDate = d;
+            switchMode('task');
+        }, (tag: string) => {
+            if (!captureContexts.includes(tag)) { captureContexts.push(tag); renderChips(); }
+            if (!this.plugin.settings.contexts) this.plugin.settings.contexts = [];
+            if (!this.plugin.settings.contexts.includes(tag)) {
+                this.plugin.settings.contexts.push(tag); // in-memory only; persisted on capture
+            }
+        }, () => this.plugin.settings.contexts ?? []);
 
         // Save
         const handleSave = async () => {
@@ -358,6 +359,7 @@ export class CommandCenterTab extends BaseTab {
             try {
                 if (captureMode === 'task') await this.vault.createTaskFile(text, contexts, due);
                 else await this.vault.createThoughtFile(text, contexts);
+                await this.plugin.saveSettings(); // persist any new contexts added during capture
                 new Notice(captureMode === 'task' ? 'Task added ✓' : 'Thought captured ✓', 1200);
                 collapse();
             } catch {
@@ -994,6 +996,10 @@ export class CommandCenterTab extends BaseTab {
         renderCluster('SYSTEM',     [{ label: 'AI Chat',  icon: AI_CHAT_ICON_ID, tab: 'mina-ai' }, { label: 'Review', icon: REVIEW_ICON_ID, tab: 'review' }, { label: 'Settings', icon: SETTINGS_ICON_ID, tab: 'settings' }], 'mina-pillar-cluster--system');
     }
 
+    /** Attach # autocomplete suggestions to a capture textarea.
+     *  When the user types #partial, shows filtered tag pills inline.
+     *  Clicking a pill inserts `#tag ` into the textarea, which the
+     *  attachInlineTriggers handler converts to a chip automatically. */
     private _buildInlineDateStrip(
         container: HTMLElement,
         onDateChange: (d: string | null) => void
@@ -1061,64 +1067,5 @@ export class CommandCenterTab extends BaseTab {
         };
 
         return { setDueDate };
-    }
-
-    private _toggleInlineCaptureTagPicker(
-        container: HTMLElement,
-        allContexts: string[],
-        getSelected: () => string[],
-        onSelect: (ctx: string) => void
-    ) {
-        if (container.hasClass('is-open')) {
-            container.removeClass('is-open');
-            container.empty();
-            return;
-        }
-        container.addClass('is-open');
-        container.empty();
-
-        // All existing tags as selectable pills (excluding already-selected)
-        const grid = container.createDiv({ cls: 'mina-tag-picker-grid' });
-        const renderGrid = () => {
-            grid.empty();
-            const selected = getSelected();
-            const available = allContexts.filter(ctx => !selected.includes(ctx)).sort((a, b) => a.localeCompare(b));
-            if (available.length === 0 && allContexts.length > 0) {
-                grid.createEl('span', { text: 'All tags added.', cls: 'mina-tag-picker-empty' });
-            } else if (available.length === 0) {
-                grid.createEl('span', { text: 'No tags configured yet.', cls: 'mina-tag-picker-empty' });
-            }
-            available.forEach(ctx => {
-                const tag = grid.createEl('button', { text: `#${ctx}`, cls: 'mina-tag-picker-tag' });
-                tag.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    onSelect(ctx);
-                    container.removeClass('is-open');
-                    container.empty();
-                });
-            });
-        };
-        renderGrid();
-
-        // New tag input row
-        const newRow = container.createDiv({ cls: 'mina-tag-picker-new-row' });
-        const newInput = newRow.createEl('input', {
-            type: 'text', cls: 'mina-tag-picker-new-input',
-            attr: { placeholder: 'New tag…' }
-        }) as HTMLInputElement;
-        const addBtn = newRow.createEl('button', { text: 'ADD', cls: 'mina-tag-picker-add-btn' });
-        const doAdd = () => {
-            const val = newInput.value.trim().replace(/^#/, '').toLowerCase();
-            if (!val) return;
-            onSelect(val);
-            container.removeClass('is-open');
-            container.empty();
-        };
-        addBtn.addEventListener('click', (e) => { e.stopPropagation(); doAdd(); });
-        newInput.addEventListener('keydown', (e: KeyboardEvent) => {
-            if (e.key === 'Enter') { e.preventDefault(); doAdd(); }
-            if (e.key === 'Escape') { container.removeClass('is-open'); container.empty(); }
-        });
-        setTimeout(() => newInput.focus(), 60);
     }
 }

@@ -37,6 +37,7 @@ export class MinaView extends ItemView {
     _taskTogglePending: number = 0;       // > 0 = suppress vault-event re-renders
     _habitTogglePending: number = 0;      // > 0 = suppress vault-event re-renders
     _checklistTogglePending: number = 0;  // > 0 = suppress vault-event re-renders
+    _capturePending: number = 0;          // > 0 = capture bar is expanded; suppress re-renders
     checklistOrder: string[] = [];        // persisted drag-reorder keys: "filePath:lineIndex"
     checklistShowDone: boolean = true;    // persisted show/hide completed checklist items
     // key = "filePath:lineIndex", value = YYYY-MM-DD — keeps completed items visible for the day

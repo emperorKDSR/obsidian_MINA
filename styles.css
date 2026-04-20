@@ -816,7 +816,7 @@
     margin-top: 0;
 }
 .mina-capture-bar.is-expanded .mina-capture-expand-body {
-    max-height: 340px;
+    max-height: 420px;
     opacity: 1;
     margin-top: 12px;
 }
@@ -1320,6 +1320,70 @@
     touch-action: pan-x;
 }
 .mina-mobile-chip-strip::-webkit-scrollbar { display: none; }
+
+.mina-chip-hint {
+    font-size: 0.72em;
+    color: var(--text-faint);
+    letter-spacing: 0.04em;
+    font-style: italic;
+    align-self: center;
+    opacity: 0.7;
+}
+
+/* ── Tag autocomplete suggest panel ─────────────────────────────────────── */
+.mina-tag-suggest {
+    display: none;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 4px 4px;
+}
+.mina-tag-suggest.is-active {
+    display: flex;
+    animation: minaFadeIn 0.1s ease;
+}
+.mina-tag-suggest-pill {
+    display: inline-flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 8px;
+    background: var(--background-modifier-hover);
+    border: 1px solid var(--background-modifier-border-faint);
+    font-size: 0.82em;
+    color: var(--text-normal);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    font-family: var(--font-monospace);
+}
+.mina-tag-suggest-pill:hover,
+.mina-tag-suggest-pill:focus-visible {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+    outline: none;
+}
+.mina-tag-suggest-pill.is-new {
+    border-style: dashed;
+    color: var(--text-muted);
+    font-family: var(--font-interface);
+}
+.mina-tag-suggest-pill.is-new:hover {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+/* Mobile: larger touch targets */
+@media (pointer: coarse) {
+    .mina-tag-suggest-pill {
+        height: 38px;
+        padding: 0 16px;
+        font-size: 0.88em;
+        border-radius: 10px;
+    }
+}
+@keyframes minaFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
 
 .mina-mobile-chip {
     display: inline-flex;

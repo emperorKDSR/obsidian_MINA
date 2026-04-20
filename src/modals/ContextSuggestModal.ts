@@ -13,14 +13,15 @@ export class ContextSuggestModal extends SuggestModal<string> {
 
     getSuggestions(query: string): string[] {
         const q = query.toLowerCase().trim();
-        const matches = this.existingContexts
-            .filter(ctx => ctx.toLowerCase().includes(q))
+        const safe = this.existingContexts.filter((c): c is string => !!c && typeof c === 'string');
+        const matches = safe
+            .filter(ctx => !q || ctx.toLowerCase().includes(q))
             .sort((a, b) => a.localeCompare(b));
 
         const results: string[] = [...matches];
 
         // Offer to create if query is non-empty and no exact match
-        if (q && !this.existingContexts.some(ctx => ctx.toLowerCase() === q)) {
+        if (q && !safe.some(ctx => ctx.toLowerCase() === q)) {
             results.unshift(`＋ Create "${query.trim()}"`);
         }
 

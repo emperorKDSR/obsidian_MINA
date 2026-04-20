@@ -1,6 +1,7 @@
 import { App, Platform, moment } from 'obsidian';
 import * as chrono from 'chrono-node';
 import { FileSuggestModal } from './modals/FileSuggestModal';
+import { ContextSuggestModal } from './modals/ContextSuggestModal';
 
 /** Convert any locale-specific digit characters to ASCII 0-9.
  *  Covers Arabic-Indic (٠-٩), Persian (۰-۹), Devanagari (०-९),
@@ -40,12 +41,15 @@ export function parseNaturalDate(text: string): string | null {
  * Attach inline smart triggers to a capture textarea:
  *   @word<space>  → NLP date parse → sets due date + inserts [[date]] wiki link
  *   [[            → opens FileSuggestModal → inserts [[Note]] link
+ *   #             → opens ContextSuggestModal → adds context chip
  *   + at line start → converts to `- [ ] ` checklist item
  */
 export function attachInlineTriggers(
     app: App,
     textArea: HTMLTextAreaElement,
-    setDueDate: (d: string) => void
+    setDueDate: (d: string) => void,
+    onContext?: (tag: string) => void,
+    getContexts?: () => string[]
 ): void {
     textArea.addEventListener('input', () => {
         const val = textArea.value;
@@ -64,6 +68,21 @@ export function attachInlineTriggers(
                 setDueDate(parsed);
                 return;
             }
+        }
+
+        // # at start or after whitespace → open ContextSuggestModal
+        if (onContext && /(^|\s)#$/.test(before)) {
+            const insertAt = pos - 1;
+            textArea.value = val.substring(0, insertAt) + val.substring(pos);
+            textArea.setSelectionRange(insertAt, insertAt);
+            new ContextSuggestModal(app, getContexts ? getContexts() : [], (tag) => {
+                const cur = textArea.value;
+                const curPos = textArea.selectionStart ?? insertAt;
+                textArea.value = cur.substring(0, curPos) + cur.substring(curPos);
+                onContext(tag);
+                textArea.focus();
+            }).open();
+            return;
         }
 
         // [[ → wiki-link insertion via file picker
