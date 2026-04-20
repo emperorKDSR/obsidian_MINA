@@ -1,5 +1,5 @@
 import { App, TFile, moment } from 'obsidian';
-import { MinaSettings, ThoughtEntry, TaskEntry, DueEntry } from '../types';
+import { MinaSettings, ThoughtEntry, TaskEntry, DueEntry, ProjectEntry } from '../types';
 
 export interface ChecklistItem {
     text: string;
@@ -28,6 +28,7 @@ export class IndexService {
     // - [x] items from MINA V2 files modified today
     thoughtDoneChecklistIndex: ThoughtChecklistItem[] = [];
     habitStatusIndex: string[] = [];
+    projectIndex: Map<string, ProjectEntry> = new Map();
     
     // Performance Cache (Synchronous Access)
     radarQueue: TaskEntry[] = [];
@@ -48,7 +49,8 @@ export class IndexService {
             this.buildTaskIndex(),
             this.buildDueIndex(),
             this.buildChecklistIndex(),
-            this.refreshHabitIndex()
+            this.refreshHabitIndex(),
+            this.buildProjectIndex()
         ]);
         this.rebuildCalculatedState();
     }
@@ -115,6 +117,28 @@ export class IndexService {
                         .filter(Boolean);
                 }
             }
+        }
+    }
+
+    async buildProjectIndex(): Promise<void> {
+        const folder = (this.settings.projectsFolder || 'Projects').replace(/\\/g, '/');
+        this.projectIndex.clear();
+        const files = this.app.vault.getMarkdownFiles().filter(f => f.path.startsWith(folder + '/'));
+        for (const file of files) {
+            const cache = this.app.metadataCache.getFileCache(file);
+            const fm = cache?.frontmatter;
+            if (!fm?.['id'] || !fm?.['name']) continue;
+            const entry: ProjectEntry = {
+                id: String(fm['id']),
+                name: String(fm['name']),
+                status: (fm['status'] || 'active') as ProjectEntry['status'],
+                goal: String(fm['goal'] || ''),
+                due: fm['due'] ? String(fm['due']) : undefined,
+                created: String(fm['created'] || ''),
+                color: fm['color'] ? String(fm['color']) : undefined,
+                filePath: file.path,
+            };
+            this.projectIndex.set(entry.id, entry);
         }
     }
 

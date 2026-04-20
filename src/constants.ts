@@ -174,5 +174,6 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     northStarGoals: [],
     enableAutoClassification: false,
     lifeMission: '',
-    attachmentsFolder: '000 Bin/MINA V2 Attachments'
+    attachmentsFolder: '000 Bin/MINA V2 Attachments',
+    projectsFolder: 'Projects'
 }
