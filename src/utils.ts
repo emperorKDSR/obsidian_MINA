@@ -1,4 +1,4 @@
-import { App, Platform, moment } from 'obsidian';
+import { App, Platform, moment, Notice } from 'obsidian';
 import * as chrono from 'chrono-node';
 import { FileSuggestModal } from './modals/FileSuggestModal';
 import { ContextSuggestModal } from './modals/ContextSuggestModal';
@@ -158,25 +158,26 @@ export function attachMediaPasteHandler(
     textarea.addEventListener('paste', async (e: ClipboardEvent) => {
         const items = e.clipboardData?.items;
         if (!items) return;
-        let handled = false;
+
+        // Pre-scan for file items synchronously so we can preventDefault before any await
+        const fileItems: DataTransferItem[] = [];
         for (let i = 0; i < items.length; i++) {
-            if (items[i].kind === 'file') {
-                e.preventDefault();
-                handled = true;
-                const file = items[i].getAsFile();
-                if (!file) continue;
-                const { Notice } = await import('obsidian');
-                const filename = await saveFile(file);
-                if (filename) {
-                    insertAtCursor(`![[${filename}]]`);
-                    new Notice(`📎 Saved: ${filename}`);
-                } else {
-                    new Notice('⚠ Failed to save attachment');
-                }
+            if (items[i].kind === 'file') fileItems.push(items[i]);
+        }
+        if (fileItems.length === 0) return; // no files — let text paste proceed normally
+
+        e.preventDefault();
+        for (const item of fileItems) {
+            const file = item.getAsFile();
+            if (!file) continue;
+            const filename = await saveFile(file);
+            if (filename) {
+                insertAtCursor(`![[${filename}]]`);
+                new Notice(`📎 Saved: ${filename}`);
+            } else {
+                new Notice('⚠ Failed to save attachment — check console');
             }
         }
-        // Non-file paste (text) — let the browser handle it normally
-        if (!handled) return;
     });
 
     textarea.addEventListener('dragover', (e: DragEvent) => {
@@ -190,7 +191,6 @@ export function attachMediaPasteHandler(
         const files = e.dataTransfer?.files;
         if (!files || files.length === 0) return;
         e.preventDefault();
-        const { Notice } = await import('obsidian');
         for (let i = 0; i < files.length; i++) {
             const filename = await saveFile(files[i]);
             if (filename) {
