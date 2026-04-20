@@ -1,8 +1,18 @@
 import { moment, setIcon, MarkdownRenderer, Platform, TFile } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
+import type { ProjectEntry, TaskEntry, DueEntry } from '../types';
+
+interface GlanceData {
+    tasks: { completed: TaskEntry[]; overdue: TaskEntry[] };
+    habits: { habit: { id: string; name: string; icon: string }; count: number }[];
+    projects: ProjectEntry[];
+    finance: { paid: DueEntry[]; overdue: DueEntry[] };
+}
 
 export class ReviewTab extends BaseTab {
+    private glanceCollapsed = false;
+
     constructor(view: MinaView) { super(view); }
 
     render(container: HTMLElement) {
@@ -159,6 +169,9 @@ export class ReviewTab extends BaseTab {
             if (!isDirty) { isDirty = true; dirtyDot.style.display = 'inline-block'; }
         };
 
+        // ── Week at a Glance ─────────────────────────────────────
+        this.renderGlancePanel(wrap, weekId);
+
         // ── Body: two-column on desktop ──────────────────────────
         const body = wrap.createEl('div', { cls: 'mina-review-body' });
         const leftCol = body.createEl('div', { cls: 'mina-review-col--left' });
@@ -273,6 +286,169 @@ export class ReviewTab extends BaseTab {
                     prevBody.createEl('div', { text: 'No review found for last week.', cls: 'mina-review-prev-empty' });
                 }
             }
+        });
+    }
+
+    private renderGlancePanel(parent: HTMLElement, weekId: string): void {
+        const glance = parent.createEl('div', { cls: 'mina-review-glance' });
+        if (this.glanceCollapsed) glance.classList.add('is-collapsed');
+
+        const glanceHeader = glance.createEl('div', { cls: 'mina-review-glance__header' });
+        glanceHeader.createEl('span', { cls: 'mina-review-glance__title', text: '⚡ WEEK AT A GLANCE' });
+
+        const glanceActions = glanceHeader.createEl('div', { cls: 'mina-review-glance__actions' });
+        const refreshBtn = glanceActions.createEl('button', { cls: 'mina-review-glance__refresh', attr: { title: 'Refresh' } });
+        setIcon(refreshBtn, 'refresh-cw');
+        const toggleBtn = glanceActions.createEl('button', { cls: 'mina-review-glance__toggle', attr: { title: 'Collapse' } });
+        setIcon(toggleBtn, this.glanceCollapsed ? 'chevron-right' : 'chevron-down');
+
+        const glanceBody = glance.createEl('div', { cls: 'mina-review-glance__body' });
+        const render = () => {
+            glanceBody.empty();
+            const data = this.computeGlanceData(weekId);
+            this.renderGlanceTasks(glanceBody, data.tasks);
+            this.renderGlanceHabits(glanceBody, data.habits);
+            this.renderGlanceProjects(glanceBody, data.projects);
+            this.renderGlanceFinance(glanceBody, data.finance);
+        };
+        render();
+
+        toggleBtn.addEventListener('click', () => {
+            this.glanceCollapsed = !this.glanceCollapsed;
+            glance.classList.toggle('is-collapsed', this.glanceCollapsed);
+            setIcon(toggleBtn, this.glanceCollapsed ? 'chevron-right' : 'chevron-down');
+        });
+        refreshBtn.addEventListener('click', render);
+    }
+
+    private computeGlanceData(weekId: string): GlanceData {
+        const today = moment();
+        const weekStart = moment().startOf('isoWeek');
+        const weekEnd = moment().endOf('isoWeek');
+
+        // Tasks
+        const allTasks = Array.from(this.index.taskIndex.values());
+        const completed = allTasks.filter(t => {
+            if (t.status !== 'done') return false;
+            const mod = moment(t.modified, 'YYYY-MM-DD HH:mm:ss');
+            return mod.isSameOrAfter(weekStart) && mod.isSameOrBefore(weekEnd);
+        });
+        const overdue = allTasks.filter(t => {
+            if (t.status !== 'open' || !t.due) return false;
+            return moment(t.due, 'YYYY-MM-DD').isBefore(today, 'day');
+        });
+
+        // Habits
+        const habits = (this.settings.habits || []).filter(h => !h.archived);
+        const habitsFolder = (this.settings.habitsFolder || '000 Bin/MINA V2 Habits').replace(/\\/g, '/');
+        const counts: Map<string, number> = new Map();
+        habits.forEach(h => counts.set(h.id, 0));
+        for (let d = 0; d < 7; d++) {
+            const dateStr = moment(weekStart).add(d, 'days').format('YYYY-MM-DD');
+            const file = this.app.vault.getAbstractFileByPath(`${habitsFolder}/${dateStr}.md`);
+            if (!(file instanceof TFile)) continue;
+            const cache = this.app.metadataCache.getFileCache(file);
+            const done: string[] = Array.isArray(cache?.frontmatter?.['completed'])
+                ? cache!.frontmatter!['completed'].map(String) : [];
+            done.forEach(id => { if (counts.has(id)) counts.set(id, (counts.get(id) || 0) + 1); });
+        }
+        const habitsData = habits.map(h => ({ habit: h, count: counts.get(h.id) || 0 }));
+
+        // Projects active this week
+        const projects = Array.from(this.index.projectIndex.values()).filter(p => {
+            if (p.status === 'archived') return false;
+            const file = this.app.vault.getAbstractFileByPath(p.filePath);
+            if (!(file instanceof TFile)) return false;
+            return moment(file.stat.mtime).isSameOrAfter(weekStart);
+        });
+
+        // Finance
+        const allDues = Array.from(this.index.dueIndex.values());
+        const finPaid = allDues.filter(d => {
+            if (!d.lastPayment) return false;
+            const lp = moment(d.lastPayment, 'YYYY-MM-DD');
+            return lp.isSameOrAfter(weekStart) && lp.isSameOrBefore(weekEnd);
+        });
+        const paidPaths = new Set(finPaid.map(d => d.path));
+        const finOverdue = allDues.filter(d => {
+            if (paidPaths.has(d.path)) return false;
+            if (!d.dueMoment) return false;
+            return moment(d.dueMoment).isBefore(today, 'day');
+        });
+
+        return { tasks: { completed, overdue }, habits: habitsData, projects, finance: { paid: finPaid, overdue: finOverdue } };
+    }
+
+    private renderGlanceTasks(parent: HTMLElement, tasks: { completed: TaskEntry[]; overdue: TaskEntry[] }): void {
+        const card = parent.createEl('div', { cls: 'mina-glance-card' });
+        const hdr = card.createEl('div', { cls: 'mina-glance-card__header' });
+        hdr.createEl('span', { cls: 'mina-glance-card__icon', text: '✅' });
+        hdr.createEl('span', { cls: 'mina-glance-card__title', text: 'TASKS' });
+
+        const statRow = card.createEl('div', { cls: 'mina-glance-stat-row' });
+        statRow.createEl('span', { cls: 'mina-glance-stat mina-glance-stat--done', text: `${tasks.completed.length} done` });
+        statRow.createEl('span', { cls: 'mina-glance-stat-sep', text: '·' });
+        statRow.createEl('span', { cls: 'mina-glance-stat mina-glance-stat--overdue', text: `${tasks.overdue.length} overdue` });
+
+        const list = card.createEl('ul', { cls: 'mina-glance-list' });
+        tasks.completed.slice(0, 6).forEach(t => {
+            list.createEl('li', { cls: 'mina-glance-item mina-glance-item--done', text: t.title });
+        });
+        if (tasks.completed.length === 0 && tasks.overdue.length === 0) {
+            list.createEl('li', { cls: 'mina-glance-item mina-glance-item--empty', text: 'No task activity this week' });
+        }
+    }
+
+    private renderGlanceHabits(parent: HTMLElement, habits: { habit: { id: string; name: string; icon: string }; count: number }[]): void {
+        if (habits.length === 0) return;
+        const card = parent.createEl('div', { cls: 'mina-glance-card' });
+        const hdr = card.createEl('div', { cls: 'mina-glance-card__header' });
+        hdr.createEl('span', { cls: 'mina-glance-card__icon', text: '🔁' });
+        hdr.createEl('span', { cls: 'mina-glance-card__title', text: 'HABITS' });
+
+        habits.forEach(({ habit, count }) => {
+            const row = card.createEl('div', { cls: 'mina-glance-habit-row' });
+            row.createEl('span', { cls: 'mina-glance-habit-icon', text: habit.icon });
+            row.createEl('span', { cls: 'mina-glance-habit-name', text: habit.name });
+            const barWrap = row.createEl('div', { cls: 'mina-glance-habit-bar' });
+            const fill = barWrap.createEl('div', { cls: 'mina-glance-habit-fill' });
+            fill.style.width = `${Math.round((count / 7) * 100)}%`;
+            row.createEl('span', { cls: 'mina-glance-habit-count', text: `${count}/7` });
+        });
+    }
+
+    private renderGlanceProjects(parent: HTMLElement, projects: ProjectEntry[]): void {
+        if (projects.length === 0) return;
+        const card = parent.createEl('div', { cls: 'mina-glance-card' });
+        const hdr = card.createEl('div', { cls: 'mina-glance-card__header' });
+        hdr.createEl('span', { cls: 'mina-glance-card__icon', text: '🗂' });
+        hdr.createEl('span', { cls: 'mina-glance-card__title', text: 'ACTIVE PROJECTS' });
+
+        projects.forEach(p => {
+            const row = card.createEl('div', { cls: 'mina-glance-project-row' });
+            const dot = row.createEl('span', { cls: 'mina-glance-project-dot' });
+            if (p.color) dot.style.background = p.color;
+            row.createEl('span', { cls: 'mina-glance-project-name', text: p.name });
+            row.createEl('span', { cls: `mina-glance-project-status mina-glance-project-status--${p.status}`, text: p.status });
+        });
+    }
+
+    private renderGlanceFinance(parent: HTMLElement, finance: { paid: DueEntry[]; overdue: DueEntry[] }): void {
+        if (finance.paid.length === 0 && finance.overdue.length === 0) return;
+        const card = parent.createEl('div', { cls: 'mina-glance-card' });
+        const hdr = card.createEl('div', { cls: 'mina-glance-card__header' });
+        hdr.createEl('span', { cls: 'mina-glance-card__icon', text: '💳' });
+        hdr.createEl('span', { cls: 'mina-glance-card__title', text: 'FINANCE' });
+
+        finance.paid.forEach(d => {
+            const row = card.createEl('div', { cls: 'mina-glance-finance-row mina-glance-finance-row--paid' });
+            row.createEl('span', { cls: 'mina-glance-finance-icon', text: '✓' });
+            row.createEl('span', { cls: 'mina-glance-finance-name', text: d.title });
+        });
+        finance.overdue.forEach(d => {
+            const row = card.createEl('div', { cls: 'mina-glance-finance-row mina-glance-finance-row--overdue' });
+            row.createEl('span', { cls: 'mina-glance-finance-icon', text: '⚠' });
+            row.createEl('span', { cls: 'mina-glance-finance-name', text: d.title });
         });
     }
 }
