@@ -2,23 +2,26 @@ import { MinaSettings } from './types';
 
 export const VIEW_TYPE_MINA = "mina-v2-view";
 
-// Custom icon — Alien head
+// Custom icon — Tactical reticle (precision targeting, cockpit HUD aesthetic)
 export const KATANA_ICON_ID = "mina-katana";
-export const MINA_ALIEN_PATH_HEAD = "M12 2C7.03 2 3 6.03 3 11c0 4.97 4.03 11 9 11s9-6.03 9-11c0-4.97-4.03-9-9-9z";
-export const MINA_ALIEN_PATH_EYE_L = "M9 11a3 2 0 0 1-3 2 3 2 0 0 1 3-2z";
-export const MINA_ALIEN_PATH_EYE_R = "M15 11a3 2 0 0 0 3 2 3 2 0 0 0-3-2z";
 
 // addIcon content — transform maps 24x24 coords into Obsidian's 100×100 icon space
-export const KATANA_ICON_SVG = `<g transform="translate(2,2) scale(4)">
-    <path d="${MINA_ALIEN_PATH_HEAD}" fill="none" stroke="currentColor" stroke-width="2"/>
-    <path d="${MINA_ALIEN_PATH_EYE_L}" fill="#39FF14" stroke="none"/>
-    <path d="${MINA_ALIEN_PATH_EYE_R}" fill="#39FF14" stroke="none"/>
+export const KATANA_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
+    <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <circle cx="12" cy="12" r="2" fill="currentColor"/>
+    <line x1="12" y1="1.5" x2="12" y2="7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="12" y1="17" x2="12" y2="22.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="1.5" y1="12" x2="7" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="17" y1="12" x2="22.5" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
 </g>`;
 
-export const NINJA_AVATAR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#39FF14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="${MINA_ALIEN_PATH_HEAD}"/>
-    <path d="${MINA_ALIEN_PATH_EYE_L}" fill="#39FF14" stroke="none"/>
-    <path d="${MINA_ALIEN_PATH_EYE_R}" fill="#39FF14" stroke="none"/>
+export const NINJA_AVATAR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="9"/>
+    <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>
+    <line x1="12" y1="1.5" x2="12" y2="7"/>
+    <line x1="12" y1="17" x2="12" y2="22.5"/>
+    <line x1="1.5" y1="12" x2="7" y2="12"/>
+    <line x1="17" y1="12" x2="22.5" y2="12"/>
 </svg>`;
 
 export const JOURNAL_ICON_ID = "mina-journal-icon";
