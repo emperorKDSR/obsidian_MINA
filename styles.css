@@ -5903,3 +5903,196 @@
 }
 .mina-btn--danger:hover { background: rgba(239,68,68,0.18); }
 .mina-btn--sm { padding: 5px 12px; font-size: 0.72em; }
+/* ── F3: Data-Driven Weekly Review — Glance Panel ─────────────────────────── */
+.mina-review-glance {
+    margin: 0 0 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 16px;
+    background: var(--background-secondary);
+    overflow: hidden;
+}
+.mina-review-glance__header {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    gap: 8px;
+    border-bottom: 1px solid var(--background-modifier-border-faint);
+}
+.mina-review-glance.is-collapsed .mina-review-glance__header {
+    border-bottom: none;
+}
+.mina-review-glance__title {
+    flex: 1;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+.mina-review-glance__actions {
+    display: flex;
+    gap: 4px;
+}
+.mina-review-glance__refresh,
+.mina-review-glance__toggle {
+    all: unset;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 120ms, color 120ms;
+}
+.mina-review-glance__refresh:hover,
+.mina-review-glance__toggle:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+.mina-review-glance__body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 10px 12px 14px;
+    max-height: 220px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+.mina-review-glance.is-collapsed .mina-review-glance__body {
+    display: none;
+}
+@media (max-width: 480px) {
+    .mina-review-glance__body { grid-template-columns: 1fr; }
+}
+.mina-glance-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.mina-glance-card__header {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 2px;
+}
+.mina-glance-card__icon { font-size: 12px; line-height: 1; }
+.mina-glance-card__title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+.mina-glance-stat-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 3px;
+}
+.mina-glance-stat { font-size: 11px; font-weight: 600; }
+.mina-glance-stat--done { color: var(--color-green, #4caf50); }
+.mina-glance-stat--overdue { color: var(--color-orange, #ff9800); }
+.mina-glance-stat-sep { color: var(--text-faint); font-size: 11px; }
+.mina-glance-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.mina-glance-item {
+    font-size: 11px;
+    color: var(--text-normal);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left: 10px;
+    position: relative;
+}
+.mina-glance-item::before { content: '·'; position: absolute; left: 2px; color: var(--text-faint); }
+.mina-glance-item--done { color: var(--text-muted); text-decoration: line-through; }
+.mina-glance-item--empty { color: var(--text-faint); font-style: italic; text-decoration: none; }
+.mina-glance-item--empty::before { content: ''; }
+.mina-glance-habit-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.mina-glance-habit-icon { font-size: 12px; line-height: 1; flex-shrink: 0; }
+.mina-glance-habit-name {
+    font-size: 11px;
+    color: var(--text-normal);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.mina-glance-habit-bar {
+    width: 48px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--background-modifier-border);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+.mina-glance-habit-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--interactive-accent);
+    transition: width 300ms ease;
+}
+.mina-glance-habit-count {
+    font-size: 10px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    min-width: 22px;
+    text-align: right;
+}
+.mina-glance-project-row { display: flex; align-items: center; gap: 6px; }
+.mina-glance-project-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--interactive-accent);
+    flex-shrink: 0;
+}
+.mina-glance-project-name {
+    font-size: 11px;
+    color: var(--text-normal);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.mina-glance-project-status {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+}
+.mina-glance-project-status--active { color: var(--color-green, #4caf50); }
+.mina-glance-project-status--on-hold { color: var(--color-orange, #ff9800); }
+.mina-glance-project-status--completed { color: var(--text-muted); }
+.mina-glance-finance-row { display: flex; align-items: center; gap: 6px; }
+.mina-glance-finance-icon {
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    width: 16px;
+    text-align: center;
+}
+.mina-glance-finance-name {
+    font-size: 11px;
+    color: var(--text-normal);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.mina-glance-finance-row--paid .mina-glance-finance-icon { color: var(--color-green, #4caf50); }
+.mina-glance-finance-row--overdue .mina-glance-finance-icon { color: var(--color-red, #f44336); }
+.mina-glance-finance-row--overdue .mina-glance-finance-name { color: var(--color-red, #f44336); }

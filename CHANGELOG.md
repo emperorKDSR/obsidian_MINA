@@ -4,6 +4,18 @@ All notable changes to MINA V2 will be documented in this file.
 
 ## [Unreleased]
 
+## [1.5.4] - 2025-07-29
+### Feat — Data-Driven Weekly Review (F3)
+
+The Weekly Review tab gains a **"Week at a Glance"** panel — a real-time dashboard summarising the current ISO week from live IndexService data. Zero vault reads; all computation is synchronous from in-memory indices.
+
+**Architecture:**
+- `ReviewTab.renderGlancePanel()`: Inserts collapsible glance panel between the review header and the body sections. Collapse state is persisted in the instance. Refresh button re-renders all four cards on demand.
+- `ReviewTab.computeGlanceData(weekId)`: Synchronously derives `GlanceData` from `taskIndex`, `dueIndex`, `projectIndex`, and habits settings. Tasks: completed = status=done + modified in ISO week; overdue = status=open + due before today. Habits: scans 7 daily `.md` files via `metadataCache` (no vault reads). Projects: active this week = `file.stat.mtime` within ISO week, not archived. Finance: paid = `lastPayment` within ISO week; overdue = `dueMoment` before today (paid takes priority).
+- Four sub-renderers: `renderGlanceTasks`, `renderGlanceHabits`, `renderGlanceProjects`, `renderGlanceFinance` — each renders a `mina-glance-card` with header, stats/rows.
+- Desktop: 2-column CSS Grid. Mobile (≤480px): single-column stack. Max-height 220px with overflow scroll.
+- CSS: `mina-review-glance`, `mina-glance-card`, `mina-glance-stat-*`, `mina-glance-habit-*`, `mina-glance-project-*`, `mina-glance-finance-*`
+
 ## [1.5.3] - 2025-07-29
 ### Feat — Edit Project + Manual Project Picker (F2)
 
