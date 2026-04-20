@@ -142,7 +142,7 @@ FORMAT: Use Markdown. Be concise. Use bullet points or headers only when they ge
         if (webSearch) body.tools = [{ googleSearch: {} }];
 
         // ai-04: Resolve model against allowlist
-        const modelId = AiService.resolveModel(s.geminiModel || 'gemini-1.5-pro', 'gemini-1.5-pro');
+        const modelId = AiService.resolveModel(s.geminiModel || 'gemini-2.5-pro', 'gemini-2.5-pro');
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent`;
 
         try {
