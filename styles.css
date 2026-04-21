@@ -1464,4 +1464,4 @@
         transition: none !important;
     }
 }
-.mina-manual-wrap{display:flex;flex-direction:column;height:100%;overflow:hidden}.mina-manual-nav-row{display:flex;align-items:center;padding:4px 0 8px 0}.mina-help-nav-item--roadmap{background:var(--background-modifier-hover);border-left:3px solid var(--color-accent)}.mina-help-accordion-block--roadmap>.mina-help-accordion-trigger{border-left:3px solid var(--color-accent);padding-left:10px}
+.mina-manual-wrap{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}.mina-manual-wrap .mina-help-root{max-height:none;border-radius:0;flex:1;min-height:0}.mina-manual-nav-row{display:flex;align-items:center;padding:0;margin-right:8px;flex-shrink:0}.mina-help-nav-item--roadmap{background:var(--background-modifier-hover);border-left:3px solid var(--color-accent)}.mina-help-accordion-block--roadmap>.mina-help-accordion-trigger{border-left:3px solid var(--color-accent);padding-left:10px}
