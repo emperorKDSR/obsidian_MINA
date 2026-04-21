@@ -1,6 +1,7 @@
 import { setIcon, Platform } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from './BaseTab';
+import { isTablet } from '../utils';
 
 interface HelpItem { label: string; desc: string; tip?: string; }
 interface HelpSection { id: string; icon: string; title: string; subtitle: string; items: HelpItem[]; }
@@ -209,15 +210,11 @@ export class ManualTab extends BaseTab {
         container.empty();
         const wrap = container.createEl('div', { cls: 'mina-manual-wrap' });
 
-        if (Platform.isMobile && !this._isTablet()) {
+        if (Platform.isMobile && !isTablet()) {
             this._renderMobile(wrap);
         } else {
             this._renderDesktop(wrap);
         }
-    }
-
-    private _isTablet(): boolean {
-        return Platform.isMobile && Math.min(screen.width, screen.height) >= 768;
     }
 
     // ── Desktop / Tablet: sidebar + content pane ──────────────────────────
