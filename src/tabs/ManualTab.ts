@@ -280,9 +280,10 @@ export class ManualTab extends BaseTab {
 
     // ── Mobile: accordion list ─────────────────────────────────────────────
     private _renderMobile(root: HTMLElement) {
-        root.addClass('mina-help-root mina-help-root--mobile');
+        root.addClass('mina-help-root');
+        root.addClass('mina-help-root--mobile');
 
-        const header = root.createEl('div', { cls: 'mina-help-header mina-help-header--mobile' });
+        const header = root.createEl('div', { cls: ['mina-help-header', 'mina-help-header--mobile'] });
         const navRow = header.createEl('div', { cls: 'mina-manual-nav-row' });
         this.renderHomeIcon(navRow);
         const titleWrap = header.createEl('div', { cls: 'mina-help-header-title' });
@@ -304,7 +305,8 @@ export class ManualTab extends BaseTab {
             list.empty();
             if (query) { this._renderSearchResults(list, query.toLowerCase().trim()); return; }
             SECTIONS.forEach(s => {
-                const block = list.createEl('div', { cls: `mina-help-accordion-block${s.id === 'roadmap' ? ' mina-help-accordion-block--roadmap' : ''}` });
+                const block = list.createEl('div', { cls: 'mina-help-accordion-block' });
+                if (s.id === 'roadmap') block.addClass('mina-help-accordion-block--roadmap');
                 const trigger = block.createEl('div', { cls: 'mina-help-accordion-trigger' });
                 const trigLeft = trigger.createEl('div', { cls: 'mina-help-accordion-trigger-left' });
                 const iconEl = trigLeft.createEl('span', { cls: 'mina-help-nav-icon' });
