@@ -58,11 +58,11 @@ export class AiTab extends BaseTab {
         } catch { return false; }
     }
 
-    async renderAiMode(container: HTMLElement) {
+    async renderAiMode(container: HTMLElement, forceNew = false) {
         container.empty();
 
-        // Load most recent chat on first open
-        if (this.view.chatHistory.length === 0 && !this.view.currentChatFile) {
+        // Load most recent chat on first open — but NOT when user explicitly starts a new chat
+        if (!forceNew && this.view.chatHistory.length === 0 && !this.view.currentChatFile) {
             await this.loadMostRecentChat();
         }
 
@@ -111,7 +111,7 @@ export class AiTab extends BaseTab {
             this.view.chatHistory = [];
             this.view.currentChatFile = null;
             this.view.groundedFiles = [];
-            this.renderAiMode(container);
+            this.renderAiMode(container, true);
         });
 
         // ─── Chat Messages ───
