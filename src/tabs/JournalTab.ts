@@ -1,74 +1,218 @@
-import { moment, Platform, setIcon } from 'obsidian';
+import { MarkdownRenderer, moment, Platform, setIcon } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from '../modals/EditEntryModal';
-import { parseContextString } from '../utils';
+import { ConfirmModal } from '../modals/ConfirmModal';
+import { parseContextString, isTablet } from '../utils';
+import type { ThoughtEntry } from '../types';
 
 export class JournalTab extends BaseTab {
     constructor(view: MinaView) { super(view); }
 
     render(container: HTMLElement) {
-        this.updateJournalList(container);
+        this._renderJournal(container);
     }
 
-    async updateJournalList(container: HTMLElement) {
+    private _renderJournal(container: HTMLElement) {
         container.empty();
-        
-        const wrap = container.createEl('div', {
-            attr: {
-                style: 'padding: 18px 16px 200px 16px; display: flex; flex-direction: column; gap: 24px; overflow-y: auto; flex-grow: 1; min-height: 0; -webkit-overflow-scrolling: touch; background: var(--background-primary);'
-            }
-        });
 
-        // 1. Header
-        const header = wrap.createEl('div', {
-            attr: { style: 'display: flex; flex-direction: column; gap: 12px; margin-bottom: 4px;' }
-        });
+        // Gather + sort: latest created first
+        const allEntries = Array.from(this.index.thoughtIndex.values())
+            .filter(e => Array.isArray(e.context) && e.context.includes('journal'));
+        allEntries.sort((a, b) =>
+            moment(b.created, 'YYYY-MM-DD HH:mm:ss').valueOf() -
+            moment(a.created, 'YYYY-MM-DD HH:mm:ss').valueOf()
+        );
 
-        const navRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px; margin-bottom: -4px;' } });
+        // Root: flex-col so FAB sits outside scroll container
+        const root = container.createEl('div', { cls: 'mina-journal-root' });
+        const scroll = root.createEl('div', { cls: 'mina-journal-scroll' });
+
+        // ── Nav row ───────────────────────────────────────────────────────
+        const navRow = scroll.createEl('div', { cls: 'mina-journal-nav-row' });
         this.renderHomeIcon(navRow);
+        if (!Platform.isMobile || isTablet()) {
+            const newBtn = navRow.createEl('button', { cls: 'mina-journal-new-btn' });
+            const btnIcon = newBtn.createSpan(); setIcon(btnIcon, 'lucide-pencil');
+            newBtn.createSpan({ text: 'New Entry' });
+            newBtn.addEventListener('click', () => this._openNewEntry());
+        }
 
-        const titleStack = header.createEl('div', { attr: { style: 'display: flex; flex-direction: column;' } });
-        const titleRow = titleStack.createEl('div', { attr: { style: 'display: flex; align-items: center; justify-content: space-between;' } });
-        titleRow.createEl('h2', {
-            text: 'Journal',
-            attr: { style: 'margin: 0; font-size: 1.4em; font-weight: 800; color: var(--text-normal); letter-spacing: -0.02em; line-height: 1.1;' }
+        // ── Title ─────────────────────────────────────────────────────────
+        scroll.createEl('h2', { text: 'Journal', cls: 'mina-journal-title' });
+        scroll.createEl('p', { text: 'Your personal reflections', cls: 'mina-journal-subtitle' });
+
+        // ── Stats strip ───────────────────────────────────────────────────
+        const thisMonth = moment().format('YYYY-MM');
+        const monthCount = allEntries.filter(e => e.day && e.day.startsWith(thisMonth)).length;
+        const streak = this._calcStreak(allEntries);
+        const statsRow = scroll.createEl('div', { cls: 'mina-journal-stats' });
+        this._stat(statsRow, String(allEntries.length), 'Entries');
+        this._stat(statsRow, String(monthCount), 'This Month');
+        this._stat(statsRow, streak > 0 ? `${streak} 🔥` : '—', 'Streak');
+
+        // ── Search ────────────────────────────────────────────────────────
+        const searchWrap = scroll.createEl('div', { cls: 'mina-journal-search-wrap' });
+        const searchIconEl = searchWrap.createEl('span', { cls: 'mina-journal-search-icon' });
+        setIcon(searchIconEl, 'lucide-search');
+        const searchInput = searchWrap.createEl('input', {
+            cls: 'mina-journal-search',
+            attr: { type: 'text', placeholder: 'Search journal…' }
+        }) as HTMLInputElement;
+        if (this.view.journalSearch) searchInput.value = this.view.journalSearch;
+
+        // ── List ──────────────────────────────────────────────────────────
+        const listEl = scroll.createEl('div', { cls: 'mina-journal-list' });
+        let debounceTimer: ReturnType<typeof setTimeout>;
+
+        const renderList = () => {
+            listEl.empty();
+            const q = (this.view.journalSearch || '').toLowerCase().trim();
+            const filtered = q
+                ? allEntries.filter(e =>
+                    e.body.toLowerCase().includes(q) ||
+                    e.title.toLowerCase().includes(q))
+                : allEntries;
+            if (filtered.length === 0) {
+                this.renderEmptyState(listEl, q
+                    ? 'No entries match your search.'
+                    : 'No journal entries yet.\nTap "New Entry" to begin. ✍️');
+                return;
+            }
+            this._renderGrouped(listEl, filtered);
+        };
+
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            this.view.journalSearch = searchInput.value;
+            debounceTimer = setTimeout(renderList, 150);
         });
 
-        const actionRow = wrap.createEl('div', { attr: { style: 'display: flex; gap: 10px;' } });
-        const actionBtnStyle = 'flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--background-modifier-border-faint); background: var(--background-secondary-alt); color: var(--text-normal); font-size: 0.85em; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;';
-        
-        const addNoteBtn = actionRow.createEl('button', { attr: { style: actionBtnStyle } });
-        const addNoteIcon = addNoteBtn.createSpan(); setIcon(addNoteIcon, 'pencil'); addNoteBtn.createSpan({ text: ' Add Note' });
-        addNoteBtn.addEventListener('click', () => {
-            new EditEntryModal(this.app, this.plugin, '', 'journal', null, false, async (text, ctxs) => {
+        renderList();
+
+        // ── Mobile FAB ────────────────────────────────────────────────────
+        if (Platform.isMobile && !isTablet()) {
+            const fab = root.createEl('button', { cls: 'mina-journal-fab' });
+            setIcon(fab, 'lucide-pencil');
+            fab.addEventListener('click', () => this._openNewEntry());
+        }
+    }
+
+    private _renderGrouped(listEl: HTMLElement, entries: ThoughtEntry[]) {
+        const today = moment().format('YYYY-MM-DD');
+        const yesterday = moment().subtract(1, 'day').format('YYYY-MM-DD');
+        let currentGroup = '';
+        for (const entry of entries) {
+            const label = this._groupLabel(entry.day || entry.created.split(' ')[0], today, yesterday);
+            if (label !== currentGroup) {
+                currentGroup = label;
+                listEl.createEl('div', { cls: 'mina-journal-group-header', text: label });
+            }
+            this._renderCard(listEl, entry);
+        }
+    }
+
+    private _groupLabel(day: string, today: string, yesterday: string): string {
+        if (day === today) return 'Today';
+        if (day === yesterday) return 'Yesterday';
+        const m = moment(day, 'YYYY-MM-DD', true);
+        if (!m.isValid()) return day;
+        const daysAgo = moment().diff(m, 'days');
+        if (daysAgo < 7) return m.format('dddd');
+        if (m.year() === moment().year()) return m.format('MMMM D');
+        return m.format('MMMM D, YYYY');
+    }
+
+    private _renderCard(listEl: HTMLElement, entry: ThoughtEntry) {
+        const timePart = entry.created.includes(' ')
+            ? entry.created.split(' ')[1].substring(0, 5)
+            : '';
+
+        const card = listEl.createEl('div', { cls: 'mina-journal-card' });
+
+        // ── Card head: time + actions ─────────────────────────────────────
+        const cardHead = card.createEl('div', { cls: 'mina-journal-card-head' });
+        if (timePart) {
+            cardHead.createEl('span', { cls: 'mina-journal-card-time', text: timePart });
+        }
+        const actions = cardHead.createEl('div', { cls: 'mina-journal-card-actions' });
+
+        const editBtn = actions.createEl('button', {
+            cls: 'mina-journal-act-btn', attr: { title: 'Edit entry' }
+        });
+        setIcon(editBtn, 'lucide-pencil');
+        editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            new EditEntryModal(this.app, this.plugin, entry.body,
+                entry.context.map(c => `#${c}`).join(' '), null, false,
+                async (newText, newCtxStr) => {
+                    const ctxArr = newCtxStr ? parseContextString(newCtxStr) : [];
+                    await this.vault.editThought(entry.filePath, newText.replace(/<br>/g, '\n'), ctxArr);
+                    this.view.renderView();
+                }).open();
+        });
+
+        const delBtn = actions.createEl('button', {
+            cls: 'mina-journal-act-btn mina-journal-act-btn--del', attr: { title: 'Delete entry' }
+        });
+        setIcon(delBtn, 'lucide-trash-2');
+        delBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            new ConfirmModal(this.app, 'Move this entry to trash?', async () => {
+                await this.vault.deleteFile(entry.filePath, 'thoughts');
+                this.view.renderView();
+            }).open();
+        });
+
+        // ── Body ──────────────────────────────────────────────────────────
+        const bodyEl = card.createEl('div', { cls: 'mina-journal-card-body' });
+        MarkdownRenderer.render(this.app, entry.body, bodyEl, entry.filePath, this.view);
+        this.hookInternalLinks(bodyEl, entry.filePath);
+        this.hookImageZoom(bodyEl);
+        this.hookCheckboxes(bodyEl, entry);
+
+        // ── Footer: context chips + reply count ───────────────────────────
+        const visibleCtx = entry.context.filter(c => c !== 'journal');
+        if (visibleCtx.length > 0 || entry.children.length > 0) {
+            const footer = card.createEl('div', { cls: 'mina-journal-card-footer' });
+            for (const ctx of visibleCtx) {
+                footer.createEl('span', { cls: 'mina-journal-ctx-chip', text: `#${ctx}` });
+            }
+            if (entry.children.length > 0) {
+                footer.createEl('span', {
+                    cls: 'mina-journal-reply-badge',
+                    text: `${entry.children.length} repl${entry.children.length === 1 ? 'y' : 'ies'}`
+                });
+            }
+        }
+    }
+
+    private _openNewEntry() {
+        new EditEntryModal(this.app, this.plugin, '', '#journal', null, false,
+            async (text, ctxs) => {
                 if (!text.trim()) return;
                 const contexts = parseContextString(ctxs);
+                if (!contexts.includes('journal')) contexts.push('journal');
                 await this.vault.createThoughtFile(text, contexts);
-                this.updateJournalList(container);
-            }, 'New Journal Note').open();
-        });
+                this.view.renderView();
+            }, 'New Journal Entry').open();
+    }
 
-        const listContainer = wrap.createEl('div', {
-            attr: { style: 'display: flex; flex-direction: column; gap: 12px; width: 100%;' }
-        });
-
-        let entries = Array.from(this.index.thoughtIndex.values())
-            .filter(e => e.context.includes('journal'));
-
-        entries.sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate);
-
-        let lastDate = "";
-        for (const entry of entries) {
-            const entryDate = moment(entry.created.split(' ')[0]).format('dddd, MMMM D');
-            if (entryDate !== lastDate) {
-                const dateHeader = listContainer.createEl('div', {
-                    text: entryDate,
-                    attr: { style: 'font-size: 0.75em; font-weight: 800; text-transform: uppercase; color: var(--text-faint); letter-spacing: 0.1em; margin-top: 10px; border-bottom: 1px solid var(--background-modifier-border-faint); padding-bottom: 4px;' }
-                });
-                lastDate = entryDate;
-            }
-            await this.renderThoughtRow(entry, listContainer, entry.filePath, 0, true);
+    private _calcStreak(entries: ThoughtEntry[]): number {
+        const days = new Set(entries.map(e => e.day || e.created.split(' ')[0]).filter(Boolean));
+        let streak = 0;
+        let cursor = moment().startOf('day');
+        if (!days.has(cursor.format('YYYY-MM-DD'))) cursor = cursor.subtract(1, 'day');
+        while (days.has(cursor.format('YYYY-MM-DD'))) {
+            streak++;
+            cursor = cursor.subtract(1, 'day');
         }
+        return streak;
+    }
+
+    private _stat(parent: HTMLElement, value: string, label: string) {
+        const s = parent.createEl('div', { cls: 'mina-journal-stat' });
+        s.createEl('div', { cls: 'mina-journal-stat-val', text: value });
+        s.createEl('div', { cls: 'mina-journal-stat-lbl', text: label });
     }
 }

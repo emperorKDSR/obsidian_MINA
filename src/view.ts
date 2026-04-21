@@ -59,6 +59,9 @@ export class MinaView extends ItemView {
     focusedTaskIds: Set<string> = new Set();
     focusAiPlan: string | null = null;
 
+    // Journal State
+    journalSearch: string = '';
+
     // Voice State
     isRecording: boolean = false;
 

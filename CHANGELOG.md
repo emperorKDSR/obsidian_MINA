@@ -1,3 +1,16 @@
+## [1.14.2] - 2026-07-22
+
+### Changed
+- **Journal Tab Redesign**: Complete overhaul for clarity and navigation
+  - Latest note always appears first (sorted by creation time)
+  - Smart date group headers: Today / Yesterday / Weekday / Month D / Month D, YYYY
+  - Stats strip: total entries, this-month count, writing streak 🔥
+  - Live search with 150ms debounce (persists across vault events)
+  - Custom journal cards: time badge, markdown body, context chips (journal tag hidden), reply count
+  - Edit / Delete actions on each card (hover on desktop, always-visible on mobile)
+  - New Entry button in header (desktop/tablet) or floating FAB (mobile)
+  - FAB mounted outside scroll container — no clipping or z-index issues
+
 ## [1.14.1] - 2026-04-22
 
 ### Updated
