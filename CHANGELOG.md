@@ -1,3 +1,9 @@
+## [1.14.1] - 2026-04-22
+
+### Updated
+- **Manual**: Added missing documentation sections for Task Focus Mode, Memento Mori, Export & Backup, and Finance Analytics (all shipped in v1.14.0 but undocumented)
+- **Manual — Settings**: Added Memento Mori (birth date, life expectancy) and Monthly Income configuration entries
+
 ## [1.14.0] - 2025-07-21
 
 ### Added

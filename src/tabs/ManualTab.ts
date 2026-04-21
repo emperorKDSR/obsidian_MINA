@@ -191,6 +191,49 @@ const SECTIONS: HelpSection[] = [
         ]
     },
     {
+        id: 'focus', icon: 'lucide-crosshair', title: 'Task Focus Mode', subtitle: "Today's mission — overdue and due tasks",
+        items: [
+            { label: 'Access', desc: 'Open from the ACTION cluster in Command Center (Focus icon — first button in the row).', tip: 'Focus is always the first action — make it your daily starting point.' },
+            { label: "Today's Mission", desc: 'Shows all overdue tasks and tasks due today sorted by urgency: overdue first, then due today, then manually pinned tasks.' },
+            { label: 'Pin Any Task', desc: 'Tap "Add to Mission" on any task in the Tasks tab to pin it to Focus for the current session, even if it has no due date.', tip: 'Pinned tasks persist only for the current session — they reset when you close the plugin.' },
+            { label: 'Complete from Focus', desc: 'Tap the checkbox on any mission task to mark it done. The card fades and the task moves to the Done filter in Tasks.' },
+            { label: 'AI Time-Block Plan', desc: 'Tap "✨ Generate Time-Block Plan" to get a Gemini-powered daily schedule: each task gets a focused time slot with duration estimates.', tip: 'Requires a Gemini API key. The plan is based on your actual mission task list.' },
+            { label: 'Empty State', desc: 'When all tasks are done, Focus shows "All clear! No tasks due today. 🎯" — a satisfying completion signal.' },
+        ]
+    },
+    {
+        id: 'memento-mori', icon: 'lucide-hourglass', title: 'Memento Mori', subtitle: 'Your life in weeks — stay present',
+        items: [
+            { label: 'Access', desc: 'Open from the SYSTEM cluster in Command Center (Memento button).', tip: 'A powerful daily reminder to focus on what matters.' },
+            { label: 'Setup', desc: 'Set your birth date (YYYY-MM-DD) and life expectancy in Settings → Memento Mori. Without a birth date, the tab shows a setup prompt.' },
+            { label: 'Stats Row', desc: 'Shows four key numbers at a glance: your current age, total weeks lived, weeks remaining, and years remaining.' },
+            { label: 'Life-in-Weeks Grid', desc: 'Each small square represents one week of your life. Filled squares are weeks already lived; the current week is highlighted in accent colour. The grid spans your full expected lifespan.', tip: 'Scrollable on mobile — the full grid can be tall for a 90-year lifespan.' },
+            { label: 'Stoic Quotes', desc: 'A rotating Marcus Aurelius or Epictetus quote is displayed daily — cycling by day of year so it changes each morning.' },
+            { label: 'Life Expectancy', desc: 'Default life expectancy is 90 years. Override in Settings → Memento Mori → Life Expectancy.' },
+        ]
+    },
+    {
+        id: 'export', icon: 'lucide-download', title: 'Export & Backup', subtitle: 'Portable copies of your data',
+        items: [
+            { label: 'Access', desc: 'Open from the SYSTEM cluster in Command Center (Export button).', tip: 'Run a backup before major vault reorganisations.' },
+            { label: 'Export Thoughts (CSV)', desc: 'Exports all thoughts as a CSV file (title, created date, day, contexts, body). Saved to your Thoughts folder.', tip: 'Open in Excel, Numbers, or any spreadsheet app.' },
+            { label: 'Export Tasks (CSV)', desc: 'Exports all tasks as a CSV file (title, status, due date, priority, energy, contexts). Saved to your Tasks folder.' },
+            { label: 'Full JSON Backup', desc: 'Creates a single JSON snapshot of thoughts, tasks, projects, dues, and plugin settings. API keys are intentionally excluded for security.', tip: 'Saved to your vault root as MINA-backup-YYYY-MM-DD.json.' },
+            { label: 'Count Badges', desc: 'Each export card shows a live count of how many items will be exported before you click.' },
+        ]
+    },
+    {
+        id: 'finance-analytics', icon: 'lucide-bar-chart-2', title: 'Finance Analytics', subtitle: 'Cashflow overview and obligation breakdown',
+        items: [
+            { label: 'Access', desc: 'Open from the Finance (Dues) tab via the "Analytics →" button in the header, or navigate directly to Finance Analytics from Command Center.', tip: 'The Analytics button appears in the top-right of the Dues ledger.' },
+            { label: 'Cashflow Overview', desc: 'Shows monthly income, total obligations, and net cashflow side by side. Set your monthly income in Settings → Finance → Monthly Income.', tip: 'Net cashflow turns red when obligations exceed income.' },
+            { label: 'Obligation Bar', desc: 'A colour-coded bar shows obligations as a percentage of income. Green = healthy (<60%), orange = caution (60–80%), red = overextended (>80%).' },
+            { label: 'Obligations by Category', desc: 'All active dues are grouped by category with total per group and a proportional bar. Quickly see your biggest spending areas.' },
+            { label: 'Quick Stats', desc: 'At a glance: how many dues are due this week, how many are overdue, and how many have been paid this month.' },
+            { label: 'No Income Set', desc: 'If monthly income is not configured, cashflow fields show "—". Add your income in Settings → Finance → Monthly Income to unlock the full view.' },
+        ]
+    },
+    {
         id: 'settings', icon: 'lucide-settings', title: 'Settings', subtitle: 'Configure MINA to your workflow',
         items: [
             { label: 'Folders', desc: 'Set where thoughts, tasks, habits, voice memos, and reviews are stored in your vault. Use Folder Config for a quick modal.' },
@@ -200,6 +243,8 @@ const SECTIONS: HelpSection[] = [
             { label: 'Habits', desc: 'Add, edit, and archive habits from the ⚙ icon on the Home screen.' },
             { label: 'Daily Note Folder', desc: 'Set the folder where daily note files live (default: "Daily Notes"). Used by the Daily Workspace integration panel.' },
             { label: 'Reminders', desc: 'Toggle habit reminders and task reminders independently. Both respect quiet hours (8 AM – 10 PM) and fire on mobile app resume.' },
+            { label: 'Memento Mori', desc: 'Enter your birth date (YYYY-MM-DD) and life expectancy to activate the Memento Mori life-in-weeks grid.' },
+            { label: 'Monthly Income', desc: 'Set your monthly income (number) to unlock the cashflow overview in Finance Analytics.' },
         ]
     },
     {
