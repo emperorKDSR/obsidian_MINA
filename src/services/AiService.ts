@@ -285,8 +285,16 @@ Rules: No preamble. No sign-off. Under 300 words total. Be direct, specific, and
             if (!resp.ok) throw new Error(`AI Error (HTTP ${resp.status}). Model: ${modelId}.`);
 
             const data = await resp.json();
-            const reply = (data?.candidates?.[0]?.content?.parts ?? []).map((p: any) => p.text ?? '').join('').trim();
-            return reply || '(no response)';
+            const blockReason = data?.promptFeedback?.blockReason;
+            if (blockReason) throw new Error(`Request blocked by Gemini safety filters (${blockReason}).`);
+            const candidate = data?.candidates?.[0];
+            const finishReason = candidate?.finishReason;
+            if (finishReason && finishReason !== 'STOP' && finishReason !== 'MAX_TOKENS') {
+                throw new Error(`Generation ended unexpectedly (finishReason: ${finishReason}). Try again or switch models.`);
+            }
+            const reply = (candidate?.content?.parts ?? []).map((p: any) => p.text ?? '').join('').trim();
+            if (!reply) throw new Error('Gemini returned an empty response. Try again or check your quota in Google AI Studio.');
+            return reply;
         } catch (e: any) {
             if (e?.name === 'AbortError') throw new Error('Weekly report generation was cancelled.');
             const safeMsg = (e?.message || '').replace(/x-goog-api-key=[^\s&]+/g, 'x-goog-api-key=[REDACTED]');
