@@ -1,3 +1,12 @@
+## [1.12.0] - 2026-04-21
+### Added
+- **AI Weekly Generator**: New "✨ AI Weekly Brief" section in the Weekly Review tab powered by Gemini. Collects tasks completed/overdue, habit completion rates, active projects, recent thoughts, wins/lessons/focus, and North Star goals, then generates a structured 5-section brief (Week Assessment, Top Win, Key Insight, Next Week Priority, North Star Pulse)
+- AI brief is integrated into the weekly review save cycle — included in the review MD file when saved
+- Brief persists across re-renders via session-level `weeklyAiReport` state
+- Copy to clipboard, Save to Review, and Regenerate actions
+- Separate abort controller for weekly generation (doesn't cancel AI chat sessions)
+- Injection boundary markers around all vault-derived content in weekly prompt
+
 ## [1.11.4] - 2026-04-21
 ### Added
 - **Manual tab**: Converted HelpModal into a full navigable tab accessible from SYSTEM cluster and header ? button

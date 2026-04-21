@@ -48,6 +48,7 @@ export class MinaView extends ItemView {
     groundedNotesBar: HTMLElement;
     chatContainer: HTMLElement;
     currentChatFile: string | null = null;
+    weeklyAiReport: string | null = null;
 
     // Voice State
     isRecording: boolean = false;

@@ -142,6 +142,21 @@ export type FileOrCreate = TFile | string;
 
 export type VoiceState = 'idle' | 'recording' | 'processing' | 'reviewing' | 'confirmed';
 
+export interface WeeklyReportContext {
+    weekId: string;
+    dateRange: string;
+    wins: string;
+    lessons: string;
+    focus: string[];
+    habitData: { name: string; icon: string; count: number }[];
+    completedTasks: string[];
+    overdueTasks: string[];
+    activeProjects: string[];
+    weeklyGoals: string[];
+    northStarGoals: string[];
+    recentThoughts: string[];
+}
+
 export interface ReviewData {
     transcript: string;
     clipFile: TFile | null;

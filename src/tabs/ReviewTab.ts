@@ -1,7 +1,7 @@
-import { moment, setIcon, MarkdownRenderer, Platform, TFile } from 'obsidian';
+import { moment, setIcon, MarkdownRenderer, Platform, TFile, Notice } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
-import type { ProjectEntry, TaskEntry, DueEntry } from '../types';
+import type { ProjectEntry, TaskEntry, DueEntry, WeeklyReportContext } from '../types';
 
 interface GlanceData {
     tasks: { completed: TaskEntry[]; overdue: TaskEntry[] };
@@ -147,6 +147,11 @@ export class ReviewTab extends BaseTab {
         while (focus.length < 3) focus.push('');
         let isDirty = false;
 
+        // Restore any previously generated AI report (session-level or from saved file)
+        if (existing?.aiReport && !this.view.weeklyAiReport) {
+            this.view.weeklyAiReport = existing.aiReport;
+        }
+
         const wrap = container.createEl('div', { cls: 'mina-review-wrap' });
         wrap.setAttribute('container-type', 'inline-size');
 
@@ -228,7 +233,7 @@ export class ReviewTab extends BaseTab {
             saveBtn.disabled = true;
             const habitHighlight = this.getHabitHighlightText();
             try {
-                await this.vault.saveWeeklyReview(weekId, dateRange, wins, lessons, focus, habitHighlight);
+                await this.vault.saveWeeklyReview(weekId, dateRange, wins, lessons, focus, habitHighlight, this.view.weeklyAiReport ?? undefined);
                 isDirty = false;
                 dirtyDot.style.display = 'none';
                 saveBtn.textContent = '✓  Saved';
@@ -253,6 +258,9 @@ export class ReviewTab extends BaseTab {
         wrap.addEventListener('keydown', (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); doSave(); }
         });
+
+        // ── AI Weekly Brief ───────────────────────────────────────
+        this._renderAiSection(wrap, weekId, dateRange, () => ({ wins, lessons, focus }), doSave);
 
         // ── Previous Week Card ────────────────────────────────────
         const prevCard = wrap.createEl('div', { cls: 'mina-review-prev-card is-collapsed' });
@@ -288,6 +296,172 @@ export class ReviewTab extends BaseTab {
                 }
             }
         });
+    }
+
+    private _buildWeeklyReportContext(weekId: string, dateRange: string, wins: string, lessons: string, focus: string[]): WeeklyReportContext {
+        const weekStart = moment().startOf('isoWeek');
+        const weekEnd = moment().endOf('isoWeek');
+
+        const allTasks = Array.from(this.index.taskIndex.values());
+        const completedTasks = allTasks
+            .filter(t => {
+                if (t.status !== 'done') return false;
+                const mod = moment(t.modified, 'YYYY-MM-DD HH:mm:ss');
+                return mod.isSameOrAfter(weekStart) && mod.isSameOrBefore(weekEnd);
+            })
+            .map(t => t.title || t.body.split('\n')[0])
+            .slice(0, 15);
+
+        const overdueTasks = allTasks
+            .filter(t => t.status === 'open' && !!t.due && moment(t.due, 'YYYY-MM-DD').isBefore(moment(), 'day'))
+            .map(t => t.title || t.body.split('\n')[0])
+            .slice(0, 8);
+
+        const habits = (this.settings.habits || []).filter(h => !h.archived);
+        const habitsFolder = (this.settings.habitsFolder || '000 Bin/MINA V2 Habits').replace(/\\/g, '/');
+        const habitCounts: Map<string, number> = new Map();
+        habits.forEach(h => habitCounts.set(h.id, 0));
+        for (let d = 0; d < 7; d++) {
+            const dateStr = moment(weekStart).add(d, 'days').format('YYYY-MM-DD');
+            const file = this.app.vault.getAbstractFileByPath(`${habitsFolder}/${dateStr}.md`);
+            if (!(file instanceof TFile)) continue;
+            const cache = this.app.metadataCache.getFileCache(file);
+            const done: string[] = Array.isArray(cache?.frontmatter?.['completed'])
+                ? cache!.frontmatter!['completed'].map(String) : [];
+            done.forEach(id => { if (habitCounts.has(id)) habitCounts.set(id, (habitCounts.get(id) || 0) + 1); });
+        }
+        const habitData = habits.map(h => ({ name: h.name, icon: h.icon, count: habitCounts.get(h.id) || 0 }));
+
+        const activeProjects = Array.from(this.index.projectIndex.values())
+            .filter(p => p.status !== 'archived' && p.status !== 'completed')
+            .map(p => `${p.name} (${p.status})${p.goal ? ': ' + p.goal : ''}`)
+            .slice(0, 6);
+
+        const recentThoughts = Array.from(this.index.thoughtIndex.values())
+            .filter(t => {
+                const created = moment(t.created, 'YYYY-MM-DD HH:mm:ss');
+                return created.isSameOrAfter(weekStart) && created.isSameOrBefore(weekEnd);
+            })
+            .sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate)
+            .slice(0, 10)
+            .map(t => t.body.split('\n')[0].substring(0, 120));
+
+        return {
+            weekId,
+            dateRange,
+            wins,
+            lessons,
+            focus,
+            habitData,
+            completedTasks,
+            overdueTasks,
+            activeProjects,
+            weeklyGoals: this.settings.weeklyGoals || [],
+            northStarGoals: this.settings.northStarGoals || [],
+            recentThoughts
+        };
+    }
+
+    private _renderAiSection(
+        parent: HTMLElement,
+        weekId: string,
+        dateRange: string,
+        getFormData: () => { wins: string; lessons: string; focus: string[] },
+        doSave: () => Promise<void>
+    ): void {
+        const section = parent.createEl('div', { cls: 'mina-review-ai-section' });
+        const sectionHeader = section.createEl('div', { cls: 'mina-review-ai-header' });
+        const titleEl = sectionHeader.createEl('span', { cls: 'mina-review-ai-title' });
+        setIcon(titleEl.createEl('span', { cls: 'mina-review-ai-title-icon' }), 'lucide-sparkles');
+        titleEl.createEl('span', { text: 'AI Weekly Brief' });
+
+        const actionsEl = sectionHeader.createEl('div', { cls: 'mina-review-ai-actions' });
+
+        const resultCard = section.createEl('div', { cls: 'mina-review-ai-card' });
+
+        const showResult = (report: string) => {
+            resultCard.empty();
+            const content = resultCard.createEl('div', { cls: 'mina-review-ai-content' });
+            MarkdownRenderer.render(this.app, report, content, '', this.view);
+            this.hookInternalLinks(content, '');
+        };
+
+        const showLoading = () => {
+            resultCard.empty();
+            const loadingEl = resultCard.createEl('div', { cls: 'mina-review-ai-loading' });
+            loadingEl.createEl('span', { cls: 'mina-ai-dot' });
+            loadingEl.createEl('span', { cls: 'mina-ai-dot' });
+            loadingEl.createEl('span', { cls: 'mina-ai-dot' });
+        };
+
+        const showError = (msg: string) => {
+            resultCard.empty();
+            resultCard.createEl('div', { cls: 'mina-review-ai-error', text: `⚠ ${msg}` });
+        };
+
+        // Build action buttons — rebuilt after generate
+        const buildActions = (hasReport: boolean) => {
+            actionsEl.empty();
+
+            if (hasReport) {
+                const copyBtn = actionsEl.createEl('button', { cls: 'mina-review-ai-action-btn', text: 'Copy' });
+                setIcon(copyBtn.createEl('span', { cls: 'mina-review-ai-btn-icon' }), 'lucide-copy');
+                copyBtn.addEventListener('click', async () => {
+                    try {
+                        await navigator.clipboard.writeText(this.view.weeklyAiReport || '');
+                        new Notice('Copied to clipboard');
+                    } catch {
+                        new Notice('Could not copy — select the text manually');
+                    }
+                });
+
+                const saveBtn = actionsEl.createEl('button', { cls: 'mina-review-ai-action-btn', text: 'Save to Review' });
+                setIcon(saveBtn.createEl('span', { cls: 'mina-review-ai-btn-icon' }), 'lucide-save');
+                saveBtn.addEventListener('click', async () => {
+                    saveBtn.disabled = true;
+                    saveBtn.textContent = 'Saving…';
+                    try {
+                        await doSave();
+                        saveBtn.textContent = '✓ Saved';
+                        setTimeout(() => {
+                            saveBtn.textContent = 'Save to Review';
+                            saveBtn.disabled = false;
+                        }, 1800);
+                    } catch {
+                        saveBtn.textContent = '⚠ Failed';
+                        saveBtn.disabled = false;
+                    }
+                });
+            }
+
+            const genBtn = actionsEl.createEl('button', { cls: 'mina-review-ai-gen-btn', text: hasReport ? '↺ Regenerate' : '✨ Generate AI Brief' });
+            genBtn.addEventListener('click', async () => {
+                genBtn.disabled = true;
+                const { wins, lessons, focus } = getFormData();
+                const ctx = this._buildWeeklyReportContext(weekId, dateRange, wins, lessons, focus);
+                showLoading();
+                try {
+                    const report = await this.ai.generateWeeklyReport(ctx);
+                    this.view.weeklyAiReport = report;
+                    showResult(report);
+                    buildActions(true);
+                } catch (e: any) {
+                    showError(e?.message || 'Generation failed');
+                    buildActions(false);
+                } finally {
+                    genBtn.disabled = false;
+                }
+            });
+        };
+
+        // Initial state — restore if we have a cached report
+        if (this.view.weeklyAiReport) {
+            showResult(this.view.weeklyAiReport);
+            buildActions(true);
+        } else {
+            resultCard.classList.add('is-empty');
+            buildActions(false);
+        }
     }
 
     private renderGlancePanel(parent: HTMLElement, weekId: string): void {

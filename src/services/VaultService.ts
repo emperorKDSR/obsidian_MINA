@@ -413,13 +413,14 @@ export class VaultService {
     }
 
     /** Save a weekly review to {reviewsFolder}/Weekly/YYYY-Www.md */
-    async saveWeeklyReview(weekId: string, dateRange: string, wins: string, lessons: string, focus: string[], habitHighlight: string): Promise<void> {
+    async saveWeeklyReview(weekId: string, dateRange: string, wins: string, lessons: string, focus: string[], habitHighlight: string, aiReport?: string): Promise<void> {
         const root = (this.settings.reviewsFolder || '000 Bin/MINA V2 Reviews').trim();
         const folder = `${root}/Weekly`;
         const path = `${folder}/${weekId}.md`;
         const now = this.formatDateTime(new Date());
         const focusLines = focus.map((f, i) => `${i + 1}. ${f.trim()}`).join('\n');
-        const content = `---\nweek: "${weekId}"\ndate_range: "${dateRange}"\nsaved: "${now}"\n---\n\n# 🏆 Wins\n${wins.trim()}\n\n# 📚 Lessons\n${lessons.trim()}\n\n# 🎯 Focus\n${focusLines}\n\n# 💡 Habit Highlight\n${habitHighlight}\n`;
+        const aiSection = aiReport ? `\n\n# 🤖 AI Weekly Brief\n${aiReport.trim()}` : '';
+        const content = `---\nweek: "${weekId}"\ndate_range: "${dateRange}"\nsaved: "${now}"\n---\n\n# 🏆 Wins\n${wins.trim()}\n\n# 📚 Lessons\n${lessons.trim()}\n\n# 🎯 Focus\n${focusLines}\n\n# 💡 Habit Highlight\n${habitHighlight}${aiSection}\n`;
         try {
             await this.ensureFolder(folder);
             const existing = this.app.vault.getAbstractFileByPath(path);
@@ -560,8 +561,8 @@ export class VaultService {
         }
     }
 
-    /** Load a weekly review file and parse wins/lessons/focus sections */
-    async loadWeeklyReview(weekId: string): Promise<{ wins: string; lessons: string; focus: string[]; saved: string } | null> {
+    /** Load a weekly review file and parse wins/lessons/focus/aiReport sections */
+    async loadWeeklyReview(weekId: string): Promise<{ wins: string; lessons: string; focus: string[]; saved: string; aiReport?: string } | null> {
         const root = (this.settings.reviewsFolder || '000 Bin/MINA V2 Reviews').trim();
         const path = `${root}/Weekly/${weekId}.md`;
         const file = this.app.vault.getAbstractFileByPath(path);
@@ -574,7 +575,7 @@ export class VaultService {
             for (const part of parts) {
                 const firstNewline = part.indexOf('\n');
                 if (firstNewline === -1) continue;
-                const heading = part.substring(0, firstNewline).replace(/[🏆📚🎯💡\s]+/g, ' ').trim().toLowerCase();
+                const heading = part.substring(0, firstNewline).replace(/[🏆📚🎯💡🤖\s]+/g, ' ').trim().toLowerCase();
                 sections[heading] = part.substring(firstNewline + 1).trim();
             }
             const focusRaw = sections['focus'] || '';
@@ -585,7 +586,8 @@ export class VaultService {
                 wins: sections['wins'] || '',
                 lessons: sections['lessons'] || '',
                 focus,
-                saved
+                saved,
+                aiReport: sections['ai weekly brief'] || undefined
             };
         } catch (e) {
             console.error('[MINA VaultService] loadWeeklyReview', e);
