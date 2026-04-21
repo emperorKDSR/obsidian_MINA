@@ -1,9 +1,21 @@
+## [1.11.4] - 2026-04-21
+### Added
+- **Manual tab**: Converted HelpModal into a full navigable tab accessible from SYSTEM cluster and header ? button
+- **Roadmap section**: Added Roadmap to the Manual with 10 upcoming features (Habit Streaks, Calendar View, Task Focus Mode, Project Milestones, Memento Mori, AI Weekly Review, Finance Analytics, Reminders, Export, Daily Note Integration)
+- Manual accessible on all platforms: desktop sidebar layout, tablet sidebar layout, mobile accordion layout
+
 ## [1.11.3] - Habit Buttons Rounded Square on Desktop and Tablet
 
 ### Fixed
 - Habit buttons on desktop and tablet now use rounded-corner square (border-radius: 14px) matching the mobile pattern, instead of circle (border-radius: 50%)
 - Button height is now auto-sized with min-height: 64px and padding 10px 8px, same as mobile grid
 - Habit labels now wrap naturally on desktop/tablet
+
+## [1.11.4] - 2026-04-21
+### Added
+- **Manual tab**: Converted HelpModal into a full navigable tab accessible from SYSTEM cluster and header ? button
+- **Roadmap section**: Added Roadmap to the Manual with 10 upcoming features (Habit Streaks, Calendar View, Task Focus Mode, Project Milestones, Memento Mori, AI Weekly Review, Finance Analytics, Reminders, Export, Daily Note Integration)
+- Manual accessible on all platforms: desktop sidebar layout, tablet sidebar layout, mobile accordion layout
 
 ## [1.11.3] - Habit Buttons: Rounded Square on Desktop + Tablet
 
@@ -730,6 +742,7 @@ Deleted 5 tab files that had no entry point in the Command Center and were unrea
 - **VaultService** — unified file I/O with YAML injection-safe frontmatter builders
 - **AiService** — Gemini integration with chunked base64, injection boundary markers, model allowlist, and API key header security
 - **17 tabs, 17 modals** — full Personal OS feature set
+
 
 
 

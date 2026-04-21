@@ -69,7 +69,7 @@ export class CommandCenterTab extends BaseTab {
             attr: { title: 'Open manual', style: btnSize }
         });
         setIcon(helpBtn, 'lucide-circle-help');
-        helpBtn.addEventListener('click', () => { new HelpModal(this.app).open(); });
+        helpBtn.addEventListener('click', () => { this.view.activeTab = 'manual'; this.view.renderView(); });
 
         const zenToggle = btnCluster.createEl('button', {
             cls: `mina-zen-btn${this.view.isZenMode ? ' is-active' : ''}`,
@@ -728,7 +728,7 @@ export class CommandCenterTab extends BaseTab {
 
         renderCluster('ACTION',     [{ label: 'Tasks',    icon: 'lucide-check-square-2', tab: 'review-tasks' }, { label: 'Finance', icon: PF_ICON_ID, tab: 'dues' }, { label: 'Habits', icon: 'lucide-flame', tab: 'habits' }, { label: 'Workspace', icon: WORKSPACE_ICON_ID, tab: 'daily-workspace' }], 'mina-pillar-cluster--action');
         renderCluster('MANAGEMENT', [{ label: 'Projects', icon: 'lucide-briefcase', tab: 'projects' }, { label: 'Synthesis', icon: SYNTHESIS_ICON_ID, tab: 'synthesis' }, { label: 'Journal', icon: JOURNAL_ICON_ID, tab: 'journal' }, { label: 'Timeline', icon: TIMELINE_ICON_ID, tab: 'timeline' }], 'mina-pillar-cluster--mgmt');
-        renderCluster('SYSTEM',     [{ label: 'AI Chat',  icon: AI_CHAT_ICON_ID, tab: 'mina-ai' }, { label: 'Voice', icon: 'lucide-mic', tab: 'voice-note' }, { label: 'Weekly', icon: REVIEW_ICON_ID, tab: 'review' }, { label: 'Monthly', icon: 'lucide-calendar-range', tab: 'monthly-review' }, { label: 'Compass', icon: COMPASS_ICON_ID, tab: 'compass' }, { label: 'Settings', icon: SETTINGS_ICON_ID, tab: 'settings' }], 'mina-pillar-cluster--system');
+        renderCluster('SYSTEM',     [{ label: 'AI Chat',  icon: AI_CHAT_ICON_ID, tab: 'mina-ai' }, { label: 'Voice', icon: 'lucide-mic', tab: 'voice-note' }, { label: 'Weekly', icon: REVIEW_ICON_ID, tab: 'review' }, { label: 'Monthly', icon: 'lucide-calendar-range', tab: 'monthly-review' }, { label: 'Compass', icon: COMPASS_ICON_ID, tab: 'compass' }, { label: 'Settings', icon: SETTINGS_ICON_ID, tab: 'settings' }, { label: 'Manual', icon: 'lucide-book-open', tab: 'manual' }], 'mina-pillar-cluster--system');
     }
 
     /** Attach # autocomplete suggestions to a capture textarea.

@@ -88,6 +88,7 @@ export class MinaView extends ItemView {
             case 'timeline': return "Timeline";
             case 'journal': return "Journal";
             case 'daily-workspace': return "Daily Workspace";
+            case 'manual': return "Manual";
             default: return "MINA";
         }
     }
@@ -153,6 +154,7 @@ export class MinaView extends ItemView {
         else if (tab === 'timeline') instantiate(import('./tabs/TimelineTab'), 'TimelineTab');
         else if (tab === 'journal') instantiate(import('./tabs/JournalTab'), 'JournalTab');
         else if (tab === 'daily-workspace') instantiate(import('./tabs/DailyWorkspaceTab'), 'DailyWorkspaceTab');
+        else if (tab === 'manual') instantiate(import('./tabs/ManualTab'), 'ManualTab');
     }
 
     // Bridge methods to Services
