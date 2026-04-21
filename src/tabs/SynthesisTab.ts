@@ -459,6 +459,11 @@ export class SynthesisTab extends BaseTab {
         });
         this.buildCtxEcho(ctxEcho);
 
+        // ── Inline capture bar (desktop + tablet only) ────────────────────────
+        if (!isPhone) {
+            this.renderInlineCaptureBar(feedScroll, shell);
+        }
+
         // ── Thought list ──────────────────────────────────────────────────────
         this.buildThoughtList(feedScroll, shell, isPhone);
     }
@@ -781,6 +786,103 @@ export class SynthesisTab extends BaseTab {
             const countEl = btn.querySelector('.mina-seg-count');
             if (countEl) countEl.textContent = String(this.getCountForFilter(key));
         });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Inline Capture Bar (desktop + tablet)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    private renderInlineCaptureBar(feedScroll: HTMLElement, shell: HTMLElement): void {
+        const bar = feedScroll.createEl('div', { cls: 'mina-syn-inline-bar' });
+        const expanded = this.view.synthesisCaptureExpanded;
+
+        if (!expanded) {
+            // Collapsed state — single-line trigger
+            const trigger = bar.createEl('div', { cls: 'mina-syn-inline-trigger' });
+            const icon = trigger.createEl('span', { cls: 'mina-syn-inline-icon' });
+            setIcon(icon, 'edit-3');
+            trigger.createEl('span', {
+                cls: 'mina-syn-inline-placeholder',
+                text: this.primedContexts.length > 0
+                    ? `Capture to #${this.primedContexts[0]}…`
+                    : 'Quick capture thought…'
+            });
+            trigger.addEventListener('click', () => {
+                this.view.synthesisCaptureExpanded = true;
+                this.view.renderView();
+            });
+            return;
+        }
+
+        // Expanded state
+        bar.addClass('is-expanded');
+        const textarea = bar.createEl('textarea', {
+            cls: 'mina-syn-inline-textarea',
+            attr: { placeholder: this.primedContexts.length > 0
+                ? `Capture to #${this.primedContexts[0]}…`
+                : 'Capture thought…', rows: '3' }
+        }) as HTMLTextAreaElement;
+        textarea.value = this.view.synthesisCaptureDraft;
+
+        // Suppress re-renders while typing
+        textarea.addEventListener('input', () => {
+            this.view.synthesisCaptureDraft = textarea.value;
+            this.view._synthesisCaptPending = textarea.value.trim().length > 0 ? 1 : 0;
+        });
+
+        // Context chips (read-only echo of primed contexts)
+        if (this.primedContexts.length > 0) {
+            const chips = bar.createEl('div', { cls: 'mina-syn-inline-chips' });
+            this.primedContexts.forEach(ctx => {
+                chips.createEl('span', { cls: 'mina-syn-inline-chip', text: `#${ctx}` });
+            });
+        }
+
+        // Actions
+        const actions = bar.createEl('div', { cls: 'mina-syn-inline-actions' });
+        const cancelBtn = actions.createEl('button', { text: 'CANCEL', cls: 'mina-capture-inline-cancel' });
+        const saveBtn = actions.createEl('button', { text: 'SAVE', cls: 'mina-capture-inline-save' }) as HTMLButtonElement;
+
+        const refreshSave = () => {
+            const empty = !textarea.value.trim();
+            saveBtn.disabled = empty;
+            saveBtn.toggleClass('is-disabled', empty);
+        };
+        textarea.addEventListener('input', refreshSave);
+        refreshSave();
+
+        const doSave = async () => {
+            const text = textarea.value.trim();
+            if (!text) return;
+            saveBtn.disabled = true;
+            try {
+                await this.vault.createThoughtFile(text, this.primedContexts);
+                new Notice('Thought captured.');
+            } catch (e) {
+                new Notice('Failed to capture thought.');
+            } finally {
+                this.view.synthesisCaptureDraft = '';
+                this.view.synthesisCaptureExpanded = false;
+                this.view._synthesisCaptPending = 0;
+                this.view.renderView();
+            }
+        };
+
+        const doCancel = () => {
+            this.view.synthesisCaptureDraft = '';
+            this.view.synthesisCaptureExpanded = false;
+            this.view._synthesisCaptPending = 0;
+            this.view.renderView();
+        };
+
+        saveBtn.addEventListener('click', doSave);
+        cancelBtn.addEventListener('click', doCancel);
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); doSave(); }
+            if (e.key === 'Escape') doCancel();
+        });
+
+        setTimeout(() => { textarea.focus(); textarea.setSelectionRange(textarea.value.length, textarea.value.length); }, 50);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

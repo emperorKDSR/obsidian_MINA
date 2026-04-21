@@ -67,7 +67,6 @@ export interface MinaSettings {
     attachmentsFolder: string;
     projectsFolder: string;
     reviewsFolder: string;
-    dailyNoteFolder: string;
     reminderHabitsEnabled: boolean;
     reminderTasksEnabled: boolean;
 }

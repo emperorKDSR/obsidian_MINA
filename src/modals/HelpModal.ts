@@ -158,13 +158,6 @@ const SECTIONS: HelpSection[] = [
         ]
     },
     {
-        id: 'workspace', icon: 'lucide-layout-dashboard', title: 'Daily Workspace', subtitle: 'Focused view for your day',
-        items: [
-            { label: 'Today\'s Tasks', desc: 'Shows tasks due today and open tasks prioritised for the day.' },
-            { label: 'Daily Note', desc: 'Opens or creates today\'s daily note directly in the workspace.' },
-        ]
-    },
-    {
         id: 'timeline', icon: 'lucide-clock', title: 'Timeline', subtitle: 'Chronological history of all activity',
         items: [
             { label: 'All Entries', desc: 'Thoughts, tasks, and notes shown in date order. Scroll to explore your history.' },

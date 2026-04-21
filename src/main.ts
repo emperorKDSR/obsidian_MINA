@@ -1,5 +1,5 @@
 import { Plugin, TFile, Notice, WorkspaceLeaf, Platform, moment, addIcon } from 'obsidian';
-import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG, GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG, MEMENTO_ICON_ID, MEMENTO_ICON_SVG, TASK_ICON_ID, TASK_ICON_SVG, PF_ICON_ID, PF_ICON_SVG, SETTINGS_ICON_ID, SETTINGS_ICON_SVG, VOICE_ICON_ID, VOICE_ICON_SVG, HOME_ICON_ID, HOME_ICON_SVG, PROJECT_ICON_ID, PROJECT_ICON_SVG, SYNTHESIS_ICON_ID, SYNTHESIS_ICON_SVG, COMPASS_ICON_ID, COMPASS_ICON_SVG, REVIEW_ICON_ID, REVIEW_ICON_SVG, WORKSPACE_ICON_ID, WORKSPACE_ICON_SVG } from './constants';
+import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG, GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG, MEMENTO_ICON_ID, MEMENTO_ICON_SVG, TASK_ICON_ID, TASK_ICON_SVG, PF_ICON_ID, PF_ICON_SVG, SETTINGS_ICON_ID, SETTINGS_ICON_SVG, VOICE_ICON_ID, VOICE_ICON_SVG, HOME_ICON_ID, HOME_ICON_SVG, PROJECT_ICON_ID, PROJECT_ICON_SVG, SYNTHESIS_ICON_ID, SYNTHESIS_ICON_SVG, COMPASS_ICON_ID, COMPASS_ICON_SVG, REVIEW_ICON_ID, REVIEW_ICON_SVG } from './constants';
 import { MinaSettings } from './types';
 import { isTablet } from './utils';
 import { MinaView } from './view';
@@ -96,14 +96,12 @@ export default class MinaPlugin extends Plugin {
 		addIcon(SYNTHESIS_ICON_ID, SYNTHESIS_ICON_SVG);
 		addIcon(COMPASS_ICON_ID, COMPASS_ICON_SVG);
 		addIcon(REVIEW_ICON_ID, REVIEW_ICON_SVG);
-		addIcon(WORKSPACE_ICON_ID, WORKSPACE_ICON_SVG);
 		addIcon(SETTINGS_ICON_ID, SETTINGS_ICON_SVG);
         addIcon(HOME_ICON_ID, HOME_ICON_SVG);
 
 		this.addRibbonIcon(HOME_ICON_ID, 'MINA Hub', () => { this.activateView('home', true); });
 
         this.addCommand({ id: 'open-mina-home-mode', name: 'MINA: Open Command Center', icon: HOME_ICON_ID, callback: () => { this.activateView('home', true); } });
-        this.addCommand({ id: 'open-mina-daily-workspace', name: 'MINA: Open Daily Workspace', icon: WORKSPACE_ICON_ID, callback: () => { this.activateView('daily-workspace', false); } });
         this.addCommand({ id: 'mina-global-search', name: 'MINA: Global Search', icon: 'lucide-search', hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'f' }], callback: () => { new SearchModal(this.app, this).open(); } });
 
 		this.addSettingTab(new MinaSettingTab(this.app, this));
@@ -223,7 +221,7 @@ export default class MinaPlugin extends Plugin {
                 const view = leaf.view as MinaView;
                 if (view && typeof view.renderView === 'function') {
                     // Don't re-render while the user is mid-toggle — let optimistic UI stand
-                    if (view._taskTogglePending > 0 || view._habitTogglePending > 0 || view._checklistTogglePending > 0 || view._capturePending > 0) continue;
+                    if (view._taskTogglePending > 0 || view._habitTogglePending > 0 || view._checklistTogglePending > 0 || view._capturePending > 0 || view._synthesisCaptPending > 0) continue;
                     view.renderView();
                 }
             }

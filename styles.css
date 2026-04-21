@@ -1816,3 +1816,168 @@
 }
 .mina-journal-fab:active { transform: scale(0.94); box-shadow: 0 2px 10px rgba(var(--interactive-accent-rgb), 0.30); }
 .mina-journal-fab .svg-icon { width: 22px; height: 22px; }
+
+/* ═══════════════════════════════════════════════════
+   QUICK CAPTURE MODAL — Desktop 2-column layout
+   ═══════════════════════════════════════════════════ */
+.mina-edit-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px 0;
+}
+.mina-capture-inline-toggle { flex-shrink: 0; }
+.mina-edit-modal-hint {
+    font-size: 0.68em;
+    font-weight: 600;
+    color: var(--text-faint);
+    margin-left: auto;
+    white-space: nowrap;
+    opacity: 0.7;
+}
+
+/* Body: single-column (thought mode) → 2-column (task mode) */
+.mina-edit-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+    padding: 12px 20px 0;
+}
+.mina-edit-modal-left {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+.mina-edit-modal-right {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 200px;
+    max-width: 220px;
+    padding-left: 16px;
+    border-left: 1px solid var(--background-modifier-border-faint);
+    overflow-y: auto;
+}
+.mina-edit-modal-right-label {
+    font-size: 0.6em;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    padding: 10px 0 3px;
+}
+/* In task mode: switch to side-by-side on wide enough modals */
+@container (min-width: 480px) {
+    .mina-edit-modal-body.is-task-mode {
+        flex-direction: row;
+        gap: 16px;
+    }
+    .mina-edit-modal-body.is-task-mode .mina-edit-modal-right {
+        display: flex;
+    }
+}
+/* Dock: chip area left, actions right */
+.mina-edit-modal-dock {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 20px 14px;
+    border-top: 1px solid var(--background-modifier-border-faint);
+    background: var(--background-secondary-alt);
+    flex-shrink: 0;
+}
+.mina-capture-desktop-chip-area {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+.mina-capture-desktop-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    align-items: center;
+}
+
+/* ═══════════════════════════════════════════════════
+   SYNTHESIS INLINE CAPTURE BAR
+   ═══════════════════════════════════════════════════ */
+.mina-syn-inline-bar {
+    margin: 0 0 10px;
+    border-radius: 12px;
+    border: 1px solid var(--background-modifier-border-faint);
+    background: var(--background-secondary-alt);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    overflow: hidden;
+}
+/* Collapsed trigger */
+.mina-syn-inline-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    cursor: text;
+    transition: background 0.12s;
+}
+.mina-syn-inline-trigger:hover {
+    background: var(--background-modifier-hover);
+}
+.mina-syn-inline-icon {
+    color: var(--interactive-accent);
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+}
+.mina-syn-inline-icon .svg-icon { width: 15px; height: 15px; }
+.mina-syn-inline-placeholder {
+    color: var(--text-faint);
+    font-size: 0.85em;
+    font-weight: 500;
+}
+/* Expanded state */
+.mina-syn-inline-bar.is-expanded {
+    border-color: var(--interactive-accent);
+    box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.10);
+}
+.mina-syn-inline-textarea {
+    width: 100%;
+    padding: 12px 14px 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-normal);
+    font-size: 0.9em;
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+    box-sizing: border-box;
+    font-family: inherit;
+    min-height: 72px;
+}
+.mina-syn-inline-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 0 14px 8px;
+}
+.mina-syn-inline-chip {
+    font-size: 0.7em;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 5px;
+    background: rgba(var(--interactive-accent-rgb), 0.10);
+    color: var(--text-accent);
+}
+.mina-syn-inline-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 8px 14px;
+    border-top: 1px solid var(--background-modifier-border-faint);
+    background: var(--background-primary);
+}

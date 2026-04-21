@@ -641,35 +641,9 @@ export class EditEntryModal extends Modal {
         modalEl.addClass('mina-edit-modal');
         if (Platform.isMobile && isTablet()) modalEl.addClass('is-tablet');
 
-        // Canvas
-        const canvas = contentEl.createEl('div', { cls: 'mina-edit-modal-canvas' });
-        const textArea = canvas.createEl('textarea', {
-            text: this.initialText,
-            cls: 'mina-edit-modal-textarea',
-            attr: { placeholder: this.currentMode === 'task' ? 'Execute intent…' : 'Capture thought…' }
-        }) as HTMLTextAreaElement;
-
-        // Date zone in canvas (collapsible, consistent with mobile)
-        const dateZone = canvas.createDiv({ cls: `mina-mobile-date-zone${this.currentMode === 'task' ? ' is-visible' : ''}` });
-        const { setDueDate } = this._buildDateStrip(dateZone);
-        if (this.currentDueDate) setDueDate(this.currentDueDate);
-        // rm-7: Recurrence zone — below date strip, inside canvas
-        const recurZone = canvas.createDiv({ cls: `mina-recur-zone${this.currentMode === 'task' ? ' is-visible' : ''}` });
-        const { setRecurrence: setRecurrenceDesktop } = this._buildRecurStrip(recurZone, true);
-        if (this.currentRecurrence) setRecurrenceDesktop(this.currentRecurrence);
-
-        // Meta zone — priority / energy / status (desktop compact 3-row layout)
-        const metaZone = canvas.createDiv({ cls: `mina-meta-zone${this.currentMode === 'task' ? ' is-visible' : ''}` });
-        const { setPriority, setEnergy, setStatus } = this._buildMetaStrip(metaZone, true);
-        if (this.currentPriority) setPriority(this.currentPriority);
-        if (this.currentEnergy) setEnergy(this.currentEnergy);
-        if (this.currentStatus !== 'open') setStatus(this.currentStatus);
-
-        // Dock
-        const dock = contentEl.createEl('div', { cls: 'mina-edit-modal-dock' });
-
-        // Mode toggle
-        const toggleBar = dock.createDiv({ cls: 'mina-seg-bar mina-capture-inline-toggle' });
+        // ── Mode toggle (TOP — primary entry point) ───────────────────────
+        const header = contentEl.createEl('div', { cls: 'mina-edit-modal-header' });
+        const toggleBar = header.createDiv({ cls: 'mina-seg-bar mina-capture-inline-toggle' });
         const thoughtBtn = toggleBar.createEl('button', {
             text: '✦ THOUGHT',
             cls: `mina-seg-btn${this.currentMode === 'thought' ? ' is-active' : ''}`
@@ -678,8 +652,43 @@ export class EditEntryModal extends Modal {
             text: '✓ TASK',
             cls: `mina-seg-btn${this.currentMode === 'task' ? ' is-active' : ''}`
         });
+        const hint = header.createEl('span', { cls: 'mina-edit-modal-hint', text: '⌘↵ to save' });
 
-        // Chip area
+        // ── Body: 2-column wrapper (single col in thought mode / narrow) ──
+        const body = contentEl.createEl('div', {
+            cls: `mina-edit-modal-body${this.currentMode === 'task' ? ' is-task-mode' : ''}`
+        });
+
+        // Left col: textarea
+        const leftCol = body.createEl('div', { cls: 'mina-edit-modal-left' });
+        const textArea = leftCol.createEl('textarea', {
+            text: this.initialText,
+            cls: 'mina-edit-modal-textarea',
+            attr: { placeholder: this.currentMode === 'task' ? 'Execute intent…' : 'Capture thought…' }
+        }) as HTMLTextAreaElement;
+
+        // Right col: task metadata (hidden in thought mode)
+        const rightCol = body.createEl('div', { cls: 'mina-edit-modal-right' });
+        rightCol.createEl('div', { cls: 'mina-edit-modal-right-label', text: 'DUE DATE' });
+        const dateZone = rightCol.createDiv({ cls: 'mina-mobile-date-zone is-visible' });
+        const { setDueDate } = this._buildDateStrip(dateZone);
+        if (this.currentDueDate) setDueDate(this.currentDueDate);
+
+        rightCol.createEl('div', { cls: 'mina-edit-modal-right-label', text: 'REPEAT' });
+        const recurZone = rightCol.createDiv({ cls: 'mina-recur-zone is-visible' });
+        const { setRecurrence: setRecurrenceDesktop } = this._buildRecurStrip(recurZone, true);
+        if (this.currentRecurrence) setRecurrenceDesktop(this.currentRecurrence);
+
+        rightCol.createEl('div', { cls: 'mina-edit-modal-right-label', text: 'PROPERTIES' });
+        const metaZone = rightCol.createDiv({ cls: 'mina-meta-zone is-visible' });
+        const { setPriority, setEnergy, setStatus } = this._buildMetaStrip(metaZone, true);
+        if (this.currentPriority) setPriority(this.currentPriority);
+        if (this.currentEnergy) setEnergy(this.currentEnergy);
+        if (this.currentStatus !== 'open') setStatus(this.currentStatus);
+
+        // ── Dock: context chips + project + actions ───────────────────────
+        const dock = contentEl.createEl('div', { cls: 'mina-edit-modal-dock' });
+
         const chipArea = dock.createDiv({ cls: 'mina-capture-desktop-chip-area' });
         const chipStrip = chipArea.createDiv({ cls: 'mina-mobile-chip-strip' });
 
@@ -704,7 +713,6 @@ export class EditEntryModal extends Modal {
         };
         renderChips();
 
-        // Project chip (desktop)
         const projectArea = chipArea.createDiv('mina-proj-zone');
         const allProjects = Array.from(this.plugin.index.projectIndex.values())
             .filter(p => p.status !== 'archived');
@@ -723,7 +731,7 @@ export class EditEntryModal extends Modal {
                     cls: 'mina-edit-modal-project-chip mina-proj-chip--active'
                 });
                 if (proj?.color) pChip.style.setProperty('--project-color', proj.color);
-                const dot = pChip.createEl('span', { cls: 'mina-project-pill-dot' });
+                projectArea.createEl('span', { cls: 'mina-project-pill-dot' });
                 pChip.createEl('span', { text: project, cls: 'mina-proj-chip-name' });
                 const x = pChip.createEl('span', { text: '×', cls: 'mina-mobile-chip-x' });
                 x.addEventListener('click', (e) => { e.stopPropagation(); this.currentProject = null; updateProjectChip(null); });
@@ -744,21 +752,18 @@ export class EditEntryModal extends Modal {
         };
         updateProjectChip(this.currentProject);
 
-        // Actions
         const actions = dock.createDiv({ cls: 'mina-capture-desktop-actions' });
         const saveLabel = () => this.stayOpen ? 'ADD' : (this.currentMode === 'task' ? 'ADD TASK' : 'SAVE');
         const cancelBtn = actions.createEl('button', { text: 'CANCEL', cls: 'mina-capture-inline-cancel' });
         const saveBtn = actions.createEl('button', { text: saveLabel(), cls: 'mina-capture-inline-save' }) as HTMLButtonElement;
 
-        // Mode switch
+        // ── Mode switch ───────────────────────────────────────────────────
         const switchMode = (mode: CaptureMode) => {
             this.currentMode = mode;
             textArea.placeholder = mode === 'task' ? 'Execute intent…' : 'Capture thought…';
             thoughtBtn.toggleClass('is-active', mode === 'thought');
             taskBtn.toggleClass('is-active', mode === 'task');
-            dateZone.toggleClass('is-visible', mode === 'task');
-            recurZone.toggleClass('is-visible', mode === 'task');
-            metaZone.toggleClass('is-visible', mode === 'task');
+            body.toggleClass('is-task-mode', mode === 'task');
             if (mode === 'thought') {
                 this.currentRecurrence = null;
                 this.currentPriority = null; this.currentEnergy = null; this.currentStatus = 'open';
@@ -798,16 +803,14 @@ export class EditEntryModal extends Modal {
             if (e.key === 'Escape') this.close();
         });
 
-        // Inline triggers — date shortcut sets due date and auto-switches to task mode
+        // Inline triggers — date trigger auto-switches to task mode
         this._attachInlineTriggers(textArea, (d: string) => {
             setDueDate(d);
             switchMode('task');
         });
 
-        // Media paste / drag-drop
         attachMediaPasteHandler(this.app, textArea, () => this.plugin.settings.attachmentsFolder);
 
-        // AI auto-classify
         if (this.plugin.settings.enableAutoClassification) {
             textArea.addEventListener('input', () => {
                 if (this.classificationTimeout) clearTimeout(this.classificationTimeout);
@@ -829,6 +832,7 @@ export class EditEntryModal extends Modal {
     }
 
     onClose() {
+        if (this.classificationTimeout) clearTimeout(this.classificationTimeout);
         if (this._isMobileSheet) {
             document.body.removeClass('mina-mobile-active');
             if (this._viewportCleanup) { this._viewportCleanup(); this._viewportCleanup = null; }

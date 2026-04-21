@@ -1,7 +1,7 @@
 import { moment, Platform, Notice, TFile, setIcon } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
-import { PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, SETTINGS_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID, WORKSPACE_ICON_ID, COMPASS_ICON_ID, FOCUS_ICON_ID, MEMENTO_ICON_ID } from '../constants';
+import { PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, SETTINGS_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID, COMPASS_ICON_ID, FOCUS_ICON_ID, MEMENTO_ICON_ID } from '../constants';
 import { parseContextString, parseNaturalDate, isTablet, attachInlineTriggers } from '../utils';
 import { HabitConfigModal } from '../modals/HabitConfigModal';
 import { HelpModal } from '../modals/HelpModal';

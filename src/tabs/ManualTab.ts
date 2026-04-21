@@ -34,11 +34,12 @@ const SECTIONS: HelpSection[] = [
     {
         id: 'capture', icon: 'lucide-plus-circle', title: 'Quick Capture', subtitle: 'Capture thoughts and tasks instantly',
         items: [
-            { label: 'Capture a Thought', desc: 'Click the capture bar and type your idea. It saves as a Markdown file in your thoughts folder.' },
-            { label: 'Capture a Task', desc: 'Switch to Task mode in the capture bar. Optionally add a due date and contexts before saving.' },
-            { label: 'Context Tags (#tags)', desc: 'Type #tag in the capture bar to attach a context. Tags appear as removable chips.' },
+            { label: 'Capture a Thought', desc: 'Click the capture bar on Home or press ⌘K / Ctrl+K. The modal opens with THOUGHT mode selected by default — just type and save.' },
+            { label: 'Capture a Task', desc: 'Tap the TASK button at the top of the capture modal to switch modes. The right panel expands showing due date, recurrence, and properties.', tip: 'Task mode uses a 2-column layout on wider screens — metadata stays visible alongside the text.' },
+            { label: 'Mode Toggle at Top', desc: 'The THOUGHT / TASK toggle is always visible at the top of the modal — switch modes without scrolling.' },
+            { label: 'Context Tags (#tags)', desc: 'Add context chips via the + button in the dock. Chips appear as removable pills.' },
             { label: 'Smart Date Triggers', desc: 'Type @tomorrow, @monday, or @2025-08-01 in the text to auto-set a due date and switch to task mode.', tip: 'Examples: "Fix bug @tomorrow", "Call client @friday"' },
-            { label: 'Task Metadata', desc: 'Set priority (High / Medium / Low), energy level, and custom status when capturing or editing any task.' },
+            { label: 'Task Metadata', desc: 'In task mode: set priority (High / Medium / Low), energy level, recurrence, and status in the right panel.' },
             { label: 'Keyboard Shortcuts', desc: '⌘K or Ctrl+K opens capture. ⌘↵ or Ctrl+↵ saves. Esc cancels.' },
         ]
     },
@@ -129,7 +130,9 @@ const SECTIONS: HelpSection[] = [
     {
         id: 'synthesis', icon: 'lucide-git-merge', title: 'Synthesis', subtitle: 'Process thoughts into permanent knowledge',
         items: [
-            { label: 'Inbox Feed', desc: 'Unprocessed thoughts appear in the sidebar with count badge. Use the search filter to find specific thoughts.' },
+            { label: 'Inbox Feed', desc: 'Unprocessed thoughts appear in the feed. Use the filter bar to switch between Inbox (no context), Mapped (with context), and Done.' },
+            { label: 'Inline Quick Capture', desc: 'A capture bar sits at the top of the feed (desktop + tablet). Click it to expand and type a thought directly into Synthesis without opening a modal.', tip: 'If contexts are primed, the thought auto-attaches them and lands in the Mapped filter.' },
+            { label: 'Context Priming', desc: 'Click a context in the left panel to "prime" it. Primed contexts auto-tag new inline captures and filter the feed.' },
             { label: 'Drag & Drop', desc: 'Drag a thought card onto the canvas to synthesize it into your Master Note. It\'s automatically marked as processed.' },
             { label: 'Quick Process', desc: 'Tap "✓ Process" on any card to mark it as processed without synthesizing.' },
             { label: 'Master Notes', desc: 'Create new insight notes with "+ New Insight". Merged thoughts are linked via wiki-links.' },
@@ -160,16 +163,6 @@ const SECTIONS: HelpSection[] = [
         items: [
             { label: 'Daily Entry', desc: 'Each day gets its own journal entry file. Use the arrow buttons to navigate between days.' },
             { label: 'Auto-Save', desc: 'Journal entries save automatically as you type. No need to press save.' },
-        ]
-    },
-    {
-        id: 'workspace', icon: 'lucide-layout-dashboard', title: 'Daily Workspace', subtitle: 'Focused view for your day',
-        items: [
-            { label: 'Today\'s Tasks', desc: 'Shows tasks due today and open tasks prioritised for the day.' },
-            { label: 'Daily Note Integration 📅', desc: 'A built-in panel shows today\'s daily note preview and lets you append captures directly without leaving the workspace.', tip: 'Configure the daily note folder in Settings → Daily Notes.' },
-            { label: 'Quick Append', desc: 'Type in the append textarea and tap "Append" to add a line to today\'s daily note. The entry is automatically prefixed with "- " if not already a list item.' },
-            { label: 'Open in Editor', desc: 'Tap "Open in Editor" to open today\'s daily note in the standard Obsidian editor. The note is created automatically if it doesn\'t exist.' },
-            { label: 'Last 5 Lines Preview', desc: 'The panel shows the last 5 non-empty lines of today\'s daily note at a glance, so you always know where you left off.' },
         ]
     },
     {
@@ -241,7 +234,6 @@ const SECTIONS: HelpSection[] = [
             { label: 'Contexts', desc: 'Manage your global context tags (#work, #personal, etc.).' },
             { label: 'AI Key', desc: 'Enter your Gemini API key to enable AI Chat and Intelligence features.' },
             { label: 'Habits', desc: 'Add, edit, and archive habits from the ⚙ icon on the Home screen.' },
-            { label: 'Daily Note Folder', desc: 'Set the folder where daily note files live (default: "Daily Notes"). Used by the Daily Workspace integration panel.' },
             { label: 'Reminders', desc: 'Toggle habit reminders and task reminders independently. Both respect quiet hours (8 AM – 10 PM) and fire on mobile app resume.' },
             { label: 'Memento Mori', desc: 'Enter your birth date (YYYY-MM-DD) and life expectancy to activate the Memento Mori life-in-weeks grid.' },
             { label: 'Monthly Income', desc: 'Set your monthly income (number) to unlock the cashflow overview in Finance Analytics.' },

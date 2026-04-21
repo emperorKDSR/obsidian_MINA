@@ -24,10 +24,12 @@ export class MinaView extends ItemView {
     synthesisShowHidden: boolean = false;
     isZenMode: boolean = false;
 
-    // Daily Workspace State
-    dailyWorkspaceDate: string = moment().format('YYYY-MM-DD');
-
     searchQuery: string = '';
+
+    // Synthesis Inline Capture State
+    synthesisCaptureExpanded: boolean = false;
+    synthesisCaptureDraft: string = '';
+    _synthesisCaptPending: number = 0;
 
     // Tasks state — persists across re-renders (viewMode survives vault events)
     tasksViewMode: string = 'open';
@@ -100,7 +102,7 @@ export class MinaView extends ItemView {
             case 'settings': return "Settings";
             case 'timeline': return "Timeline";
             case 'journal': return "Journal";
-            case 'daily-workspace': return "Daily Workspace";
+            case 'daily-workspace': return "Home";
             case 'manual': return "Manual";
             case 'calendar': return "Calendar";
             case 'memento-mori': return "Memento Mori";
@@ -128,7 +130,10 @@ export class MinaView extends ItemView {
 
     /** Called by Obsidian after setViewState() — apply activeTab/isDedicated then re-render. */
     async setState(state: any, result: ViewStateResult): Promise<void> {
-        if (state?.activeTab) this.activeTab = state.activeTab;
+        if (state?.activeTab) {
+            // Migrate removed tab to home
+            this.activeTab = state.activeTab === 'daily-workspace' ? 'home' : state.activeTab;
+        }
         if (state?.isDedicated !== undefined) this.isDedicated = state.isDedicated;
         await super.setState(state, result);
         this.renderView();
@@ -172,7 +177,7 @@ export class MinaView extends ItemView {
         else if (tab === 'settings') instantiate(import('./tabs/SettingsTab'), 'SettingsTab');
         else if (tab === 'timeline') instantiate(import('./tabs/TimelineTab'), 'TimelineTab');
         else if (tab === 'journal') instantiate(import('./tabs/JournalTab'), 'JournalTab');
-        else if (tab === 'daily-workspace') instantiate(import('./tabs/DailyWorkspaceTab'), 'DailyWorkspaceTab');
+        else if (tab === 'daily-workspace') instantiate(import('./tabs/CommandCenterTab'), 'CommandCenterTab');
         else if (tab === 'manual') instantiate(import('./tabs/ManualTab'), 'ManualTab');
         else if (tab === 'calendar') instantiate(import('./tabs/CalendarTab'), 'CalendarTab');
         else if (tab === 'memento-mori') instantiate(import('./tabs/MementoMoriTab'), 'MementoMoriTab');
