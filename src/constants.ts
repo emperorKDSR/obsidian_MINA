@@ -176,5 +176,6 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     enableAutoClassification: false,
     lifeMission: '',
     attachmentsFolder: '000 Bin/MINA V2 Attachments',
-    projectsFolder: 'Projects'
+    projectsFolder: 'Projects',
+    reviewsFolder: '000 Bin/MINA V2 Reviews'
 }

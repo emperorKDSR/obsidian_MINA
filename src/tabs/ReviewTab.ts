@@ -271,7 +271,8 @@ export class ReviewTab extends BaseTab {
             prevCard.classList.toggle('is-collapsed');
             if (isCollapsed && !prevLoaded) {
                 prevLoaded = true;
-                const prevFile = this.app.vault.getAbstractFileByPath(`Reviews/Weekly/${prevWeekId}.md`);
+                const reviewsRoot = (this.settings.reviewsFolder || '000 Bin/MINA V2 Reviews').trim();
+                const prevFile = this.app.vault.getAbstractFileByPath(`${reviewsRoot}/Weekly/${prevWeekId}.md`);
                 if (prevFile instanceof TFile) {
                     prevBody.createEl('span', { cls: 'mina-review-readonly-badge', text: 'READ-ONLY' });
                     const rendered = prevBody.createEl('div', { cls: 'mina-review-prev-content' });

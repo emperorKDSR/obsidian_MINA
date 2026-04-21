@@ -412,9 +412,10 @@ export class VaultService {
         new Notice(`Payment recorded for ${file.basename}. Next due: ${nextDueDate}`);
     }
 
-    /** Save a weekly review to Reviews/Weekly/YYYY-Www.md */
+    /** Save a weekly review to {reviewsFolder}/Weekly/YYYY-Www.md */
     async saveWeeklyReview(weekId: string, dateRange: string, wins: string, lessons: string, focus: string[], habitHighlight: string): Promise<void> {
-        const folder = 'Reviews/Weekly';
+        const root = (this.settings.reviewsFolder || '000 Bin/MINA V2 Reviews').trim();
+        const folder = `${root}/Weekly`;
         const path = `${folder}/${weekId}.md`;
         const now = this.formatDateTime(new Date());
         const focusLines = focus.map((f, i) => `${i + 1}. ${f.trim()}`).join('\n');
@@ -475,9 +476,10 @@ export class VaultService {
         return content.slice(yamlEnd + 4).trim();
     }
 
-    /** Save monthly goals to Reviews/Monthly/YYYY-MM.md */
+    /** Save monthly goals to {reviewsFolder}/Monthly/YYYY-MM.md */
     async saveMonthlyGoals(monthId: string, goals: string[]): Promise<void> {
-        const folder = 'Reviews/Monthly';
+        const root = (this.settings.reviewsFolder || '000 Bin/MINA V2 Reviews').trim();
+        const folder = `${root}/Monthly`;
         const path = `${folder}/${monthId}.md`;
         const now = this.formatDateTime(new Date());
         const goalLines = goals.map((g, i) => `${i + 1}. ${(g || '').trim()}`).join('\n');
@@ -496,9 +498,10 @@ export class VaultService {
         }
     }
 
-    /** Load monthly goals from Reviews/Monthly/YYYY-MM.md */
+    /** Load monthly goals from {reviewsFolder}/Monthly/YYYY-MM.md */
     async loadMonthlyGoals(monthId: string): Promise<string[] | null> {
-        const path = `Reviews/Monthly/${monthId}.md`;
+        const root = (this.settings.reviewsFolder || '000 Bin/MINA V2 Reviews').trim();
+        const path = `${root}/Monthly/${monthId}.md`;
         const file = this.app.vault.getAbstractFileByPath(path);
         if (!(file instanceof TFile)) return null;
         try {
@@ -513,9 +516,10 @@ export class VaultService {
         }
     }
 
-    /** Save Compass data to Reviews/Compass/YYYY-Qx.md */
+    /** Save Compass data to {reviewsFolder}/Compass/YYYY-Qx.md */
     async saveCompassData(quarterId: string, northStarGoals: string[], lifeMission: string): Promise<void> {
-        const folder = 'Reviews/Compass';
+        const root = (this.settings.reviewsFolder || '000 Bin/MINA V2 Reviews').trim();
+        const folder = `${root}/Compass`;
         const path = `${folder}/${quarterId}.md`;
         const now = this.formatDateTime(new Date());
         const goalLines = northStarGoals.map((g, i) => `${i + 1}. ${(g || '').trim()}`).join('\n');
@@ -534,9 +538,10 @@ export class VaultService {
         }
     }
 
-    /** Load Compass data from Reviews/Compass/YYYY-Qx.md */
+    /** Load Compass data from {reviewsFolder}/Compass/YYYY-Qx.md */
     async loadCompassData(quarterId: string): Promise<{ northStarGoals: string[]; lifeMission: string } | null> {
-        const path = `Reviews/Compass/${quarterId}.md`;
+        const root = (this.settings.reviewsFolder || '000 Bin/MINA V2 Reviews').trim();
+        const path = `${root}/Compass/${quarterId}.md`;
         const file = this.app.vault.getAbstractFileByPath(path);
         if (!(file instanceof TFile)) return null;
         try {
@@ -557,7 +562,8 @@ export class VaultService {
 
     /** Load a weekly review file and parse wins/lessons/focus sections */
     async loadWeeklyReview(weekId: string): Promise<{ wins: string; lessons: string; focus: string[]; saved: string } | null> {
-        const path = `Reviews/Weekly/${weekId}.md`;
+        const root = (this.settings.reviewsFolder || '000 Bin/MINA V2 Reviews').trim();
+        const path = `${root}/Weekly/${weekId}.md`;
         const file = this.app.vault.getAbstractFileByPath(path);
         if (!(file instanceof TFile)) return null;
         try {
