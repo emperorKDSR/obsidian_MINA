@@ -111,6 +111,17 @@ export class FolderSettingsModal extends Modal {
                     await this.plugin.saveSettings();
                 }));
 
+        new Setting(body)
+            .setName('Reviews Folder')
+            .setDesc('Root folder for Weekly, Monthly, and Compass review files (sub-folders created automatically).')
+            .addText(text => text
+                .setPlaceholder('000 Bin/MINA V2 Reviews')
+                .setValue(this.plugin.settings.reviewsFolder ?? '000 Bin/MINA V2 Reviews')
+                .onChange(async (value) => {
+                    this.plugin.settings.reviewsFolder = value;
+                    await this.plugin.saveSettings();
+                }));
+
         // 3. Footer
         const footer = contentEl.createEl('div', {
             attr: { style: 'padding: 16px 20px; background: var(--background-secondary-alt); border-top: 1px solid var(--background-modifier-border-faint); display: flex; justify-content: flex-end;' }

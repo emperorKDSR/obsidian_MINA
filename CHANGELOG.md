@@ -1,3 +1,10 @@
+## [1.11.2] - Reviews Folder Configuration
+
+### Feature
+- **Configurable Reviews Folder**: All Weekly, Monthly, and Compass review files now save under a configurable root folder (default: `000 Bin/MINA V2 Reviews`). Sub-folders Weekly/, Monthly/, and Compass/ are created automatically
+- **Settings**: New Reviews Folder field added to both the main Settings tab (Storage and Capture) and the Folder Config modal
+- All 6 VaultService review read/write methods now respect settings.reviewsFolder
+
 ## [1.11.1] - Review & Compass MD Persistence
 
 ### Fixed / Improved
@@ -708,3 +715,4 @@ Deleted 5 tab files that had no entry point in the Command Center and were unrea
 - **VaultService** — unified file I/O with YAML injection-safe frontmatter builders
 - **AiService** — Gemini integration with chunked base64, injection boundary markers, model allowlist, and API key header security
 - **17 tabs, 17 modals** — full Personal OS feature set
+

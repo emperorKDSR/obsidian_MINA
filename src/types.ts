@@ -65,6 +65,7 @@ export interface MinaSettings {
     lifeMission: string;
     attachmentsFolder: string;
     projectsFolder: string;
+    reviewsFolder: string;
 }
 
 export interface Habit {
