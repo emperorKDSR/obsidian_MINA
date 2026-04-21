@@ -1,3 +1,18 @@
+## [1.11.3] - Habit Buttons Rounded Square on Desktop and Tablet
+
+### Fixed
+- Habit buttons on desktop and tablet now use rounded-corner square (border-radius: 14px) matching the mobile pattern, instead of circle (border-radius: 50%)
+- Button height is now auto-sized with min-height: 64px and padding 10px 8px, same as mobile grid
+- Habit labels now wrap naturally on desktop/tablet
+
+## [1.11.3] - Habit Buttons: Rounded Square on Desktop + Tablet
+
+### Fixed / Improved
+- **Desktop + Tablet habit buttons**: Changed from circle (`border-radius: 50%`) to rounded-corner square (`border-radius: 14px`) matching the mobile grid pattern
+- Habit button height is now auto-sized (min 64px) with proper padding (10px 8px), matching mobile layout
+- Habit labels on desktop/tablet now wrap naturally (`white-space: normal`) instead of being truncated to 54px
+- Applied via the container query at min-width 500px so it targets desktop and tablet only, leaving mobile unaffected
+
 ## [1.11.2] - Reviews Folder Configuration
 
 ### Feature
@@ -715,4 +730,6 @@ Deleted 5 tab files that had no entry point in the Command Center and were unrea
 - **VaultService** — unified file I/O with YAML injection-safe frontmatter builders
 - **AiService** — Gemini integration with chunked base64, injection boundary markers, model allowlist, and API key header security
 - **17 tabs, 17 modals** — full Personal OS feature set
+
+
 
