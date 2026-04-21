@@ -380,6 +380,7 @@ export class ReviewTab extends BaseTab {
         const resultCard = section.createEl('div', { cls: 'mina-review-ai-card' });
 
         const showResult = (report: string) => {
+            resultCard.removeClass('is-empty');
             resultCard.empty();
             const content = resultCard.createEl('div', { cls: 'mina-review-ai-content' });
             MarkdownRenderer.render(this.app, report, content, '', this.view);
@@ -387,6 +388,7 @@ export class ReviewTab extends BaseTab {
         };
 
         const showLoading = () => {
+            resultCard.removeClass('is-empty');
             resultCard.empty();
             const loadingEl = resultCard.createEl('div', { cls: 'mina-review-ai-loading' });
             loadingEl.createEl('span', { cls: 'mina-ai-dot' });
@@ -395,6 +397,7 @@ export class ReviewTab extends BaseTab {
         };
 
         const showError = (msg: string) => {
+            resultCard.removeClass('is-empty');
             resultCard.empty();
             resultCard.createEl('div', { cls: 'mina-review-ai-error', text: `⚠ ${msg}` });
         };
