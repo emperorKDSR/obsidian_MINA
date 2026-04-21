@@ -1,5 +1,5 @@
 import { App, TFile, Notice, moment } from 'obsidian';
-import type { MinaSettings, ThoughtEntry, TaskEntry, ReplyEntry, ProjectEntry } from '../types';
+import type { MinaSettings, ThoughtEntry, TaskEntry, ReplyEntry, ProjectEntry, Milestone } from '../types';
 
 export class VaultService {
     app: App;
@@ -462,6 +462,43 @@ export class VaultService {
             if (updates.due !== undefined) fm['due'] = updates.due;
             if (updates.color !== undefined) fm['color'] = updates.color;
         });
+    }
+
+    async readMilestones(filePath: string): Promise<Milestone[]> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return [];
+        try {
+            const content = await this.app.vault.read(file);
+            const match = content.match(/## Milestones\n([\s\S]*?)(?=\n##|$)/);
+            if (!match) return [];
+            const lines = match[1].split('\n').filter(l => l.trim().match(/^- \[[ x]\]/));
+            return lines.map((line, i) => {
+                const done = line.includes('- [x]');
+                const rest = line.replace(/^- \[[ x]\] /, '').trim();
+                const parts = rest.split(' | ');
+                return {
+                    id: `m-${i}`,
+                    title: parts[0].trim(),
+                    done,
+                    dueDate: parts[1]?.trim() || undefined,
+                };
+            });
+        } catch { return []; }
+    }
+
+    async writeMilestones(filePath: string, milestones: Milestone[]): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return;
+        const content = await this.app.vault.read(file);
+        const milestoneMd = milestones.map(m =>
+            `- [${m.done ? 'x' : ' '}] ${m.title}${m.dueDate ? ' | ' + m.dueDate : ''}`
+        ).join('\n');
+        const section = `## Milestones\n${milestoneMd}`;
+        const sectionRegex = /## Milestones\n[\s\S]*?(?=\n##|$)/;
+        const newContent = sectionRegex.test(content)
+            ? content.replace(sectionRegex, section)
+            : content + '\n\n' + section;
+        await this.app.vault.modify(file, newContent);
     }
 
     async archiveProject(file: TFile): Promise<void> {

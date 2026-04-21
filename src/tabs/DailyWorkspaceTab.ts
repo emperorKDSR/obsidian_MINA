@@ -75,6 +75,7 @@ export class DailyWorkspaceTab extends BaseTab {
 
         const writingPane = body.createEl('div', { cls: 'mina-dw-writing' });
         this.renderCaptureBar(writingPane);
+        this.renderDailyNotePanel(writingPane);
         this.renderEntries(writingPane);
 
         const taskPane = body.createEl('div', { cls: 'mina-dw-tasks' });
@@ -99,6 +100,7 @@ export class DailyWorkspaceTab extends BaseTab {
         if (this.activePanel === 'write') {
             taskPanel.style.display = 'none';
             this.renderCaptureBar(writePanel);
+            this.renderDailyNotePanel(writePanel);
             this.renderEntries(writePanel);
         } else {
             writePanel.style.display = 'none';
@@ -231,6 +233,86 @@ export class DailyWorkspaceTab extends BaseTab {
                 e.preventDefault();
                 handleSave();
             }
+        });
+    }
+
+    // ── Daily Note Integration Panel ────────────────────────────────────
+    private renderDailyNotePanel(parent: HTMLElement) {
+        const folder = (this.settings.dailyNoteFolder || 'Daily Notes').replace(/\\/g, '/');
+        const today = moment().format('YYYY-MM-DD');
+        const notePath = `${folder}/${today}.md`;
+
+        const panel = parent.createEl('div', { cls: 'mina-dw-daily-note-panel' });
+
+        const header = panel.createEl('div', { cls: 'mina-dw-daily-note-header' });
+        header.createEl('span', { text: `📅 ${moment(today).format('MMMM D, YYYY')}`, cls: 'mina-dw-daily-note-title' });
+
+        const openBtn = header.createEl('button', { text: 'Open in Editor', cls: 'mina-btn mina-btn--ghost mina-btn--sm' });
+        openBtn.addEventListener('click', async () => {
+            let file = this.app.vault.getAbstractFileByPath(notePath);
+            if (!(file instanceof TFile)) {
+                await this.vault.ensureFolder(folder);
+                file = await this.app.vault.create(notePath, `# ${today}\n\n`);
+            }
+            if (file instanceof TFile) {
+                this.app.workspace.getLeaf().openFile(file);
+            }
+        });
+
+        // Preview of last 5 lines
+        const preview = panel.createEl('div', { cls: 'mina-dw-daily-note-preview' });
+        this.loadDailyNotePreview(preview, notePath);
+
+        // Append capture row
+        const appendRow = panel.createEl('div', { cls: 'mina-dw-daily-note-append' });
+        const appendInput = appendRow.createEl('textarea', {
+            cls: 'mina-dw-daily-note-textarea',
+            attr: { placeholder: '- Append to today\'s note…', rows: '2' }
+        }) as HTMLTextAreaElement;
+        const appendBtn = appendRow.createEl('button', { text: 'Append', cls: 'mina-btn mina-btn--primary mina-btn--sm' });
+        appendBtn.addEventListener('click', async () => {
+            const text = appendInput.value.trim();
+            if (!text) return;
+            appendBtn.disabled = true;
+            try {
+                let file = this.app.vault.getAbstractFileByPath(notePath);
+                if (!(file instanceof TFile)) {
+                    await this.vault.ensureFolder(folder);
+                    file = await this.app.vault.create(notePath, `# ${today}\n\n`);
+                }
+                if (file instanceof TFile) {
+                    const existing = await this.app.vault.read(file);
+                    const line = text.startsWith('- ') ? text : `- ${text}`;
+                    await this.app.vault.modify(file, existing.trimEnd() + '\n' + line + '\n');
+                    new Notice('📅 Appended to daily note');
+                    appendInput.value = '';
+                    this.loadDailyNotePreview(preview, notePath);
+                }
+            } catch (e) {
+                new Notice('Failed to append — check console');
+                console.error('[MINA DW] Append error:', e);
+            } finally {
+                appendBtn.disabled = false;
+            }
+        });
+    }
+
+    private loadDailyNotePreview(container: HTMLElement, notePath: string) {
+        container.empty();
+        const file = this.app.vault.getAbstractFileByPath(notePath);
+        if (!(file instanceof TFile)) {
+            container.createEl('span', { text: 'No daily note yet — click "Open in Editor" to create it.', cls: 'mina-dw-daily-note-empty' });
+            return;
+        }
+        this.app.vault.read(file).then(content => {
+            const lines = content.split('\n').filter(l => l.trim()).slice(-5);
+            if (lines.length === 0) {
+                container.createEl('span', { text: 'Note is empty.', cls: 'mina-dw-daily-note-empty' });
+                return;
+            }
+            lines.forEach(line => container.createEl('div', { text: line, cls: 'mina-dw-daily-note-line' }));
+        }).catch(() => {
+            container.createEl('span', { text: 'Could not read note.', cls: 'mina-dw-daily-note-empty' });
         });
     }
 

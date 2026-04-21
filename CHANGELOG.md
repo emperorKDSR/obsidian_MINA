@@ -1,3 +1,18 @@
+## [1.14.0] - 2025-07-21
+
+### Added
+- **Project Milestones**: Track milestones per project with checkboxes, progress bar, and collapsible UI. Stored in project note body under `## Milestones`.
+- **Daily Note Integration**: Append quick captures to today's daily note from the Daily Workspace tab. Configurable folder path in Settings.
+- **Reminders**: Hourly nudges for pending habits and due tasks. Quiet hours enforced (8 AM–10 PM). Mobile-aware via `visibilitychange`.
+- **Task Focus Mode**: Tactical task view in Command Center for today's priority tasks with AI time-block planning.
+- **Memento Mori**: Life-in-weeks visualization with rotating quotes and longevity statistics.
+- **Export & Backup**: CSV export for thoughts/tasks and full JSON backup.
+- **Finance Analytics**: Cashflow overview with obligations by category.
+
+### Updated
+- Manual tab fully documents all 7 new features.
+- Roadmap cleared — MINA V2 is feature-complete.
+
 ## [1.13.1] - 2026-04-21
 ### Changed
 - **Manual — Calendar View**: Added dedicated "Calendar View" section documenting month/week toggle, event dots, day detail panel, navigation, and state persistence

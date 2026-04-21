@@ -1,0 +1,149 @@
+import { Notice, TFile, moment } from 'obsidian';
+import type { MinaView } from '../view';
+import { BaseTab } from './BaseTab';
+
+function csvField(val: string | number | undefined): string {
+    const s = String(val ?? '').replace(/"/g, '""');
+    return `"${s}"`;
+}
+
+export class ExportTab extends BaseTab {
+    constructor(view: MinaView) { super(view); }
+
+    render(container: HTMLElement) {
+        container.empty();
+        const wrap = container.createEl('div', { cls: 'mina-export-wrap' });
+
+        // ── Header ────────────────────────────────────────────────────────
+        const headerRow = wrap.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px; margin-bottom: 4px;' } });
+        this.renderHomeIcon(headerRow);
+        headerRow.createEl('h2', { text: 'Export & Backup', attr: { style: 'margin: 0; font-size: 1.4em; font-weight: 800;' } });
+
+        const thoughtCount = this.index.thoughtIndex.size;
+        const taskCount = this.index.taskIndex.size;
+
+        // ── Thoughts Export ───────────────────────────────────────────────
+        const thoughtCard = wrap.createEl('div', { cls: 'mina-export-card' });
+        thoughtCard.createEl('div', { text: '💭 Thoughts Export', cls: 'mina-export-card-title' });
+        thoughtCard.createEl('span', { text: `${thoughtCount} thoughts`, cls: 'mina-export-count-badge' });
+        thoughtCard.createEl('div', { text: 'Exports all thoughts as a CSV file into your thoughts folder.', cls: 'mina-export-card-desc' });
+        const thoughtBtn = thoughtCard.createEl('button', { text: 'Export as CSV', cls: 'mina-export-btn' });
+        thoughtBtn.addEventListener('click', () => this._exportThoughts(thoughtBtn));
+
+        // ── Tasks Export ──────────────────────────────────────────────────
+        const taskCard = wrap.createEl('div', { cls: 'mina-export-card' });
+        taskCard.createEl('div', { text: '✅ Tasks Export', cls: 'mina-export-card-title' });
+        taskCard.createEl('span', { text: `${taskCount} tasks`, cls: 'mina-export-count-badge' });
+        taskCard.createEl('div', { text: 'Exports all tasks as a CSV file into your tasks folder.', cls: 'mina-export-card-desc' });
+        const taskBtn = taskCard.createEl('button', { text: 'Export as CSV', cls: 'mina-export-btn' });
+        taskBtn.addEventListener('click', () => this._exportTasks(taskBtn));
+
+        // ── Full Backup ───────────────────────────────────────────────────
+        const backupCard = wrap.createEl('div', { cls: 'mina-export-card' });
+        backupCard.createEl('div', { text: '💾 Full Backup', cls: 'mina-export-card-title' });
+        backupCard.createEl('div', { text: 'Creates a JSON backup of thoughts, tasks, projects, and settings (no API keys).', cls: 'mina-export-card-desc' });
+        const backupBtn = backupCard.createEl('button', { text: 'Create Backup', cls: 'mina-export-btn' });
+        backupBtn.addEventListener('click', () => this._createBackup(backupBtn));
+    }
+
+    private async _exportThoughts(btn: HTMLButtonElement) {
+        btn.disabled = true;
+        btn.textContent = 'Exporting…';
+        try {
+            const thoughts = Array.from(this.index.thoughtIndex.values());
+            const rows = [
+                ['title', 'created', 'day', 'contexts', 'body'].map(csvField).join(','),
+                ...thoughts.map(t => [
+                    t.title,
+                    t.created,
+                    t.day,
+                    t.context.join('; '),
+                    (t.body || '').slice(0, 200),
+                ].map(csvField).join(','))
+            ];
+            const content = rows.join('\n');
+            const folder = (this.settings.thoughtsFolder || '000 Bin/MINA V2').replace(/\\/g, '/');
+            const path = `${folder}/MINA_Export_Thoughts.csv`;
+            await this._writeFile(path, content);
+            new Notice(`Exported ${thoughts.length} thoughts to thoughts folder ✓`);
+        } catch (e) {
+            new Notice(`Export failed: ${e.message}`);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Export as CSV';
+        }
+    }
+
+    private async _exportTasks(btn: HTMLButtonElement) {
+        btn.disabled = true;
+        btn.textContent = 'Exporting…';
+        try {
+            const tasks = Array.from(this.index.taskIndex.values());
+            const rows = [
+                ['title', 'created', 'status', 'due', 'priority', 'energy', 'contexts'].map(csvField).join(','),
+                ...tasks.map(t => [
+                    t.title,
+                    t.created,
+                    t.status,
+                    t.due || '',
+                    t.priority || '',
+                    t.energy || '',
+                    t.context.join('; '),
+                ].map(csvField).join(','))
+            ];
+            const content = rows.join('\n');
+            const folder = (this.settings.tasksFolder || '000 Bin/MINA V2 Tasks').replace(/\\/g, '/');
+            const path = `${folder}/MINA_Export_Tasks.csv`;
+            await this._writeFile(path, content);
+            new Notice(`Exported ${tasks.length} tasks to tasks folder ✓`);
+        } catch (e) {
+            new Notice(`Export failed: ${e.message}`);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Export as CSV';
+        }
+    }
+
+    private async _createBackup(btn: HTMLButtonElement) {
+        btn.disabled = true;
+        btn.textContent = 'Creating…';
+        try {
+            const dateStr = moment().format('YYYYMMDD');
+            const { geminiApiKey, ...safeSettings } = this.settings as any;
+            const backup = {
+                version: '1.14.0',
+                exportedAt: new Date().toISOString(),
+                thoughts: Array.from(this.index.thoughtIndex.values()),
+                tasks: Array.from(this.index.taskIndex.values()),
+                projects: Array.from(this.index.projectIndex.values()),
+                settings: {
+                    habits: safeSettings.habits,
+                    contexts: safeSettings.contexts,
+                    weeklyGoals: safeSettings.weeklyGoals,
+                    monthlyGoals: safeSettings.monthlyGoals,
+                    northStarGoals: safeSettings.northStarGoals,
+                },
+            };
+            const content = JSON.stringify(backup, null, 2);
+            const folder = (this.settings.thoughtsFolder || '000 Bin/MINA V2').replace(/\\/g, '/');
+            const fileName = `MINA_Backup_${dateStr}.json`;
+            const path = `${folder}/${fileName}`;
+            await this._writeFile(path, content);
+            new Notice(`Backup created: ${fileName} ✓`);
+        } catch (e) {
+            new Notice(`Backup failed: ${e.message}`);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Create Backup';
+        }
+    }
+
+    private async _writeFile(path: string, content: string) {
+        const existing = this.app.vault.getAbstractFileByPath(path);
+        if (existing instanceof TFile) {
+            await this.app.vault.modify(existing, content);
+        } else {
+            await this.app.vault.create(path, content);
+        }
+    }
+}

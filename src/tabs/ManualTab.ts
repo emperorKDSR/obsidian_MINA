@@ -82,6 +82,7 @@ const SECTIONS: HelpSection[] = [
             { label: 'Status', desc: 'Projects can be: Active, On Hold, Completed, or Archived. Archived projects are hidden from active views.' },
             { label: 'Link to Capture', desc: 'Tap the folder icon in the capture modal to link a thought or task to a project.' },
             { label: 'Weekly Glance', desc: 'Projects modified this week appear in the "Active Projects" card in Weekly Review.' },
+            { label: 'Project Milestones 🎯', desc: 'Expand any project card and click "▸ Milestones" to reveal the milestone tracker. Add milestone steps, check them off as you complete them, and watch the progress bar advance.', tip: 'Milestones are stored in the project note body under a ## Milestones section — no separate files needed.' },
         ]
     },
     {
@@ -165,7 +166,10 @@ const SECTIONS: HelpSection[] = [
         id: 'workspace', icon: 'lucide-layout-dashboard', title: 'Daily Workspace', subtitle: 'Focused view for your day',
         items: [
             { label: 'Today\'s Tasks', desc: 'Shows tasks due today and open tasks prioritised for the day.' },
-            { label: 'Daily Note', desc: 'Opens or creates today\'s daily note directly in the workspace.' },
+            { label: 'Daily Note Integration 📅', desc: 'A built-in panel shows today\'s daily note preview and lets you append captures directly without leaving the workspace.', tip: 'Configure the daily note folder in Settings → Daily Notes.' },
+            { label: 'Quick Append', desc: 'Type in the append textarea and tap "Append" to add a line to today\'s daily note. The entry is automatically prefixed with "- " if not already a list item.' },
+            { label: 'Open in Editor', desc: 'Tap "Open in Editor" to open today\'s daily note in the standard Obsidian editor. The note is created automatically if it doesn\'t exist.' },
+            { label: 'Last 5 Lines Preview', desc: 'The panel shows the last 5 non-empty lines of today\'s daily note at a glance, so you always know where you left off.' },
         ]
     },
     {
@@ -194,18 +198,24 @@ const SECTIONS: HelpSection[] = [
             { label: 'Contexts', desc: 'Manage your global context tags (#work, #personal, etc.).' },
             { label: 'AI Key', desc: 'Enter your Gemini API key to enable AI Chat and Intelligence features.' },
             { label: 'Habits', desc: 'Add, edit, and archive habits from the ⚙ icon on the Home screen.' },
+            { label: 'Daily Note Folder', desc: 'Set the folder where daily note files live (default: "Daily Notes"). Used by the Daily Workspace integration panel.' },
+            { label: 'Reminders', desc: 'Toggle habit reminders and task reminders independently. Both respect quiet hours (8 AM – 10 PM) and fire on mobile app resume.' },
         ]
     },
     {
-        id: 'roadmap', icon: 'lucide-map', title: 'Roadmap', subtitle: 'What\'s coming to MINA V2',
+        id: 'reminders', icon: 'lucide-bell', title: 'Reminders ⏰', subtitle: 'Hourly nudges for habits and tasks',
         items: [
-            { label: '🎯 Task Focus Mode', desc: 'A dedicated "Today\'s Mission" view showing only tasks you\'ve selected for today, with a distraction-free interface and time-block suggestions from AI.' },
-            { label: '🏗️ Project Milestones', desc: 'Sub-tasks and milestone tracking within Projects — break down a project into steps, track completion %, and see milestones in the Weekly Glance.', tip: 'Will link to existing task files so no data is duplicated.' },
-            { label: '⏰ Memento Mori Visual', desc: 'A Life Calendar visualization showing your weeks as a grid — weeks lived (filled), weeks remaining (empty). A powerful reminder to use your time well.', tip: 'Birth date and life expectancy are already configured in Settings → Memento Mori.' },
-            { label: '📊 Advanced Finance Analytics', desc: 'Trend charts showing monthly spending by category, year-over-year comparisons, and a Cashflow Forecast using your recurring dues and monthly income.' },
-            { label: '🔔 Habit & Task Reminders', desc: 'Native Obsidian notifications (mobile and desktop) for incomplete habits at end of day and upcoming task due dates.', tip: 'Mobile requires Obsidian\'s notification permissions to be enabled.' },
-            { label: '📤 Export & Backup', desc: 'Export thoughts, tasks, and dues to CSV or JSON. Manual backup utility to snapshot all MINA data files to a zip archive.' },
-            { label: '🌐 Daily Note Integration', desc: 'Deep link between Daily Workspace and Obsidian Daily Notes — append today\'s captures directly to your daily note template, and pull existing daily note content into the Workspace view.' },
+            { label: 'Habit Reminders', desc: 'When enabled, MINA checks every hour if you have pending habits for today and shows a toast notification.' },
+            { label: 'Task Reminders', desc: 'When enabled, MINA checks every hour for tasks due today that are not yet marked done.' },
+            { label: 'Quiet Hours', desc: 'Reminders only fire between 8 AM and 10 PM — never in the middle of the night.', tip: 'Quiet hours are based on your local device time.' },
+            { label: 'Mobile-Aware', desc: 'On mobile, reminders also fire when you switch back to Obsidian (app resume via visibilitychange event).' },
+            { label: 'Configuration', desc: 'Enable or disable each reminder type independently under Settings → Reminders.' },
+        ]
+    },
+    {
+        id: 'roadmap', icon: 'lucide-map', title: 'Roadmap', subtitle: 'Future direction',
+        items: [
+            { label: '✅ All Planned Features Shipped', desc: 'MINA V2 is feature-complete. All roadmap items have been implemented. Future updates will focus on polish, performance, and community requests.' },
         ]
     },
 ];

@@ -40,6 +40,12 @@ export class DuesTab extends BaseTab {
             new NewDueModal(this.app, this.settings.pfFolder, () => this.renderDuesMode(container)).open();
         });
 
+        const analyticsBtn = titleRow.createEl('button', {
+            text: 'Analytics →',
+            cls: 'mina-bills-inline-add-btn'
+        });
+        analyticsBtn.addEventListener('click', () => { this.view.activeTab = 'finance-analytics'; this.view.renderView(); });
+
         // ── 2. Summary Strip ─────────────────────────────────────────────
         const allEntries = this.buildEntries();
         const today      = moment().startOf('day');

@@ -14,6 +14,7 @@ export interface ProjectEntry {
     created: string;
     color?: string;
     filePath: string;
+    milestones?: Milestone[];
 }
 
 export interface MinaSettings {
@@ -66,6 +67,16 @@ export interface MinaSettings {
     attachmentsFolder: string;
     projectsFolder: string;
     reviewsFolder: string;
+    dailyNoteFolder: string;
+    reminderHabitsEnabled: boolean;
+    reminderTasksEnabled: boolean;
+}
+
+export interface Milestone {
+    id: string;
+    title: string;
+    done: boolean;
+    dueDate?: string;
 }
 
 export interface Habit {

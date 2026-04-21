@@ -3,7 +3,7 @@ import type { MinaView } from '../view';
 import { BaseTab } from './BaseTab';
 import { NewProjectModal } from '../modals/NewProjectModal';
 import { EditProjectModal } from '../modals/EditProjectModal';
-import type { ProjectEntry } from '../types';
+import type { ProjectEntry, Milestone } from '../types';
 
 type ProjectFilter = 'all' | 'active' | 'on-hold' | 'completed';
 
@@ -214,6 +214,99 @@ export class ProjectsTab extends BaseTab {
                 this.expandedIds.delete(project.id);
                 this.render(rootContainer);
             }
+        });
+
+        // Milestones section
+        this.renderMilestonesSection(panel, project, rootContainer);
+    }
+
+    private renderMilestonesSection(panel: HTMLElement, project: ProjectEntry, rootContainer: HTMLElement) {
+        const wrap = panel.createDiv('mina-milestones-wrap');
+
+        // Collapsible toggle header
+        const toggle = wrap.createEl('button', { text: '▸ Milestones', cls: 'mina-milestones-toggle' });
+        const body = wrap.createDiv('mina-milestones-body');
+        body.style.display = 'none';
+
+        let isOpen = false;
+        const toggleOpen = () => {
+            isOpen = !isOpen;
+            toggle.textContent = `${isOpen ? '▾' : '▸'} Milestones`;
+            body.style.display = isOpen ? '' : 'none';
+            if (isOpen) this.loadAndRenderMilestones(body, project, rootContainer);
+        };
+        toggle.addEventListener('click', toggleOpen);
+    }
+
+    private loadAndRenderMilestones(container: HTMLElement, project: ProjectEntry, rootContainer: HTMLElement) {
+        container.empty();
+        const loading = container.createEl('span', { text: 'Loading…', cls: 'mina-milestones-loading' });
+
+        this.vault.readMilestones(project.filePath).then(milestones => {
+            loading.remove();
+            this.renderMilestonesBody(container, milestones, project, rootContainer);
+        }).catch(() => {
+            loading.textContent = 'Failed to load milestones.';
+        });
+    }
+
+    private renderMilestonesBody(container: HTMLElement, milestones: Milestone[], project: ProjectEntry, rootContainer: HTMLElement) {
+        const done = milestones.filter(m => m.done).length;
+        const total = milestones.length;
+
+        // Progress bar
+        if (total > 0) {
+            const progressWrap = container.createDiv('mina-milestone-progress-wrap');
+            progressWrap.createEl('span', { text: `${done}/${total} complete`, cls: 'mina-milestone-progress-label' });
+            const track = progressWrap.createDiv('mina-milestone-progress-track');
+            const bar = track.createDiv('mina-milestone-progress');
+            bar.style.width = `${Math.round((done / total) * 100)}%`;
+        }
+
+        // Milestone list
+        milestones.forEach((m, idx) => {
+            const row = container.createDiv('mina-milestone-row');
+            const cb = row.createEl('input', { attr: { type: 'checkbox' } }) as HTMLInputElement;
+            cb.checked = m.done;
+            cb.addEventListener('change', async () => {
+                milestones[idx].done = cb.checked;
+                await this.vault.writeMilestones(project.filePath, milestones);
+                this.renderMilestonesBody(container, milestones, project, rootContainer);
+            });
+            row.createEl('span', { text: m.title, cls: `mina-milestone-title${m.done ? ' is-done' : ''}` });
+            if (m.dueDate) {
+                row.createEl('span', { text: m.dueDate, cls: 'mina-chip mina-chip--date mina-chip--sm' });
+            }
+        });
+
+        // Add milestone form
+        const addRow = container.createDiv('mina-milestone-add-row');
+        const titleInput = addRow.createEl('input', {
+            cls: 'mina-milestone-add-input',
+            attr: { type: 'text', placeholder: 'New milestone…' }
+        }) as HTMLInputElement;
+        const dateInput = addRow.createEl('input', {
+            cls: 'mina-milestone-add-date',
+            attr: { type: 'date' }
+        }) as HTMLInputElement;
+        const addBtn = addRow.createEl('button', { text: '+ Add', cls: 'mina-btn mina-btn--ghost mina-btn--sm' });
+        addBtn.addEventListener('click', async () => {
+            const title = titleInput.value.trim();
+            if (!title) return;
+            const newMilestone: Milestone = {
+                id: `m-${Date.now()}`,
+                title,
+                done: false,
+                dueDate: dateInput.value || undefined,
+            };
+            milestones.push(newMilestone);
+            await this.vault.writeMilestones(project.filePath, milestones);
+            titleInput.value = '';
+            dateInput.value = '';
+            this.renderMilestonesBody(container, milestones, project, rootContainer);
+        });
+        titleInput.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter') addBtn.click();
         });
     }
 

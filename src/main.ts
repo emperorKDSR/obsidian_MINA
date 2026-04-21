@@ -76,6 +76,12 @@ export default class MinaPlugin extends Plugin {
 
         this.registerView(VIEW_TYPE_MINA, (leaf) => new MinaView(leaf, this));
 
+        // Reminders: hourly nudge for habits and due tasks
+        this.registerInterval(window.setInterval(() => this._checkReminders(), 60 * 60 * 1000));
+        this.registerDomEvent(document, 'visibilitychange', () => {
+            if (document.visibilityState === 'visible') this._checkReminders();
+        });
+
 		addIcon(KATANA_ICON_ID, KATANA_ICON_SVG);
 		addIcon(JOURNAL_ICON_ID, JOURNAL_ICON_SVG);
 		addIcon(DAILY_ICON_ID, DAILY_ICON_SVG);
@@ -226,6 +232,29 @@ export default class MinaPlugin extends Plugin {
 
     getProjects(): string[] {
         return this.index ? this.index.getProjects() : [];
+    }
+
+    private _checkReminders(): void {
+        const hour = new Date().getHours();
+        if (hour < 8 || hour > 22) return;
+
+        if (this.settings.reminderHabitsEnabled) {
+            const allHabits = this.settings.habits?.filter(h => !h.archived) ?? [];
+            const completed = this.index.habitStatusIndex ?? [];
+            const incomplete = allHabits.filter(h => !completed.includes(h.id));
+            if (incomplete.length > 0) {
+                new Notice(`🌿 MINA: ${incomplete.length} habit${incomplete.length > 1 ? 's' : ''} pending today`, 5000);
+            }
+        }
+
+        if (this.settings.reminderTasksEnabled) {
+            const today = new Date().toISOString().split('T')[0];
+            const dueTasks = Array.from(this.index.taskIndex.values())
+                .filter(t => t.status !== 'done' && t.due === today);
+            if (dueTasks.length > 0) {
+                new Notice(`✅ MINA: ${dueTasks.length} task${dueTasks.length > 1 ? 's' : ''} due today`, 5000);
+            }
+        }
     }
 
     async getHabitStatus(date: string): Promise<string[]> {

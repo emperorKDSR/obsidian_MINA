@@ -177,5 +177,8 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     lifeMission: '',
     attachmentsFolder: '000 Bin/MINA V2 Attachments',
     projectsFolder: 'Projects',
-    reviewsFolder: '000 Bin/MINA V2 Reviews'
+    reviewsFolder: '000 Bin/MINA V2 Reviews',
+    dailyNoteFolder: 'Daily Notes',
+    reminderHabitsEnabled: true,
+    reminderTasksEnabled: true,
 }
