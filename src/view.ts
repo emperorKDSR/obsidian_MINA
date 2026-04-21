@@ -50,6 +50,11 @@ export class MinaView extends ItemView {
     currentChatFile: string | null = null;
     weeklyAiReport: string | null = null;
 
+    // Calendar State
+    calendarViewMonth: string = moment().format('YYYY-MM');
+    calendarSelectedDate: string = moment().format('YYYY-MM-DD');
+    calendarViewMode: 'month' | 'week' = 'month';
+
     // Voice State
     isRecording: boolean = false;
 
@@ -90,6 +95,7 @@ export class MinaView extends ItemView {
             case 'journal': return "Journal";
             case 'daily-workspace': return "Daily Workspace";
             case 'manual': return "Manual";
+            case 'calendar': return "Calendar";
             default: return "MINA";
         }
     }
@@ -156,6 +162,7 @@ export class MinaView extends ItemView {
         else if (tab === 'journal') instantiate(import('./tabs/JournalTab'), 'JournalTab');
         else if (tab === 'daily-workspace') instantiate(import('./tabs/DailyWorkspaceTab'), 'DailyWorkspaceTab');
         else if (tab === 'manual') instantiate(import('./tabs/ManualTab'), 'ManualTab');
+        else if (tab === 'calendar') instantiate(import('./tabs/CalendarTab'), 'CalendarTab');
     }
 
     // Bridge methods to Services

@@ -1,3 +1,8 @@
+## [1.13.0] - 2026-04-21
+### Added
+- **Calendar View**: New full tab accessible from the Command Center ACTION cluster. Displays a month or week grid with event indicators (tasks, financial dues, habit completions). Click any day to see its full detail panel listing tasks due, dues, and habits. Month/Week toggle, prev/next navigation, and Today shortcut. All state (view month, selected date, mode) persists across re-renders.
+- Calendar View removed from roadmap in Manual tab (feature shipped)
+
 ## [1.12.0] - 2026-04-21
 ### Added
 - **AI Weekly Generator**: New "✨ AI Weekly Brief" section in the Weekly Review tab powered by Gemini. Collects tasks completed/overdue, habit completion rates, active projects, recent thoughts, wins/lessons/focus, and North Star goals, then generates a structured 5-section brief (Week Assessment, Top Win, Key Insight, Next Week Priority, North Star Pulse)

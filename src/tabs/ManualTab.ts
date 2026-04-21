@@ -187,7 +187,6 @@ const SECTIONS: HelpSection[] = [
         id: 'roadmap', icon: 'lucide-map', title: 'Roadmap', subtitle: 'What\'s coming to MINA V2',
         items: [
             { label: '🔥 Habit Streaks', desc: 'Continuous streak counter per habit — see how many days in a row you\'ve completed each habit. Includes longest streak record and streak restoration alerts.', tip: 'Currently you can see weekly completion %. Streaks will add a continuous day-count visible on the Home screen and Habits tab.' },
-            { label: '📅 Calendar View', desc: 'A month/week calendar overlay showing tasks due, habits scheduled, and dues on a visual grid — making it easy to see load and balance your week at a glance.', tip: 'Will integrate with Tasks and Dues without duplicating data.' },
             { label: '🎯 Task Focus Mode', desc: 'A dedicated "Today\'s Mission" view showing only tasks you\'ve selected for today, with a distraction-free interface and time-block suggestions from AI.' },
             { label: '🏗️ Project Milestones', desc: 'Sub-tasks and milestone tracking within Projects — break down a project into steps, track completion %, and see milestones in the Weekly Glance.', tip: 'Will link to existing task files so no data is duplicated.' },
             { label: '⏰ Memento Mori Visual', desc: 'A Life Calendar visualization showing your weeks as a grid — weeks lived (filled), weeks remaining (empty). A powerful reminder to use your time well.', tip: 'Birth date and life expectancy are already configured in Settings → Memento Mori.' },

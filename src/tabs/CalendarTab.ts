@@ -1,0 +1,261 @@
+import { moment, setIcon, TFile } from 'obsidian';
+import type { MinaView } from '../view';
+import { BaseTab } from './BaseTab';
+import type { TaskEntry } from '../types';
+
+export class CalendarTab extends BaseTab {
+    constructor(view: MinaView) {
+        super(view);
+        if (!this.view.calendarViewMonth) this.view.calendarViewMonth = moment().format('YYYY-MM');
+        if (!this.view.calendarSelectedDate) this.view.calendarSelectedDate = moment().format('YYYY-MM-DD');
+        if (!this.view.calendarViewMode) this.view.calendarViewMode = 'month';
+    }
+
+    render(container: HTMLElement) {
+        container.empty();
+        const habitMap = this._buildHabitMap();
+        const wrap = container.createEl('div', { cls: 'mina-cal-wrap' });
+        this._renderHeader(wrap, () => this.render(container));
+        this._renderGrid(wrap, habitMap, () => this.render(container));
+        this._renderDetail(wrap, habitMap);
+    }
+
+    private _getDisplayRange(): { start: moment.Moment; end: moment.Moment } {
+        const vm = moment(this.view.calendarViewMonth + '-01');
+        if (this.view.calendarViewMode === 'week') {
+            return {
+                start: moment(this.view.calendarSelectedDate).startOf('isoWeek'),
+                end: moment(this.view.calendarSelectedDate).endOf('isoWeek'),
+            };
+        }
+        return {
+            start: vm.clone().startOf('month').startOf('isoWeek'),
+            end: vm.clone().endOf('month').endOf('isoWeek'),
+        };
+    }
+
+    private _buildHabitMap(): Map<string, Set<string>> {
+        const map = new Map<string, Set<string>>();
+        const folder = (this.settings.habitsFolder || '000 Bin/MINA V2 Habits').replace(/\\/g, '/');
+        const { start, end } = this._getDisplayRange();
+        const cur = start.clone();
+        while (cur.isSameOrBefore(end, 'day')) {
+            const d = cur.format('YYYY-MM-DD');
+            const file = this.app.vault.getAbstractFileByPath(`${folder}/${d}.md`);
+            if (file instanceof TFile) {
+                const fm = this.app.metadataCache.getFileCache(file)?.frontmatter;
+                const completed: string[] = Array.isArray(fm?.['completed']) ? fm!['completed'].map(String) : [];
+                if (completed.length) map.set(d, new Set(completed));
+            }
+            cur.add(1, 'day');
+        }
+        return map;
+    }
+
+    private _renderHeader(parent: HTMLElement, onRefresh: () => void) {
+        const header = parent.createEl('div', { cls: 'mina-cal-header' });
+        const titleRow = header.createEl('div', { cls: 'mina-cal-title-row' });
+        this.renderHomeIcon(titleRow);
+        titleRow.createEl('h2', { cls: 'mina-cal-title', text: 'Calendar' });
+
+        const toggle = titleRow.createEl('div', { cls: 'mina-cal-view-toggle' });
+        (['month', 'week'] as const).forEach(mode => {
+            const btn = toggle.createEl('button', {
+                cls: `mina-cal-toggle-btn${this.view.calendarViewMode === mode ? ' is-active' : ''}`,
+                text: mode.charAt(0).toUpperCase() + mode.slice(1),
+            });
+            btn.addEventListener('click', () => { this.view.calendarViewMode = mode; onRefresh(); });
+        });
+
+        const navRow = header.createEl('div', { cls: 'mina-cal-nav-row' });
+        const prevBtn = navRow.createEl('button', { cls: 'mina-cal-nav-btn' });
+        setIcon(prevBtn, 'chevron-left');
+
+        const vm = moment(this.view.calendarViewMonth + '-01');
+        const isWeek = this.view.calendarViewMode === 'week';
+        let labelText: string;
+        if (isWeek) {
+            const ws = moment(this.view.calendarSelectedDate).startOf('isoWeek');
+            const we = moment(this.view.calendarSelectedDate).endOf('isoWeek');
+            labelText = `${ws.format('MMM D')} – ${we.format('MMM D, YYYY')}`;
+        } else {
+            labelText = vm.format('MMMM YYYY');
+        }
+        navRow.createEl('span', { cls: 'mina-cal-nav-label', text: labelText });
+
+        const nextBtn = navRow.createEl('button', { cls: 'mina-cal-nav-btn' });
+        setIcon(nextBtn, 'chevron-right');
+
+        const todayBtn = navRow.createEl('button', { cls: 'mina-cal-today-btn', text: 'Today' });
+
+        prevBtn.addEventListener('click', () => {
+            if (isWeek) {
+                this.view.calendarSelectedDate = moment(this.view.calendarSelectedDate).subtract(1, 'week').format('YYYY-MM-DD');
+                this.view.calendarViewMonth = moment(this.view.calendarSelectedDate).format('YYYY-MM');
+            } else {
+                this.view.calendarViewMonth = vm.clone().subtract(1, 'month').format('YYYY-MM');
+            }
+            onRefresh();
+        });
+        nextBtn.addEventListener('click', () => {
+            if (isWeek) {
+                this.view.calendarSelectedDate = moment(this.view.calendarSelectedDate).add(1, 'week').format('YYYY-MM-DD');
+                this.view.calendarViewMonth = moment(this.view.calendarSelectedDate).format('YYYY-MM');
+            } else {
+                this.view.calendarViewMonth = vm.clone().add(1, 'month').format('YYYY-MM');
+            }
+            onRefresh();
+        });
+        todayBtn.addEventListener('click', () => {
+            this.view.calendarSelectedDate = moment().format('YYYY-MM-DD');
+            this.view.calendarViewMonth = moment().format('YYYY-MM');
+            onRefresh();
+        });
+    }
+
+    private _renderGrid(parent: HTMLElement, habitMap: Map<string, Set<string>>, onRefresh: () => void) {
+        const gridWrap = parent.createEl('div', { cls: 'mina-cal-grid-wrap' });
+
+        const dayLabels = gridWrap.createEl('div', { cls: 'mina-cal-weekdays' });
+        ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(d =>
+            dayLabels.createEl('div', { cls: 'mina-cal-weekday-label', text: d })
+        );
+
+        // Pre-index tasks and dues for O(1) cell lookup
+        const tasksByDate = new Map<string, TaskEntry[]>();
+        this.index.taskIndex.forEach(t => {
+            if (!t.due) return;
+            if (!tasksByDate.has(t.due)) tasksByDate.set(t.due, []);
+            tasksByDate.get(t.due)!.push(t);
+        });
+        const dueCountByDate = new Map<string, number>();
+        this.index.dueIndex.forEach(d => {
+            if (d.dueDate && d.isActive)
+                dueCountByDate.set(d.dueDate, (dueCountByDate.get(d.dueDate) || 0) + 1);
+        });
+
+        const isWeek = this.view.calendarViewMode === 'week';
+        const grid = gridWrap.createEl('div', { cls: `mina-cal-grid${isWeek ? ' mina-cal-grid--week' : ''}` });
+
+        const today = moment().format('YYYY-MM-DD');
+        const { start, end } = this._getDisplayRange();
+        const viewMonth = this.view.calendarViewMonth;
+        const habits = (this.settings.habits || []).filter(h => !h.archived);
+
+        const cur = start.clone();
+        while (cur.isSameOrBefore(end, 'day')) {
+            const dateStr = cur.format('YYYY-MM-DD');
+            const isToday = dateStr === today;
+            const isSelected = dateStr === this.view.calendarSelectedDate;
+            const isOutside = !isWeek && cur.format('YYYY-MM') !== viewMonth;
+
+            const cellCls = ['mina-cal-cell',
+                isWeek ? 'mina-cal-cell--week' : '',
+                isToday ? 'is-today' : '',
+                isSelected ? 'is-selected' : '',
+                isOutside ? 'is-outside' : '',
+            ].filter(Boolean).join(' ');
+            const cell = grid.createEl('div', { cls: cellCls });
+
+            cell.createEl('span', { cls: 'mina-cal-cell-num', text: cur.format('D') });
+
+            const dots = cell.createEl('div', { cls: 'mina-cal-cell-dots' });
+            const dayTasks = tasksByDate.get(dateStr) || [];
+            const openTasks = dayTasks.filter(t => t.status !== 'done');
+            const dueCount = dueCountByDate.get(dateStr) || 0;
+            const habitCount = habitMap.get(dateStr)?.size || 0;
+
+            if (openTasks.length > 0) {
+                const dot = dots.createEl('span', { cls: 'mina-cal-dot mina-cal-dot--task' });
+                if (openTasks.length > 1) dot.createEl('sup', { text: String(openTasks.length) });
+            }
+            if (dueCount > 0) {
+                const dot = dots.createEl('span', { cls: 'mina-cal-dot mina-cal-dot--due' });
+                if (dueCount > 1) dot.createEl('sup', { text: String(dueCount) });
+            }
+            if (habitCount > 0 && habits.length > 0) {
+                const pct = Math.round((habitCount / habits.length) * 100);
+                const dot = dots.createEl('span', {
+                    cls: `mina-cal-dot mina-cal-dot--habit${pct === 100 ? ' is-full' : ''}`,
+                    attr: { title: `${habitCount}/${habits.length} habits` }
+                });
+                if (pct < 100) dot.createEl('sup', { text: `${habitCount}` });
+            }
+
+            if (isWeek && openTasks.length > 0) {
+                const miniList = cell.createEl('div', { cls: 'mina-cal-cell-mini-list' });
+                openTasks.slice(0, 4).forEach(t =>
+                    miniList.createEl('div', { cls: 'mina-cal-mini-task', text: t.title })
+                );
+                if (openTasks.length > 4)
+                    miniList.createEl('div', { cls: 'mina-cal-mini-more', text: `+${openTasks.length - 4} more` });
+            }
+
+            cell.addEventListener('click', () => {
+                this.view.calendarSelectedDate = dateStr;
+                if (!isWeek && cur.format('YYYY-MM') !== viewMonth)
+                    this.view.calendarViewMonth = cur.format('YYYY-MM');
+                onRefresh();
+            });
+
+            cur.add(1, 'day');
+        }
+    }
+
+    private _renderDetail(parent: HTMLElement, habitMap: Map<string, Set<string>>) {
+        const dateStr = this.view.calendarSelectedDate;
+        const detail = parent.createEl('div', { cls: 'mina-cal-detail' });
+
+        detail.createEl('div', { cls: 'mina-cal-detail-date', text: moment(dateStr).format('dddd, MMMM D, YYYY') });
+
+        const tasks: TaskEntry[] = [];
+        this.index.taskIndex.forEach(t => { if (t.due === dateStr) tasks.push(t); });
+
+        if (tasks.length > 0) {
+            detail.createEl('div', { cls: 'mina-cal-detail-section-title', text: `Tasks · ${tasks.length}` });
+            const list = detail.createEl('div', { cls: 'mina-cal-detail-list' });
+            tasks.sort((a, b) => (a.status === 'done' ? 1 : 0) - (b.status === 'done' ? 1 : 0))
+                .forEach(t => {
+                    const item = list.createEl('div', { cls: `mina-cal-detail-item mina-cal-detail-item--task${t.status === 'done' ? ' is-done' : ''}` });
+                    const icon = item.createEl('span', { cls: 'mina-cal-detail-item-icon' });
+                    setIcon(icon, t.status === 'done' ? 'check-circle-2' : 'circle');
+                    item.createEl('span', { cls: 'mina-cal-detail-item-title', text: t.title });
+                    if (t.priority) item.createEl('span', { cls: `mina-cal-detail-badge mina-cal-badge--${t.priority}`, text: t.priority });
+                });
+        }
+
+        const dues: any[] = [];
+        this.index.dueIndex.forEach(d => { if (d.dueDate === dateStr) dues.push(d); });
+
+        if (dues.length > 0) {
+            detail.createEl('div', { cls: 'mina-cal-detail-section-title', text: `Financial · ${dues.length}` });
+            const list = detail.createEl('div', { cls: 'mina-cal-detail-list' });
+            dues.forEach(d => {
+                const item = list.createEl('div', { cls: 'mina-cal-detail-item mina-cal-detail-item--due' });
+                const icon = item.createEl('span', { cls: 'mina-cal-detail-item-icon' });
+                setIcon(icon, 'credit-card');
+                item.createEl('span', { cls: 'mina-cal-detail-item-title', text: d.title });
+                if (d.amount) item.createEl('span', { cls: 'mina-cal-detail-badge', text: `€${Number(d.amount).toFixed(2)}` });
+            });
+        }
+
+        const habits = (this.settings.habits || []).filter(h => !h.archived);
+        if (habits.length > 0) {
+            const completed = habitMap.get(dateStr) || new Set<string>();
+            detail.createEl('div', { cls: 'mina-cal-detail-section-title', text: `Habits · ${completed.size}/${habits.length}` });
+            const list = detail.createEl('div', { cls: 'mina-cal-detail-list mina-cal-detail-list--habits' });
+            habits.forEach(h => {
+                const done = completed.has(h.id);
+                const item = list.createEl('div', { cls: `mina-cal-detail-item mina-cal-detail-item--habit${done ? ' is-done' : ''}` });
+                item.createEl('span', { cls: 'mina-cal-detail-habit-icon', text: h.icon });
+                item.createEl('span', { cls: 'mina-cal-detail-item-title', text: h.name });
+                const icon = item.createEl('span', { cls: 'mina-cal-detail-item-icon mina-cal-detail-item-icon--right' });
+                setIcon(icon, done ? 'check-circle-2' : 'circle');
+            });
+        }
+
+        if (tasks.length === 0 && dues.length === 0 && habits.length === 0) {
+            this.renderEmptyState(detail, 'Nothing scheduled for this day.');
+        }
+    }
+}
