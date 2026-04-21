@@ -68,6 +68,7 @@ const SECTIONS: HelpSection[] = [
         items: [
             { label: 'Quick Bar (Home)', desc: 'Tap habit buttons on the Home screen to log today\'s completions without leaving the hub.' },
             { label: '7-Day Strip', desc: 'In the Habits tab, each habit shows a 7-day calendar. Tap any day to toggle it.' },
+            { label: 'Streak Leaderboard 🔥', desc: 'The Habits tab shows a streak table for every habit: current streak, personal best, and this month\'s completion rate. Habits with 7+ day streaks glow amber; 30+ day streaks turn red.', tip: 'Streaks are calculated from the last 90 days of habit files.' },
             { label: 'Configure Habits', desc: 'Tap the ⚙ gear icon on the Home screen to add, edit, or archive habits.' },
             { label: 'Weekly Highlight', desc: 'The Weekly Review automatically shows your best-performing habit for the week.' },
             { label: 'Progress Bar', desc: 'A visual progress bar shows how many habits you\'ve completed today.' },
@@ -96,6 +97,7 @@ const SECTIONS: HelpSection[] = [
         id: 'review', icon: 'lucide-calendar-check', title: 'Weekly Review', subtitle: 'Reflect and plan every week',
         items: [
             { label: 'Week at a Glance ⚡', desc: 'Auto-generated panel showing tasks completed, habit progress, active projects, and finance paid/overdue.', tip: 'Tap ↻ to refresh. Tap ⌄ to collapse.' },
+            { label: 'AI Weekly Brief 🤖', desc: 'Tap "✨ Generate AI Brief" at the bottom of the review to get a Gemini-powered 5-section brief: Week Assessment, Top Win, Key Insight, Next Week Priority, and North Star Pulse.', tip: 'Requires a Gemini API key. The brief is generated from your actual vault data — tasks, habits, thoughts, projects, and goals.' },
             { label: 'Wins', desc: 'Write what went well this week — celebrate progress, big and small.' },
             { label: 'Lessons Learned', desc: 'Capture what you\'d do differently. Turns mistakes into growth.' },
             { label: 'Next Week\'s Focus', desc: 'Set 1–3 priorities for the coming week. These appear on your Home screen.' },
@@ -174,6 +176,17 @@ const SECTIONS: HelpSection[] = [
         ]
     },
     {
+        id: 'calendar', icon: 'lucide-calendar', title: 'Calendar View', subtitle: 'Visual month & week overview',
+        items: [
+            { label: 'Access', desc: 'Open from the ACTION cluster in Command Center (Calendar icon), or via command palette: "MINA: Open View".' },
+            { label: 'Month / Week Toggle', desc: 'Switch between a full month grid and a focused 7-day week view using the toggle in the top-right.', tip: 'Week view shows mini task lists inside each day cell.' },
+            { label: 'Event Dots', desc: 'Each day cell shows coloured dots: accent = tasks due, orange = financial dues, green = habits completed. A count badge appears when there are multiple.', tip: 'Green dot glows when you\'ve completed all habits for the day.' },
+            { label: 'Day Detail Panel', desc: 'Tap any day cell to see its full detail panel below the grid: tasks with priority badges, dues with amounts, and habits with completion status.' },
+            { label: 'Navigation', desc: 'Use ◀ ▶ to move between months or weeks. "Today" snaps back to the current date instantly.' },
+            { label: 'State Persistence', desc: 'Your selected date, view mode, and current month are remembered even when the tab re-renders after vault changes.' },
+        ]
+    },
+    {
         id: 'settings', icon: 'lucide-settings', title: 'Settings', subtitle: 'Configure MINA to your workflow',
         items: [
             { label: 'Folders', desc: 'Set where thoughts, tasks, habits, voice memos, and reviews are stored in your vault. Use Folder Config for a quick modal.' },
@@ -186,11 +199,9 @@ const SECTIONS: HelpSection[] = [
     {
         id: 'roadmap', icon: 'lucide-map', title: 'Roadmap', subtitle: 'What\'s coming to MINA V2',
         items: [
-            { label: '🔥 Habit Streaks', desc: 'Continuous streak counter per habit — see how many days in a row you\'ve completed each habit. Includes longest streak record and streak restoration alerts.', tip: 'Currently you can see weekly completion %. Streaks will add a continuous day-count visible on the Home screen and Habits tab.' },
             { label: '🎯 Task Focus Mode', desc: 'A dedicated "Today\'s Mission" view showing only tasks you\'ve selected for today, with a distraction-free interface and time-block suggestions from AI.' },
             { label: '🏗️ Project Milestones', desc: 'Sub-tasks and milestone tracking within Projects — break down a project into steps, track completion %, and see milestones in the Weekly Glance.', tip: 'Will link to existing task files so no data is duplicated.' },
             { label: '⏰ Memento Mori Visual', desc: 'A Life Calendar visualization showing your weeks as a grid — weeks lived (filled), weeks remaining (empty). A powerful reminder to use your time well.', tip: 'Birth date and life expectancy are already configured in Settings → Memento Mori.' },
-            { label: '🤖 AI Weekly Review Generator', desc: 'Let AI auto-generate your Weekly Review draft by analysing your captured thoughts, completed tasks, habits, and dues from the week.', tip: 'You\'ll still review and edit — AI handles the first draft.' },
             { label: '📊 Advanced Finance Analytics', desc: 'Trend charts showing monthly spending by category, year-over-year comparisons, and a Cashflow Forecast using your recurring dues and monthly income.' },
             { label: '🔔 Habit & Task Reminders', desc: 'Native Obsidian notifications (mobile and desktop) for incomplete habits at end of day and upcoming task due dates.', tip: 'Mobile requires Obsidian\'s notification permissions to be enabled.' },
             { label: '📤 Export & Backup', desc: 'Export thoughts, tasks, and dues to CSV or JSON. Manual backup utility to snapshot all MINA data files to a zip archive.' },
