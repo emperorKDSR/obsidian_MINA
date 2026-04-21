@@ -1,3 +1,10 @@
+## [1.13.1] - 2026-04-21
+### Changed
+- **Manual — Calendar View**: Added dedicated "Calendar View" section documenting month/week toggle, event dots, day detail panel, navigation, and state persistence
+- **Manual — Habits**: Added "Streak Leaderboard 🔥" entry documenting the current streak, personal best, and monthly % table
+- **Manual — Weekly Review**: Added "AI Weekly Brief 🤖" entry documenting the AI brief generation, 5-section structure, and Gemini API requirement
+- **Manual — Roadmap**: Removed shipped features — Habit Streaks (✅ shipped v1.11.x) and AI Weekly Review Generator (✅ shipped v1.12.0)
+
 ## [1.13.0] - 2026-04-21
 ### Added
 - **Calendar View**: New full tab accessible from the Command Center ACTION cluster. Displays a month or week grid with event indicators (tasks, financial dues, habit completions). Click any day to see its full detail panel listing tasks due, dues, and habits. Month/Week toggle, prev/next navigation, and Today shortcut. All state (view month, selected date, mode) persists across re-renders.
