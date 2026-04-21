@@ -266,7 +266,9 @@ Rules: No preamble. No sign-off. Under 300 words total. Be direct, specific, and
                 temperature: 0.3,
                 maxOutputTokens: 1024,
                 topP: 0.9,
-                topK: 40
+                topK: 40,
+                // Allow thinking tokens for 2.5 models without exhausting output budget
+                thinkingConfig: { thinkingBudget: 512 }
             }
         };
 
@@ -292,8 +294,13 @@ Rules: No preamble. No sign-off. Under 300 words total. Be direct, specific, and
             if (finishReason && finishReason !== 'STOP' && finishReason !== 'MAX_TOKENS') {
                 throw new Error(`Generation ended unexpectedly (finishReason: ${finishReason}). Try again or switch models.`);
             }
-            const reply = (candidate?.content?.parts ?? []).map((p: any) => p.text ?? '').join('').trim();
-            if (!reply) throw new Error('Gemini returned an empty response. Try again or check your quota in Google AI Studio.');
+            // Filter out thought-token parts (gemini-2.5 thinking models)
+            const parts: any[] = candidate?.content?.parts ?? [];
+            const reply = parts.filter((p: any) => !p.thought).map((p: any) => p.text ?? '').join('').trim();
+            if (!reply) {
+                console.warn('[MINA] generateWeeklyReport: empty reply. Raw response:', JSON.stringify(data));
+                throw new Error('Gemini returned an empty response. Try again or check your quota in Google AI Studio.');
+            }
             return reply;
         } catch (e: any) {
             if (e?.name === 'AbortError') throw new Error('Weekly report generation was cancelled.');
