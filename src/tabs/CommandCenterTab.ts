@@ -2,7 +2,7 @@ import { moment, Platform, Notice, TFile, setIcon } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, SETTINGS_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID, COMPASS_ICON_ID, FOCUS_ICON_ID, MEMENTO_ICON_ID } from '../constants';
-import { parseContextString, parseNaturalDate, isTablet, attachInlineTriggers } from '../utils';
+import { parseNaturalDate, isTablet } from '../utils';
 import { HabitConfigModal } from '../modals/HabitConfigModal';
 import { HelpModal } from '../modals/HelpModal';
 import { SearchModal } from '../modals/SearchModal';
@@ -111,338 +111,109 @@ export class CommandCenterTab extends BaseTab {
 
     // ── 1. Capture bar ──────────────────────────────────────────────────────
     private renderCaptureBar(parent: HTMLElement) {
-        const syncTextareaHeight = (textarea: HTMLTextAreaElement) => {
-            textarea.style.height = 'auto';
-            textarea.style.overflowY = 'hidden';
-            textarea.style.height = `${textarea.scrollHeight}px`;
-        };
+        const zone = parent.createEl('div', { cls: 'mina-dual-capture-zone' });
 
-        // ── Desktop / tablet path: inline expansion ──────────────────────────
-        if (!Platform.isMobile || isTablet()) {
-            let captureContexts: string[] = [];
-            let captureDueDate: string | null = null;
-            let captureMode: 'thought' | 'task' = 'thought';
+        // ── Thought Box ──────────────────────────────────────────────────────
+        const thoughtBox = zone.createEl('div', { cls: 'mina-capture-box mina-capture-box--thought' });
+        const thoughtLabel = thoughtBox.createEl('div', { cls: 'mina-capture-box-label' });
+        thoughtLabel.createEl('span', { text: '✦', cls: 'mina-capture-box-icon' });
+        thoughtLabel.createEl('span', { text: 'THOUGHT', cls: 'mina-capture-box-title' });
 
-            const cap = parent.createEl('div', { cls: 'mina-capture-bar' });
-
-            // Collapsed header row
-            const collapsedRow = cap.createDiv({ cls: 'mina-capture-collapsed-row' });
-            const iconWrap = collapsedRow.createDiv({ cls: 'mina-capture-icon-wrap' });
-            setIcon(iconWrap, 'lucide-plus');
-            collapsedRow.createEl('span', { text: "What's on your mind…", cls: 'mina-capture-placeholder' });
-            collapsedRow.createEl('span', { text: '⌘K', cls: 'mina-capture-kbd' });
-
-            // Expansion body
-            const expandBody = cap.createDiv({ cls: 'mina-capture-expand-body' });
-            const textarea = expandBody.createEl('textarea', {
-                cls: 'mina-capture-inline-textarea',
-                attr: { placeholder: 'Capture thought…', rows: '3' }
-            }) as HTMLTextAreaElement;
-
-            // Due date zone (task mode only)
-            const dateZone = expandBody.createDiv({ cls: 'mina-mobile-date-zone' });
-            this._buildInlineDateStrip(dateZone, (d: string | null) => { captureDueDate = d; });
-
-            // Desktop dock: mode toggle | chips (flex) | actions
-            const dock = expandBody.createDiv({ cls: 'mina-capture-desktop-dock' });
-
-            const toggleBar = dock.createDiv({ cls: 'mina-seg-bar mina-capture-inline-toggle' });
-            const thoughtBtn = toggleBar.createEl('button', { text: '✦ THOUGHT', cls: 'mina-seg-btn is-active' });
-            const taskBtn = toggleBar.createEl('button', { text: '✓ TASK', cls: 'mina-seg-btn' });
-
-            const chipArea = dock.createDiv({ cls: 'mina-capture-desktop-chip-area' });
-            const chipStrip = chipArea.createDiv({ cls: 'mina-mobile-chip-strip' });
-
-            const actionRow = dock.createDiv({ cls: 'mina-capture-desktop-actions' });
-            const cancelBtn = actionRow.createEl('button', { text: 'CANCEL', cls: 'mina-capture-inline-cancel' });
-            const saveBtn = actionRow.createEl('button', { text: 'CAPTURE', cls: 'mina-capture-inline-save is-disabled' }) as HTMLButtonElement;
-            saveBtn.disabled = true;
-
-            const renderChips = () => {
-                chipStrip.empty();
-                if (captureContexts.length === 0) return;
-                captureContexts.forEach(ctx => {
-                    const chip = chipStrip.createEl('span', { cls: 'mina-mobile-chip' });
-                    chip.createSpan({ text: `#${ctx}` });
-                    const x = chip.createSpan({ text: '×', cls: 'mina-mobile-chip-x' });
-                    x.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        captureContexts = captureContexts.filter(c => c !== ctx);
-                        renderChips();
-                    });
-                });
-            };
-            renderChips();
-
-            // Mode switch
-            const switchMode = (mode: 'thought' | 'task') => {
-                captureMode = mode;
-                textarea.placeholder = mode === 'task' ? 'Execute intent…' : 'Capture thought…';
-                thoughtBtn.toggleClass('is-active', mode === 'thought');
-                taskBtn.toggleClass('is-active', mode === 'task');
-                dateZone.toggleClass('is-visible', mode === 'task');
-                saveBtn.textContent = mode === 'task' ? 'ADD TASK' : 'CAPTURE';
-            };
-            thoughtBtn.addEventListener('click', () => switchMode('thought'));
-            taskBtn.addEventListener('click', () => switchMode('task'));
-
-            // Save gate
-            const refreshSave = () => {
-                const empty = !textarea.value.trim();
-                saveBtn.toggleClass('is-disabled', empty);
-                saveBtn.disabled = empty;
-            };
-
-            // Inline smart triggers: @date, [[link, #tag, + checklist
-            attachInlineTriggers(this.plugin.app, textarea, (d: string) => {
-                captureDueDate = d;
-                switchMode('task');
-            }, (tag: string) => {
-                if (!captureContexts.includes(tag)) { captureContexts.push(tag); renderChips(); }
-                if (!this.plugin.settings.contexts) this.plugin.settings.contexts = [];
-                if (!this.plugin.settings.contexts.includes(tag)) {
-                    this.plugin.settings.contexts.push(tag); // in-memory only; persisted on capture
-                }
-            }, () => this.plugin.settings.contexts ?? []);
-
-            const refreshCaptureInput = () => {
-                refreshSave();
-                syncTextareaHeight(textarea);
-            };
-            textarea.addEventListener('input', refreshCaptureInput);
-
-            // Collapse
-            const collapse = () => {
-                this.view._capturePending = 0;
-                cap.removeClass('is-expanded');
-                captureContexts = []; captureDueDate = null;
-                textarea.value = '';
-                textarea.style.height = '';
-                textarea.style.overflowY = '';
-                switchMode('thought');
-                renderChips();
-                refreshSave();
-            };
-
-            // Expand
-            const expand = () => {
-                if (cap.hasClass('is-expanded')) return;
-                this.view._capturePending = 1;
-                cap.addClass('is-expanded');
-                setTimeout(() => {
-                    textarea.focus();
-                    syncTextareaHeight(textarea);
-                }, 60);
-            };
-
-            // Save
-            const handleSave = async () => {
-                const raw = textarea.value.trim();
-                if (!raw) return;
-                saveBtn.toggleClass('is-disabled', true);
-                saveBtn.disabled = true;
-                const text = raw.replace(/\n/g, '<br>');
-                const contexts = parseContextString(captureContexts.map(c => `#${c}`).join(' '));
-                const due = captureMode === 'task' ? captureDueDate ?? undefined : undefined;
-                try {
-                    if (captureMode === 'task') await this.vault.createTaskFile(text, contexts, due);
-                    else await this.vault.createThoughtFile(text, contexts);
-                    await this.plugin.saveSettings(); // persist any new contexts added during capture
-                    new Notice(captureMode === 'task' ? 'Task added ✓' : 'Thought captured ✓', 1200);
-                    collapse();
-                } catch {
-                    saveBtn.toggleClass('is-disabled', false);
-                    saveBtn.disabled = false;
-                    new Notice('Error saving — please try again', 2500);
-                }
-            };
-
-            collapsedRow.addEventListener('click', expand);
-            cancelBtn.addEventListener('click', collapse);
-            saveBtn.addEventListener('click', handleSave);
-            textarea.addEventListener('keydown', (e: KeyboardEvent) => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSave(); }
-                if (e.key === 'Escape') collapse();
-            });
-
-            syncTextareaHeight(textarea);
-
-            // Click-outside to collapse
-            const onOutside = (e: MouseEvent) => {
-                if (cap.hasClass('is-expanded') && !cap.contains(e.target as Node)) collapse();
-            };
-            parent.ownerDocument.addEventListener('mousedown', onOutside);
-
-            // ⌘K / C shortcut
-            const onKey = (e: KeyboardEvent) => {
-                if (cap.hasClass('is-expanded')) return;
-                const active = parent.ownerDocument.activeElement;
-                const isTyping = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || (active as HTMLElement)?.isContentEditable;
-                if (isTyping) return;
-                if (e.key === 'c' || e.key === 'C') { e.preventDefault(); expand(); }
-            };
-            parent.ownerDocument.addEventListener('keydown', onKey);
-
-            // Cleanup when removed from DOM
-            const obs = new MutationObserver(() => {
-                if (!cap.isConnected) {
-                    parent.ownerDocument.removeEventListener('keydown', onKey);
-                    parent.ownerDocument.removeEventListener('mousedown', onOutside);
-                    obs.disconnect();
-                }
-            });
-            obs.observe(parent.ownerDocument.body, { childList: true, subtree: true });
-            return;
-        }
-
-        // ── Mobile path: inline expansion ────────────────────────────────────
-        let captureContexts: string[] = [];
-        let captureDueDate: string | null = null;
-        let captureMode: 'thought' | 'task' = 'thought';
-
-        const strip = parent.createEl('div', { cls: 'mina-mobile-capture-strip' });
-
-        // Section 1: Collapsed pill row
-        const collapsedRow = strip.createDiv({ cls: 'mina-mobile-capture-collapsed-row' });
-        const iconWrap = collapsedRow.createDiv({ cls: 'mina-mobile-capture-strip-icon' });
-        setIcon(iconWrap, 'lucide-pen-line');
-        collapsedRow.createEl('span', { text: "What's on your mind…", cls: 'mina-mobile-capture-strip-ph' });
-
-        // Section 2: Expansion body
-        const expandBody = strip.createDiv({ cls: 'mina-capture-expand-body' });
-        const canvas = expandBody.createDiv({ cls: 'mina-capture-inline-canvas' });
-        const textarea = canvas.createEl('textarea', {
-            cls: 'mina-capture-inline-textarea',
-            attr: { placeholder: 'Capture thought…', rows: '4' }
+        const thoughtArea = thoughtBox.createEl('textarea', {
+            cls: 'mina-capture-box-textarea',
+            attr: { placeholder: "What's on your mind… (Enter to save, Shift+Enter for new line)", rows: '2' }
         }) as HTMLTextAreaElement;
 
-        const dock = expandBody.createDiv({ cls: 'mina-capture-inline-dock' });
-
-        // 1. Mode toggle
-        const toggleBar = dock.createDiv({ cls: 'mina-seg-bar mina-capture-inline-toggle' });
-        const thoughtBtn = toggleBar.createEl('button', { text: '✦ THOUGHT', cls: 'mina-seg-btn is-active' });
-        const taskBtn = toggleBar.createEl('button', { text: '✓ TASK', cls: 'mina-seg-btn' });
-
-        // 2. Date zone (task mode only)
-        const dateZone = dock.createDiv({ cls: 'mina-mobile-date-zone' });
-        this._buildInlineDateStrip(dateZone, (d: string | null) => { captureDueDate = d; });
-
-        // 3. Chip strip
-        const chipStrip = dock.createDiv({ cls: 'mina-mobile-chip-strip' });
-
-        const renderChips = () => {
-            chipStrip.empty();
-            if (captureContexts.length === 0) return;
-            captureContexts.forEach(ctx => {
-                const chip = chipStrip.createEl('span', { cls: 'mina-mobile-chip' });
-                chip.createSpan({ text: `#${ctx}` });
-                const x = chip.createSpan({ text: '×', cls: 'mina-mobile-chip-x' });
-                x.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    captureContexts = captureContexts.filter(c => c !== ctx);
-                    renderChips();
-                });
-            });
-        };
-        renderChips();
-
-        // 4. Action row
-        const actionRow = dock.createDiv({ cls: 'mina-capture-inline-action-row' });
-        const cancelBtn = actionRow.createEl('button', { text: 'CANCEL', cls: 'mina-capture-inline-cancel' });
-        const saveBtn = actionRow.createEl('button', { text: 'CAPTURE', cls: 'mina-capture-inline-save is-disabled' }) as HTMLButtonElement;
-        saveBtn.disabled = true;
-
-        // Mode switch
-        const switchMode = (mode: 'thought' | 'task') => {
-            captureMode = mode;
-            textarea.placeholder = mode === 'task' ? 'Execute intent…' : 'Capture thought…';
-            thoughtBtn.toggleClass('is-active', mode === 'thought');
-            taskBtn.toggleClass('is-active', mode === 'task');
-            dateZone.toggleClass('is-visible', mode === 'task');
-            saveBtn.textContent = mode === 'task' ? 'ADD TASK' : 'CAPTURE';
-        };
-        thoughtBtn.addEventListener('click', () => switchMode('thought'));
-        taskBtn.addEventListener('click', () => switchMode('task'));
-
-        // Save gate
-        const refreshSave = () => {
-            const empty = !textarea.value.trim();
-            saveBtn.toggleClass('is-disabled', empty);
-            saveBtn.disabled = empty;
+        const syncThoughtHeight = () => {
+            thoughtArea.style.height = 'auto';
+            thoughtArea.style.overflowY = 'hidden';
+            thoughtArea.style.height = `${thoughtArea.scrollHeight}px`;
         };
 
-        // Collapse
-        const collapse = () => {
-            this.view._capturePending = 0;
-            strip.removeClass('is-expanded');
-            captureContexts = []; captureDueDate = null;
-            textarea.value = '';
-            textarea.style.height = '';
-            textarea.style.overflowY = '';
-            switchMode('thought');
-            renderChips();
-            refreshSave();
-        };
-
-        // Expand
-        const expand = () => {
-            this.view._capturePending = 1;
-            strip.addClass('is-expanded');
-            setTimeout(() => {
-                textarea.focus();
-                syncTextareaHeight(textarea);
-            }, 80);
-        };
-
-        // Inline smart triggers: @date, [[link, #tag, + checklist
-        attachInlineTriggers(this.plugin.app, textarea, (d: string) => {
-            captureDueDate = d;
-            switchMode('task');
-        }, (tag: string) => {
-            if (!captureContexts.includes(tag)) { captureContexts.push(tag); renderChips(); }
-            if (!this.plugin.settings.contexts) this.plugin.settings.contexts = [];
-            if (!this.plugin.settings.contexts.includes(tag)) {
-                this.plugin.settings.contexts.push(tag); // in-memory only; persisted on capture
-            }
-        }, () => this.plugin.settings.contexts ?? []);
-
-        const refreshCaptureInput = () => {
-            refreshSave();
-            syncTextareaHeight(textarea);
-        };
-        textarea.addEventListener('input', refreshCaptureInput);
-
-        // Save
-        const handleSave = async () => {
-            const raw = textarea.value.trim();
-            if (!raw) return;
-            saveBtn.toggleClass('is-disabled', true);
-            saveBtn.disabled = true;
-            const text = raw.replace(/\n/g, '<br>');
-            const contexts = parseContextString(captureContexts.map(c => `#${c}`).join(' '));
-            const due = captureMode === 'task' ? captureDueDate ?? undefined : undefined;
-            try {
-                if (captureMode === 'task') await this.vault.createTaskFile(text, contexts, due);
-                else await this.vault.createThoughtFile(text, contexts);
-                await this.plugin.saveSettings(); // persist any new contexts added during capture
-                new Notice(captureMode === 'task' ? 'Task added ✓' : 'Thought captured ✓', 1200);
-                collapse();
-            } catch {
-                saveBtn.toggleClass('is-disabled', false);
-                saveBtn.disabled = false;
-                new Notice('Error saving — please try again', 2500);
-            }
-        };
-
-        collapsedRow.addEventListener('click', expand);
-        cancelBtn.addEventListener('click', collapse);
-        saveBtn.addEventListener('click', handleSave);
-        textarea.addEventListener('keydown', (e: KeyboardEvent) => {
-            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSave(); }
-            if (e.key === 'Escape') collapse();
+        thoughtArea.addEventListener('focus', () => { this.view._capturePending = 1; });
+        thoughtArea.addEventListener('input', () => {
+            syncThoughtHeight();
+            this.view._capturePending = thoughtArea.value.trim().length > 0 ? 1 : 0;
         });
 
-        syncTextareaHeight(textarea);
+        const saveThought = async () => {
+            const raw = thoughtArea.value.trim();
+            if (!raw) return;
+            this.view._capturePending = 0;
+            thoughtArea.value = '';
+            thoughtArea.style.height = '';
+            thoughtArea.style.overflowY = '';
+            try {
+                await this.vault.createThoughtFile(raw, []);
+                new Notice('✦ Thought saved', 1200);
+            } catch {
+                new Notice('Error saving thought — please try again', 2500);
+            }
+        };
+
+        thoughtArea.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveThought(); }
+            if (e.key === 'Escape') {
+                thoughtArea.value = '';
+                this.view._capturePending = 0;
+                thoughtArea.blur();
+            }
+        });
+
+        // ── Task Box ─────────────────────────────────────────────────────────
+        const taskBox = zone.createEl('div', { cls: 'mina-capture-box mina-capture-box--task' });
+        const taskLabel = taskBox.createEl('div', { cls: 'mina-capture-box-label' });
+        taskLabel.createEl('span', { text: '✓', cls: 'mina-capture-box-icon mina-capture-box-icon--task' });
+        taskLabel.createEl('span', { text: 'TASK', cls: 'mina-capture-box-title' });
+
+        const taskInput = taskBox.createEl('input', {
+            cls: 'mina-capture-box-input',
+            attr: { placeholder: 'Add a task… use @tomorrow to set due date', type: 'text' }
+        }) as HTMLInputElement;
+
+        taskInput.addEventListener('focus', () => { this.view._capturePending = 1; });
+        taskInput.addEventListener('input', () => {
+            this.view._capturePending = taskInput.value.trim().length > 0 ? 1 : 0;
+        });
+
+        const saveTask = async () => {
+            const raw = taskInput.value.trim();
+            if (!raw) return;
+
+            // Strip @date tokens from title and parse the due date
+            let dueDate: string | undefined;
+            let title = raw;
+            const atMatch = raw.match(/@\S+/g);
+            if (atMatch) {
+                for (const token of atMatch) {
+                    const parsed = parseNaturalDate(token.slice(1));
+                    if (parsed) { dueDate = parsed; title = title.replace(token, '').trim(); break; }
+                }
+            }
+
+            this.view._capturePending = 0;
+            taskInput.value = '';
+            try {
+                await this.vault.createTaskFile(title, [], dueDate);
+                new Notice('✓ Task added', 1200);
+            } catch {
+                new Notice('Error saving task — please try again', 2500);
+            }
+        };
+
+        taskInput.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter') { e.preventDefault(); saveTask(); }
+            if (e.key === 'Escape') {
+                taskInput.value = '';
+                this.view._capturePending = 0;
+                taskInput.blur();
+            }
+        });
+
+        // ── ⌘K hint ──────────────────────────────────────────────────────────
+        const hint = zone.createEl('div', { cls: 'mina-dual-capture-hint' });
+        hint.createEl('span', { text: '⌘K', cls: 'mina-capture-kbd' });
+        hint.createEl('span', { text: ' full capture with contexts & projects', cls: 'mina-dual-capture-hint-text' });
     }
 
     // ── 2. Habit quick-bar ──────────────────────────────────────────────────
