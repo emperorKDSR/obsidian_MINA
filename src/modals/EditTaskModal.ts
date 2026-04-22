@@ -1058,38 +1058,69 @@ export class EditTaskModal extends Modal {
     // ── Swipe dismiss — mobile ────────────────────────────────────────────
 
     // ── Keyboard avoidance (mobile soft keyboard) ─────────────────────────────
-    // Robust multi-signal approach: visualViewport + window.resize + focusin
-    // Uses CSS custom properties to avoid !important specificity battles
+    // Strategy: tri-layer approach
+    //   1. Direct inline style !important (highest cascade priority)
+    //   2. CSS custom property on :root (fallback for cascade edge-cases)
+    //   3. scrollIntoView on active element (last-resort visibility)
+    //
+    // Formula fix: use `window.innerHeight - vv.height` NOT subtracting vv.offsetTop.
+    // On iOS, when keyboard appears the OS may also scroll the page, changing
+    // vv.offsetTop — including it double-counts and underestimates keyboard height.
 
     private _initKeyboardAvoidance(modalEl: HTMLElement): void {
         const vv = window.visualViewport ?? null;
+        let rafId = 0;
 
-        const adjust = () => {
-            requestAnimationFrame(() => {
-                let keyboardH = 0;
-                if (vv) {
-                    // Standard formula: layout viewport minus visible viewport minus scroll offset
-                    keyboardH = Math.max(0, window.innerHeight - vv.height - Math.max(0, vv.offsetTop));
-                } else {
-                    // Fallback: compare window height to screen height
-                    keyboardH = Math.max(0, (window.screen?.height ?? window.innerHeight) - window.innerHeight);
+        const applyOffset = (keyboardH: number) => {
+            const visibleH = vv ? vv.height : (window.innerHeight - keyboardH);
+            const maxH     = Math.round(Math.min(visibleH * 0.95, visibleH - 16));
+
+            // Layer 1: direct inline style — beats ALL author CSS including !important rules
+            modalEl.style.setProperty('bottom',     keyboardH + 'px', 'important');
+            modalEl.style.setProperty('max-height', maxH + 'px',      'important');
+
+            // Layer 2: CSS custom property on :root (read by our CSS rule as fallback)
+            document.documentElement.style.setProperty('--mina-kb-h', keyboardH + 'px');
+
+            // Layer 3: scroll focused input into view within the sheet
+            if (keyboardH > 0) {
+                const active = document.activeElement as HTMLElement | null;
+                if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+                    requestAnimationFrame(() =>
+                        active.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+                    );
                 }
-                const visibleH = vv ? vv.height : (window.innerHeight - keyboardH);
-                const maxH     = Math.round(Math.min(visibleH * 0.95, visibleH - 12));
-
-                // Use CSS custom properties — avoids inline-!important specificity fights
-                modalEl.style.setProperty('--mina-sheet-bottom',   keyboardH + 'px');
-                modalEl.style.setProperty('--mina-sheet-max-height', maxH + 'px');
-            });
+            }
         };
 
-        // Fire on focus so Android (which may skip visualViewport events) is covered
+        const measure = () => {
+            // On iOS: innerHeight is full screen height, vv.height is visible height above keyboard.
+            // On Android adjustResize: both shrink equally → keyboardH = 0 (already above keyboard).
+            // On Android adjustPan: innerHeight stays, vv.height shrinks → keyboardH > 0.
+            const keyboardH = vv ? Math.max(0, window.innerHeight - vv.height) : 0;
+            applyOffset(keyboardH);
+        };
+
+        const adjust = () => {
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(measure);
+        };
+
+        // Fire at multiple intervals — keyboard animation can take up to ~500ms on some devices
         const onFocusIn = (e: FocusEvent) => {
             const t = e.target as HTMLElement;
             if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA') {
-                // Keyboard animation on Android takes ~300ms
-                setTimeout(adjust, 300);
-                setTimeout(adjust, 600);
+                [50, 200, 400, 700].forEach(ms => setTimeout(adjust, ms));
+            }
+        };
+
+        // Reset when focus leaves the modal entirely
+        const onFocusOut = (e: FocusEvent) => {
+            const next = e.relatedTarget as HTMLElement | null;
+            if (!next || !modalEl.contains(next)) {
+                setTimeout(() => {
+                    if (!modalEl.contains(document.activeElement)) applyOffset(0);
+                }, 150);
             }
         };
 
@@ -1098,17 +1129,21 @@ export class EditTaskModal extends Modal {
             vv.addEventListener('scroll', adjust);
         }
         window.addEventListener('resize', adjust);
-        modalEl.addEventListener('focusin', onFocusIn as EventListener);
+        modalEl.addEventListener('focusin',  onFocusIn  as EventListener);
+        modalEl.addEventListener('focusout', onFocusOut as EventListener);
 
         this._viewportCleanup = () => {
+            if (rafId) cancelAnimationFrame(rafId);
             if (vv) {
                 vv.removeEventListener('resize', adjust);
                 vv.removeEventListener('scroll', adjust);
             }
             window.removeEventListener('resize', adjust);
-            modalEl.removeEventListener('focusin', onFocusIn as EventListener);
-            modalEl.style.removeProperty('--mina-sheet-bottom');
-            modalEl.style.removeProperty('--mina-sheet-max-height');
+            modalEl.removeEventListener('focusin',  onFocusIn  as EventListener);
+            modalEl.removeEventListener('focusout', onFocusOut as EventListener);
+            document.documentElement.style.removeProperty('--mina-kb-h');
+            modalEl.style.removeProperty('bottom');
+            modalEl.style.removeProperty('max-height');
         };
     }
 
