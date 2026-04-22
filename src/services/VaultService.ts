@@ -432,6 +432,13 @@ export class VaultService {
         });
     }
 
+    async unmarkSynthesized(filePath: string): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return;
+        await this.app.fileManager.processFrontMatter(file, (fm) => {
+            fm['synthesized'] = false;
+        });
+    }
     /** Merge new context tags into a thought file. Pass replace=true to overwrite entirely. */
     async assignContext(filePath: string, contexts: string[], replace = false): Promise<void> {
         const file = this.app.vault.getAbstractFileByPath(filePath);

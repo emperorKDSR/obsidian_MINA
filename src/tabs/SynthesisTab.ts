@@ -1,4 +1,4 @@
-import { moment, Platform, MarkdownRenderer, Notice, setIcon, Modal } from 'obsidian';
+import { moment, Platform, MarkdownRenderer, Notice, setIcon, Modal, TFile } from 'obsidian';
 import type { MinaView } from '../view';
 import type { ThoughtEntry } from '../types';
 import { BaseTab } from './BaseTab';
@@ -479,7 +479,7 @@ export class SynthesisTab extends BaseTab {
 
         // Select mode toggle
         const selectToggle = hdrTop.createEl('button', {
-            cls: `mina-syn-select-toggle${this.synthesisSelectMode ? ' is-active' : ''}${this.feedFilter === 'processed' ? ' is-hidden' : ''}`,
+            cls: `mina-syn-select-toggle${this.synthesisSelectMode ? ' is-active' : ''}`,
             attr: { title: this.synthesisSelectMode ? 'Exit select mode' : 'Select notes' },
         });
         setIcon(selectToggle, 'check-square');
@@ -650,8 +650,8 @@ export class SynthesisTab extends BaseTab {
             cls: `mina-syn-card${thought.synthesized ? ' is-processed' : ''}`,
         });
 
-        // Select-mode checkbox
-        if (this.synthesisSelectMode && !thought.synthesized) {
+        // Select-mode checkbox (inbox/mapped: unsynthesized only; Done: all)
+        if (this.synthesisSelectMode && (!thought.synthesized || this.feedFilter === 'processed')) {
             const cbWrap = card.createEl('label', { cls: 'mina-syn-card-cb-wrap' });
             const cb = cbWrap.createEl('input', { attr: { type: 'checkbox' } }) as HTMLInputElement;
             cb.checked = this.selectedPaths.has(thought.filePath);
@@ -841,6 +841,30 @@ export class SynthesisTab extends BaseTab {
                     }, 3000);
                 }
             });
+        } else {
+            // ── Done card actions: Open in new window + Unmark ────────────────
+            const doneActions = card.createEl('div', { cls: 'mina-syn-card-actions mina-syn-card-actions--done' });
+
+            const openBtn = doneActions.createEl('button', { cls: 'mina-syn-card-btn mina-syn-card-btn--open' });
+            setIcon(openBtn, 'external-link');
+            openBtn.createEl('span', { text: 'Open' });
+            openBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const file = this.app.vault.getAbstractFileByPath(thought.filePath);
+                if (file instanceof TFile) {
+                    const leaf = this.app.workspace.getLeaf('window');
+                    await leaf.openFile(file);
+                }
+            });
+
+            const unmarkBtn = doneActions.createEl('button', { cls: 'mina-syn-card-btn mina-syn-card-btn--unmark' });
+            setIcon(unmarkBtn, 'rotate-ccw');
+            unmarkBtn.createEl('span', { text: 'Unmark' });
+            unmarkBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                await this.vault.unmarkSynthesized(thought.filePath);
+                this.exitCard(card, () => this.view.renderView());
+            });
         }
     }
 
@@ -848,10 +872,10 @@ export class SynthesisTab extends BaseTab {
         const paths = [...this.selectedPaths];
         const thoughts = paths
             .map(fp => Array.from(this.index.thoughtIndex.values()).find(t => t.filePath === fp))
-            .filter((t): t is ThoughtEntry => !!t && !t.synthesized);
+            .filter((t): t is ThoughtEntry => !!t);
 
         if (thoughts.length < 2) {
-            new Notice('Select at least 2 unsynthesized notes to merge.', 2000);
+            new Notice('Select at least 2 notes to merge.', 2000);
             return;
         }
 

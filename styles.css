@@ -2674,3 +2674,30 @@ body.mina-task-edit-active .modal-bg { background: rgba(0,0,0,0.5) !important; }
     animation: none !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SYNTHESIS — DONE TAB ACTIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.mina-syn-card-actions--done {
+  border-top: 1px solid var(--background-modifier-border-faint);
+  padding-top: 8px;
+  margin-top: 8px;
+  gap: 6px;
+}
+
+.mina-syn-card-btn--open {
+  color: var(--interactive-accent);
+  border-color: color-mix(in srgb, var(--interactive-accent) 30%, transparent);
+}
+.mina-syn-card-btn--open:hover {
+  background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
+}
+
+.mina-syn-card-btn--unmark {
+  color: var(--text-muted);
+}
+.mina-syn-card-btn--unmark:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
