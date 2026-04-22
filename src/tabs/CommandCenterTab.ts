@@ -120,7 +120,7 @@ export class CommandCenterTab extends BaseTab {
         thoughtLabel.createEl('span', { text: 'THOUGHT', cls: 'mina-capture-box-title' });
 
         const thoughtArea = thoughtBox.createEl('textarea', {
-            cls: 'mina-capture-box-textarea',
+            cls: 'mina-capture-box-input mina-capture-box-textarea',
             attr: { placeholder: "What's on your mind… (Enter to save, Shift+Enter for new line)", rows: '1' }
         }) as HTMLTextAreaElement;
 
