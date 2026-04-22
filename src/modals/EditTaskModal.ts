@@ -23,6 +23,7 @@ export class EditTaskModal extends Modal {
     private _project:  ProjectEntry | null;
 
     private _isMobileSheet = false;
+    private _viewportCleanup: (() => void) | null = null;
 
     constructor(
         app: App,
@@ -68,6 +69,8 @@ export class EditTaskModal extends Modal {
     }
 
     onClose(): void {
+        this._viewportCleanup?.();
+        this._viewportCleanup = null;
         if (this._isMobileSheet) {
             document.body.removeClass('mina-task-edit-active');
         }
@@ -185,6 +188,7 @@ export class EditTaskModal extends Modal {
         }, 80);
 
         this._initSwipeToDismiss(modalEl, handleBar, header);
+        this._initKeyboardAvoidance(modalEl);
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -1046,6 +1050,36 @@ export class EditTaskModal extends Modal {
     }
 
     // ── Swipe dismiss — mobile ────────────────────────────────────────────
+
+    // ── Keyboard avoidance (mobile soft keyboard) ─────────────────────────────
+
+    private _initKeyboardAvoidance(modalEl: HTMLElement): void {
+        if (!('visualViewport' in window) || !window.visualViewport) return;
+        const vv = window.visualViewport;
+
+        const adjust = () => {
+            // Keyboard height = gap between window bottom and visible viewport bottom
+            const keyboardH = Math.max(
+                0,
+                window.innerHeight - vv.height - Math.max(0, vv.offsetTop)
+            );
+            // Shift sheet above keyboard
+            modalEl.style.setProperty('bottom', keyboardH + 'px', 'important');
+            // Shrink max-height so content stays within the visible area
+            const maxH = Math.round(Math.min(vv.height * 0.95, vv.height - 12));
+            modalEl.style.setProperty('max-height', maxH + 'px', 'important');
+        };
+
+        vv.addEventListener('resize', adjust);
+        vv.addEventListener('scroll', adjust);
+
+        this._viewportCleanup = () => {
+            vv.removeEventListener('resize', adjust);
+            vv.removeEventListener('scroll', adjust);
+            modalEl.style.removeProperty('bottom');
+            modalEl.style.removeProperty('max-height');
+        };
+    }
 
     private _initSwipeToDismiss(
         modalEl:  HTMLElement,
