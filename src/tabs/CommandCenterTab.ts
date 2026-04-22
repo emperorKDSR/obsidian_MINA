@@ -2,7 +2,9 @@ import { moment, Platform, Notice, TFile, setIcon } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, SETTINGS_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID, COMPASS_ICON_ID, FOCUS_ICON_ID, MEMENTO_ICON_ID } from '../constants';
-import { parseNaturalDate, isTablet } from '../utils';
+import { parseNaturalDate, isTablet, attachInlineTriggers } from '../utils';
+import { FileSuggestModal } from '../modals/FileSuggestModal';
+import { ContextSuggestModal } from '../modals/ContextSuggestModal';
 import { HabitConfigModal } from '../modals/HabitConfigModal';
 import { HelpModal } from '../modals/HelpModal';
 import { SearchModal } from '../modals/SearchModal';
@@ -119,6 +121,20 @@ export class CommandCenterTab extends BaseTab {
         thoughtLabel.createEl('span', { text: '✦', cls: 'mina-capture-box-icon' });
         thoughtLabel.createEl('span', { text: 'THOUGHT', cls: 'mina-capture-box-title' });
 
+        // Context chips row (populated when user types #tag)
+        const thoughtChipRow = thoughtBox.createEl('div', { cls: 'mina-capture-chip-row' });
+        let thoughtContexts: string[] = [];
+
+        const addThoughtChip = (tag: string) => {
+            if (thoughtContexts.includes(tag)) return;
+            thoughtContexts.push(tag);
+            const chip = thoughtChipRow.createEl('span', { cls: 'mina-capture-chip', text: `#${tag}` });
+            chip.addEventListener('click', () => {
+                thoughtContexts = thoughtContexts.filter(c => c !== tag);
+                chip.remove();
+            });
+        };
+
         const thoughtArea = thoughtBox.createEl('textarea', {
             cls: 'mina-capture-box-input mina-capture-box-textarea',
             attr: { placeholder: "What's on your mind… (Enter to save, Shift+Enter for new line)", rows: '1' }
@@ -136,15 +152,27 @@ export class CommandCenterTab extends BaseTab {
             this.view._capturePending = thoughtArea.value.trim().length > 0 ? 1 : 0;
         });
 
+        // @word<space> → date link in text (no due date for thoughts), [[ → file picker, # → context chip
+        attachInlineTriggers(
+            this.app,
+            thoughtArea,
+            () => {},               // thoughts have no due date — no-op
+            (tag) => addThoughtChip(tag),
+            () => thoughtContexts,
+        );
+
         const saveThought = async () => {
             const raw = thoughtArea.value.trim();
             if (!raw) return;
+            const ctxSnapshot = [...thoughtContexts];
             this.view._capturePending = 0;
             thoughtArea.value = '';
             thoughtArea.style.height = '';
             thoughtArea.style.overflowY = '';
+            thoughtContexts = [];
+            thoughtChipRow.empty();
             try {
-                await this.vault.createThoughtFile(raw, []);
+                await this.vault.createThoughtFile(raw, ctxSnapshot);
                 new Notice('✦ Thought saved', 1200);
             } catch {
                 new Notice('Error saving thought — please try again', 2500);
@@ -155,6 +183,8 @@ export class CommandCenterTab extends BaseTab {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveThought(); }
             if (e.key === 'Escape') {
                 thoughtArea.value = '';
+                thoughtContexts = [];
+                thoughtChipRow.empty();
                 this.view._capturePending = 0;
                 thoughtArea.blur();
             }
@@ -174,6 +204,39 @@ export class CommandCenterTab extends BaseTab {
         taskInput.addEventListener('focus', () => { this.view._capturePending = 1; });
         taskInput.addEventListener('input', () => {
             this.view._capturePending = taskInput.value.trim().length > 0 ? 1 : 0;
+
+            // [[ → wiki-link file picker
+            const val = taskInput.value;
+            const pos = taskInput.selectionStart ?? val.length;
+            const before = val.substring(0, pos);
+            if (before.endsWith('[[')) {
+                taskInput.value = val.substring(0, pos - 2) + val.substring(pos);
+                const insertAt = pos - 2;
+                taskInput.setSelectionRange(insertAt, insertAt);
+                new FileSuggestModal(this.app, (file) => {
+                    const link = `[[${file.basename}]]`;
+                    const cur = taskInput.value;
+                    const curPos = taskInput.selectionStart ?? insertAt;
+                    taskInput.value = cur.substring(0, curPos) + link + cur.substring(curPos);
+                    taskInput.setSelectionRange(curPos + link.length, curPos + link.length);
+                    taskInput.focus();
+                }).open();
+                return;
+            }
+            // # → context suggest
+            if (/(^|\s)#$/.test(before)) {
+                const insertAt = pos - 1;
+                taskInput.value = val.substring(0, insertAt) + val.substring(pos);
+                taskInput.setSelectionRange(insertAt, insertAt);
+                new ContextSuggestModal(this.app, [], (tag) => {
+                    const cur = taskInput.value;
+                    const curPos = taskInput.selectionStart ?? insertAt;
+                    const insert = `#${tag} `;
+                    taskInput.value = cur.substring(0, curPos) + insert + cur.substring(curPos);
+                    taskInput.setSelectionRange(curPos + insert.length, curPos + insert.length);
+                    taskInput.focus();
+                }).open();
+            }
         });
 
         const saveTask = async () => {
