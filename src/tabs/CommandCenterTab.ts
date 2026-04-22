@@ -121,7 +121,7 @@ export class CommandCenterTab extends BaseTab {
 
         const thoughtArea = thoughtBox.createEl('textarea', {
             cls: 'mina-capture-box-textarea',
-            attr: { placeholder: "What's on your mind… (Enter to save, Shift+Enter for new line)", rows: '2' }
+            attr: { placeholder: "What's on your mind… (Enter to save, Shift+Enter for new line)", rows: '1' }
         }) as HTMLTextAreaElement;
 
         const syncThoughtHeight = () => {
