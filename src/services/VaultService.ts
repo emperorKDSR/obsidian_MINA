@@ -267,6 +267,59 @@ export class VaultService {
         } catch (e) { console.error('[MINA VaultService]', e); new Notice(VaultService.toUserMessage(e)); }
     }
 
+    async updateTaskEntry(filePath: string, updates: {
+        title:      string;
+        dueDate:    string | null;
+        recurrence: string | null;
+        priority:   string | null;
+        energy:     string | null;
+        status:     string;
+        contexts:   string[];
+        project:    string | null;
+    }): Promise<boolean> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) { new Notice('Task file not found.'); return false; }
+        try {
+            const now    = new Date();
+            const nowStr = this.formatDateTime(now);
+            const dayStr = this.formatDate(now);
+            const safeContexts = updates.contexts.map(c => this.sanitizeContext(c));
+
+            await this.app.fileManager.processFrontMatter(file, (fm) => {
+                fm['title']    = this.sanitizeYamlString(updates.title);
+                fm['modified'] = nowStr;
+                fm['day']      = `[[${dayStr}]]`;
+                fm['context']  = safeContexts;
+                fm['tags']     = safeContexts;
+                fm['due']      = updates.dueDate ? `[[${updates.dueDate}]]` : '';
+                fm['status']   = updates.status;
+                if (updates.priority !== null) { fm['priority'] = updates.priority; }
+                else { delete fm['priority']; }
+                if (updates.energy !== null) { fm['energy'] = updates.energy; }
+                else { delete fm['energy']; }
+                if (updates.recurrence !== null) { fm['recurrence'] = updates.recurrence; }
+                else { delete fm['recurrence']; }
+                if (updates.project !== null) { fm['project'] = updates.project; }
+                else { delete fm['project']; }
+            });
+
+            // Update body text — preserve any reply sections
+            const content = await this.app.vault.read(file);
+            const fmEnd   = content.indexOf('\n---\n', 3);
+            if (fmEnd === -1) return true;
+            const bodyStart    = fmEnd + 5;
+            const existing     = content.slice(bodyStart);
+            const replyIdx     = existing.indexOf('\n## [[');
+            const replySuffix  = replyIdx !== -1 ? existing.slice(replyIdx) : '';
+            await this.app.vault.modify(file, content.slice(0, bodyStart) + updates.title + '\n' + replySuffix);
+            return true;
+        } catch (e) {
+            console.error('[MINA VaultService]', e);
+            new Notice(VaultService.toUserMessage(e));
+            return false;
+        }
+    }
+
     async deleteFile(filePath: string, type: 'thoughts' | 'tasks'): Promise<void> {
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return;

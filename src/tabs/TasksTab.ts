@@ -2,6 +2,7 @@ import { moment, setIcon, Notice } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from "../modals/EditEntryModal";
+import { EditTaskModal } from "../modals/EditTaskModal";
 import { ConfirmModal } from "../modals/ConfirmModal";
 import type { TaskEntry, RecurrenceRule } from '../types';
 import { parseContextString, computeNextDue } from '../utils';
@@ -283,18 +284,7 @@ export class TasksTab extends BaseTab {
             btn.addEventListener('click', (e) => { e.stopPropagation(); fn(); });
         };
         mkBtn('pencil', () => {
-            const modal = new EditEntryModal(this.app, this.plugin, task.title, task.context.map(c => `#${c}`).join(' '), task.due || null, true, async (t, c, d, _proj, _recur, priority, energy, status) => {
-                await this.vault.editTask(task.filePath, t, parseContextString(c), d || undefined, {
-                    priority: priority !== undefined ? priority : undefined,
-                    energy:   energy   !== undefined ? energy   : undefined,
-                    status:   status   !== undefined ? status   : undefined,
-                });
-                this.renderList();
-            }, 'Edit Task');
-            modal.currentPriority = task.priority ?? null;
-            modal.currentEnergy   = task.energy   ?? null;
-            modal.currentStatus   = (task.status === 'waiting' || task.status === 'someday') ? task.status : 'open';
-            modal.open();
+            new EditTaskModal(this.app, task, this.vault, this.index, () => this.renderList()).open();
         });
         mkBtn('trash-2', () => {
             new ConfirmModal(this.app, 'Move this task to trash?', async () => {
