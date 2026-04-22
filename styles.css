@@ -3310,3 +3310,24 @@ body.mina-task-edit-active .modal-bg { background: rgba(0,0,0,0.5) !important; }
 }
 .modal.mina-task-edit-modal .mina-tem-save-btn:hover       { opacity: 0.88; }
 .modal.mina-task-edit-modal .mina-tem-save-btn.is-disabled { opacity: 0.35; cursor: default; }
+
+/* EditTaskModal — desktop toolbar two-row fix */
+.mina-etm-toolbar {
+    flex-wrap: wrap !important;
+    row-gap: 5px !important;
+    overflow-x: unset !important;
+}
+
+/* Full-width invisible break between scheduling row and properties row */
+.mina-etm-toolbar-row-break {
+    flex-basis: 100%;
+    width: 100%;
+    height: 0;
+    margin: 0;
+    padding: 0;
+}
+
+/* Slightly taller toolbar-wrap to breathe with two rows */
+.modal.mina-edit-task-modal .mina-etm-toolbar-wrap {
+    padding: 8px 14px;
+}

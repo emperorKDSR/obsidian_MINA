@@ -313,11 +313,11 @@ export class EditTaskModal extends Modal {
         }) as HTMLTextAreaElement;
         textarea.value = this._title;
 
-        // Metadata toolbar — date · recur · pri · nrg · status
+        // Metadata toolbar — row 1: scheduling | row 2: priority · energy · status
         const toolbarWrap = body.createDiv({ cls: 'mina-etm-toolbar-wrap' });
         const toolbar     = toolbarWrap.createDiv({ cls: 'mina-etm-toolbar' });
         this._buildToolbarChips(toolbar, toolbarWrap,
-            'mina-etm-tool-chip', 'mina-etm-toolbar-dot');
+            'mina-etm-tool-chip', 'mina-etm-toolbar-dot', true);
 
         // Tags + project
         const chipsRow = body.createDiv({ cls: 'mina-etm-chips-row' });
@@ -873,12 +873,18 @@ export class EditTaskModal extends Modal {
         toolbar:       HTMLElement,
         popoverAnchor: HTMLElement,
         chipCls:       string,
-        dotCls:        string
+        dotCls:        string,
+        twoRow =       false
     ): void {
         this._buildDateChip(toolbar, popoverAnchor, chipCls);
         this._buildRecurChip(toolbar, popoverAnchor, chipCls);
 
-        toolbar.createSpan({ cls: dotCls, text: '·' });
+        if (twoRow) {
+            // Force properties row to start on a new line
+            toolbar.createDiv({ cls: 'mina-etm-toolbar-row-break' });
+        } else {
+            toolbar.createSpan({ cls: dotCls, text: '·' });
+        }
 
         // Priority
         const PRI: { val: 'low' | 'medium' | 'high'; label: string }[] = [
