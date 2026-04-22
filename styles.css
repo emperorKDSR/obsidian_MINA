@@ -3331,3 +3331,17 @@ body.mina-task-edit-active .modal-bg { background: rgba(0,0,0,0.5) !important; }
 .modal.mina-edit-task-modal .mina-etm-toolbar-wrap {
     padding: 8px 14px;
 }
+
+/* ── Mobile keyboard avoidance: CSS variable bridge ──────────────────────
+   JS sets --mina-sheet-bottom / --mina-sheet-max-height on the element.
+   Using var() here avoids the inline-style vs !important specificity fight.
+   Default values keep the sheet in its normal bottom-sheet position.    */
+.mina-edit-task-sheet {
+    bottom:     var(--mina-sheet-bottom,      0px)   !important;
+    max-height: var(--mina-sheet-max-height,  92dvh) !important;
+    transition: bottom 0.18s ease, max-height 0.18s ease !important;
+}
+/* Disable transition during swipe-to-dismiss (JS removes transition inline) */
+.mina-edit-task-sheet[style*="transition: none"] {
+    transition: none !important;
+}

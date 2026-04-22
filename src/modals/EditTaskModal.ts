@@ -1058,32 +1058,57 @@ export class EditTaskModal extends Modal {
     // ── Swipe dismiss — mobile ────────────────────────────────────────────
 
     // ── Keyboard avoidance (mobile soft keyboard) ─────────────────────────────
+    // Robust multi-signal approach: visualViewport + window.resize + focusin
+    // Uses CSS custom properties to avoid !important specificity battles
 
     private _initKeyboardAvoidance(modalEl: HTMLElement): void {
-        if (!('visualViewport' in window) || !window.visualViewport) return;
-        const vv = window.visualViewport;
+        const vv = window.visualViewport ?? null;
 
         const adjust = () => {
-            // Keyboard height = gap between window bottom and visible viewport bottom
-            const keyboardH = Math.max(
-                0,
-                window.innerHeight - vv.height - Math.max(0, vv.offsetTop)
-            );
-            // Shift sheet above keyboard
-            modalEl.style.setProperty('bottom', keyboardH + 'px', 'important');
-            // Shrink max-height so content stays within the visible area
-            const maxH = Math.round(Math.min(vv.height * 0.95, vv.height - 12));
-            modalEl.style.setProperty('max-height', maxH + 'px', 'important');
+            requestAnimationFrame(() => {
+                let keyboardH = 0;
+                if (vv) {
+                    // Standard formula: layout viewport minus visible viewport minus scroll offset
+                    keyboardH = Math.max(0, window.innerHeight - vv.height - Math.max(0, vv.offsetTop));
+                } else {
+                    // Fallback: compare window height to screen height
+                    keyboardH = Math.max(0, (window.screen?.height ?? window.innerHeight) - window.innerHeight);
+                }
+                const visibleH = vv ? vv.height : (window.innerHeight - keyboardH);
+                const maxH     = Math.round(Math.min(visibleH * 0.95, visibleH - 12));
+
+                // Use CSS custom properties — avoids inline-!important specificity fights
+                modalEl.style.setProperty('--mina-sheet-bottom',   keyboardH + 'px');
+                modalEl.style.setProperty('--mina-sheet-max-height', maxH + 'px');
+            });
         };
 
-        vv.addEventListener('resize', adjust);
-        vv.addEventListener('scroll', adjust);
+        // Fire on focus so Android (which may skip visualViewport events) is covered
+        const onFocusIn = (e: FocusEvent) => {
+            const t = e.target as HTMLElement;
+            if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA') {
+                // Keyboard animation on Android takes ~300ms
+                setTimeout(adjust, 300);
+                setTimeout(adjust, 600);
+            }
+        };
+
+        if (vv) {
+            vv.addEventListener('resize', adjust);
+            vv.addEventListener('scroll', adjust);
+        }
+        window.addEventListener('resize', adjust);
+        modalEl.addEventListener('focusin', onFocusIn as EventListener);
 
         this._viewportCleanup = () => {
-            vv.removeEventListener('resize', adjust);
-            vv.removeEventListener('scroll', adjust);
-            modalEl.style.removeProperty('bottom');
-            modalEl.style.removeProperty('max-height');
+            if (vv) {
+                vv.removeEventListener('resize', adjust);
+                vv.removeEventListener('scroll', adjust);
+            }
+            window.removeEventListener('resize', adjust);
+            modalEl.removeEventListener('focusin', onFocusIn as EventListener);
+            modalEl.style.removeProperty('--mina-sheet-bottom');
+            modalEl.style.removeProperty('--mina-sheet-max-height');
         };
     }
 
