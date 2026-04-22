@@ -2701,3 +2701,612 @@ body.mina-task-edit-active .modal-bg { background: rgba(0,0,0,0.5) !important; }
   color: var(--text-normal);
   background: var(--background-modifier-hover);
 }
+
+/* ═════════════════════════════════════════════════════════════════════
+   EDIT TASK MODAL — Minimalist Toolbar Redesign (v1.18.1)
+   Design tokens scoped to modal shell
+   ═════════════════════════════════════════════════════════════════════ */
+
+.modal.mina-edit-task-modal,
+.modal-container:has(.mina-edit-task-sheet) {
+    --etm-chip-bg: var(--background-modifier-form-field);
+    --etm-chip-radius: 20px;
+    --etm-chip-pad: 4px 10px;
+    --etm-chip-fs: 0.78rem;
+    --etm-chip-color: var(--text-muted);
+    --etm-chip-active-bg: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+    --etm-chip-active-color: var(--interactive-accent);
+    --etm-chip-active-border: color-mix(in srgb, var(--interactive-accent) 40%, transparent);
+    --etm-transition: 150ms ease;
+    --etm-separator: 1px solid var(--background-modifier-border-faint);
+}
+:root {
+    --etm-chip-bg: var(--background-modifier-form-field);
+    --etm-chip-radius: 20px;
+    --etm-chip-pad: 4px 10px;
+    --etm-chip-fs: 0.78rem;
+    --etm-chip-color: var(--text-muted);
+    --etm-chip-active-bg: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+    --etm-chip-active-color: var(--interactive-accent);
+    --etm-chip-active-border: color-mix(in srgb, var(--interactive-accent) 40%, transparent);
+    --etm-transition: 150ms ease;
+    --etm-separator: 1px solid var(--background-modifier-border-faint);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   DESKTOP — .mina-edit-task-modal
+   ───────────────────────────────────────────────────────────────── */
+
+.modal.mina-edit-task-modal {
+    max-width: 520px !important;
+    width: 520px !important;
+    border-radius: 16px !important;
+    background: var(--background-primary) !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.22) !important;
+}
+
+/* Suppress legacy header */
+.modal.mina-edit-task-modal .mina-etm-header { display: none !important; }
+
+/* Body — single column */
+.modal.mina-edit-task-modal .mina-etm-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* No right column needed */
+.modal.mina-edit-task-modal .mina-etm-right { display: none !important; }
+.modal.mina-edit-task-modal .mina-etm-left  { flex: 1; min-width: 0; }
+
+/* Title textarea */
+.modal.mina-edit-task-modal .mina-etm-textarea {
+    width: 100%;
+    resize: none;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    background: transparent;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-normal);
+    line-height: 1.55;
+    padding: 20px 20px 8px;
+    min-height: 56px;
+    box-sizing: border-box;
+    font-family: inherit;
+    caret-color: var(--interactive-accent);
+    overflow: hidden;
+}
+.modal.mina-edit-task-modal .mina-etm-textarea::placeholder {
+    color: var(--text-faint);
+    font-weight: 400;
+}
+
+/* Toolbar wrap */
+.mina-etm-toolbar-wrap {
+    position: relative;
+    border-top: var(--etm-separator);
+    border-bottom: var(--etm-separator);
+    padding: 6px 14px;
+}
+
+.mina-etm-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.mina-etm-toolbar::-webkit-scrollbar { display: none; }
+
+.mina-etm-toolbar-dot {
+    color: var(--text-faint);
+    font-size: 0.68rem;
+    padding: 0 5px;
+    pointer-events: none;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+/* ── Desktop tool chip ── */
+.mina-etm-tool-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--etm-chip-bg);
+    border-radius: var(--etm-chip-radius);
+    padding: var(--etm-chip-pad);
+    font-size: var(--etm-chip-fs);
+    color: var(--etm-chip-color);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition:
+        background var(--etm-transition),
+        color var(--etm-transition),
+        border-color var(--etm-transition);
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-family: inherit;
+    line-height: 1.4;
+}
+.mina-etm-tool-chip:hover {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+.mina-etm-tool-chip.is-active {
+    background: var(--etm-chip-active-bg);
+    color: var(--etm-chip-active-color);
+    border-color: var(--etm-chip-active-border);
+}
+.mina-etm-tool-chip--pri-high.is-active   { background:rgba(239,68,68,0.12);  color:#ef4444; border-color:rgba(239,68,68,0.30);   }
+.mina-etm-tool-chip--pri-medium.is-active { background:rgba(245,158,11,0.12); color:#f59e0b; border-color:rgba(245,158,11,0.30);  }
+.mina-etm-tool-chip--pri-low.is-active    { background:rgba(148,163,184,0.12);color:#94a3b8; border-color:rgba(148,163,184,0.30); }
+
+/* Chip clear button */
+.mina-etm-chip-clear {
+    opacity: 0.5;
+    cursor: pointer;
+    transition: opacity var(--etm-transition);
+    font-size: 0.85em;
+}
+.mina-etm-tool-chip:hover .mina-etm-chip-clear { opacity: 1; }
+
+/* Chips row (tags + project) */
+.modal.mina-edit-task-modal .mina-etm-chips-row {
+    padding: 8px 14px 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+    min-height: 38px;
+}
+
+/* ── Desktop footer ── */
+.modal.mina-edit-task-modal .mina-etm-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 16px;
+    background: transparent;
+    border-top: var(--etm-separator);
+}
+
+.modal.mina-edit-task-modal .mina-etm-cancel-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.84rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: color var(--etm-transition);
+    font-family: inherit;
+}
+.modal.mina-edit-task-modal .mina-etm-cancel-btn:hover { color: var(--text-normal); }
+
+.modal.mina-edit-task-modal .mina-etm-save-btn {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 9px;
+    padding: 7px 18px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity var(--etm-transition);
+    font-family: inherit;
+}
+.modal.mina-edit-task-modal .mina-etm-save-btn:hover       { opacity: 0.88; }
+.modal.mina-edit-task-modal .mina-etm-save-btn.is-disabled { opacity: 0.35; cursor: default; }
+
+/* Popover (date / recur) */
+.mina-etm-popover {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 14px;
+    z-index: 100;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.16);
+    padding: 10px;
+    min-width: 260px;
+    max-width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mina-etm-popover-shortcuts {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.mina-etm-popover .mina-date-shortcut-btn {
+    background: var(--background-secondary-alt) !important;
+    border: 1px solid var(--background-modifier-border-faint) !important;
+    border-radius: 8px !important;
+    padding: 4px 9px !important;
+    font-size: 0.74rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all var(--etm-transition) !important;
+    color: var(--text-muted) !important;
+    font-family: inherit !important;
+}
+.mina-etm-popover .mina-date-shortcut-btn:hover,
+.mina-etm-popover .mina-date-shortcut-btn.is-selected {
+    background: var(--etm-chip-active-bg) !important;
+    color: var(--etm-chip-active-color) !important;
+    border-color: var(--etm-chip-active-border) !important;
+}
+
+.mina-date-nlp-wrap {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.mina-date-nlp-input {
+    flex: 1;
+    border: 1px solid var(--background-modifier-border-faint);
+    border-radius: 8px;
+    background: var(--background-secondary-alt);
+    color: var(--text-normal);
+    padding: 5px 9px;
+    font-size: 0.8rem;
+    outline: none;
+    transition: border-color var(--etm-transition);
+    font-family: inherit;
+}
+.mina-date-nlp-input:focus          { border-color: var(--interactive-accent); }
+.mina-date-nlp-input.is-error       { border-color: var(--text-error); animation: etm-shake 0.3s ease; }
+
+.mina-date-nlp-confirm {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 8px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity var(--etm-transition);
+    font-family: inherit;
+}
+.mina-date-nlp-confirm:hover { opacity: 0.85; }
+
+.mina-etm-recur-opts {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.mina-etm-popover .mina-recur-btn {
+    background: var(--background-secondary-alt) !important;
+    border: 1px solid var(--background-modifier-border-faint) !important;
+    border-radius: 8px !important;
+    padding: 4px 10px !important;
+    font-size: 0.76rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all var(--etm-transition) !important;
+    color: var(--text-muted) !important;
+    font-family: inherit !important;
+}
+.mina-etm-popover .mina-recur-btn:hover,
+.mina-etm-popover .mina-recur-btn.is-active {
+    background: var(--etm-chip-active-bg) !important;
+    color: var(--etm-chip-active-color) !important;
+    border-color: var(--etm-chip-active-border) !important;
+}
+
+@keyframes etm-shake {
+    0%,100% { transform: translateX(0); }
+    25%      { transform: translateX(-3px); }
+    75%      { transform: translateX(3px); }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   MOBILE toolbar — .mina-ets-toolbar-section
+   ───────────────────────────────────────────────────────────────── */
+
+.mina-ets-toolbar-section {
+    position: relative;
+    border-top: var(--etm-separator);
+    border-bottom: var(--etm-separator);
+    padding: 6px 14px;
+}
+
+.mina-ets-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.mina-ets-toolbar::-webkit-scrollbar { display: none; }
+
+.mina-ets-toolbar-dot {
+    color: var(--text-faint);
+    font-size: 0.68rem;
+    padding: 0 5px;
+    pointer-events: none;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.mina-ets-tool-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--etm-chip-bg);
+    border-radius: var(--etm-chip-radius);
+    padding: var(--etm-chip-pad);
+    font-size: var(--etm-chip-fs);
+    color: var(--etm-chip-color);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition:
+        background var(--etm-transition),
+        color var(--etm-transition),
+        border-color var(--etm-transition);
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-family: inherit;
+    line-height: 1.4;
+}
+.mina-ets-tool-chip:hover,
+.mina-ets-tool-chip:active {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+.mina-ets-tool-chip.is-active {
+    background: var(--etm-chip-active-bg);
+    color: var(--etm-chip-active-color);
+    border-color: var(--etm-chip-active-border);
+}
+.mina-ets-tool-chip--pri-high.is-active   { background:rgba(239,68,68,0.12);  color:#ef4444; border-color:rgba(239,68,68,0.30);   }
+.mina-ets-tool-chip--pri-medium.is-active { background:rgba(245,158,11,0.12); color:#f59e0b; border-color:rgba(245,158,11,0.30);  }
+.mina-ets-tool-chip--pri-low.is-active    { background:rgba(148,163,184,0.12);color:#94a3b8; border-color:rgba(148,163,184,0.30); }
+
+/* Mobile header — hide label, keep close btn */
+.mina-ets-header { display: flex; align-items: center; justify-content: flex-end; padding: 14px 18px 0; }
+.mina-ets-header-title { display: none; }
+
+/* Mobile chips section — no label */
+.mina-ets-chips-section { padding: 6px 0 0; }
+.mina-ets-section-label { display: none; }
+
+/* Mobile chips row */
+.mina-ets-chips-section .mina-ets-chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+    min-height: 32px;
+    padding: 2px 0;
+}
+
+/* Mobile footer */
+.mina-ets-footer {
+    display: flex;
+    gap: 10px;
+    padding: 12px 18px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    border-top: var(--etm-separator);
+    background: transparent;
+}
+
+.mina-ets-cancel-btn {
+    flex: 1;
+    padding: 11px 0;
+    background: var(--background-modifier-form-field);
+    border: none;
+    border-radius: 10px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: background var(--etm-transition);
+    font-family: inherit;
+}
+.mina-ets-cancel-btn:hover { background: var(--background-modifier-hover); }
+
+.mina-ets-save-btn {
+    flex: 2;
+    padding: 11px 0;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: opacity var(--etm-transition);
+    font-family: inherit;
+}
+.mina-ets-save-btn:hover       { opacity: 0.88; }
+.mina-ets-save-btn.is-disabled { opacity: 0.35; cursor: default; }
+
+/* ─────────────────────────────────────────────────────────────────
+   TABLET — .mina-task-edit-modal  (same token set)
+   ───────────────────────────────────────────────────────────────── */
+
+.modal.mina-task-edit-modal {
+    max-width: 560px !important;
+    width: 560px !important;
+    border-radius: 16px !important;
+    background: var(--background-primary) !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Suppress all legacy labels */
+.modal.mina-task-edit-modal .mina-tem-header-label,
+.modal.mina-task-edit-modal .mina-tem-section-label,
+.modal.mina-task-edit-modal .mina-tem-field-label { display: none !important; }
+
+/* Body */
+.modal.mina-task-edit-modal .mina-tem-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.modal.mina-task-edit-modal .mina-tem-body.is-split { flex-direction: row; }
+.modal.mina-task-edit-modal .mina-tem-body.is-split .mina-tem-left  { flex: 1; min-width: 0; }
+.modal.mina-task-edit-modal .mina-tem-body.is-split .mina-tem-right {
+    width: 200px;
+    flex-shrink: 0;
+    border-left: var(--etm-separator);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 14px 14px 0;
+}
+
+/* Title */
+.modal.mina-task-edit-modal .mina-tem-title-input {
+    width: 100%;
+    resize: none;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    background: transparent;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-normal);
+    line-height: 1.55;
+    padding: 20px 20px 8px;
+    min-height: 56px;
+    box-sizing: border-box;
+    font-family: inherit;
+    caret-color: var(--interactive-accent);
+}
+.modal.mina-task-edit-modal .mina-tem-title-input::placeholder {
+    color: var(--text-faint);
+    font-weight: 400;
+}
+
+/* Toolbar */
+.mina-tem-toolbar-wrap {
+    position: relative;
+    border-top: var(--etm-separator);
+    border-bottom: var(--etm-separator);
+    padding: 6px 14px;
+}
+.mina-tem-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.mina-tem-toolbar::-webkit-scrollbar { display: none; }
+.mina-tem-toolbar-dot {
+    color: var(--text-faint);
+    font-size: 0.68rem;
+    padding: 0 5px;
+    pointer-events: none;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.mina-tem-tool-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--etm-chip-bg);
+    border-radius: var(--etm-chip-radius);
+    padding: var(--etm-chip-pad);
+    font-size: var(--etm-chip-fs);
+    color: var(--etm-chip-color);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition:
+        background var(--etm-transition),
+        color var(--etm-transition),
+        border-color var(--etm-transition);
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-family: inherit;
+    line-height: 1.4;
+}
+.mina-tem-tool-chip:hover {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+.mina-tem-tool-chip.is-active {
+    background: var(--etm-chip-active-bg);
+    color: var(--etm-chip-active-color);
+    border-color: var(--etm-chip-active-border);
+}
+.mina-tem-tool-chip--pri-high.is-active   { background:rgba(239,68,68,0.12);  color:#ef4444; border-color:rgba(239,68,68,0.30);   }
+.mina-tem-tool-chip--pri-medium.is-active { background:rgba(245,158,11,0.12); color:#f59e0b; border-color:rgba(245,158,11,0.30);  }
+.mina-tem-tool-chip--pri-low.is-active    { background:rgba(148,163,184,0.12);color:#94a3b8; border-color:rgba(148,163,184,0.30); }
+
+/* Chips row */
+.modal.mina-task-edit-modal .mina-tem-chips-row {
+    padding: 8px 14px 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+    min-height: 38px;
+}
+
+/* Footer */
+.modal.mina-task-edit-modal .mina-tem-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 16px;
+    background: transparent;
+    border-top: var(--etm-separator);
+}
+.modal.mina-task-edit-modal .mina-tem-cancel-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.84rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: color var(--etm-transition);
+    font-family: inherit;
+}
+.modal.mina-task-edit-modal .mina-tem-cancel-btn:hover { color: var(--text-normal); }
+.modal.mina-task-edit-modal .mina-tem-save-btn {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 9px;
+    padding: 7px 18px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity var(--etm-transition);
+    font-family: inherit;
+}
+.modal.mina-task-edit-modal .mina-tem-save-btn:hover       { opacity: 0.88; }
+.modal.mina-task-edit-modal .mina-tem-save-btn.is-disabled { opacity: 0.35; cursor: default; }

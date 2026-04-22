@@ -116,7 +116,6 @@ export class EditTaskModal extends Modal {
 
         // Header
         const header = root.createDiv({ cls: 'mina-ets-header' });
-        header.createEl('span', { text: 'EDIT TASK', cls: 'mina-ets-header-title' });
         const closeBtn = header.createEl('button', {
             text: '✕', cls: 'mina-ets-close-btn', attr: { 'aria-label': 'Close' }
         });
@@ -135,10 +134,9 @@ export class EditTaskModal extends Modal {
 
         // Title
         const titleSection = body.createDiv({ cls: 'mina-ets-title-section' });
-        titleSection.createEl('span', { text: 'TITLE', cls: 'mina-ets-section-label' });
         const titleTA = titleSection.createEl('textarea', {
             cls: 'mina-ets-title-textarea',
-            attr: { placeholder: 'Task title…', rows: '2' }
+            attr: { placeholder: 'What needs to be done?', rows: '2' }
         }) as HTMLTextAreaElement;
         titleTA.value = this._title;
         titleTA.addEventListener('input', () => {
@@ -148,23 +146,14 @@ export class EditTaskModal extends Modal {
             refreshSave();
         });
 
-        // Date
-        const dateSection = body.createDiv({ cls: 'mina-ets-date-section' });
-        dateSection.createEl('span', { text: 'DUE DATE', cls: 'mina-ets-section-label' });
-        this._buildDateStrip(dateSection, 'mina-ets-date-strip');
-
-        // Recurrence
-        const recurSection = body.createDiv({ cls: 'mina-ets-recur-section' });
-        recurSection.createEl('span', { text: 'REPEAT', cls: 'mina-ets-section-label' });
-        this._buildRecurStrip(recurSection, false, 'mina-ets-recur-strip');
-
-        // Meta (PRI/NRG/STATUS)
-        const metaSection = body.createDiv({ cls: 'mina-ets-meta-section' });
-        this._buildMetaStrip(metaSection, false, 'mina-ets-meta-strip');
+        // Toolbar — date · recur · pri · nrg · status (replaces separate sections)
+        const toolbarSection = body.createDiv({ cls: 'mina-ets-toolbar-section' });
+        const toolbar        = toolbarSection.createDiv({ cls: 'mina-ets-toolbar' });
+        this._buildToolbarChips(toolbar, toolbarSection,
+            'mina-ets-tool-chip', 'mina-ets-toolbar-dot');
 
         // Chips + project
         const chipsSection = body.createDiv({ cls: 'mina-ets-chips-section' });
-        chipsSection.createEl('span', { text: 'TAGS & PROJECT', cls: 'mina-ets-section-label' });
         const renderChips = this._buildChipsRow(
             chipsSection, 'mina-ets-chips-row',
             'mina-ets-tag-chip', 'mina-ets-tag-add-btn', 'mina-ets-project-pill'
@@ -213,7 +202,6 @@ export class EditTaskModal extends Modal {
         const header = contentEl.createDiv({ cls: 'mina-tem-header' });
         header.createDiv({ cls: 'mina-tem-drag-handle' });
         const headerRow = header.createDiv({ cls: 'mina-tem-header-row' });
-        headerRow.createEl('span', { text: 'EDIT TASK', cls: 'mina-tem-header-label' });
         const closeBtn = headerRow.createEl('button', {
             text: '✕', cls: 'mina-tem-close-btn', attr: { 'aria-label': 'Close' }
         });
@@ -235,7 +223,7 @@ export class EditTaskModal extends Modal {
         const buildTitleTA = (parent: HTMLElement, maxH: number): HTMLTextAreaElement => {
             const sec = parent.createDiv({ cls: 'mina-tem-section mina-tem-title-zone' });
             const ta = sec.createEl('textarea', {
-                cls: 'mina-tem-title-input', attr: { placeholder: 'Task title…' }
+                cls: 'mina-tem-title-input', attr: { placeholder: 'What needs to be done?' }
             }) as HTMLTextAreaElement;
             ta.value = this._title;
             ta.addEventListener('input', () => {
@@ -259,28 +247,19 @@ export class EditTaskModal extends Modal {
             const chipZone = leftPane.createDiv({ cls: 'mina-tem-section mina-tem-chip-zone' });
             this._buildChipsRow(chipZone, 'mina-tem-chips-row', 'mina-tem-tag-chip', 'mina-tem-tag-add-btn', 'mina-tem-project-pill')();
 
-            const dueFld = rightPane.createDiv({ cls: 'mina-tem-field' });
-            dueFld.createEl('span', { text: 'DUE DATE', cls: 'mina-tem-field-label' });
-            this._buildDateStrip(dueFld, 'mina-tem-due-strip');
-
-            const recurFld = rightPane.createDiv({ cls: 'mina-tem-field' });
-            recurFld.createEl('span', { text: 'REPEAT', cls: 'mina-tem-field-label' });
-            this._buildRecurStrip(recurFld, false, 'mina-tem-recur-strip');
-
-            this._buildMetaStrip(rightPane, true, 'mina-tem-meta-strip');
+            // Toolbar in right pane (landscape)
+            const twWrap  = rightPane.createDiv({ cls: 'mina-tem-toolbar-wrap' });
+            const twInner = twWrap.createDiv({ cls: 'mina-tem-toolbar' });
+            this._buildToolbarChips(twInner, twWrap,
+                'mina-tem-tool-chip', 'mina-tem-toolbar-dot');
         } else {
             titleInput = buildTitleTA(body, 148);
 
-            const metaZone = body.createDiv({ cls: 'mina-tem-section mina-tem-meta-zone' });
-            this._buildMetaStrip(metaZone, false, 'mina-tem-meta-strip');
-
-            const dueSec = body.createDiv({ cls: 'mina-tem-section' });
-            dueSec.createEl('span', { text: 'DUE DATE', cls: 'mina-tem-section-label' });
-            this._buildDateStrip(dueSec, 'mina-tem-due-strip');
-
-            const recurSec = body.createDiv({ cls: 'mina-tem-section' });
-            recurSec.createEl('span', { text: 'REPEAT', cls: 'mina-tem-section-label' });
-            this._buildRecurStrip(recurSec, false, 'mina-tem-recur-strip');
+            // Toolbar (portrait)
+            const tpWrap  = body.createDiv({ cls: 'mina-tem-toolbar-wrap' });
+            const tpInner = tpWrap.createDiv({ cls: 'mina-tem-toolbar' });
+            this._buildToolbarChips(tpInner, tpWrap,
+                'mina-tem-tool-chip', 'mina-tem-toolbar-dot');
 
             const chipSec = body.createDiv({ cls: 'mina-tem-section mina-tem-chip-zone' });
             this._buildChipsRow(chipSec, 'mina-tem-chips-row', 'mina-tem-tag-chip', 'mina-tem-tag-add-btn', 'mina-tem-project-pill')();
@@ -313,46 +292,35 @@ export class EditTaskModal extends Modal {
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // DESKTOP RENDER — two-column
+    // DESKTOP RENDER — single column, toolbar
     // ════════════════════════════════════════════════════════════════════
 
     private _renderDesktop(): void {
         const { contentEl, modalEl } = this;
         modalEl.addClass('mina-edit-task-modal');
 
-        // Header
-        const header = contentEl.createDiv({ cls: 'mina-etm-header' });
-        header.createEl('span', { text: 'EDIT TASK', cls: 'mina-etm-header-label' });
-        header.createEl('span', { text: '⌘↵ to save', cls: 'mina-etm-header-hint' });
-
-        // Body (flex row)
+        // Body — single column
         const body = contentEl.createDiv({ cls: 'mina-etm-body' });
 
-        // Left column
-        const leftCol = body.createDiv({ cls: 'mina-etm-left' });
-        const textareaWrap = leftCol.createDiv({ cls: 'mina-etm-textarea-wrap' });
-        const textarea = textareaWrap.createEl('textarea', {
-            cls: 'mina-etm-textarea', attr: { placeholder: 'Task title…' }
+        const titleWrap = body.createDiv({ cls: 'mina-etm-title-wrap' });
+        const textarea  = titleWrap.createEl('textarea', {
+            cls:  'mina-etm-textarea',
+            attr: { placeholder: 'What needs to be done?' }
         }) as HTMLTextAreaElement;
         textarea.value = this._title;
 
-        const chipsRow = leftCol.createDiv({ cls: 'mina-etm-chips-row' });
-        this._buildChipsRow(chipsRow, 'mina-etm-chips-inner', 'mina-etm-chip', 'mina-etm-chip-add-btn', 'mina-etm-proj-pill')();
+        // Metadata toolbar — date · recur · pri · nrg · status
+        const toolbarWrap = body.createDiv({ cls: 'mina-etm-toolbar-wrap' });
+        const toolbar     = toolbarWrap.createDiv({ cls: 'mina-etm-toolbar' });
+        this._buildToolbarChips(toolbar, toolbarWrap,
+            'mina-etm-tool-chip', 'mina-etm-toolbar-dot');
 
-        // Right column (196px)
-        const rightCol = body.createDiv({ cls: 'mina-etm-right' });
-
-        const dateSec = rightCol.createDiv({ cls: 'mina-etm-section' });
-        dateSec.createEl('span', { text: 'DUE DATE', cls: 'mina-etm-section-label' });
-        this._buildDateStrip(dateSec, 'mina-date-strip');
-
-        const recurSec = rightCol.createDiv({ cls: 'mina-etm-section' });
-        recurSec.createEl('span', { text: 'REPEAT', cls: 'mina-etm-section-label' });
-        this._buildRecurStrip(recurSec, true, 'mina-recur-strip mina-recur-strip--compact');
-
-        const propsSec = rightCol.createDiv({ cls: 'mina-etm-section' });
-        propsSec.createEl('span', { text: 'PROPERTIES', cls: 'mina-etm-section-label' });
-        this._buildMetaStrip(propsSec, true, 'mina-meta-strip', true);
+        // Tags + project
+        const chipsRow = body.createDiv({ cls: 'mina-etm-chips-row' });
+        this._buildChipsRow(
+            chipsRow, 'mina-etm-chips-inner',
+            'mina-etm-chip', 'mina-etm-chip-add-btn', 'mina-etm-proj-pill'
+        )();
 
         // Footer
         const footer = contentEl.createDiv({ cls: 'mina-etm-footer' });
@@ -695,6 +663,297 @@ export class EditTaskModal extends Modal {
 
         syncPri();
         syncEnergy();
+        syncStatus();
+    }
+
+    // ── Toolbar chip: due date ────────────────────────────────────────────────
+
+    private _buildDateChip(
+        toolbar:       HTMLElement,
+        popoverAnchor: HTMLElement,
+        chipCls:       string
+    ): HTMLButtonElement {
+        const chip = toolbar.createEl('button', {
+            cls:  `${chipCls} ${chipCls}--date`,
+            attr: { 'aria-label': 'Set due date', type: 'button' }
+        }) as HTMLButtonElement;
+
+        const updateLabel = () => {
+            chip.empty();
+            chip.createSpan({ text: '📅 ' });
+            chip.createSpan({
+                text: this._dueDate
+                    ? window.moment(this._dueDate).format('MMM D')
+                    : 'Due'
+            });
+            chip.toggleClass('is-active', !!this._dueDate);
+            if (this._dueDate) {
+                const clr = chip.createSpan({
+                    text: ' ×', cls: 'mina-etm-chip-clear',
+                    attr: { role: 'button', 'aria-label': 'Clear date', tabindex: '0' }
+                });
+                clr.addEventListener('click', (e: MouseEvent) => {
+                    e.stopPropagation();
+                    this._dueDate = null;
+                    updateLabel();
+                    popoverAnchor.querySelector('[data-etm-popover="date"]')?.remove();
+                });
+            }
+        };
+        updateLabel();
+
+        chip.addEventListener('click', (e: MouseEvent) => {
+            if ((e.target as HTMLElement).classList.contains('mina-etm-chip-clear')) return;
+            const existing = popoverAnchor.querySelector('[data-etm-popover="date"]');
+            if (existing) { existing.remove(); return; }
+            popoverAnchor.querySelector('.mina-etm-popover')?.remove();
+
+            const popover = popoverAnchor.createDiv({
+                cls:  'mina-etm-popover',
+                attr: { 'data-etm-popover': 'date' }
+            });
+
+            const shortcutsRow = popover.createDiv({ cls: 'mina-etm-popover-shortcuts' });
+            const today     = window.moment();
+            const dow       = today.day();
+            const daysToFri = dow <= 4 ? (5 - dow) : (12 - dow);
+            const rawShortcuts = [
+                { label: 'TODAY',                                 days: 0              },
+                { label: 'TMRW',                                  days: 1              },
+                { label: daysToFri > 2 ? 'THIS FRI' : '+7D',     days: daysToFri > 2 ? daysToFri : 7 },
+                { label: '+7D',                                   days: 7              },
+                { label: '+30D',                                  days: 30             },
+            ];
+            const shortcuts = rawShortcuts.filter(
+                (s, i, a) => a.findIndex(x => x.days === s.days) === i
+            );
+
+            const scBtns: HTMLButtonElement[] = [];
+            shortcuts.forEach(s => {
+                const d   = window.moment().add(s.days, 'days').format('YYYY-MM-DD');
+                const btn = shortcutsRow.createEl('button', {
+                    text: s.label, cls: 'mina-date-shortcut-btn', attr: { type: 'button' }
+                }) as HTMLButtonElement;
+                scBtns.push(btn);
+                if (d === this._dueDate) btn.addClass('is-selected');
+                btn.addEventListener('click', () => {
+                    this._dueDate = d;
+                    updateLabel();
+                    scBtns.forEach(b => b.removeClass('is-selected'));
+                    btn.addClass('is-selected');
+                    setTimeout(() => popover.remove(), 200);
+                });
+            });
+
+            const nlpWrap    = popover.createDiv({ cls: 'mina-date-nlp-wrap' });
+            const nlpInput   = nlpWrap.createEl('input', {
+                type: 'text', cls: 'mina-date-nlp-input',
+                attr: { placeholder: 'next tuesday, in 3 weeks…' }
+            }) as HTMLInputElement;
+            nlpInput.style.setProperty('font-size', 'max(16px, 0.82rem)');
+            const confirmBtn = nlpWrap.createEl('button', {
+                text: '↵', cls: 'mina-date-nlp-confirm',
+                attr: { 'aria-label': 'Confirm date', type: 'button' }
+            });
+            const tryConfirm = () => {
+                const parsed = parseNaturalDate(nlpInput.value.trim());
+                if (parsed) {
+                    this._dueDate = parsed;
+                    updateLabel();
+                    popover.remove();
+                } else {
+                    nlpInput.addClass('is-error');
+                    setTimeout(() => nlpInput.removeClass('is-error'), 600);
+                }
+            };
+            confirmBtn.addEventListener('click', tryConfirm);
+            nlpInput.addEventListener('keydown', (e: KeyboardEvent) => {
+                if (e.key === 'Enter')  tryConfirm();
+                if (e.key === 'Escape') popover.remove();
+            });
+            const onOutside = (ev: MouseEvent) => {
+                if (!popover.contains(ev.target as Node) && !chip.contains(ev.target as Node)) {
+                    popover.remove();
+                    document.removeEventListener('mousedown', onOutside);
+                }
+            };
+            setTimeout(() => document.addEventListener('mousedown', onOutside), 0);
+            setTimeout(() => nlpInput.focus(), 50);
+        });
+
+        return chip;
+    }
+
+    // ── Toolbar chip: recurrence ─────────────────────────────────────────────
+
+    private _buildRecurChip(
+        toolbar:       HTMLElement,
+        popoverAnchor: HTMLElement,
+        chipCls:       string
+    ): HTMLButtonElement {
+        type ROption = { value: RecurrenceRule | null; label: string };
+        const OPTIONS: ROption[] = [
+            { value: null,       label: '—'        },
+            { value: 'daily',    label: 'Daily'    },
+            { value: 'weekly',   label: 'Weekly'   },
+            { value: 'biweekly', label: 'Biweekly' },
+            { value: 'monthly',  label: 'Monthly'  },
+        ];
+
+        const chip = toolbar.createEl('button', {
+            cls:  `${chipCls} ${chipCls}--recur`,
+            attr: { 'aria-label': 'Set recurrence', type: 'button' }
+        }) as HTMLButtonElement;
+
+        const updateLabel = () => {
+            chip.empty();
+            chip.createSpan({ text: '🔁 ' });
+            const active = OPTIONS.find(o => o.value === this._recurrence);
+            chip.createSpan({ text: active?.value ? active.label : 'Repeat' });
+            chip.toggleClass('is-active', !!this._recurrence);
+        };
+        updateLabel();
+
+        chip.addEventListener('click', () => {
+            const existing = popoverAnchor.querySelector('[data-etm-popover="recur"]');
+            if (existing) { existing.remove(); return; }
+            popoverAnchor.querySelector('.mina-etm-popover')?.remove();
+
+            const popover = popoverAnchor.createDiv({
+                cls:  'mina-etm-popover',
+                attr: { 'data-etm-popover': 'recur' }
+            });
+            const optsRow = popover.createDiv({ cls: 'mina-etm-recur-opts' });
+
+            const recurBtns: HTMLButtonElement[] = [];
+            OPTIONS.forEach(({ value, label }) => {
+                const btn = optsRow.createEl('button', {
+                    text: label, cls: 'mina-recur-btn',
+                    attr: {
+                        type: 'button',
+                        'aria-pressed': String(this._recurrence === value),
+                        'data-recurrence': value ?? 'none'
+                    }
+                }) as HTMLButtonElement;
+                recurBtns.push(btn);
+                btn.toggleClass('is-active', this._recurrence === value);
+                btn.addEventListener('click', () => {
+                    this._recurrence = (this._recurrence === value && value !== null) ? null : value;
+                    updateLabel();
+                    recurBtns.forEach(b => {
+                        const rv = b.getAttribute('data-recurrence');
+                        const resolved = rv === 'none' ? null : rv as RecurrenceRule;
+                        b.toggleClass('is-active', this._recurrence === resolved);
+                        b.setAttribute('aria-pressed', String(this._recurrence === resolved));
+                    });
+                    if ('vibrate' in navigator) navigator.vibrate(8);
+                    setTimeout(() => popover.remove(), 120);
+                });
+            });
+
+            const onOutside = (ev: MouseEvent) => {
+                if (!popover.contains(ev.target as Node) && !chip.contains(ev.target as Node)) {
+                    popover.remove();
+                    document.removeEventListener('mousedown', onOutside);
+                }
+            };
+            setTimeout(() => document.addEventListener('mousedown', onOutside), 0);
+        });
+
+        return chip;
+    }
+
+    // ── Toolbar: full chip row ───────────────────────────────────────────────
+
+    private _buildToolbarChips(
+        toolbar:       HTMLElement,
+        popoverAnchor: HTMLElement,
+        chipCls:       string,
+        dotCls:        string
+    ): void {
+        this._buildDateChip(toolbar, popoverAnchor, chipCls);
+        this._buildRecurChip(toolbar, popoverAnchor, chipCls);
+
+        toolbar.createSpan({ cls: dotCls, text: '·' });
+
+        // Priority
+        const PRI: { val: 'low' | 'medium' | 'high'; label: string }[] = [
+            { val: 'low',    label: '!'   },
+            { val: 'medium', label: '!!'  },
+            { val: 'high',   label: '!!!' },
+        ];
+        const priChips: HTMLButtonElement[] = [];
+        PRI.forEach(({ val, label }) => {
+            const c = toolbar.createEl('button', {
+                cls:  `${chipCls} ${chipCls}--pri-${val}`,
+                text: label,
+                attr: { type: 'button', 'aria-label': `Priority ${val}`, 'aria-pressed': 'false' }
+            }) as HTMLButtonElement;
+            priChips.push(c);
+            c.addEventListener('click', () => {
+                this._priority = this._priority === val ? null : val;
+                syncPri();
+                if ('vibrate' in navigator) navigator.vibrate(8);
+            });
+        });
+        const syncPri = () => PRI.forEach(({ val }, i) => {
+            priChips[i].toggleClass('is-active', this._priority === val);
+            priChips[i].setAttribute('aria-pressed', String(this._priority === val));
+        });
+        syncPri();
+
+        // Energy
+        const NRG: { val: 'low' | 'medium' | 'high'; label: string }[] = [
+            { val: 'low',    label: '🌙' },
+            { val: 'medium', label: '〰' },
+            { val: 'high',   label: '⚡' },
+        ];
+        const nrgChips: HTMLButtonElement[] = [];
+        NRG.forEach(({ val, label }) => {
+            const c = toolbar.createEl('button', {
+                cls:  `${chipCls} ${chipCls}--nrg-${val}`,
+                text: label,
+                attr: { type: 'button', 'aria-label': `Energy ${val}`, 'aria-pressed': 'false' }
+            }) as HTMLButtonElement;
+            nrgChips.push(c);
+            c.addEventListener('click', () => {
+                this._energy = this._energy === val ? null : val;
+                syncNrg();
+                if ('vibrate' in navigator) navigator.vibrate(8);
+            });
+        });
+        const syncNrg = () => NRG.forEach(({ val }, i) => {
+            nrgChips[i].toggleClass('is-active', this._energy === val);
+            nrgChips[i].setAttribute('aria-pressed', String(this._energy === val));
+        });
+        syncNrg();
+
+        toolbar.createSpan({ cls: dotCls, text: '·' });
+
+        // Status
+        const STATUS: { val: 'waiting' | 'someday'; label: string }[] = [
+            { val: 'waiting', label: 'WAIT' },
+            { val: 'someday', label: 'SMDY' },
+        ];
+        const statusChips: HTMLButtonElement[] = [];
+        STATUS.forEach(({ val, label }) => {
+            const c = toolbar.createEl('button', {
+                cls:  chipCls,
+                text: label,
+                attr: { type: 'button', 'aria-label': `Status: ${val}`,
+                        'aria-pressed': 'false', 'data-status': val }
+            }) as HTMLButtonElement;
+            statusChips.push(c);
+            c.addEventListener('click', () => {
+                this._status = this._status === val ? 'open' : val;
+                syncStatus();
+                if ('vibrate' in navigator) navigator.vibrate(8);
+            });
+        });
+        const syncStatus = () => STATUS.forEach(({ val }, i) => {
+            statusChips[i].toggleClass('is-active', this._status === val);
+            statusChips[i].setAttribute('aria-pressed', String(this._status === val));
+        });
         syncStatus();
     }
 
