@@ -31,6 +31,11 @@ export class MinaView extends ItemView {
     synthesisCaptureDraft: string = '';
     _synthesisCaptPending: number = 0;
 
+    // Synthesis select/merge mode
+    synthesisSelectMode: boolean = false;
+    synthesisSelectedPaths: Set<string> = new Set();
+    _mergePending: number = 0;
+
     // Tasks state — persists across re-renders (viewMode survives vault events)
     tasksViewMode: string = 'open';
     _taskTogglePending: number = 0;       // > 0 = suppress vault-event re-renders

@@ -2,7 +2,8 @@ import { moment, Platform, MarkdownRenderer, Notice, setIcon, Modal } from 'obsi
 import type { MinaView } from '../view';
 import type { ThoughtEntry } from '../types';
 import { BaseTab } from './BaseTab';
-import { isTablet } from '../utils';
+import { isTablet, parseContextString } from '../utils';
+import { EditEntryModal } from '../modals/EditEntryModal';
 
 // ── Add-Context Modal ─────────────────────────────────────────────────────────
 class AddContextModal extends Modal {
@@ -74,6 +75,84 @@ class AddContextModal extends Modal {
     }
 }
 
+// ── MergeModal ────────────────────────────────────────────────────────────────
+class MergeModal extends Modal {
+    private thoughts: ThoughtEntry[];
+    private onConfirm: (mergedText: string, contexts: string[]) => void;
+
+    constructor(app: any, thoughts: ThoughtEntry[], onConfirm: (mergedText: string, contexts: string[]) => void) {
+        super(app);
+        this.thoughts = thoughts;
+        this.onConfirm = onConfirm;
+    }
+
+    onOpen(): void {
+        const { contentEl } = this;
+        contentEl.empty();
+        contentEl.addClass('mina-modal-standard');
+
+        const hdr = contentEl.createEl('div', { cls: 'mina-modal-header' });
+        hdr.createEl('h2', {
+            text: `Merge ${this.thoughts.length} Notes`,
+            attr: { style: 'margin:0; font-size:1.1em; font-weight:700;' },
+        });
+
+        const body = contentEl.createEl('div', {
+            attr: { style: 'padding:16px 24px; display:flex; flex-direction:column; gap:12px;' },
+        });
+
+        // Source previews
+        const preview = body.createEl('div', { cls: 'mina-merge-preview' });
+        this.thoughts.forEach((t, i) => {
+            if (i > 0) preview.createEl('hr', { cls: 'mina-merge-preview-divider' });
+            preview.createEl('p', {
+                text: (t.body || '').substring(0, 140) + ((t.body || '').length > 140 ? '…' : ''),
+                cls: 'mina-merge-preview-item',
+            });
+        });
+
+        // Union of contexts
+        const unionContexts = [...new Set(this.thoughts.flatMap(t => t.context))];
+        const mergedBodies = this.thoughts.map(t => t.body || '').join('\n\n---\n\n');
+
+        body.createEl('label', {
+            text: 'Merged content — edit as needed',
+            attr: { style: 'font-size:0.78rem; font-weight:600; color:var(--text-muted);' },
+        });
+        const textarea = body.createEl('textarea', {
+            cls: 'mina-merge-textarea',
+        }) as HTMLTextAreaElement;
+        textarea.value = mergedBodies;
+
+        const footer = contentEl.createEl('div', { cls: 'mina-modal-footer' });
+        footer.createEl('span', {
+            text: '⌘↵ to merge',
+            attr: { style: 'font-size:0.72rem; color:var(--text-faint); flex:1;' },
+        });
+        const cancelBtn = footer.createEl('button', { text: 'Cancel', cls: 'mina-btn-secondary' });
+        const mergeBtn = footer.createEl('button', {
+            text: `Merge ${this.thoughts.length} Notes`,
+            cls: 'mina-btn-primary',
+        });
+
+        const doMerge = () => {
+            const text = textarea.value.trim();
+            if (!text) { new Notice('Merged content cannot be empty.'); return; }
+            this.onConfirm(text, unionContexts);
+            this.close();
+        };
+
+        cancelBtn.addEventListener('click', () => this.close());
+        mergeBtn.addEventListener('click', doMerge);
+        textarea.addEventListener('keydown', (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); doMerge(); }
+        });
+        setTimeout(() => textarea.focus(), 60);
+    }
+
+    onClose(): void { this.contentEl.empty(); }
+}
+
 // ── SynthesisTab V2.1 ─────────────────────────────────────────────────────────
 export class SynthesisTab extends BaseTab {
     /**
@@ -89,6 +168,10 @@ export class SynthesisTab extends BaseTab {
 
     private get showHidden(): boolean { return this.view.synthesisShowHidden; }
     private set showHidden(v: boolean) { this.view.synthesisShowHidden = v; }
+
+    private get synthesisSelectMode(): boolean { return this.view.synthesisSelectMode; }
+    private set synthesisSelectMode(v: boolean) { this.view.synthesisSelectMode = v; }
+    private get selectedPaths(): Set<string> { return this.view.synthesisSelectedPaths; }
 
     private get feedFilter(): 'no-context' | 'with-context' | 'processed' {
         return this.view.synthesisFeedFilter;
@@ -394,6 +477,27 @@ export class SynthesisTab extends BaseTab {
         const segBar = hdrTop.createEl('div', { cls: 'mina-seg-bar mina-syn-toggle-bar' });
         const feedScroll = feed.createEl('div', { cls: 'mina-syn-feed-scroll' });
 
+        // Select mode toggle
+        const selectToggle = hdrTop.createEl('button', {
+            cls: `mina-syn-select-toggle${this.synthesisSelectMode ? ' is-active' : ''}${this.feedFilter === 'processed' ? ' is-hidden' : ''}`,
+            attr: { title: this.synthesisSelectMode ? 'Exit select mode' : 'Select notes' },
+        });
+        setIcon(selectToggle, 'check-square');
+        selectToggle.addEventListener('click', () => {
+            this.synthesisSelectMode = !this.synthesisSelectMode;
+            if (!this.synthesisSelectMode) this.view.synthesisSelectedPaths.clear();
+            this.view.renderView();
+        });
+
+        // Merge button — visible when 2+ notes selected
+        const mergeHeaderBtn = hdrTop.createEl('button', {
+            cls: `mina-syn-merge-btn${this.selectedPaths.size >= 2 ? '' : ' is-hidden'}`,
+            attr: { title: `Merge selected notes` },
+        });
+        setIcon(mergeHeaderBtn, 'git-merge');
+        mergeHeaderBtn.createEl('span', { text: `Merge (${this.selectedPaths.size})` });
+        mergeHeaderBtn.addEventListener('click', () => this.openMergeModal(shell));
+
         // "Done All" — marks every Mapped note as synthesized
         const doneAllBtn = hdrTop.createEl('button', {
             cls: `mina-syn-feed-done-all${this.feedFilter === 'with-context' ? '' : ' is-hidden'}`,
@@ -431,6 +535,12 @@ export class SynthesisTab extends BaseTab {
             btn.addEventListener('click', () => {
                 if (this.feedFilter === f.key) return;
                 this.feedFilter = f.key;
+
+                // Clear select mode on filter switch
+                if (this.synthesisSelectMode) {
+                    this.synthesisSelectMode = false;
+                    this.view.synthesisSelectedPaths.clear();
+                }
 
                 // Show/hide Done All based on active filter
                 doneAllBtn.classList.toggle('is-hidden', this.feedFilter !== 'with-context');
@@ -539,6 +649,27 @@ export class SynthesisTab extends BaseTab {
         const card = container.createEl('div', {
             cls: `mina-syn-card${thought.synthesized ? ' is-processed' : ''}`,
         });
+
+        // Select-mode checkbox
+        if (this.synthesisSelectMode && !thought.synthesized) {
+            const cbWrap = card.createEl('label', { cls: 'mina-syn-card-cb-wrap' });
+            const cb = cbWrap.createEl('input', { attr: { type: 'checkbox' } }) as HTMLInputElement;
+            cb.checked = this.selectedPaths.has(thought.filePath);
+            cbWrap.createEl('span', { cls: 'mina-syn-card-cb-label' });
+            cb.addEventListener('change', () => {
+                if (cb.checked) this.selectedPaths.add(thought.filePath);
+                else this.selectedPaths.delete(thought.filePath);
+                card.classList.toggle('is-selected', cb.checked);
+                // Update merge button in-place
+                const mergeBtn = card.closest('.mina-syn-shell')?.querySelector<HTMLElement>('.mina-syn-merge-btn');
+                if (mergeBtn) {
+                    const count = this.selectedPaths.size;
+                    mergeBtn.classList.toggle('is-hidden', count < 2);
+                    const span = mergeBtn.querySelector('span');
+                    if (span) span.textContent = `Merge (${count})`;
+                }
+            });
+        }
 
         // ── Card header: timestamp + context chips ────────────────────────────
         const cardHdr = card.createEl('div', { cls: 'mina-syn-card-hdr' });
@@ -661,9 +792,83 @@ export class SynthesisTab extends BaseTab {
             processBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 await this.vault.markAsSynthesized(thought.filePath);
+                // Remove from selection if selected
+                this.selectedPaths.delete(thought.filePath);
                 this.exitCard(card, () => this.view.renderView());
             });
+
+            // ── Edit button ───────────────────────────────────────────────────
+            const editBtn = actions.createEl('button', { cls: 'mina-syn-card-btn mina-syn-card-btn--edit' });
+            setIcon(editBtn, 'pencil-line');
+            editBtn.createEl('span', { text: 'Edit' });
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                new EditEntryModal(
+                    this.app,
+                    this.plugin,
+                    thought.body || '',
+                    thought.context.join(' '),
+                    null,
+                    false,
+                    async (newText: string, newContexts: string) => {
+                        const ctxArr = parseContextString(newContexts);
+                        await this.vault.editThought(thought.filePath, newText, ctxArr);
+                    },
+                    'Edit Thought',
+                ).open();
+            });
+
+            // ── Delete button (two-stage confirm) ─────────────────────────────
+            const deleteBtn = actions.createEl('button', { cls: 'mina-syn-card-btn mina-syn-card-btn--delete' });
+            setIcon(deleteBtn, 'trash-2');
+            const deleteSpan = deleteBtn.createEl('span', { text: 'Delete' });
+            let deleteConfirmTimer: ReturnType<typeof setTimeout> | null = null;
+            deleteBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (deleteBtn.classList.contains('is-confirm')) {
+                    if (deleteConfirmTimer) { clearTimeout(deleteConfirmTimer); deleteConfirmTimer = null; }
+                    deleteBtn.disabled = true;
+                    this.selectedPaths.delete(thought.filePath);
+                    await this.vault.deleteFile(thought.filePath, 'thoughts');
+                    this.exitCard(card, () => this.refreshCountsInDOM(shell));
+                } else {
+                    deleteBtn.classList.add('is-confirm');
+                    deleteSpan.textContent = 'Confirm?';
+                    deleteConfirmTimer = setTimeout(() => {
+                        deleteBtn.classList.remove('is-confirm');
+                        deleteSpan.textContent = 'Delete';
+                        deleteConfirmTimer = null;
+                    }, 3000);
+                }
+            });
         }
+    }
+
+    private openMergeModal(shell: HTMLElement): void {
+        const paths = [...this.selectedPaths];
+        const thoughts = paths
+            .map(fp => Array.from(this.index.thoughtIndex.values()).find(t => t.filePath === fp))
+            .filter((t): t is ThoughtEntry => !!t && !t.synthesized);
+
+        if (thoughts.length < 2) {
+            new Notice('Select at least 2 unsynthesized notes to merge.', 2000);
+            return;
+        }
+
+        new MergeModal(this.app, thoughts, async (mergedText: string, contexts: string[]) => {
+            this.view._mergePending = 1;
+            try {
+                await this.vault.mergeThoughts(thoughts.map(t => t.filePath), mergedText, contexts);
+                new Notice(`✓ ${thoughts.length} notes merged.`, 1500);
+                this.synthesisSelectMode = false;
+                this.view.synthesisSelectedPaths.clear();
+            } catch (err) {
+                new Notice('Merge failed: ' + (err instanceof Error ? err.message : 'Unknown error'), 3000);
+            } finally {
+                this.view._mergePending = 0;
+                this.view.renderView();
+            }
+        }).open();
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

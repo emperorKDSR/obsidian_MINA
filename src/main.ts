@@ -221,7 +221,7 @@ export default class MinaPlugin extends Plugin {
                 const view = leaf.view as MinaView;
                 if (view && typeof view.renderView === 'function') {
                     // Don't re-render while the user is mid-toggle — let optimistic UI stand
-                    if (view._taskTogglePending > 0 || view._habitTogglePending > 0 || view._checklistTogglePending > 0 || view._capturePending > 0 || view._synthesisCaptPending > 0) continue;
+                    if (view._taskTogglePending > 0 || view._habitTogglePending > 0 || view._checklistTogglePending > 0 || view._capturePending > 0 || view._synthesisCaptPending > 0 || view._mergePending > 0) continue;
                     view.renderView();
                 }
             }

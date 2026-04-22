@@ -285,6 +285,33 @@ export class VaultService {
         }
     }
 
+    private async _trashFile(filePath: string): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return;
+        const folder = this.settings.thoughtsFolder;
+        const trashFolder = (folder.trim() || '000 Bin/MINA V2') + '/trash';
+        await this.ensureFolder(trashFolder);
+        const trashPath = `${trashFolder}/${file.basename}_${Date.now()}.md`;
+        await this.app.vault.rename(file, trashPath);
+    }
+
+    async mergeThoughts(filePaths: string[], mergedText: string, contexts: string[]): Promise<TFile> {
+        for (const fp of filePaths) {
+            const f = this.app.vault.getAbstractFileByPath(fp);
+            if (!(f instanceof TFile)) throw new Error(`Source note no longer exists: ${fp}`);
+        }
+        const newFile = await this.createThoughtFile(mergedText, contexts);
+        const failed: string[] = [];
+        for (const fp of filePaths) {
+            try { await this._trashFile(fp); }
+            catch { failed.push(fp); }
+        }
+        if (failed.length > 0) {
+            new Notice(`Merged ✓ — but ${failed.length} source note(s) could not be trashed.`, 3000);
+        }
+        return newFile;
+    }
+
     async appendComment(filePath: string, text: string): Promise<boolean> {
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return false;
