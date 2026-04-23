@@ -86,7 +86,7 @@ const SECTIONS: HelpSection[] = [
         items: [
             { label: 'Dues Ledger', desc: 'All your recurring bills and due dates in one place.' },
             { label: 'Filter Views', desc: 'Switch between All, Due Soon, Overdue, and Paid views using the segment bar.' },
-            { label: 'Mark Paid', desc: 'Tap a due item to log a payment. The date is stamped and reflected in Weekly Review.' },
+            { label: 'Mark Paid', desc: 'Tap a due item to log a payment. Updates next_duedate and last_payment frontmatter, stamped and reflected in Weekly Review.', tip: 'Dates are stored as plain YYYY-MM-DD strings (e.g. 2026-05-01), not wiki links.' },
             { label: 'Burn Rate', desc: 'Total monthly obligation is shown at the top — your financial baseline.' },
         ]
     },

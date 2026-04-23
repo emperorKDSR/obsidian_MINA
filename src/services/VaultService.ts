@@ -488,7 +488,8 @@ export class VaultService {
     async savePayment(file: TFile, paymentDate: string, nextDueDate: string, notes: string, attachedFiles: File[]): Promise<void> {
         // Update next due date in frontmatter
         await this.app.fileManager.processFrontMatter(file, (fm) => {
-            fm['due'] = `[[${nextDueDate}]]`;
+            fm['next_duedate'] = nextDueDate;
+            fm['last_payment'] = paymentDate;
             fm['modified'] = this.formatDateTime(new Date());
         });
         // Append payment record as a log entry in the file body
