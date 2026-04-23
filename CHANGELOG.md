@@ -1,3 +1,15 @@
+## [1.18.1] - 2026-04-23
+
+### Changed
+- **Edit Task Modal Redesign**: Simplified mobile sheet to premium minimalism
+  - Borderless, focus-driven task title textarea (transparent background, outline focus)
+  - Unified metadata dock: all scheduling, priority, energy, status, tags, and project in one horizontal scrollable row
+  - Metadata chips open popovers upward into the title area
+  - Close button moved into handle bar for cleaner header
+  - Swipe-to-dismiss restricted to handle bar only (avoids conflict with dock scrolling)
+  - Reduced visual weight: removed section labels and unnecessary spacing
+  - Desktop: applied borderless textarea treatment for consistency across platforms
+
 ## [1.14.2] - 2026-07-22
 
 ### Changed
