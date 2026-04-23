@@ -113,19 +113,22 @@ export class EditTaskModal extends Modal {
 
         const root = contentEl.createDiv({ cls: 'mina-ets-root' });
 
-        // Handle bar
+        // Handle bar — drag pill + inline close button (no separate header)
         const handleBar = root.createDiv({ cls: 'mina-ets-handle-bar' });
         handleBar.createDiv({ cls: 'mina-ets-handle-pill' });
-
-        // Header
-        const header = root.createDiv({ cls: 'mina-ets-header' });
-        const closeBtn = header.createEl('button', {
-            text: '✕', cls: 'mina-ets-close-btn', attr: { 'aria-label': 'Close' }
+        const closeBtn = handleBar.createEl('button', {
+            cls: 'mina-ets-close-btn', attr: { 'aria-label': 'Close' }
         });
+        setIcon(closeBtn, 'x');
         closeBtn.addEventListener('click', () => this.close());
 
-        // Body
-        const body = root.createDiv({ cls: 'mina-ets-body' });
+        // Title — borderless, full-focus textarea
+        const titleWrap = root.createDiv({ cls: 'mina-ets-title-wrap' });
+        const titleTA = titleWrap.createEl('textarea', {
+            cls: 'mina-ets-title-textarea',
+            attr: { placeholder: 'What needs to be done?' }
+        }) as HTMLTextAreaElement;
+        titleTA.value = this._title;
 
         let saveBtn!: HTMLButtonElement;
         const refreshSave = () => {
@@ -135,42 +138,29 @@ export class EditTaskModal extends Modal {
             saveBtn.disabled = empty;
         };
 
-        // Title
-        const titleSection = body.createDiv({ cls: 'mina-ets-title-section' });
-        const titleTA = titleSection.createEl('textarea', {
-            cls: 'mina-ets-title-textarea',
-            attr: { placeholder: 'What needs to be done?', rows: '2' }
-        }) as HTMLTextAreaElement;
-        titleTA.value = this._title;
         titleTA.addEventListener('input', () => {
             this._title = titleTA.value;
             titleTA.style.height = 'auto';
-            titleTA.style.height = Math.min(titleTA.scrollHeight, 180) + 'px';
+            titleTA.style.height = Math.min(titleTA.scrollHeight, 200) + 'px';
             refreshSave();
         });
 
-        // Toolbar — date · recur · pri · nrg · status (replaces separate sections)
-        const toolbarSection = body.createDiv({ cls: 'mina-ets-toolbar-section' });
-        const toolbar        = toolbarSection.createDiv({ cls: 'mina-ets-toolbar' });
-        this._buildToolbarChips(toolbar, toolbarSection,
-            'mina-ets-tool-chip', 'mina-ets-toolbar-dot');
+        // Unified metadata dock — single horizontal scrollable row
+        // dockWrap is position:relative so popovers open upward from it
+        const dockWrap = root.createDiv({ cls: 'mina-ets-dock-wrap' });
+        const dock     = dockWrap.createDiv({ cls: 'mina-ets-dock' });
 
-        // Chips + project
-        const chipsSection = body.createDiv({ cls: 'mina-ets-chips-section' });
-        const renderChips = this._buildChipsRow(
-            chipsSection, 'mina-ets-chips-row',
-            'mina-ets-tag-chip', 'mina-ets-tag-add-btn', 'mina-ets-project-pill'
-        );
-        renderChips();
+        this._buildToolbarChips(dock, dockWrap, 'mina-ets-tool-chip', 'mina-ets-toolbar-dot');
+        dock.createEl('span', { cls: 'mina-ets-toolbar-dot', text: '·' });
+        this._buildChipsRow(dock, 'mina-ets-inline-chips',
+            'mina-ets-tag-chip', 'mina-ets-tag-add-btn', 'mina-ets-project-pill')();
 
         // Footer
         const footer = root.createDiv({ cls: 'mina-ets-footer' });
-        const cancelBtn = footer.createEl('button', {
-            text: 'CANCEL', cls: 'mina-ets-cancel-btn'
-        });
-        cancelBtn.addEventListener('click', () => this.close());
+        footer.createEl('button', { text: 'Cancel', cls: 'mina-ets-cancel-btn' })
+            .addEventListener('click', () => this.close());
         saveBtn = footer.createEl('button', {
-            text: 'SAVE TASK', cls: 'mina-ets-save-btn'
+            text: 'Save Task', cls: 'mina-ets-save-btn'
         }) as HTMLButtonElement;
         saveBtn.addEventListener('click', () => this._save());
         refreshSave();
@@ -184,10 +174,11 @@ export class EditTaskModal extends Modal {
             titleTA.focus();
             titleTA.setSelectionRange(titleTA.value.length, titleTA.value.length);
             titleTA.style.height = 'auto';
-            titleTA.style.height = Math.min(titleTA.scrollHeight, 180) + 'px';
+            titleTA.style.height = Math.min(titleTA.scrollHeight, 200) + 'px';
         }, 80);
 
-        this._initSwipeToDismiss(modalEl, handleBar, header);
+        // Swipe to dismiss only from handle bar — not from dock (avoid conflict with horizontal scroll)
+        this._initSwipeToDismiss(modalEl, handleBar, handleBar);
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -308,7 +299,7 @@ export class EditTaskModal extends Modal {
         const titleWrap = body.createDiv({ cls: 'mina-etm-title-wrap' });
         const textarea  = titleWrap.createEl('textarea', {
             cls:  'mina-etm-textarea',
-            attr: { placeholder: 'What needs to be done?' }
+            attr: { placeholder: 'What needs to be done?', rows: '1' }
         }) as HTMLTextAreaElement;
         textarea.value = this._title;
 
