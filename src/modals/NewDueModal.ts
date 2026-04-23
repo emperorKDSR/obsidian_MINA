@@ -77,7 +77,7 @@ export class NewDueModal extends Modal {
 category: recurring payment
 active_status: true
 next_duedate: ${dInput.value}
-last_payment: ${lInput.value || ''}
+last_payment_date: ${lInput.value || ''}
 amount: ${aInput.value || '0.00'}
 ---
 
