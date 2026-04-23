@@ -2867,3 +2867,96 @@ body.mina-task-edit-active .modal-bg { background: rgba(0,0,0,0.5) !important; }
     from { opacity: 1; transform: translateY(0)     scale(1);    }
     to   { opacity: 0; transform: translateY(-12px) scale(0.97); }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EDIT TASK MODAL — Design Tokens (v2 Modernize)
+   Defines previously-missing --etm-* CSS variables referenced throughout
+   the chip / toolbar styles. Appended after original section so these
+   definitions win at computed-value time for all referencing rules.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+    --etm-chip-bg:            var(--background-modifier-form-field);
+    --etm-chip-radius:        20px;
+    --etm-chip-pad:           3px 10px;
+    --etm-chip-fs:            0.72rem;
+    --etm-chip-color:         var(--text-muted);
+    --etm-chip-active-bg:     color-mix(in srgb, var(--interactive-accent) 12%, transparent);
+    --etm-chip-active-color:  var(--interactive-accent);
+    --etm-chip-active-border: color-mix(in srgb, var(--interactive-accent) 30%, transparent);
+    --etm-separator:          1px solid var(--background-modifier-border-faint);
+    --etm-transition:         0.12s ease;
+}
+
+/* ── Mobile sheet: clean title textarea ── */
+.mina-ets-title-textarea {
+    caret-color: var(--interactive-accent) !important;
+    font-weight: 500 !important;
+}
+.mina-ets-title-textarea:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    background: color-mix(in srgb, var(--interactive-accent) 4%, transparent) !important;
+}
+
+/* ── Mobile sheet: refined handle pill ── */
+.mina-ets-handle-pill {
+    width: 32px !important;
+    height: 3px !important;
+    opacity: 0.45 !important;
+}
+
+/* ── Mobile sheet: ghost cancel + bold save ── */
+.mina-ets-cancel-btn {
+    background: transparent !important;
+    border: 1px solid var(--background-modifier-border) !important;
+}
+.mina-ets-cancel-btn:hover { background: var(--background-modifier-hover) !important; }
+.mina-ets-save-btn { flex: 2 !important; letter-spacing: 0.01em !important; }
+
+/* ── Tablet: clean title focus ── */
+.modal.mina-task-edit-modal .mina-tem-title-input {
+    caret-color: var(--interactive-accent) !important;
+}
+.modal.mina-task-edit-modal .mina-tem-title-input:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    background: color-mix(in srgb, var(--interactive-accent) 4%, transparent) !important;
+}
+
+/* ── Desktop modal: responsive dimensions ── */
+.modal.mina-edit-task-modal {
+    max-width: min(480px, calc(100vw - 24px)) !important;
+    width:     min(480px, calc(100vw - 24px)) !important;
+    border-radius: 14px !important;
+    padding:   0 !important;
+    overflow:  hidden !important;
+}
+
+/* ── Desktop modal: missing layout rules ── */
+.mina-etm-body      { display: flex; flex-direction: column; }
+.mina-etm-title-wrap { padding: 18px 16px 8px; }
+
+.mina-etm-textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    font-size: max(16px, 1rem);
+    font-weight: 500;
+    color: var(--text-normal);
+    line-height: 1.55;
+    resize: none;
+    overflow: hidden;
+    min-height: 44px;
+    caret-color: var(--interactive-accent);
+    font-family: inherit;
+    padding: 0;
+}
+.mina-etm-textarea:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    background: color-mix(in srgb, var(--interactive-accent) 4%, transparent);
+}
+.mina-etm-textarea::placeholder { color: var(--text-faint); font-weight: 400; }
