@@ -1,3 +1,10 @@
+## [1.18.2] - 2026-04-24
+
+### Fixed
+- **Payment Registration Bug**: `savePayment()` was writing to wrong frontmatter key `due` instead of `next_duedate` — due date never updated after marking paid
+- **Payment Wikilink Bug**: Due date was stored as `[[YYYY-MM-DD]]` wikilink format; `IndexService` strict-parses plain dates — payments always rendered as invalid/overdue
+- **Last Payment Badge Bug**: `last_payment` frontmatter key was never written — "Paid X ago" badge was always blank
+
 ## [1.18.1] - 2026-04-23
 
 ### Changed
