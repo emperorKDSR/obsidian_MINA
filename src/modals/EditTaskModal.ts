@@ -160,7 +160,7 @@ export class EditTaskModal extends Modal {
         footer.createEl('button', { text: 'Cancel', cls: 'mina-ets-cancel-btn' })
             .addEventListener('click', () => this.close());
         saveBtn = footer.createEl('button', {
-            text: 'Save Task', cls: 'mina-ets-save-btn'
+            text: 'Save', cls: 'mina-ets-save-btn'
         }) as HTMLButtonElement;
         saveBtn.addEventListener('click', () => this._save());
         refreshSave();
@@ -261,10 +261,10 @@ export class EditTaskModal extends Modal {
 
         // Footer
         const footer = contentEl.createDiv({ cls: 'mina-tem-footer' });
-        footer.createEl('button', { text: 'CANCEL', cls: 'mina-tem-cancel-btn' })
+        footer.createEl('button', { text: 'Cancel', cls: 'mina-tem-cancel-btn' })
             .addEventListener('click', () => this.close());
         saveBtn = footer.createEl('button', {
-            text: 'SAVE TASK', cls: 'mina-tem-save-btn'
+            text: 'Save', cls: 'mina-tem-save-btn'
         }) as HTMLButtonElement;
         saveBtn.addEventListener('click', () => this._save());
         refreshSave();
@@ -340,7 +340,7 @@ export class EditTaskModal extends Modal {
                 setTimeout(() => this.close(), 140);
             });
         saveBtn = footer.createEl('button', {
-            text: 'Save Task', cls: 'mina-etm-save-btn'
+            text: 'Save', cls: 'mina-etm-save-btn'
         }) as HTMLButtonElement;
         saveBtn.addEventListener('click', () => {
             modalEl.addClass('is-closing');
