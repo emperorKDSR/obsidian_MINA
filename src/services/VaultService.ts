@@ -489,7 +489,7 @@ export class VaultService {
         // Update next due date in frontmatter
         await this.app.fileManager.processFrontMatter(file, (fm) => {
             fm['next_duedate'] = nextDueDate;
-            fm['last_payment'] = paymentDate;
+            fm['last_payment_date'] = paymentDate;
             fm['modified'] = this.formatDateTime(new Date());
         });
         // Append payment record as a log entry in the file body

@@ -1,3 +1,8 @@
+## [1.18.3] - 2026-04-24
+
+### Fixed
+- **Field Rename**: `last_payment` frontmatter key renamed to `last_payment_date` across VaultService, IndexService, and NewDueModal template for naming consistency
+
 ## [1.18.2] - 2026-04-24
 
 ### Fixed

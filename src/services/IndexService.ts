@@ -152,7 +152,7 @@ export class IndexService {
             const active = fm?.['active_status'];
             const isActive = active === true || active === 'true' || active === 'True';
             const dueDate = (fm?.['next_duedate'] ?? '').toString().trim();
-            const lastPayment = (fm?.['last_payment'] ?? '').toString().trim();
+            const lastPayment = (fm?.['last_payment_date'] ?? '').toString().trim();
             const dueMoment = dueDate ? moment(dueDate, ['YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY'], true) : null;
             // Read amount from frontmatter first; fall back to filename parse for legacy files
             const fmAmount = parseFloat((fm?.['amount'] ?? '').toString().replace(/[^\d.]/g, ''));
