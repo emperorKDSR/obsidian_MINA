@@ -2989,7 +2989,7 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
 .mina-journal-modal { overflow: hidden !important; }
 
 /* ── 1. MOBILE BOTTOM SHEET ──────────────────────────────────────────────── */
-.mina-journal-modal > .modal-content { background: var(--background-primary) !important; }.mina-jm-sheet {
+.mina-journal-modal > .modal-content { background: var(--background-primary) !important; display: flex !important; flex-direction: column !important; flex: 1 1 auto !important; min-height: 0 !important; overflow: hidden !important; padding: 0 !important; }.mina-jm-sheet {
   position: fixed !important;
   left: 0 !important;
   right: 0 !important;
@@ -3103,7 +3103,7 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
   box-sizing: border-box;
   padding: 16px;
 }
-.mina-jm-textarea--mobile { font-size: 16px; min-height: 40vh; }
+.mina-jm-textarea--mobile { font-size: 16px; min-height: 120px; flex: 1 1 auto !important; overflow-y: auto !important; }
 .mina-jm-textarea--tablet { font-size: 15px; min-height: 280px; line-height: 1.7; }
 .mina-jm-textarea--desktop { font-size: 15px; min-height: 280px; line-height: 1.7; }
 .mina-jm-textarea::placeholder { color: var(--jm-muted); opacity: 0.7; }
