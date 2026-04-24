@@ -1,3 +1,10 @@
+## [1.18.7] - 2026-04-24
+
+### Changed
+- **Manual (Docs)**: Updated Quick Capture section with image paste, `/` people picker, `[[` wiki-link, and `#` context tag trigger entries
+- **Manual (Docs)**: Finance section now accurately documents the `last_payment_date` / `next_duedate` frontmatter contract and pay button conditions
+- **Manual (Docs)**: Settings section now includes the Attachments Folder configuration entry
+
 ## [1.18.6] - 2026-04-24
 
 ### Fixed
