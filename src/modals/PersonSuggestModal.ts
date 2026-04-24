@@ -18,7 +18,7 @@ export class PersonSuggestModal extends SuggestModal<TFile> {
         return this.app.vault.getMarkdownFiles()
             .filter(f => {
                 const fm = this.app.metadataCache.getFileCache(f)?.frontmatter;
-                return fm?.type === 'people';
+                return fm?.category === 'people';
             })
             .filter(f => !q || f.basename.toLowerCase().includes(q))
             .sort((a, b) => a.basename.localeCompare(b.basename));
