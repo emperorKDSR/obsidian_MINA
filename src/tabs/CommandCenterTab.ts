@@ -2,7 +2,7 @@ import { moment, Platform, Notice, TFile, setIcon } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, SETTINGS_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID, COMPASS_ICON_ID, FOCUS_ICON_ID, MEMENTO_ICON_ID } from '../constants';
-import { parseNaturalDate, isTablet, attachInlineTriggers } from '../utils';
+import { parseNaturalDate, isTablet, attachInlineTriggers, attachMediaPasteHandler } from '../utils';
 import { FileSuggestModal } from '../modals/FileSuggestModal';
 import { ContextSuggestModal } from '../modals/ContextSuggestModal';
 import { HabitConfigModal } from '../modals/HabitConfigModal';
@@ -160,6 +160,7 @@ export class CommandCenterTab extends BaseTab {
             (tag) => addThoughtChip(tag),
             () => thoughtContexts,
         );
+        attachMediaPasteHandler(this.app, thoughtArea, () => this.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments');
 
         const saveThought = async () => {
             const raw = thoughtArea.value.trim();
@@ -200,6 +201,7 @@ export class CommandCenterTab extends BaseTab {
             cls: 'mina-capture-box-input',
             attr: { placeholder: 'Add a task… use @tomorrow to set due date', type: 'text' }
         }) as HTMLInputElement;
+        attachMediaPasteHandler(this.app, taskInput, () => this.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments');
 
         taskInput.addEventListener('focus', () => { this.view._capturePending = 1; });
         taskInput.addEventListener('input', () => {
