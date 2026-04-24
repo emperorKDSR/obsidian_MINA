@@ -1,3 +1,9 @@
+## [1.19.3] - 2026-04-25
+
+### Changed
+- **Journal (mobile)**: Input modal now anchors to the **top** of the screen (slides down) so the soft keyboard doesn't cover the textarea
+- **Journal (mobile)**: "+" button is now a small flat 28px outlined button — no FAB styling
+
 ## [1.19.2] - 2026-04-25
 
 ### Added
