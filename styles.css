@@ -2989,7 +2989,7 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
 .mina-journal-modal { overflow: hidden !important; }
 
 /* ── 1. MOBILE BOTTOM SHEET ──────────────────────────────────────────────── */
-.mina-jm-sheet {
+.mina-journal-modal > .modal-content { background: var(--background-primary) !important; }.mina-jm-sheet {
   position: fixed !important;
   left: 0 !important;
   right: 0 !important;
@@ -3096,7 +3096,7 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
 /* ── 3. TEXTAREA ─────────────────────────────────────────────────────────── */
 .mina-jm-textarea {
   flex: 1; width: 100%;
-  background: transparent; border: none; outline: none; resize: none;
+  background: var(--jm-bg); border: none; outline: none; resize: none;
   color: var(--jm-text);
   font-family: var(--font-text);
   line-height: 1.65;

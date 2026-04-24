@@ -1,3 +1,8 @@
+## [1.18.9] - 2026-04-25
+
+### Fixed
+- **Journal Entry Modal**: Textarea and modal content area were transparent making text input difficult — textarea background now uses solid `var(--background-primary)`; Obsidian's `.modal-content` inside the journal modal is now explicitly forced opaque
+
 ## [1.18.8] - 2026-04-25
 
 ### Added
