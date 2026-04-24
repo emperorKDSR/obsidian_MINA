@@ -1,3 +1,8 @@
+## [1.19.1] - 2026-04-25
+
+### Fixed
+- **Journal Entry Modal (mobile)**: Textarea was invisible / collapsed — broken flex chain between Obsidian's `.modal-content` and the sheet's flex column. Fixed by making `.modal-content` a flex column with `flex: 1; min-height: 0; overflow: hidden` so the textarea can expand and fill available space
+
 ## [1.19.0] - 2026-04-25
 
 ### Changed
