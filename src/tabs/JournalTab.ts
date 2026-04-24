@@ -31,7 +31,12 @@ export class JournalTab extends BaseTab {
         // ── Nav row ───────────────────────────────────────────────────────
         const navRow = scroll.createEl('div', { cls: 'mina-journal-nav-row' });
         this.renderHomeIcon(navRow);
-        if (!Platform.isMobile || isTablet()) {
+        if (Platform.isMobile && !isTablet()) {
+            // Mobile: compact + button in nav row (upper right)
+            const addBtn = navRow.createEl('button', { cls: 'mina-journal-add-btn' });
+            setIcon(addBtn, 'lucide-plus');
+            addBtn.addEventListener('click', () => this._openNewEntry());
+        } else {
             const newBtn = navRow.createEl('button', { cls: 'mina-journal-new-btn' });
             const btnIcon = newBtn.createSpan(); setIcon(btnIcon, 'lucide-pencil');
             newBtn.createSpan({ text: 'New Entry' });
@@ -89,13 +94,6 @@ export class JournalTab extends BaseTab {
         });
 
         renderList();
-
-        // ── Mobile FAB ────────────────────────────────────────────────────
-        if (Platform.isMobile && !isTablet()) {
-            const fab = root.createEl('button', { cls: 'mina-journal-fab' });
-            setIcon(fab, 'lucide-pencil');
-            fab.addEventListener('click', () => this._openNewEntry());
-        }
     }
 
     private _renderGrouped(listEl: HTMLElement, entries: ThoughtEntry[]) {

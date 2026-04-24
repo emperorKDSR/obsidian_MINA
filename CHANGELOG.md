@@ -1,3 +1,8 @@
+## [1.19.2] - 2026-04-25
+
+### Added
+- **Journal (mobile)**: "+" button in the upper-right of the nav row for quick new entry — replaces the bottom FAB
+
 ## [1.19.1] - 2026-04-25
 
 ### Fixed
