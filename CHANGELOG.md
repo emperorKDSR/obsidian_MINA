@@ -1,3 +1,8 @@
+## [1.18.6] - 2026-04-24
+
+### Fixed
+- **People Picker**: `PersonSuggestModal` now filters by `category: people` frontmatter (was incorrectly using `type: people`)
+
 ## [1.18.5] - 2026-04-24
 
 ### Added
