@@ -1,3 +1,8 @@
+## [1.18.4] - 2026-04-24
+
+### Added
+- **Image Paste in Capture**: Thought textarea and Task input in Command Center now support pasting (and drag-dropping) images. The file is saved to the configured Attachments Folder and a `![[filename]]` wikilink is inserted at the cursor.
+
 ## [1.18.3] - 2026-04-24
 
 ### Fixed

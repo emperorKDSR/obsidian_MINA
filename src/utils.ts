@@ -132,7 +132,7 @@ export function attachInlineTriggers(
  */
 export function attachMediaPasteHandler(
     app: App,
-    textarea: HTMLTextAreaElement,
+    textarea: HTMLTextAreaElement | HTMLInputElement,
     getFolder: () => string
 ): void {
     const saveFile = async (file: File): Promise<string | null> => {
@@ -160,15 +160,17 @@ export function attachMediaPasteHandler(
     };
 
     const insertAtCursor = (link: string) => {
-        const start = textarea.selectionStart ?? textarea.value.length;
-        const end = textarea.selectionEnd ?? start;
-        textarea.value = textarea.value.substring(0, start) + link + textarea.value.substring(end);
-        textarea.setSelectionRange(start + link.length, start + link.length);
-        textarea.dispatchEvent(new Event('input'));
+        const el = textarea as HTMLInputElement;
+        const start = el.selectionStart ?? el.value.length;
+        const end = el.selectionEnd ?? start;
+        el.value = el.value.substring(0, start) + link + el.value.substring(end);
+        el.setSelectionRange(start + link.length, start + link.length);
+        el.dispatchEvent(new Event('input'));
     };
 
-    textarea.addEventListener('paste', async (e: ClipboardEvent) => {
-        const items = e.clipboardData?.items;
+    (textarea as HTMLElement).addEventListener('paste', async (e: Event) => {
+        const ce = e as ClipboardEvent;
+        const items = ce.clipboardData?.items;
         if (!items) return;
 
         // Pre-scan for file items synchronously so we can preventDefault before any await
@@ -178,7 +180,7 @@ export function attachMediaPasteHandler(
         }
         if (fileItems.length === 0) return; // no files — let text paste proceed normally
 
-        e.preventDefault();
+        ce.preventDefault();
         for (const item of fileItems) {
             const file = item.getAsFile();
             if (!file) continue;
@@ -192,17 +194,19 @@ export function attachMediaPasteHandler(
         }
     });
 
-    textarea.addEventListener('dragover', (e: DragEvent) => {
-        if (e.dataTransfer?.items && Array.from(e.dataTransfer.items).some(i => i.kind === 'file')) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'copy';
+    (textarea as HTMLElement).addEventListener('dragover', (e: Event) => {
+        const de = e as DragEvent;
+        if (de.dataTransfer?.items && Array.from(de.dataTransfer.items).some(i => i.kind === 'file')) {
+            de.preventDefault();
+            de.dataTransfer.dropEffect = 'copy';
         }
     });
 
-    textarea.addEventListener('drop', async (e: DragEvent) => {
-        const files = e.dataTransfer?.files;
+    (textarea as HTMLElement).addEventListener('drop', async (e: Event) => {
+        const de = e as DragEvent;
+        const files = de.dataTransfer?.files;
         if (!files || files.length === 0) return;
-        e.preventDefault();
+        de.preventDefault();
         for (let i = 0; i < files.length; i++) {
             const filename = await saveFile(files[i]);
             if (filename) {
