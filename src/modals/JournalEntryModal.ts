@@ -181,9 +181,6 @@ export class JournalEntryModal extends Modal {
             cls: 'mina-jm-header-date',
             text: moment().format(variant === 'desktop' ? 'dddd, MMMM D' : 'ddd, MMM D')
         });
-        const closeBtn = header.createEl('button', { cls: 'mina-jm-close-btn', text: '×' });
-        closeBtn.addEventListener('click', () => this.close());
-
         // ── Body
         const body = contentEl.createDiv({
             cls: 'mina-jm-card-body' + (variant === 'desktop' ? ' mina-jm-card-body--desktop' : '')
