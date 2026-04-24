@@ -2,6 +2,7 @@ import { App, Platform, moment, Notice } from 'obsidian';
 import * as chrono from 'chrono-node';
 import { FileSuggestModal } from './modals/FileSuggestModal';
 import { ContextSuggestModal } from './modals/ContextSuggestModal';
+import { PersonSuggestModal } from './modals/PersonSuggestModal';
 import type { RecurrenceRule } from './types';
 
 export function computeNextDue(currentDue: string, rule: RecurrenceRule): string {
@@ -92,6 +93,22 @@ export function attachInlineTriggers(
                 const curPos = textArea.selectionStart ?? insertAt;
                 textArea.value = cur.substring(0, curPos) + cur.substring(curPos);
                 onContext(tag);
+                textArea.focus();
+            }).open();
+            return;
+        }
+
+        // / at start or after whitespace → open PersonSuggestModal (type: people)
+        if (/(^|\s)\/$/.test(before)) {
+            const insertAt = pos - 1;
+            textArea.value = val.substring(0, insertAt) + val.substring(pos);
+            textArea.setSelectionRange(insertAt, insertAt);
+            new PersonSuggestModal(app, (file) => {
+                const link = `[[${file.basename}]]`;
+                const cur = textArea.value;
+                const curPos = textArea.selectionStart ?? insertAt;
+                textArea.value = cur.substring(0, curPos) + link + cur.substring(curPos);
+                textArea.setSelectionRange(curPos + link.length, curPos + link.length);
                 textArea.focus();
             }).open();
             return;

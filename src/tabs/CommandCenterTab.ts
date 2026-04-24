@@ -5,6 +5,7 @@ import { PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, SETTING
 import { parseNaturalDate, isTablet, attachInlineTriggers, attachMediaPasteHandler } from '../utils';
 import { FileSuggestModal } from '../modals/FileSuggestModal';
 import { ContextSuggestModal } from '../modals/ContextSuggestModal';
+import { PersonSuggestModal } from '../modals/PersonSuggestModal';
 import { HabitConfigModal } from '../modals/HabitConfigModal';
 import { HelpModal } from '../modals/HelpModal';
 import { SearchModal } from '../modals/SearchModal';
@@ -236,6 +237,21 @@ export class CommandCenterTab extends BaseTab {
                     const insert = `#${tag} `;
                     taskInput.value = cur.substring(0, curPos) + insert + cur.substring(curPos);
                     taskInput.setSelectionRange(curPos + insert.length, curPos + insert.length);
+                    taskInput.focus();
+                }).open();
+                return;
+            }
+            // / at start or after whitespace → person picker (type: people)
+            if (/(^|\s)\/$/.test(before)) {
+                const insertAt = pos - 1;
+                taskInput.value = val.substring(0, insertAt) + val.substring(pos);
+                taskInput.setSelectionRange(insertAt, insertAt);
+                new PersonSuggestModal(this.app, (file) => {
+                    const link = `[[${file.basename}]]`;
+                    const cur = taskInput.value;
+                    const curPos = taskInput.selectionStart ?? insertAt;
+                    taskInput.value = cur.substring(0, curPos) + link + cur.substring(curPos);
+                    taskInput.setSelectionRange(curPos + link.length, curPos + link.length);
                     taskInput.focus();
                 }).open();
             }

@@ -1,3 +1,8 @@
+## [1.18.5] - 2026-04-24
+
+### Added
+- **`/` People Trigger**: Type `/` (at start or after a space) in any capture input to open a person picker. Lists all vault notes with `type: people` frontmatter. Selecting a person inserts `[[Person Name]]` at the cursor. Works in: Thought textarea, Task input (Command Center), and all EditEntryModal capture fields.
+
 ## [1.18.4] - 2026-04-24
 
 ### Added
