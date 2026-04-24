@@ -2960,3 +2960,225 @@ body.mina-task-edit-active .modal-bg { background: rgba(0,0,0,0.5) !important; }
     background: color-mix(in srgb, var(--interactive-accent) 4%, transparent);
 }
 .mina-etm-textarea::placeholder { color: var(--text-faint); font-weight: 400; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   JOURNAL ENTRY MODAL — MINA V2  (v1.18.8)
+   Namespace: .mina-journal-modal  /  .mina-jm-*
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --jm-radius-sheet: 20px 20px 0 0;
+  --jm-radius-card: 20px;
+  --jm-bg: var(--background-primary);
+  --jm-surface: var(--background-secondary);
+  --jm-accent: var(--interactive-accent);
+  --jm-accent-hover: var(--interactive-accent-hover);
+  --jm-text: var(--text-normal);
+  --jm-muted: var(--text-muted);
+  --jm-border: var(--background-modifier-border);
+  --jm-handle: var(--background-modifier-border);
+  --jm-chip-bg: var(--background-modifier-hover);
+  --jm-chip-text: var(--text-muted);
+  --jm-spacing: 16px;
+  --jm-spacing-sm: 10px;
+  --jm-toolbar-h: 56px;
+  --jm-transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
+.mina-journal-modal { overflow: hidden !important; }
+
+/* ── 1. MOBILE BOTTOM SHEET ──────────────────────────────────────────────── */
+.mina-jm-sheet {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  top: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  border-radius: var(--jm-radius-sheet) !important;
+  background: var(--jm-bg) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: 92vh !important;
+  animation: jm-sheet-slide-up var(--jm-transition) both;
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+}
+@keyframes jm-sheet-slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.mina-jm-handle-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 6px;
+  cursor: grab;
+  flex-shrink: 0;
+}
+.mina-jm-handle-pill {
+  width: 32px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--jm-handle);
+}
+.mina-jm-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 10px;
+  flex-shrink: 0;
+}
+.mina-jm-title-text { font-size: 15px; font-weight: 600; color: var(--jm-text); }
+.mina-jm-title-date { font-size: 12px; color: var(--jm-muted); letter-spacing: 0.01em; }
+
+/* ── 2. TABLET / DESKTOP CARD ────────────────────────────────────────────── */
+.mina-jm-card {
+  border-radius: var(--jm-radius-card) !important;
+  background: var(--jm-bg) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  animation: jm-card-in var(--jm-transition) both;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10) !important;
+}
+.mina-jm-card--tablet { width: 600px !important; max-width: 96vw !important; }
+.mina-jm-card--desktop { width: 680px !important; max-width: 96vw !important; }
+@keyframes jm-card-in {
+  from { opacity: 0; transform: scale(0.97) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+.mina-jm-card.is-dragover {
+  outline: 2px dashed var(--jm-accent) !important;
+  outline-offset: -3px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--jm-accent) 18%, transparent) !important;
+}
+.mina-jm-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--jm-border);
+  flex-shrink: 0;
+}
+.mina-jm-header-left { display: flex; flex-direction: column; gap: 2px; }
+.mina-jm-header-title { font-size: 15px; font-weight: 700; color: var(--jm-text); letter-spacing: 0.01em; }
+.mina-jm-header-date { font-size: 12px; color: var(--jm-muted); }
+.mina-jm-close-btn {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--background-modifier-hover);
+  border: none;
+  color: var(--jm-muted);
+  font-size: 18px; line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--jm-transition), color var(--jm-transition);
+  flex-shrink: 0;
+}
+.mina-jm-close-btn:hover { background: var(--background-modifier-border); color: var(--jm-text); }
+
+/* Card body */
+.mina-jm-card-body { display: flex; flex: 1; min-height: 0; }
+.mina-jm-card-body--desktop { flex-direction: row; }
+.mina-jm-write-zone { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+/* Desktop image preview strip */
+.mina-jm-preview-strip {
+  width: 120px; flex-shrink: 0;
+  background: var(--jm-surface);
+  border-left: 1px solid var(--jm-border);
+  flex-direction: column; gap: 6px;
+  padding: 10px; overflow-y: auto;
+}
+.mina-jm-preview-img { width: 100%; border-radius: 8px; object-fit: cover; aspect-ratio: 1; }
+
+/* ── 3. TEXTAREA ─────────────────────────────────────────────────────────── */
+.mina-jm-textarea {
+  flex: 1; width: 100%;
+  background: transparent; border: none; outline: none; resize: none;
+  color: var(--jm-text);
+  font-family: var(--font-text);
+  line-height: 1.65;
+  box-sizing: border-box;
+  padding: 16px;
+}
+.mina-jm-textarea--mobile { font-size: 16px; min-height: 40vh; }
+.mina-jm-textarea--tablet { font-size: 15px; min-height: 280px; line-height: 1.7; }
+.mina-jm-textarea--desktop { font-size: 15px; min-height: 280px; line-height: 1.7; }
+.mina-jm-textarea::placeholder { color: var(--jm-muted); opacity: 0.7; }
+
+/* ── 4. CHIP ROW ─────────────────────────────────────────────────────────── */
+.mina-jm-chip-row {
+  display: flex; flex-wrap: nowrap; overflow-x: auto;
+  gap: 6px; padding: 6px 16px;
+  scrollbar-width: none; flex-shrink: 0;
+  border-top: 1px solid var(--jm-border);
+  align-items: center; min-height: 36px;
+}
+.mina-jm-chip-row::-webkit-scrollbar { display: none; }
+.mina-jm-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--jm-chip-bg); color: var(--jm-chip-text);
+  font-size: 11px; font-weight: 500;
+  padding: 3px 8px; border-radius: 20px;
+  white-space: nowrap; cursor: default;
+}
+.mina-jm-chip-x {
+  cursor: pointer; opacity: 0.6; font-size: 13px;
+  line-height: 1; padding: 0 2px;
+  transition: opacity 0.15s;
+}
+.mina-jm-chip-x:hover { opacity: 1; }
+.mina-jm-chip-hint { font-size: 11px; color: var(--jm-muted); opacity: 0.6; font-style: italic; }
+
+/* ── 5. TOOLBAR ──────────────────────────────────────────────────────────── */
+.mina-jm-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  height: var(--jm-toolbar-h); padding: 0 16px;
+  background: var(--jm-bg); flex-shrink: 0; gap: 8px;
+}
+.mina-jm-toolbar--mobile {
+  border-top: 1px solid var(--jm-border);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.mina-jm-toolbar--card { border-top: 1px solid var(--jm-border); }
+.mina-jm-toolbar-left { display: flex; align-items: center; gap: 8px; }
+.mina-jm-toolbar-right { display: flex; align-items: center; gap: 8px; }
+
+.mina-jm-attach-btn {
+  height: 36px; min-width: 36px; padding: 0 10px;
+  border-radius: 10px;
+  background: var(--background-modifier-hover);
+  border: 1px solid var(--jm-border);
+  color: var(--jm-text); font-size: 13px;
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  transition: background var(--jm-transition);
+  touch-action: manipulation; min-height: 44px;
+}
+.mina-jm-attach-btn:hover { background: var(--background-modifier-border); }
+.mina-jm-attach-hint { font-size: 11px; color: var(--jm-muted); opacity: 0.7; }
+
+.mina-jm-cancel-btn {
+  height: 36px; padding: 0 14px; border-radius: 10px;
+  background: transparent; border: 1px solid var(--jm-border);
+  color: var(--jm-muted); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: background var(--jm-transition), color var(--jm-transition);
+  touch-action: manipulation; min-height: 44px;
+}
+.mina-jm-cancel-btn:hover { background: var(--background-modifier-hover); color: var(--jm-text); }
+
+.mina-jm-save-btn {
+  height: 36px; padding: 0 16px; border-radius: 10px;
+  background: var(--jm-accent); border: none;
+  color: var(--text-on-accent); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background var(--jm-transition), opacity var(--jm-transition);
+  touch-action: manipulation; min-height: 44px;
+}
+.mina-jm-save-btn:hover:not(:disabled) { background: var(--jm-accent-hover); }
+.mina-jm-save-btn:disabled,
+.mina-jm-save-btn.is-disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   END JOURNAL ENTRY MODAL
+   ═══════════════════════════════════════════════════════════════════════════ */

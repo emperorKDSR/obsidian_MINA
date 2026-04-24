@@ -1,9 +1,9 @@
 import { MarkdownRenderer, moment, Platform, setIcon } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
-import { EditEntryModal } from '../modals/EditEntryModal';
+import { JournalEntryModal } from '../modals/JournalEntryModal';
 import { ConfirmModal } from '../modals/ConfirmModal';
-import { parseContextString, isTablet } from '../utils';
+import { isTablet } from '../utils';
 import type { ThoughtEntry } from '../types';
 
 export class JournalTab extends BaseTab {
@@ -143,11 +143,10 @@ export class JournalTab extends BaseTab {
         setIcon(editBtn, 'lucide-pencil');
         editBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            new EditEntryModal(this.app, this.plugin, entry.body,
-                entry.context.map(c => `#${c}`).join(' '), null, false,
-                async (newText, newCtxStr) => {
-                    const ctxArr = newCtxStr ? parseContextString(newCtxStr) : [];
-                    await this.vault.editThought(entry.filePath, newText.replace(/<br>/g, '\n'), ctxArr);
+            new JournalEntryModal(this.app, this.plugin, 'edit', entry.body,
+                entry.filePath,
+                async (newText, ctxArr) => {
+                    await this.vault.editThought(entry.filePath, newText, ctxArr);
                     this.view.renderView();
                 }).open();
         });
@@ -188,14 +187,12 @@ export class JournalTab extends BaseTab {
     }
 
     private _openNewEntry() {
-        new EditEntryModal(this.app, this.plugin, '', '#journal', null, false,
-            async (text, ctxs) => {
+        new JournalEntryModal(this.app, this.plugin, 'new', '', null,
+            async (text, contexts) => {
                 if (!text.trim()) return;
-                const contexts = parseContextString(ctxs);
-                if (!contexts.includes('journal')) contexts.push('journal');
                 await this.vault.createThoughtFile(text, contexts);
                 this.view.renderView();
-            }, 'New Journal Entry').open();
+            }).open();
     }
 
     private _calcStreak(entries: ThoughtEntry[]): number {

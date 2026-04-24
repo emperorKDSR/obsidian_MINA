@@ -1,3 +1,8 @@
+## [1.18.8] - 2026-04-25
+
+### Added
+- **JournalEntryModal**: Purpose-built dedicated journal entry modal replacing generic `EditEntryModal` in the Journal tab. Features three render variants (mobile bottom sheet, tablet centered card, desktop two-zone card), image attachment via file input and clipboard paste/drag-drop (`attachMediaPasteHandler`), context tag chips with `#` inline trigger, `#journal` always auto-included, keyboard shortcut ⌘↵/Ctrl+↵ to save, Esc to close, swipe-to-dismiss on mobile (handle-only), and drag-over dashed outline on desktop/tablet. Desktop variant includes a 120px image preview strip that appears when images are attached.
+
 ## [1.18.7] - 2026-04-24
 
 ### Changed
