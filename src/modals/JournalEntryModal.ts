@@ -56,13 +56,9 @@ export class JournalEntryModal extends Modal {
         modalEl.addClass('mina-jm-sheet');
         document.body.addClass('mina-journal-sheet-active');
 
-        modalEl.style.setProperty('border-radius', '20px 20px 0 0', 'important');
+        modalEl.style.setProperty('border-radius', '0 0 20px 20px', 'important');
         modalEl.style.setProperty('overflow', 'hidden', 'important');
         contentEl.style.setProperty('padding', '0', 'important');
-
-        // Handle pill
-        const handle = contentEl.createDiv({ cls: 'mina-jm-handle-wrap' });
-        handle.createDiv({ cls: 'mina-jm-handle-pill' });
 
         // Title bar
         const titleBar = contentEl.createDiv({ cls: 'mina-jm-title-bar' });
@@ -152,8 +148,6 @@ export class JournalEntryModal extends Modal {
             (tag: string) => { if (!this.contexts.includes(tag)) { this.contexts.push(tag); renderChips(); } },
             () => this.plugin.settings.contexts ?? []
         );
-
-        this._initSwipeToDismiss(modalEl, handle);
 
         setTimeout(() => {
             textArea.focus();
