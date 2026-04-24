@@ -37,8 +37,11 @@ const SECTIONS: HelpSection[] = [
             { label: 'Capture a Thought', desc: 'Click the capture bar on Home or press ⌘K / Ctrl+K. The modal opens with THOUGHT mode selected by default — just type and save.' },
             { label: 'Capture a Task', desc: 'Tap the TASK button at the top of the capture modal to switch modes. The right panel expands showing due date, recurrence, and properties.', tip: 'Task mode uses a 2-column layout on wider screens — metadata stays visible alongside the text.' },
             { label: 'Mode Toggle at Top', desc: 'The THOUGHT / TASK toggle is always visible at the top of the modal — switch modes without scrolling.' },
-            { label: 'Context Tags (#tags)', desc: 'Add context chips via the + button in the dock. Chips appear as removable pills.' },
+            { label: 'Context Tags (#tags)', desc: 'Type # in any capture field to open the context tag picker. Selected tags appear as removable chip pills.' },
             { label: 'Smart Date Triggers', desc: 'Type @tomorrow, @monday, or @2025-08-01 in the text to auto-set a due date and switch to task mode.', tip: 'Examples: "Fix bug @tomorrow", "Call client @friday"' },
+            { label: 'Wiki-Link Trigger ([[)', desc: 'Type [[ in any capture field to open the full file picker and insert a [[Note Link]] inline.' },
+            { label: 'People Mention Trigger (/)', desc: 'Type / (at the start or after a space) in any capture field to open the People picker. Lists all vault notes with category: people frontmatter. Selecting a person inserts [[Person Name]] at the cursor.', tip: 'To make a note appear in the picker, add category: people to its frontmatter.' },
+            { label: 'Image Paste & Drop 📎', desc: 'Paste (Ctrl+V / ⌘V) or drag-and-drop an image directly into the Thought textarea or Task input. The image is saved to your Attachments Folder and a ![[filename]] wikilink is inserted at the cursor.', tip: 'Supported formats: PNG, JPG, GIF, WebP, SVG, PDF. Configure the save folder under Settings → Attachments Folder.' },
             { label: 'Task Metadata', desc: 'In task mode: set priority (High / Medium / Low), energy level, recurrence, and status in the right panel.' },
             { label: 'Keyboard Shortcuts', desc: '⌘K or Ctrl+K opens capture. ⌘↵ or Ctrl+↵ saves. Esc cancels.' },
         ]
@@ -91,8 +94,9 @@ const SECTIONS: HelpSection[] = [
         items: [
             { label: 'Dues Ledger', desc: 'All your recurring bills and due dates in one place.' },
             { label: 'Filter Views', desc: 'Switch between All, Due Soon, Overdue, and Paid views using the segment bar.' },
-            { label: 'Mark Paid', desc: 'Tap a due item to log a payment. The date is stamped and reflected in Weekly Review.' },
+            { label: 'Mark Paid', desc: 'Tap a due item to open the payment modal. Enter the payment date and next due date. MINA updates the last_payment_date and next_duedate frontmatter fields and appends a payment log entry to the bill note.', tip: 'Dates must be plain YYYY-MM-DD format (e.g. 2026-05-01). The "Paid X ago" badge reads last_payment_date.' },
             { label: 'Burn Rate', desc: 'Total monthly obligation is shown at the top — your financial baseline.' },
+            { label: 'Bill Frontmatter Contract', desc: 'Each bill note uses: active_status, next_duedate, last_payment_date, and amount. The pay button only shows for active bills that have a next_duedate set.', tip: 'Use category: recurring payment to create standard bills via the New Due modal.' },
         ]
     },
     {
@@ -231,6 +235,7 @@ const SECTIONS: HelpSection[] = [
         items: [
             { label: 'Folders', desc: 'Set where thoughts, tasks, habits, voice memos, and reviews are stored in your vault. Use Folder Config for a quick modal.' },
             { label: 'Reviews Folder', desc: 'Root folder for Weekly, Monthly, and Compass review files. Sub-folders Weekly/, Monthly/, Compass/ are auto-created.', tip: 'Default: 000 Bin/MINA V2 Reviews. Configurable in Folder Config.' },
+            { label: 'Attachments Folder', desc: 'Folder where pasted or drag-dropped images and files are saved. Used by the image paste feature in capture inputs.', tip: 'Default: 000 Bin/MINA V2 Attachments. The folder is auto-created on first paste.' },
             { label: 'Contexts', desc: 'Manage your global context tags (#work, #personal, etc.).' },
             { label: 'AI Key', desc: 'Enter your Gemini API key to enable AI Chat and Intelligence features.' },
             { label: 'Habits', desc: 'Add, edit, and archive habits from the ⚙ icon on the Home screen.' },
