@@ -1,3 +1,8 @@
+## [1.19.0] - 2026-04-25
+
+### Changed
+- **Journal Entry Modal**: Removed close button (×) from upper-right header — dismiss via Cancel button, Escape key, or swipe-down (mobile)
+
 ## [1.18.9] - 2026-04-25
 
 ### Fixed
