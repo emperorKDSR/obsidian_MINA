@@ -3268,11 +3268,11 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
 
 /* ── JOURNAL: COMPOSE BAR ───────────────────────────────────────────────── */
 .mina-journal-root.has-compose-bar .mina-journal-scroll {
-    padding-bottom: calc(var(--mobile-toolbar-height, 48px) + 80px);
+    padding-bottom: 120px; /* JS overrides with measured toolbar + compose height */
 }
 .mina-journal-compose {
     position: fixed;
-    bottom: var(--mobile-toolbar-height, 48px);
+    bottom: 0;
     left: 0;
     right: 0;
     z-index: 200;
