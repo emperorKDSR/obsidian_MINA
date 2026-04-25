@@ -207,8 +207,6 @@ export class CalendarTab extends BaseTab {
 
             cell.addEventListener('click', () => {
                 this.view.calendarSelectedDate = dateStr;
-                if (!isWeek && cur.format('YYYY-MM') !== viewMonth)
-                    this.view.calendarViewMonth = cur.format('YYYY-MM');
                 onRefresh();
             });
 

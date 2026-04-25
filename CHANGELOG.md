@@ -385,6 +385,12 @@
 
 # Changelog
 
+## [1.21.2] - 2026-04-25
+
+### Fixed
+- Calendar no longer jumps to a different month when selecting padding days from adjacent months
+
+
 ## [1.21.1] - 2026-04-25
 
 ### Added
