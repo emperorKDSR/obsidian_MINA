@@ -1,3 +1,10 @@
+## [1.19.16] - 2026-04-25
+### Fixed
+- Journal mobile: measure actual .mobile-toolbar height via DOM (was guessing 48px CSS fallback)
+- Journal mobile: visualViewport listener repositions compose bar when keyboard opens
+- Journal mobile: scroll to bottom on textarea focus to prevent iOS blank-space bug
+- CSS: compose bar bottom driven by JS, not hardcoded CSS variable
+
 ## [1.19.15] - 2026-04-25
 ### Fixed
 - Journal mobile: compose bar now position:fixed at ottom:var(--mobile-toolbar-height,48px) — sits exactly above Obsidian's action bar
