@@ -1594,6 +1594,7 @@
 .mina-view-root:has(.mina-journal-root.has-compose-bar) {
     display: flex !important;
     flex-direction: column !important;
+    height: 100% !important;
     overflow: hidden !important;
 }
 .mina-view-root:has(.mina-journal-root.has-compose-bar) .mina-view-content {
@@ -3268,17 +3269,12 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
 
 /* ── JOURNAL: COMPOSE BAR ───────────────────────────────────────────────── */
 .mina-journal-root.has-compose-bar .mina-journal-scroll {
-    padding-bottom: 120px; /* JS overrides with measured toolbar + compose height */
+    padding-bottom: 16px;
 }
 .mina-journal-compose {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 200;
+    flex-shrink: 0;
     background: var(--background-primary);
     border-top: 1px solid var(--background-modifier-border);
-    padding-bottom: 0;
     transition: box-shadow 0.2s ease;
 }
 .mina-journal-compose.is-focused {

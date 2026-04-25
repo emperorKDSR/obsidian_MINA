@@ -78,7 +78,12 @@ export class JournalTab extends BaseTab {
         // ── Compose bar (mobile only) ──────────────────────────────────────
         if (isMobilePhone) {
             this._renderComposeBar(root, scroll);
-            this._initComposePlacement(root, scroll);
+            // Measure Obsidian's mobile toolbar and push compose bar above it
+            requestAnimationFrame(() => {
+                const obsToolbar = document.querySelector('.mobile-toolbar') as HTMLElement;
+                const toolbarH = obsToolbar ? Math.round(obsToolbar.getBoundingClientRect().height) : 0;
+                if (toolbarH > 0) root.style.paddingBottom = `${toolbarH}px`;
+            });
         }
     }
 
@@ -177,40 +182,6 @@ export class JournalTab extends BaseTab {
         }
     }
 
-    // ── COMPOSE BAR PLACEMENT: measure actual toolbar height via DOM ───────
-    private _initComposePlacement(root: HTMLElement, scroll: HTMLElement) {
-        requestAnimationFrame(() => {
-            const compose = root.querySelector('.mina-journal-compose') as HTMLElement;
-            if (!compose) return;
-
-            const obsToolbar = document.querySelector('.mobile-toolbar') as HTMLElement;
-            const toolbarH = obsToolbar
-                ? Math.round(obsToolbar.getBoundingClientRect().height)
-                : 54;
-
-            const updateLayout = (keyboardH = 0) => {
-                const bottomOffset = toolbarH + keyboardH;
-                compose.style.bottom = `${bottomOffset}px`;
-                const composeH = compose.offsetHeight || 52;
-                scroll.style.paddingBottom = `${toolbarH + composeH + 12}px`;
-            };
-
-            updateLayout();
-
-            // visualViewport tracks keyboard appearance on iOS/Android
-            const vv = (window as any).visualViewport;
-            if (vv) {
-                const onVVChange = () => {
-                    const kbH = Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0));
-                    updateLayout(kbH);
-                    if (kbH > 50) requestAnimationFrame(() => { scroll.scrollTop = scroll.scrollHeight; });
-                };
-                vv.addEventListener('resize', onVVChange);
-                vv.addEventListener('scroll', onVVChange);
-            }
-        });
-    }
-
     // ── INLINE COMPOSE BAR ─────────────────────────────────────────────────
     private _renderComposeBar(root: HTMLElement, scroll: HTMLElement) {
         let contexts: string[] = [];
@@ -264,8 +235,7 @@ export class JournalTab extends BaseTab {
 
         textarea.addEventListener('focus', () => {
             compose.addClass('is-focused');
-            // Prevent iOS blank-space-on-focus: scroll to bottom after keyboard animation
-            if (Platform.isMobile) setTimeout(() => { scroll.scrollTop = scroll.scrollHeight; }, 350);
+            setTimeout(() => { scroll.scrollTop = scroll.scrollHeight; }, 350);
         });
         textarea.addEventListener('blur', () => {
             if (!textarea.value.trim() && contexts.length === 0) compose.removeClass('is-focused');
