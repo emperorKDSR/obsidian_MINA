@@ -385,6 +385,14 @@
 
 # Changelog
 
+## [1.21.3] - 2026-04-25
+
+### Fixed
+- Calendar: padding days from adjacent months are now non-interactive (pointer-events:none + reduced opacity)
+- Calendar: skip click handler for outside-month cells to prevent month confusion on mobile
+- Calendar: guard async day-plan loader against stale container references
+
+
 ## [1.21.2] - 2026-04-25
 
 ### Fixed

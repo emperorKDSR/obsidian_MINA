@@ -3510,3 +3510,5 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
 /* ── Task Edit Icon ── */
 .mina-weekplan-task__edit{font-size:0.78em;cursor:pointer;opacity:0.5;margin-left:4px;transition:opacity 0.15s;}
 .mina-weekplan-task__edit:hover{opacity:1;}
+/* ── Calendar: padding days non-interactive ── */
+.mina-cal-cell.is-outside{pointer-events:none;opacity:0.3;}
