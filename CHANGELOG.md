@@ -1,3 +1,8 @@
+## [1.19.23] - 2026-04-25
+### Fixed
+- Journal mobile: always scroll to bottom on load (triple-fire for image rendering)
+- Added 72px bottom padding so last entries are fully visible above FAB
+
 ## [1.19.22] - 2026-04-25
 ### Changed
 - Journal mobile: replaced inline compose bar with FAB trigger button that opens M365-style modal
