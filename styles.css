@@ -1639,6 +1639,12 @@
 }
 .mina-journal-new-btn:hover { opacity: 0.88; }
 .mina-journal-new-btn .svg-icon { width: 13px; height: 13px; }
+.mina-journal-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
 .mina-journal-title {
     margin: 0;
     font-size: 1.5em;
@@ -1827,6 +1833,13 @@
     font-weight: 600;
     letter-spacing: 0.01em;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mina-journal-title-row .mina-journal-fab {
+    margin: 0;
+    padding: 7px 14px;
+    font-size: 0.8em;
+    flex-shrink: 0;
 }
 .mina-journal-fab:active { transform: scale(0.96); box-shadow: 0 1px 4px rgba(0,0,0,0.10); }
 .mina-journal-fab svg, .mina-journal-fab .svg-icon { width: 16px; height: 16px; }

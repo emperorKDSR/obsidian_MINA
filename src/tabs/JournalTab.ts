@@ -16,7 +16,7 @@ export class JournalTab extends BaseTab {
     private _renderJournal(container: HTMLElement) {
         container.empty();
 
-        // Last 14 days, ascending (oldest → newest at bottom)
+        // Last 14 days, descending (newest → oldest at top)
         const twoWeeksAgo = moment().subtract(14, 'days').startOf('day');
         const allEntries = Array.from(this.index.thoughtIndex.values())
             .filter(e =>
@@ -24,8 +24,8 @@ export class JournalTab extends BaseTab {
                 moment(e.created, 'YYYY-MM-DD HH:mm:ss').isSameOrAfter(twoWeeksAgo)
             );
         allEntries.sort((a, b) =>
-            moment(a.created, 'YYYY-MM-DD HH:mm:ss').valueOf() -
-            moment(b.created, 'YYYY-MM-DD HH:mm:ss').valueOf()
+            moment(b.created, 'YYYY-MM-DD HH:mm:ss').valueOf() -
+            moment(a.created, 'YYYY-MM-DD HH:mm:ss').valueOf()
         );
 
         const isMobilePhone = Platform.isMobile && !isTablet();
@@ -44,8 +44,15 @@ export class JournalTab extends BaseTab {
             newBtn.addEventListener('click', () => this._openNewEntry());
         }
 
-        // ── Title ─────────────────────────────────────────────────────────
-        scroll.createEl('h2', { text: 'Journal', cls: 'mina-journal-title' });
+        // ── Title row (header + FAB pill inline on mobile) ────────────────
+        const titleRow = scroll.createEl('div', { cls: 'mina-journal-title-row' });
+        titleRow.createEl('h2', { text: 'Journal', cls: 'mina-journal-title' });
+        if (isMobilePhone) {
+            const fab = titleRow.createEl('button', { cls: 'mina-journal-fab', attr: { 'aria-label': 'New entry' } });
+            setIcon(fab, 'lucide-pencil');
+            fab.createSpan({ text: 'New Entry', cls: 'mina-journal-fab-label' });
+            fab.addEventListener('click', () => this._openNewEntry());
+        }
         scroll.createEl('p', { text: 'Last 14 days', cls: 'mina-journal-subtitle' });
 
         // ── Stats strip ───────────────────────────────────────────────────
@@ -62,32 +69,14 @@ export class JournalTab extends BaseTab {
         const renderList = () => {
             listEl.empty();
             if (allEntries.length === 0) {
-                this.renderEmptyState(listEl, 'No entries in the last 14 days.\nUse the button below to begin. ✍️');
-                if (isMobilePhone) this._appendFab(listEl);
+                this.renderEmptyState(listEl, 'No entries in the last 14 days.\nTap New Entry above to begin. ✍️');
                 return;
             }
             this._renderGrouped(listEl, allEntries);
-            // FAB placed inline after last entry so scroll-to-bottom always lands on it
-            if (isMobilePhone) this._appendFab(listEl);
         };
 
         renderList();
-
-        // Scroll to bottom — quad-fire ensures bottom on load even with late images
-        const scrollToBottom = () => { scroll.scrollTop = scroll.scrollHeight; };
-        requestAnimationFrame(scrollToBottom);
-        setTimeout(scrollToBottom, 150);
-        setTimeout(scrollToBottom, 400);
-        setTimeout(scrollToBottom, 800);
     }
-
-    private _appendFab(listEl: HTMLElement) {
-        const fab = listEl.createEl('button', { cls: 'mina-journal-fab', attr: { 'aria-label': 'New entry' } });
-        setIcon(fab, 'lucide-pencil');
-        fab.createSpan({ text: 'New Entry', cls: 'mina-journal-fab-label' });
-        fab.addEventListener('click', () => this._openNewEntry());
-    }
-
     private _renderGrouped(listEl: HTMLElement, entries: ThoughtEntry[]) {
         const today = moment().format('YYYY-MM-DD');
         const yesterday = moment().subtract(1, 'day').format('YYYY-MM-DD');
