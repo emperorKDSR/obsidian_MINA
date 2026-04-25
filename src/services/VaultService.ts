@@ -501,14 +501,22 @@ export class VaultService {
     }
 
     /** Save a weekly review to {reviewsFolder}/Weekly/YYYY-Www.md */
-    async saveWeeklyReview(weekId: string, dateRange: string, wins: string, lessons: string, focus: string[], habitHighlight: string, aiReport?: string): Promise<void> {
+    async saveWeeklyReview(weekId: string, dateRange: string, wins: string, lessons: string, focus: string[], habitHighlight: string, aiReport?: string, dayPlans?: Record<string, string>): Promise<void> {
         const root = (this.settings.reviewsFolder || '000 Bin/MINA V2 Reviews').trim();
         const folder = `${root}/Weekly`;
         const path = `${folder}/${weekId}.md`;
         const now = this.formatDateTime(new Date());
         const focusLines = focus.map((f, i) => `${i + 1}. ${f.trim()}`).join('\n');
         const aiSection = aiReport ? `\n\n# 🤖 AI Weekly Brief\n${aiReport.trim()}` : '';
-        const content = `---\nweek: "${weekId}"\ndate_range: "${dateRange}"\nsaved: "${now}"\n---\n\n# 🏆 Wins\n${wins.trim()}\n\n# 📚 Lessons\n${lessons.trim()}\n\n# 🎯 Focus\n${focusLines}\n\n# 💡 Habit Highlight\n${habitHighlight}${aiSection}\n`;
+        let dayPlanSection = '';
+        if (dayPlans && Object.values(dayPlans).some(v => v.trim())) {
+            const lines = Object.entries(dayPlans)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([date, intention]) => `- ${date}: ${intention.trim()}`)
+                .join('\n');
+            dayPlanSection = `\n\n# 📅 Next Week Plan\n${lines}`;
+        }
+        const content = `---\nweek: "${weekId}"\ndate_range: "${dateRange}"\nsaved: "${now}"\n---\n\n# 🏆 Wins\n${wins.trim()}\n\n# 📚 Lessons\n${lessons.trim()}\n\n# 🎯 Focus\n${focusLines}\n\n# 💡 Habit Highlight\n${habitHighlight}${dayPlanSection}${aiSection}\n`;
         try {
             await this.ensureFolder(folder);
             const existing = this.app.vault.getAbstractFileByPath(path);
@@ -687,7 +695,7 @@ export class VaultService {
     }
 
     /** Load a weekly review file and parse wins/lessons/focus/aiReport sections */
-    async loadWeeklyReview(weekId: string): Promise<{ wins: string; lessons: string; focus: string[]; saved: string; aiReport?: string } | null> {
+    async loadWeeklyReview(weekId: string): Promise<{ wins: string; lessons: string; focus: string[]; saved: string; aiReport?: string; dayPlans?: Record<string, string> } | null> {
         const root = (this.settings.reviewsFolder || '000 Bin/MINA V2 Reviews').trim();
         const path = `${root}/Weekly/${weekId}.md`;
         const file = this.app.vault.getAbstractFileByPath(path);
@@ -700,19 +708,32 @@ export class VaultService {
             for (const part of parts) {
                 const firstNewline = part.indexOf('\n');
                 if (firstNewline === -1) continue;
-                const heading = part.substring(0, firstNewline).replace(/[🏆📚🎯💡🤖\s]+/g, ' ').trim().toLowerCase();
+                const heading = part.substring(0, firstNewline).replace(/[🏆📚🎯💡🤖📅\s]+/g, ' ').trim().toLowerCase();
                 sections[heading] = part.substring(firstNewline + 1).trim();
             }
             const focusRaw = sections['focus'] || '';
             const focus = focusRaw.split('\n').map(l => l.replace(/^\d+\.\s*/, '').trim()).filter(Boolean);
             const cache = this.app.metadataCache.getFileCache(file);
             const saved = cache?.frontmatter?.['saved'] || '';
+
+            // Parse day plans: lines like "- 2026-04-28: Deep work sprint"
+            let dayPlans: Record<string, string> | undefined;
+            const dayPlanRaw = sections['next week plan'];
+            if (dayPlanRaw) {
+                dayPlans = {};
+                for (const line of dayPlanRaw.split('\n')) {
+                    const match = line.match(/^-\s*(\d{4}-\d{2}-\d{2}):\s*(.+)/);
+                    if (match) dayPlans[match[1]] = match[2].trim();
+                }
+            }
+
             return {
                 wins: sections['wins'] || '',
                 lessons: sections['lessons'] || '',
                 focus,
                 saved,
-                aiReport: sections['ai weekly brief'] || undefined
+                aiReport: sections['ai weekly brief'] || undefined,
+                dayPlans
             };
         } catch (e) {
             console.error('[MINA VaultService] loadWeeklyReview', e);

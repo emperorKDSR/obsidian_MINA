@@ -165,6 +165,7 @@ export interface WeeklyReportContext {
     weeklyGoals: string[];
     northStarGoals: string[];
     recentThoughts: string[];
+    dayPlans?: Record<string, string>;
 }
 
 export interface ReviewData {

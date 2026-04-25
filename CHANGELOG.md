@@ -1,3 +1,19 @@
+## [1.20.0] - 2026-04-25
+### Added
+- **Next Week Plan**: New collapsible section in Weekly Review for day-by-day planning
+  - 7 day cards (Mon–Sun) with intention input and assigned task display
+  - This Week / Next Week toggle to plan either the current or upcoming week
+  - Inline task picker: tap "+ Assign Task" to route unscheduled tasks to specific days
+  - Tasks show priority badges; checkbox to complete inline
+  - Day cards are collapsible on mobile; CSS grid layout on tablet/desktop
+  - Day plans saved as markdown section in weekly review file (`# 📅 Next Week Plan`)
+  - Assigned tasks automatically appear in Focus tab on their due day
+- Manual & Help: documented Next Week Plan and task assignment features
+
+### Changed
+- VaultService: `saveWeeklyReview()` and `loadWeeklyReview()` extended with `dayPlans` parameter
+- types.ts: added `dayPlans` to `WeeklyReportContext`; view.ts: added `weekPlanDraft` and `weekPlanTargetMode` state
+
 ## [1.19.34] - 2026-04-25
 ### Changed
 - Manual (ManualTab + HelpModal): updated all outdated section descriptions to reflect current state
