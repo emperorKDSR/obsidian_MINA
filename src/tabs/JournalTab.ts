@@ -70,10 +70,11 @@ export class JournalTab extends BaseTab {
 
         renderList();
 
-        // Scroll to bottom — double-fire to catch late-rendering images
+        // Scroll to bottom — triple-fire to catch late-rendering images
         const scrollToBottom = () => { scroll.scrollTop = scroll.scrollHeight; };
         requestAnimationFrame(scrollToBottom);
         setTimeout(scrollToBottom, 150);
+        setTimeout(scrollToBottom, 400);
 
         // ── Compose trigger (mobile only) — FAB opens modal ────────────────
         if (isMobilePhone) {
