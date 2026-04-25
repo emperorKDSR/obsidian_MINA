@@ -1,3 +1,8 @@
+## [1.19.25] - 2026-04-25
+### Fixed
+- Journal mobile: FAB bottom position set to 22px
+- Journal mobile: quad-fire scroll-to-bottom on load (rAF, 150ms, 400ms, 800ms) for reliable initial position
+
 ## [1.19.24] - 2026-04-25
 ### Fixed
 - Journal mobile: FAB bottom position reduced to 4px
