@@ -1,3 +1,7 @@
+## [1.19.20] - 2026-04-25
+### Fixed
+- Journal mobile: reduce root height by extra 8px so compose bar sits slightly higher above toolbar
+
 ## [1.19.19] - 2026-04-25
 ### Fixed
 - Journal mobile: use window.innerHeight instead of 100vh for root height calculation — 100vh on iOS includes area behind toolbar
