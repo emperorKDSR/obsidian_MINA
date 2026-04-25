@@ -206,6 +206,7 @@ export class CalendarTab extends BaseTab {
             }
 
             cell.addEventListener('click', () => {
+                if (isOutside) return;
                 this.view.calendarSelectedDate = dateStr;
                 onRefresh();
             });
@@ -287,8 +288,8 @@ export class CalendarTab extends BaseTab {
             (this.view as any).calendarDayPlans = plans;
             (this.view as any)._calDayPlansKey = cacheKey;
 
-            // Only re-render if we actually have intentions to show
-            if (Object.keys(plans).length > 0) {
+            // Only re-render if container is still attached to DOM and we have data
+            if (Object.keys(plans).length > 0 && container.isConnected) {
                 this.render(container);
             }
         } catch { /* no review for this week */ }
