@@ -70,8 +70,10 @@ export class JournalTab extends BaseTab {
 
         renderList();
 
-        // Scroll to bottom so latest entries are visible
-        requestAnimationFrame(() => { scroll.scrollTop = scroll.scrollHeight; });
+        // Scroll to bottom — double-fire to catch late-rendering images
+        const scrollToBottom = () => { scroll.scrollTop = scroll.scrollHeight; };
+        requestAnimationFrame(scrollToBottom);
+        setTimeout(scrollToBottom, 150);
 
         // ── Compose bar (mobile only) ──────────────────────────────────────
         if (isMobilePhone) this._renderComposeBar(root);
@@ -144,13 +146,14 @@ export class JournalTab extends BaseTab {
         this.hookImageZoom(bodyEl);
         this.hookCheckboxes(bodyEl, entry);
 
-        // Thumbnail images — click to expand
+        // Thumbnail images — tap to open full-screen zoomable lightbox
         setTimeout(() => {
             bodyEl.querySelectorAll('img').forEach((img: HTMLElement) => {
                 img.addClass('mina-journal-thumb');
                 img.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    img.classList.toggle('is-thumb-expanded');
+                    const src = (img as HTMLImageElement).src;
+                    if (src) this._openImageLightbox(src);
                 });
             });
         }, 120);
@@ -298,6 +301,61 @@ export class JournalTab extends BaseTab {
             console.error('[MINA] Compose attachment failed:', e);
             new Notice('Failed to attach image.', 2000);
         }
+    }
+
+    // ── FULL-SCREEN IMAGE LIGHTBOX WITH PINCH ZOOM ───────────────────────
+    private _openImageLightbox(src: string) {
+        const overlay = document.body.createDiv({ cls: 'mina-journal-lightbox' });
+        const imgEl = overlay.createEl('img', {
+            cls: 'mina-journal-lightbox-img',
+            attr: { src }
+        }) as HTMLImageElement;
+
+        const closeBtn = overlay.createEl('button', { cls: 'mina-journal-lightbox-close', text: '×' });
+        closeBtn.addEventListener('click', () => overlay.remove());
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+        // Pinch-to-zoom
+        let scale = 1, lastScale = 1, startDist = 0;
+        let originX = 0, originY = 0;
+
+        imgEl.addEventListener('touchstart', (e: TouchEvent) => {
+            if (e.touches.length === 2) {
+                startDist = Math.hypot(
+                    e.touches[1].clientX - e.touches[0].clientX,
+                    e.touches[1].clientY - e.touches[0].clientY
+                );
+                originX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                originY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                imgEl.style.transformOrigin = `${originX}px ${originY}px`;
+            }
+        }, { passive: true });
+
+        imgEl.addEventListener('touchmove', (e: TouchEvent) => {
+            if (e.touches.length !== 2) return;
+            e.preventDefault();
+            const dist = Math.hypot(
+                e.touches[1].clientX - e.touches[0].clientX,
+                e.touches[1].clientY - e.touches[0].clientY
+            );
+            scale = Math.max(1, Math.min(6, lastScale * (dist / startDist)));
+            imgEl.style.transform = `scale(${scale})`;
+        }, { passive: false });
+
+        imgEl.addEventListener('touchend', () => { lastScale = scale; });
+
+        // Double-tap to reset zoom
+        let lastTap = 0;
+        imgEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const now = Date.now();
+            if (now - lastTap < 300) {
+                scale = 1; lastScale = 1;
+                imgEl.style.transform = 'scale(1)';
+                imgEl.style.transformOrigin = 'center center';
+            }
+            lastTap = now;
+        });
     }
 
     private _openNewEntry() {

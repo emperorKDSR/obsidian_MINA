@@ -1,3 +1,10 @@
+## [1.19.6] - 2026-04-25
+
+### Changed
+- **Journal (mobile)**: Tapping a thumbnail opens a full-screen lightbox — pinch to zoom (up to 6×), double-tap to reset, tap outside or × to close
+- **Journal compose bar**: `padding-bottom: max(4px, safe-area-inset)` — input is never clipped at the bottom edge
+- **Journal scroll**: Double-scroll-to-bottom (rAF + 150ms) ensures latest entry always visible on load, even when images delay layout
+
 ## [1.19.5] - 2026-04-25
 
 ### Changed
