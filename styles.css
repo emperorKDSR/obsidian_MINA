@@ -3524,3 +3524,5 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
 .mina-cal-quickadd__input--past:focus{border-color:var(--text-warning,#e6a817);}
 .mina-cal-quickadd__submit{background:var(--interactive-accent);color:var(--text-on-accent);border:none;border-radius:8px;padding:6px 10px;font-size:0.85em;cursor:pointer;font-weight:700;line-height:1;}
 .mina-cal-quickadd__submit:disabled{opacity:0.5;cursor:wait;}
+/* ── Calendar task toggle icon ── */
+.mina-cal-detail-item-icon--toggle{cursor:pointer;border-radius:50%;transition:color 0.15s;}.mina-cal-detail-item-icon--toggle:hover{color:var(--interactive-accent);}
