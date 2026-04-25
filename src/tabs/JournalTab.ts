@@ -1,9 +1,9 @@
-import { MarkdownRenderer, moment, Platform, setIcon } from 'obsidian';
+import { MarkdownRenderer, moment, Platform, setIcon, Notice } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { JournalEntryModal } from '../modals/JournalEntryModal';
 import { ConfirmModal } from '../modals/ConfirmModal';
-import { isTablet } from '../utils';
+import { isTablet, attachMediaPasteHandler, attachInlineTriggers } from '../utils';
 import type { ThoughtEntry } from '../types';
 
 export class JournalTab extends BaseTab {
@@ -16,27 +16,28 @@ export class JournalTab extends BaseTab {
     private _renderJournal(container: HTMLElement) {
         container.empty();
 
-        // Gather + sort: latest created first
+        // Last 14 days, ascending (oldest → newest at bottom)
+        const twoWeeksAgo = moment().subtract(14, 'days').startOf('day');
         const allEntries = Array.from(this.index.thoughtIndex.values())
-            .filter(e => Array.isArray(e.context) && e.context.includes('journal'));
+            .filter(e =>
+                Array.isArray(e.context) && e.context.includes('journal') &&
+                moment(e.created, 'YYYY-MM-DD HH:mm:ss').isSameOrAfter(twoWeeksAgo)
+            );
         allEntries.sort((a, b) =>
-            moment(b.created, 'YYYY-MM-DD HH:mm:ss').valueOf() -
-            moment(a.created, 'YYYY-MM-DD HH:mm:ss').valueOf()
+            moment(a.created, 'YYYY-MM-DD HH:mm:ss').valueOf() -
+            moment(b.created, 'YYYY-MM-DD HH:mm:ss').valueOf()
         );
 
-        // Root: flex-col so FAB sits outside scroll container
+        const isMobilePhone = Platform.isMobile && !isTablet();
+
         const root = container.createEl('div', { cls: 'mina-journal-root' });
+        if (isMobilePhone) root.addClass('has-compose-bar');
         const scroll = root.createEl('div', { cls: 'mina-journal-scroll' });
 
         // ── Nav row ───────────────────────────────────────────────────────
         const navRow = scroll.createEl('div', { cls: 'mina-journal-nav-row' });
         this.renderHomeIcon(navRow);
-        if (Platform.isMobile && !isTablet()) {
-            // Mobile: compact + button in nav row (upper right)
-            const addBtn = navRow.createEl('button', { cls: 'mina-journal-add-btn' });
-            setIcon(addBtn, 'lucide-plus');
-            addBtn.addEventListener('click', () => this._openNewEntry());
-        } else {
+        if (!isMobilePhone) {
             const newBtn = navRow.createEl('button', { cls: 'mina-journal-new-btn' });
             const btnIcon = newBtn.createSpan(); setIcon(btnIcon, 'lucide-pencil');
             newBtn.createSpan({ text: 'New Entry' });
@@ -45,7 +46,7 @@ export class JournalTab extends BaseTab {
 
         // ── Title ─────────────────────────────────────────────────────────
         scroll.createEl('h2', { text: 'Journal', cls: 'mina-journal-title' });
-        scroll.createEl('p', { text: 'Your personal reflections', cls: 'mina-journal-subtitle' });
+        scroll.createEl('p', { text: 'Last 14 days', cls: 'mina-journal-subtitle' });
 
         // ── Stats strip ───────────────────────────────────────────────────
         const thisMonth = moment().format('YYYY-MM');
@@ -58,17 +59,22 @@ export class JournalTab extends BaseTab {
 
         // ── List ──────────────────────────────────────────────────────────
         const listEl = scroll.createEl('div', { cls: 'mina-journal-list' });
-
         const renderList = () => {
             listEl.empty();
             if (allEntries.length === 0) {
-                this.renderEmptyState(listEl, 'No journal entries yet.\nTap + to begin. ✍️');
+                this.renderEmptyState(listEl, 'No entries in the last 14 days.\nUse the bar below to begin. ✍️');
                 return;
             }
             this._renderGrouped(listEl, allEntries);
         };
 
         renderList();
+
+        // Scroll to bottom so latest entries are visible
+        requestAnimationFrame(() => { scroll.scrollTop = scroll.scrollHeight; });
+
+        // ── Compose bar (mobile only) ──────────────────────────────────────
+        if (isMobilePhone) this._renderComposeBar(root);
     }
 
     private _renderGrouped(listEl: HTMLElement, entries: ThoughtEntry[]) {
@@ -105,19 +111,14 @@ export class JournalTab extends BaseTab {
 
         // ── Card head: time + actions ─────────────────────────────────────
         const cardHead = card.createEl('div', { cls: 'mina-journal-card-head' });
-        if (timePart) {
-            cardHead.createEl('span', { cls: 'mina-journal-card-time', text: timePart });
-        }
+        if (timePart) cardHead.createEl('span', { cls: 'mina-journal-card-time', text: timePart });
         const actions = cardHead.createEl('div', { cls: 'mina-journal-card-actions' });
 
-        const editBtn = actions.createEl('button', {
-            cls: 'mina-journal-act-btn', attr: { title: 'Edit entry' }
-        });
+        const editBtn = actions.createEl('button', { cls: 'mina-journal-act-btn', attr: { title: 'Edit entry' } });
         setIcon(editBtn, 'lucide-pencil');
         editBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            new JournalEntryModal(this.app, this.plugin, 'edit', entry.body,
-                entry.filePath,
+            new JournalEntryModal(this.app, this.plugin, 'edit', entry.body, entry.filePath,
                 async (newText, ctxArr) => {
                     await this.vault.editThought(entry.filePath, newText, ctxArr);
                     this.view.renderView();
@@ -143,6 +144,17 @@ export class JournalTab extends BaseTab {
         this.hookImageZoom(bodyEl);
         this.hookCheckboxes(bodyEl, entry);
 
+        // Thumbnail images — click to expand
+        setTimeout(() => {
+            bodyEl.querySelectorAll('img').forEach((img: HTMLElement) => {
+                img.addClass('mina-journal-thumb');
+                img.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    img.classList.toggle('is-thumb-expanded');
+                });
+            });
+        }, 120);
+
         // ── Footer: context chips + reply count ───────────────────────────
         const visibleCtx = entry.context.filter(c => c !== 'journal');
         if (visibleCtx.length > 0 || entry.children.length > 0) {
@@ -156,6 +168,135 @@ export class JournalTab extends BaseTab {
                     text: `${entry.children.length} repl${entry.children.length === 1 ? 'y' : 'ies'}`
                 });
             }
+        }
+    }
+
+    // ── INLINE COMPOSE BAR ─────────────────────────────────────────────────
+    private _renderComposeBar(root: HTMLElement) {
+        let contexts: string[] = [];
+        const compose = root.createDiv({ cls: 'mina-journal-compose' });
+
+        // Chips row — appears above input when focused and chips exist
+        const chipsWrap = compose.createDiv({ cls: 'mina-journal-compose-chips' });
+        const renderChips = () => {
+            chipsWrap.empty();
+            const visible = contexts.filter(c => c !== 'journal');
+            for (const ctx of visible) {
+                const chip = chipsWrap.createEl('span', { cls: 'mina-jm-chip' });
+                chip.createSpan({ text: `#${ctx}` });
+                const x = chip.createSpan({ text: '×', cls: 'mina-jm-chip-x' });
+                x.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    contexts = contexts.filter(c => c !== ctx);
+                    renderChips();
+                });
+            }
+        };
+
+        const row = compose.createDiv({ cls: 'mina-journal-compose-row' });
+
+        const fileInput = compose.createEl('input', {
+            attr: { type: 'file', accept: 'image/*,application/pdf', style: 'display:none' }
+        }) as HTMLInputElement;
+
+        const attachBtn = row.createEl('button', {
+            cls: 'mina-journal-compose-attach', attr: { title: 'Attach image' }
+        });
+        setIcon(attachBtn, 'lucide-image');
+        attachBtn.addEventListener('click', () => fileInput.click());
+
+        const textarea = row.createEl('textarea', {
+            cls: 'mina-journal-compose-input',
+            attr: { placeholder: 'Write a journal entry…', rows: '1' }
+        }) as HTMLTextAreaElement;
+
+        const sendBtn = row.createEl('button', {
+            cls: 'mina-journal-compose-send', attr: { title: 'Save entry' }
+        }) as HTMLButtonElement;
+        setIcon(sendBtn, 'lucide-send');
+        sendBtn.disabled = true;
+
+        const autoGrow = () => {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+            textarea.style.overflowY = textarea.scrollHeight > 120 ? 'auto' : 'hidden';
+        };
+
+        textarea.addEventListener('focus', () => compose.addClass('is-focused'));
+        textarea.addEventListener('blur', () => {
+            if (!textarea.value.trim() && contexts.length === 0) compose.removeClass('is-focused');
+        });
+        textarea.addEventListener('input', () => {
+            autoGrow();
+            sendBtn.disabled = !textarea.value.trim();
+        });
+
+        fileInput.addEventListener('change', async () => {
+            if (!fileInput.files?.length) return;
+            for (let i = 0; i < fileInput.files.length; i++) {
+                await this._saveComposeAttachment(fileInput.files[i], textarea);
+            }
+            fileInput.value = '';
+            sendBtn.disabled = !textarea.value.trim();
+            autoGrow();
+        });
+
+        attachMediaPasteHandler(this.app, textarea, () =>
+            this.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments'
+        );
+        attachInlineTriggers(
+            this.app, textarea,
+            () => {},
+            (tag: string) => { if (!contexts.includes(tag)) { contexts.push(tag); renderChips(); } },
+            () => this.settings.contexts ?? []
+        );
+
+        const doSend = async () => {
+            const text = textarea.value.trim();
+            if (!text) return;
+            const ctxs = [...contexts];
+            if (!ctxs.includes('journal')) ctxs.push('journal');
+            await this.vault.createThoughtFile(text, ctxs);
+            textarea.value = '';
+            textarea.style.height = '';
+            contexts = [];
+            renderChips();
+            sendBtn.disabled = true;
+            compose.removeClass('is-focused');
+            this.view.renderView();
+        };
+
+        sendBtn.addEventListener('click', doSend);
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); doSend(); }
+        });
+    }
+
+    private async _saveComposeAttachment(file: File, textarea: HTMLTextAreaElement): Promise<void> {
+        try {
+            const folder = (this.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments').trim();
+            if (!this.app.vault.getAbstractFileByPath(folder)) {
+                await this.app.vault.createFolder(folder);
+            }
+            const mimeToExt: Record<string, string> = {
+                'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif',
+                'image/webp': 'webp', 'application/pdf': 'pdf',
+            };
+            const ext = mimeToExt[file.type] || (file.name.includes('.') ? file.name.split('.').pop()! : 'bin');
+            const ts = moment().format('YYYYMMDD_HHmmss');
+            const rand = Math.random().toString(36).substring(2, 6);
+            const filename = `journal_${ts}_${rand}.${ext}`;
+            await this.app.vault.createBinary(`${folder}/${filename}`, await file.arrayBuffer());
+            const link = `![[${filename}]]`;
+            const start = textarea.selectionStart ?? textarea.value.length;
+            const end = textarea.selectionEnd ?? start;
+            textarea.value = textarea.value.substring(0, start) + link + textarea.value.substring(end);
+            textarea.setSelectionRange(start + link.length, start + link.length);
+            textarea.dispatchEvent(new Event('input'));
+            new Notice('📎 Image attached', 1200);
+        } catch (e) {
+            console.error('[MINA] Compose attachment failed:', e);
+            new Notice('Failed to attach image.', 2000);
         }
     }
 
