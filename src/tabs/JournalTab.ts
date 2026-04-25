@@ -78,11 +78,15 @@ export class JournalTab extends BaseTab {
         // ── Compose bar (mobile only) ──────────────────────────────────────
         if (isMobilePhone) {
             this._renderComposeBar(root, scroll);
-            // Measure Obsidian's mobile toolbar and push compose bar above it
+            // Explicitly bound root height: from its top to the toolbar top
             requestAnimationFrame(() => {
                 const obsToolbar = document.querySelector('.mobile-toolbar') as HTMLElement;
                 const toolbarH = obsToolbar ? Math.round(obsToolbar.getBoundingClientRect().height) : 0;
-                if (toolbarH > 0) root.style.paddingBottom = `${toolbarH}px`;
+                const rootTop = Math.round(root.getBoundingClientRect().top);
+                root.style.height = `calc(100vh - ${rootTop}px - ${toolbarH}px)`;
+                root.style.overflow = 'hidden';
+                // Scroll to bottom after layout settles
+                setTimeout(() => { scroll.scrollTop = scroll.scrollHeight; }, 100);
             });
         }
     }
