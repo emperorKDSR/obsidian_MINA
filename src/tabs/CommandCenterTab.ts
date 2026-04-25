@@ -34,9 +34,10 @@ export class CommandCenterTab extends BaseTab {
         this.renderCaptureBar(wrap);
         this.renderHabitQuickBar(wrap);
         this.renderZenBanner(wrap);
-        const goalsDual = wrap.createEl('div', { cls: 'mina-goals-pane mina-section--hideable' });
-        this.renderWeeklyGoals(goalsDual);
-        this.renderMonthlyGoals(goalsDual);
+        // Goals removed per design — do not render weekly/monthly goals here
+        // const goalsDual = wrap.createEl('div', { cls: 'mina-goals-pane mina-section--hideable' });
+        // this.renderWeeklyGoals(goalsDual);
+        // this.renderMonthlyGoals(goalsDual);
         this.renderNavigationFooter(wrap);
     }
 
@@ -578,9 +579,40 @@ export class CommandCenterTab extends BaseTab {
             });
         };
 
-        renderCluster('ACTION',     [{ label: 'Focus', icon: FOCUS_ICON_ID, tab: 'focus' }, { label: 'Tasks',    icon: 'lucide-check-square-2', tab: 'review-tasks' }, { label: 'Finance', icon: PF_ICON_ID, tab: 'dues' }, { label: 'Habits', icon: 'lucide-flame', tab: 'habits' }, { label: 'Calendar', icon: 'lucide-calendar', tab: 'calendar' }], 'mina-pillar-cluster--action');
-        renderCluster('MANAGEMENT', [{ label: 'Projects', icon: 'lucide-briefcase', tab: 'projects' }, { label: 'Synthesis', icon: SYNTHESIS_ICON_ID, tab: 'synthesis' }, { label: 'Journal', icon: JOURNAL_ICON_ID, tab: 'journal' }, { label: 'Timeline', icon: TIMELINE_ICON_ID, tab: 'timeline' }], 'mina-pillar-cluster--mgmt');
-        renderCluster('SYSTEM',     [{ label: 'AI Chat',  icon: AI_CHAT_ICON_ID, tab: 'mina-ai' }, { label: 'Voice', icon: 'lucide-mic', tab: 'voice-note' }, { label: 'Weekly', icon: REVIEW_ICON_ID, tab: 'review' }, { label: 'Monthly', icon: 'lucide-calendar-range', tab: 'monthly-review' }, { label: 'Compass', icon: COMPASS_ICON_ID, tab: 'compass' }, { label: 'Memento', icon: MEMENTO_ICON_ID, tab: 'memento-mori' }, { label: 'Export', icon: 'lucide-download', tab: 'export' }, { label: 'Settings', icon: SETTINGS_ICON_ID, tab: 'settings' }, { label: 'Manual', icon: 'lucide-book-open', tab: 'manual' }], 'mina-pillar-cluster--system');
+        // ACTION row (reordered)
+        renderCluster('ACTION',     [
+            { label: 'Focus', icon: FOCUS_ICON_ID, tab: 'focus' },
+            { label: 'Habits', icon: 'lucide-flame', tab: 'habits' },
+            { label: 'Journal', icon: JOURNAL_ICON_ID, tab: 'journal' },
+            { label: 'Synthesis', icon: SYNTHESIS_ICON_ID, tab: 'synthesis' },
+            { label: 'Timeline', icon: TIMELINE_ICON_ID, tab: 'timeline' }
+        ], 'mina-pillar-cluster--action');
+
+        // MANAGEMENT row — displayed like action row but with blocked background
+        renderCluster('MANAGEMENT', [
+            { label: 'Tasks', icon: 'lucide-check-square-2', tab: 'review-tasks' },
+            { label: 'Finance', icon: PF_ICON_ID, tab: 'dues' },
+            { label: 'Projects', icon: 'lucide-briefcase', tab: 'projects' },
+            { label: 'Calendar', icon: 'lucide-calendar', tab: 'calendar' },
+            { label: 'Weekly', icon: REVIEW_ICON_ID, tab: 'review' },
+            { label: 'Monthly', icon: 'lucide-calendar-range', tab: 'monthly-review' },
+            { label: 'Compass', icon: COMPASS_ICON_ID, tab: 'compass' }
+        ], 'mina-pillar-cluster--mgmt mina-pillar-cluster--blocked');
+
+        // FEATURES row
+        renderCluster('FEATURES', [
+            { label: 'AI Chat', icon: AI_CHAT_ICON_ID, tab: 'mina-ai' },
+            { label: 'Voice', icon: 'lucide-mic', tab: 'voice-note' },
+            { label: 'Compasee', icon: COMPASS_ICON_ID, tab: 'compass' },
+            { label: 'Memento', icon: MEMENTO_ICON_ID, tab: 'memento-mori' }
+        ], 'mina-pillar-cluster--features');
+
+        // SYSTEM row
+        renderCluster('SYSTEM', [
+            { label: 'Settings', icon: SETTINGS_ICON_ID, tab: 'settings' },
+            { label: 'Manual', icon: 'lucide-book-open', tab: 'manual' },
+            { label: 'Export', icon: 'lucide-download', tab: 'export' }
+        ], 'mina-pillar-cluster--system');
     }
 
     /** Attach # autocomplete suggestions to a capture textarea.
