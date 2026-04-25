@@ -1,3 +1,8 @@
+## [1.19.32] - 2026-04-25
+### Fixed
+- Tasks tab: full task title now always visible — changed row to align-items:flex-start so multi-line titles expand correctly
+- Added white-space:normal and overflow:visible on task title element
+
 ## [1.19.31] - 2026-04-25
 ### Changed
 - Command Center: Management, Features, System clusters now share same accent border/background as Action cluster
