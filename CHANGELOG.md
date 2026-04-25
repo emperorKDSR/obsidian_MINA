@@ -1,3 +1,8 @@
+## [1.19.30] - 2026-04-25
+### Changed
+- Command Center: navigation clusters now wrap responsively to the next row when space is insufficient.
+- Adjusted min-widths to keep pill layout stable across breakpoints.
+
 ## [1.19.29] - 2026-04-25
 ### Changed
 - Command Center: removed Weekly/Monthly goals from header

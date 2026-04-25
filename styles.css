@@ -3394,3 +3394,9 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
 .mina-pillar-cluster--features { /* same visual style as action */ }
 .mina-pillar-cluster--action .mina-pillar-item, .mina-pillar-cluster--features .mina-pillar-item { min-width: 90px; }
 
+
+/* Command Center: make pillar clusters responsive and wrap */
+.mina-pillar-cluster { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.mina-pillar-cluster .mina-pillar-item { flex: 0 1 auto; min-width: 84px; }
+@media (min-width: 900px) { .mina-pillar-cluster .mina-pillar-item { min-width: 110px; } }
+
