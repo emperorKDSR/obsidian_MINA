@@ -62,10 +62,13 @@ export class JournalTab extends BaseTab {
         const renderList = () => {
             listEl.empty();
             if (allEntries.length === 0) {
-                this.renderEmptyState(listEl, 'No entries in the last 14 days.\nUse the bar below to begin. ✍️');
+                this.renderEmptyState(listEl, 'No entries in the last 14 days.\nUse the button below to begin. ✍️');
+                if (isMobilePhone) this._appendFab(listEl);
                 return;
             }
             this._renderGrouped(listEl, allEntries);
+            // FAB placed inline after last entry so scroll-to-bottom always lands on it
+            if (isMobilePhone) this._appendFab(listEl);
         };
 
         renderList();
@@ -76,13 +79,13 @@ export class JournalTab extends BaseTab {
         setTimeout(scrollToBottom, 150);
         setTimeout(scrollToBottom, 400);
         setTimeout(scrollToBottom, 800);
+    }
 
-        // ── Compose trigger (mobile only) — FAB opens modal ────────────────
-        if (isMobilePhone) {
-            const fab = root.createEl('button', { cls: 'mina-journal-fab', attr: { 'aria-label': 'New entry' } });
-            setIcon(fab, 'lucide-pencil');
-            fab.addEventListener('click', () => this._openNewEntry());
-        }
+    private _appendFab(listEl: HTMLElement) {
+        const fab = listEl.createEl('button', { cls: 'mina-journal-fab', attr: { 'aria-label': 'New entry' } });
+        setIcon(fab, 'lucide-pencil');
+        fab.createSpan({ text: 'New Entry', cls: 'mina-journal-fab-label' });
+        fab.addEventListener('click', () => this._openNewEntry());
     }
 
     private _renderGrouped(listEl: HTMLElement, entries: ThoughtEntry[]) {

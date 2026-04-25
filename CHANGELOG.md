@@ -1,3 +1,9 @@
+## [1.19.26] - 2026-04-25
+### Changed
+- Journal mobile: FAB moved inline into list flow below last entry (no longer floating)
+- FAB is a pill button with pencil icon + 'New Entry' label
+- Scroll-to-bottom on load now lands on the FAB, ensuring latest entry and action are always visible
+
 ## [1.19.25] - 2026-04-25
 ### Fixed
 - Journal mobile: FAB bottom position set to 22px
