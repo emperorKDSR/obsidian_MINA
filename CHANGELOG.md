@@ -1,3 +1,7 @@
+## [1.19.11] - 2026-04-25
+### Changed
+- Journal mobile: increased compose bar height by 20px (row padding 11/9px -> 21/19px)
+
 ## [1.19.10] - 2026-04-25
 ### Fixed
 - Journal mobile: removed empty space below compose bar (was safe-area padding)

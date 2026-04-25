@@ -3297,7 +3297,7 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
     display: flex;
     align-items: flex-end;
     gap: 8px;
-    padding: 11px 10px 9px;
+    padding: 21px 10px 19px;
 }
 .mina-journal-compose-attach {
     display: flex; align-items: center; justify-content: center;
