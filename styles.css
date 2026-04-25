@@ -3512,3 +3512,15 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
 .mina-weekplan-task__edit:hover{opacity:1;}
 /* ── Calendar: padding days non-interactive ── */
 .mina-cal-cell.is-outside{pointer-events:none;opacity:0.3;}
+/* ── Calendar Detail Quick Add ── */
+.mina-cal-detail-section-title--action{display:flex;align-items:center;justify-content:space-between;}
+.mina-cal-detail-add-btn{background:transparent;border:none;cursor:pointer;color:var(--text-muted);padding:2px 4px;border-radius:6px;display:flex;align-items:center;}
+.mina-cal-detail-add-btn:hover{color:var(--interactive-accent);background:var(--background-modifier-hover);}
+.mina-cal-detail-add-btn svg{width:16px;height:16px;}
+.mina-cal-quickadd{display:flex;gap:4px;margin-top:6px;align-items:center;padding:0 4px;}
+.mina-cal-quickadd__input{flex:1;background:var(--background-primary);border:1px solid var(--background-modifier-border);border-radius:8px;padding:6px 10px;font-size:0.82em;color:var(--text-normal);outline:none;}
+.mina-cal-quickadd__input:focus{border-color:var(--interactive-accent);}
+.mina-cal-quickadd__input--past{border-color:var(--text-warning,#e6a817);}
+.mina-cal-quickadd__input--past:focus{border-color:var(--text-warning,#e6a817);}
+.mina-cal-quickadd__submit{background:var(--interactive-accent);color:var(--text-on-accent);border:none;border-radius:8px;padding:6px 10px;font-size:0.85em;cursor:pointer;font-weight:700;line-height:1;}
+.mina-cal-quickadd__submit:disabled{opacity:0.5;cursor:wait;}

@@ -1,4 +1,4 @@
-import { moment, setIcon, TFile } from 'obsidian';
+import { moment, setIcon, TFile, Notice } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from './BaseTab';
 import type { TaskEntry } from '../types';
@@ -17,7 +17,7 @@ export class CalendarTab extends BaseTab {
         const wrap = container.createEl('div', { cls: 'mina-cal-wrap' });
         this._renderHeader(wrap, () => this.render(container));
         this._renderGrid(wrap, habitMap, () => this.render(container));
-        this._renderDetail(wrap, habitMap);
+        this._renderDetail(wrap, habitMap, container);
 
         // Pre-load day plans for week view intention chips (async, one-shot)
         if (this.view.calendarViewMode === 'week') {
@@ -215,7 +215,7 @@ export class CalendarTab extends BaseTab {
         }
     }
 
-    private _renderDetail(parent: HTMLElement, habitMap: Map<string, Set<string>>) {
+    private _renderDetail(parent: HTMLElement, habitMap: Map<string, Set<string>>, renderContainer: HTMLElement) {
         const dateStr = this.view.calendarSelectedDate;
         const detail = parent.createEl('div', { cls: 'mina-cal-detail' });
 
@@ -224,9 +224,16 @@ export class CalendarTab extends BaseTab {
         const tasks: TaskEntry[] = [];
         this.index.taskIndex.forEach(t => { if (t.due === dateStr) tasks.push(t); });
 
+        // Tasks section — always render (with + button)
+        const taskHeader = detail.createEl('div', { cls: 'mina-cal-detail-section-title mina-cal-detail-section-title--action' });
+        taskHeader.createEl('span', { text: `Tasks · ${tasks.length}` });
+        const addBtn = taskHeader.createEl('button', { cls: 'mina-cal-detail-add-btn', attr: { title: 'Add task for this day' } });
+        setIcon(addBtn, 'plus');
+
+        const taskSection = detail.createEl('div', { cls: 'mina-cal-detail-task-section' });
+
         if (tasks.length > 0) {
-            detail.createEl('div', { cls: 'mina-cal-detail-section-title', text: `Tasks · ${tasks.length}` });
-            const list = detail.createEl('div', { cls: 'mina-cal-detail-list' });
+            const list = taskSection.createEl('div', { cls: 'mina-cal-detail-list' });
             tasks.sort((a, b) => (a.status === 'done' ? 1 : 0) - (b.status === 'done' ? 1 : 0))
                 .forEach(t => {
                     const item = list.createEl('div', { cls: `mina-cal-detail-item mina-cal-detail-item--task${t.status === 'done' ? ' is-done' : ''}` });
@@ -236,6 +243,43 @@ export class CalendarTab extends BaseTab {
                     if (t.priority) item.createEl('span', { cls: `mina-cal-detail-badge mina-cal-badge--${t.priority}`, text: t.priority });
                 });
         }
+
+        // Quick-add toggle
+        const isPast = dateStr < moment().format('YYYY-MM-DD');
+        addBtn.addEventListener('click', () => {
+            const existing = taskSection.querySelector('.mina-cal-quickadd');
+            if (existing) { existing.remove(); return; }
+
+            const quickAdd = taskSection.createEl('div', { cls: 'mina-cal-quickadd' });
+            const quickInput = quickAdd.createEl('input', {
+                cls: `mina-cal-quickadd__input${isPast ? ' mina-cal-quickadd__input--past' : ''}`,
+                attr: { type: 'text', placeholder: isPast ? 'Add task (past date)…' : 'Task for this day…' }
+            }) as HTMLInputElement;
+            const submitBtn = quickAdd.createEl('button', { cls: 'mina-cal-quickadd__submit', text: '↵' });
+
+            const doCreate = async () => {
+                const title = quickInput.value.trim();
+                if (!title) return;
+                quickInput.disabled = true;
+                submitBtn.disabled = true;
+                try {
+                    await this.vault.createTaskFile(title, [], dateStr);
+                    quickAdd.remove();
+                    setTimeout(() => this.render(renderContainer), 300);
+                } catch (err: any) {
+                    new Notice('Failed to create task: ' + (err?.message || 'Unknown error'));
+                    quickInput.disabled = false;
+                    submitBtn.disabled = false;
+                }
+            };
+
+            quickInput.addEventListener('keydown', (ev) => {
+                if (ev.key === 'Enter') { ev.preventDefault(); doCreate(); }
+                if (ev.key === 'Escape') { ev.preventDefault(); quickAdd.remove(); }
+            });
+            submitBtn.addEventListener('click', () => doCreate());
+            requestAnimationFrame(() => quickInput.focus());
+        });
 
         const dues: any[] = [];
         this.index.dueIndex.forEach(d => { if (d.dueDate === dateStr) dues.push(d); });
@@ -268,7 +312,7 @@ export class CalendarTab extends BaseTab {
         }
 
         if (tasks.length === 0 && dues.length === 0 && habits.length === 0) {
-            this.renderEmptyState(detail, 'Nothing scheduled for this day.');
+            this.renderEmptyState(detail, 'No dues or habits — tap + above to plan a task.');
         }
     }
 
