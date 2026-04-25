@@ -1,3 +1,8 @@
+## [1.19.10] - 2026-04-25
+### Fixed
+- Journal mobile: removed empty space below compose bar (was safe-area padding)
+- Journal mobile: increased compose bar height by 3px (row top padding 8→11px)
+
 ## [1.19.9] - 2026-04-25
 ### Fixed
 - Journal mobile: pinned compose input bar to bottom of screen; entries area is now independently scrollable (fixes flex height chain via CSS `:has()`)

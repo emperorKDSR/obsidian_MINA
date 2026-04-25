@@ -3275,7 +3275,7 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
     flex-shrink: 0;
     background: var(--background-primary);
     border-top: 1px solid var(--background-modifier-border);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: 0;
     transition: box-shadow 0.2s ease;
 }
 .mina-journal-compose.is-focused {
@@ -3297,7 +3297,7 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
     display: flex;
     align-items: flex-end;
     gap: 8px;
-    padding: 8px 10px 9px;
+    padding: 11px 10px 9px;
 }
 .mina-journal-compose-attach {
     display: flex; align-items: center; justify-content: center;
