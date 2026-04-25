@@ -75,21 +75,11 @@ export class JournalTab extends BaseTab {
         requestAnimationFrame(scrollToBottom);
         setTimeout(scrollToBottom, 150);
 
-        // ── Compose bar (mobile only) ──────────────────────────────────────
+        // ── Compose trigger (mobile only) — FAB opens modal ────────────────
         if (isMobilePhone) {
-            this._renderComposeBar(root, scroll);
-            // Explicitly bound root height using JS pixel measurements
-            // (100vh on iOS includes area behind toolbar — use innerHeight instead)
-            // Reduce available height by 8px to add small gap above the toolbar
-            requestAnimationFrame(() => {
-                const obsToolbar = document.querySelector('.mobile-toolbar') as HTMLElement;
-                const toolbarH = obsToolbar ? Math.round(obsToolbar.getBoundingClientRect().height) : 0;
-                const rootTop = Math.round(root.getBoundingClientRect().top);
-                const availH = window.innerHeight - rootTop - toolbarH - 20;
-                root.style.height = `${availH}px`;
-                root.style.overflow = 'hidden';
-                setTimeout(() => { scroll.scrollTop = scroll.scrollHeight; }, 100);
-            });
+            const fab = root.createEl('button', { cls: 'mina-journal-fab', attr: { 'aria-label': 'New entry' } });
+            setIcon(fab, 'lucide-pencil');
+            fab.addEventListener('click', () => this._openNewEntry());
         }
     }
 

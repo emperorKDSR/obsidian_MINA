@@ -1,3 +1,8 @@
+## [1.19.22] - 2026-04-25
+### Changed
+- Journal mobile: replaced inline compose bar with FAB trigger button that opens M365-style modal
+- Eliminates all mobile toolbar height calculation hacks — compose now uses Obsidian's native modal layer
+
 ## [1.19.21] - 2026-04-25
 ### Fixed
 - Journal mobile: reduce root height by extra 20px so compose bar sits higher above toolbar
