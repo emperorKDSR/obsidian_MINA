@@ -1594,7 +1594,6 @@
 .mina-view-root:has(.mina-journal-root.has-compose-bar) {
     display: flex !important;
     flex-direction: column !important;
-    height: 100% !important;
     overflow: hidden !important;
 }
 .mina-view-root:has(.mina-journal-root.has-compose-bar) .mina-view-content {
