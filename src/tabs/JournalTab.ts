@@ -85,7 +85,7 @@ export class JournalTab extends BaseTab {
                 const obsToolbar = document.querySelector('.mobile-toolbar') as HTMLElement;
                 const toolbarH = obsToolbar ? Math.round(obsToolbar.getBoundingClientRect().height) : 0;
                 const rootTop = Math.round(root.getBoundingClientRect().top);
-                const availH = window.innerHeight - rootTop - toolbarH - 8;
+                const availH = window.innerHeight - rootTop - toolbarH - 20;
                 root.style.height = `${availH}px`;
                 root.style.overflow = 'hidden';
                 setTimeout(() => { scroll.scrollTop = scroll.scrollHeight; }, 100);

@@ -1,3 +1,7 @@
+## [1.19.21] - 2026-04-25
+### Fixed
+- Journal mobile: reduce root height by extra 20px so compose bar sits higher above toolbar
+
 ## [1.19.20] - 2026-04-25
 ### Fixed
 - Journal mobile: reduce root height by extra 8px so compose bar sits slightly higher above toolbar
