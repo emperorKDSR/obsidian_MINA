@@ -385,6 +385,12 @@
 
 # Changelog
 
+## [1.21.0] - 2026-04-25
+
+### Added
+- AI Week Architect: Gemini-powered day-by-day week planning with staging panel (accept/reject per suggestion)
+- Calendar intention chips: week-view shows day plan intentions from Weekly Review as muted chips above task lists
+
 All notable changes to MINA V2 will be documented in this file.
 
 ## [1.10.5] - 2026-04-20

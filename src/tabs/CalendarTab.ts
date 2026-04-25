@@ -18,6 +18,11 @@ export class CalendarTab extends BaseTab {
         this._renderHeader(wrap, () => this.render(container));
         this._renderGrid(wrap, habitMap, () => this.render(container));
         this._renderDetail(wrap, habitMap);
+
+        // Pre-load day plans for week view intention chips (async, one-shot)
+        if (this.view.calendarViewMode === 'week') {
+            this._loadCalendarDayPlans(container);
+        }
     }
 
     private _getDisplayRange(): { start: moment.Moment; end: moment.Moment } {
@@ -135,6 +140,10 @@ export class CalendarTab extends BaseTab {
         });
 
         const isWeek = this.view.calendarViewMode === 'week';
+
+        // Use cached day plan intentions for week view
+        const calDayPlans: Record<string, string> = (isWeek && (this.view as any).calendarDayPlans) || {};
+
         const grid = gridWrap.createEl('div', { cls: `mina-cal-grid${isWeek ? ' mina-cal-grid--week' : ''}` });
 
         const today = moment().format('YYYY-MM-DD');
@@ -180,6 +189,11 @@ export class CalendarTab extends BaseTab {
                     attr: { title: `${habitCount}/${habits.length} habits` }
                 });
                 if (pct < 100) dot.createEl('sup', { text: `${habitCount}` });
+            }
+
+            // Intention chip from week planner (week view only)
+            if (isWeek && calDayPlans[dateStr]) {
+                cell.createEl('div', { cls: 'mina-cal-intention-chip', text: `✦ ${calDayPlans[dateStr]}` });
             }
 
             if (isWeek && openTasks.length > 0) {
@@ -257,5 +271,28 @@ export class CalendarTab extends BaseTab {
         if (tasks.length === 0 && dues.length === 0 && habits.length === 0) {
             this.renderEmptyState(detail, 'Nothing scheduled for this day.');
         }
+    }
+
+    private async _loadCalendarDayPlans(container: HTMLElement): Promise<void> {
+        const { start: wkStart } = this._getDisplayRange();
+        const isoWeek = wkStart.isoWeek();
+        const isoYear = wkStart.isoWeekYear();
+        const weekId = `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
+        const cacheKey = `cal-dayplans-${weekId}`;
+
+        // Avoid re-fetching if already loaded for this week
+        if ((this.view as any)._calDayPlansKey === cacheKey) return;
+
+        try {
+            const reviewData = await this.vault.loadWeeklyReview(weekId);
+            const plans = reviewData?.dayPlans || {};
+            (this.view as any).calendarDayPlans = plans;
+            (this.view as any)._calDayPlansKey = cacheKey;
+
+            // Only re-render if we actually have intentions to show
+            if (Object.keys(plans).length > 0) {
+                this.render(container);
+            }
+        } catch { /* no review for this week */ }
     }
 }
