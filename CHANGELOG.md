@@ -1,3 +1,7 @@
+## [1.19.13] - 2026-04-25
+### Changed
+- Journal mobile: increased compose bar padding by 6px (top 25->28px, bottom 23->26px)
+
 ## [1.19.12] - 2026-04-25
 ### Changed
 - Journal mobile: added 4px extra padding to compose bar (top 21->25px, bottom 19->23px)
