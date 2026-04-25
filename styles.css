@@ -1590,20 +1590,7 @@
     position: relative;
     overflow: hidden;
 }
-/* ── Mobile journal: fix flex-height chain so compose bar stays pinned at bottom ── */
-.mina-view-root:has(.mina-journal-root.has-compose-bar) {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100% !important;
-    overflow: hidden !important;
-}
-.mina-view-root:has(.mina-journal-root.has-compose-bar) .mina-view-content {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
+
 
 .mina-journal-scroll {
     padding: var(--mina-spacing) var(--mina-spacing-sm) var(--mina-footer-clearance);

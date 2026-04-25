@@ -1,3 +1,9 @@
+## [1.19.18] - 2026-04-25
+### Fixed
+- Journal mobile: compose bar visible again — JS sets explicit root height using getBoundingClientRect
+- Removed CSS :has() rules; height bounding now handled entirely by JS measurement
+- Root height = calc(100vh - topOffset - toolbarHeight) — bulletproof across all devices
+
 ## [1.19.17] - 2026-04-25
 ### Fixed
 - Journal mobile: replaced position:fixed compose bar with pure flex-column layout
