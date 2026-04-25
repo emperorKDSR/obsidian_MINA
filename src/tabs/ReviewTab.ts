@@ -228,7 +228,7 @@ export class ReviewTab extends BaseTab {
         }
 
         // ── Next Week Plan Section ──────────────────────────────────
-        this._renderWeekPlanSection(wrap, dayPlans, markDirty);
+        this._renderWeekPlanSection(wrap, dayPlans, markDirty, () => ({ wins, lessons, focus }));
 
         // ── Save Row ─────────────────────────────────────────────
         const saveRow = wrap.createEl('div', { cls: 'mina-review-save-row' });
@@ -308,7 +308,7 @@ export class ReviewTab extends BaseTab {
     }
 
     // ── Next Week Plan ────────────────────────────────────────────────
-    private _renderWeekPlanSection(parent: HTMLElement, dayPlans: Record<string, string>, markDirty: () => void): void {
+    private _renderWeekPlanSection(parent: HTMLElement, dayPlans: Record<string, string>, markDirty: () => void, getFormData: () => { wins: string; lessons: string; focus: string[] }): void {
         const { body: planBody } = this.createSection(parent, 'week-plan', '📅', 'NEXT WEEK PLAN');
 
         // Week target toggle
@@ -421,6 +421,41 @@ export class ReviewTab extends BaseTab {
             if (totalIntentions === 0 && totalAssigned === 0) {
                 grid.createEl('div', { cls: 'mina-weekplan-empty', text: 'No tasks planned — tap "+ Assign Task" to build your week' });
             }
+
+            // AI Week Architect button
+            const aiRow = planBody.createEl('div', { cls: 'mina-weekplan-ai-row' });
+            const aiBtn = aiRow.createEl('button', { cls: 'mina-weekplan-ai-btn', text: '✨ AI Week Architect' });
+            aiBtn.addEventListener('click', async () => {
+                aiBtn.disabled = true;
+                aiBtn.textContent = '⏳ Planning…';
+
+                const { wins, lessons, focus } = getFormData();
+                const weekId = this.getWeekId();
+                const dateRange = this.getWeekDateRange();
+                const ctx = this._buildWeeklyReportContext(weekId, dateRange, wins, lessons, focus);
+
+                // Attach open tasks with metadata for AI prompt
+                const openTasks = Array.from(this.index.taskIndex.values())
+                    .filter(t => t.status === 'open' && !t.due)
+                    .map(t => ({ title: t.title, priority: t.priority, energy: t.energy, project: t.project }));
+                (ctx as any)._openTasks = openTasks;
+
+                const targetDates: string[] = [];
+                for (let d = 0; d < 7; d++) {
+                    targetDates.push(baseWeek.clone().add(d, 'days').format('YYYY-MM-DD'));
+                }
+
+                try {
+                    const result = await this.ai.generateWeekPlan(ctx, targetDates);
+                    this._showAiStagingPanel(planBody, result, dayPlans, markDirty, renderPlan);
+                    aiBtn.textContent = '✨ AI Week Architect';
+                    aiBtn.disabled = false;
+                } catch (e: any) {
+                    aiBtn.textContent = '⚠ ' + (e?.message || 'Failed');
+                    aiBtn.disabled = false;
+                    setTimeout(() => { aiBtn.textContent = '✨ AI Week Architect'; }, 3000);
+                }
+            });
         };
 
         // Render toggle buttons
@@ -498,6 +533,106 @@ export class ReviewTab extends BaseTab {
 
         // Auto-focus search
         requestAnimationFrame(() => searchInput.focus());
+    }
+
+    private _showAiStagingPanel(
+        container: HTMLElement,
+        result: Record<string, { intention: string; tasks: string[] }>,
+        dayPlans: Record<string, string>,
+        markDirty: () => void,
+        onDone: () => void
+    ): void {
+        // Remove existing panel
+        container.querySelector('.mina-weekplan-staging')?.remove();
+
+        const panel = container.createEl('div', { cls: 'mina-weekplan-staging' });
+        const header = panel.createEl('div', { cls: 'mina-weekplan-staging__header' });
+        header.createEl('span', { cls: 'mina-weekplan-staging__title', text: '✨ AI Suggestions' });
+
+        const applyAllBtn = header.createEl('button', { cls: 'mina-weekplan-staging__apply-all', text: 'Apply All' });
+        const dismissAllBtn = header.createEl('button', { cls: 'mina-weekplan-staging__dismiss', text: '✕' });
+
+        const body = panel.createEl('div', { cls: 'mina-weekplan-staging__body' });
+
+        // Track accepted state per item
+        const accepted: Map<string, { intention: boolean; tasks: Set<string> }> = new Map();
+
+        const dayKeys = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+        Object.entries(result).sort(([a], [b]) => a.localeCompare(b)).forEach(([date, plan]) => {
+            const dayMoment = moment(date, 'YYYY-MM-DD');
+            const dayIdx = dayMoment.isoWeekday() - 1;
+            const dayLabel = dayIdx >= 0 && dayIdx < 7 ? `${dayKeys[dayIdx]} · ${dayMoment.format('MMM D')}` : date;
+
+            accepted.set(date, { intention: false, tasks: new Set() });
+
+            const dayRow = body.createEl('div', { cls: 'mina-weekplan-staging__day' });
+            dayRow.createEl('div', { cls: 'mina-weekplan-staging__day-label', text: dayLabel });
+
+            if (plan.intention) {
+                const intentionRow = dayRow.createEl('div', { cls: 'mina-weekplan-staging__item' });
+                intentionRow.createEl('span', { cls: 'mina-weekplan-staging__item-text', text: `🎯 ${plan.intention}` });
+                const acceptBtn = intentionRow.createEl('button', { cls: 'mina-weekplan-staging__accept', text: '✓' });
+                acceptBtn.addEventListener('click', () => {
+                    accepted.get(date)!.intention = true;
+                    acceptBtn.classList.add('is-accepted');
+                    acceptBtn.disabled = true;
+                });
+            }
+
+            if (plan.tasks && plan.tasks.length > 0) {
+                plan.tasks.forEach(taskTitle => {
+                    const taskRow = dayRow.createEl('div', { cls: 'mina-weekplan-staging__item' });
+                    taskRow.createEl('span', { cls: 'mina-weekplan-staging__item-text', text: `○ ${taskTitle}` });
+                    const acceptBtn = taskRow.createEl('button', { cls: 'mina-weekplan-staging__accept', text: '✓' });
+                    acceptBtn.addEventListener('click', () => {
+                        accepted.get(date)!.tasks.add(taskTitle);
+                        acceptBtn.classList.add('is-accepted');
+                        acceptBtn.disabled = true;
+                    });
+                });
+            }
+        });
+
+        const applyAccepted = async () => {
+            // Apply intentions
+            for (const [date, state] of accepted) {
+                if (state.intention && result[date]?.intention) {
+                    dayPlans[date] = result[date].intention;
+                }
+            }
+
+            // Apply task assignments
+            const allTasks = Array.from(this.index.taskIndex.values());
+            for (const [date, state] of accepted) {
+                for (const taskTitle of state.tasks) {
+                    const match = allTasks.find(t => t.status === 'open' && !t.due && t.title === taskTitle);
+                    if (match) {
+                        await this.vault.editTask(match.filePath, match.body, match.context, date);
+                    }
+                }
+            }
+
+            markDirty();
+            panel.remove();
+            onDone();
+        };
+
+        applyAllBtn.addEventListener('click', async () => {
+            // Mark everything accepted
+            for (const [date, state] of accepted) {
+                state.intention = true;
+                if (result[date]?.tasks) result[date].tasks.forEach(t => state.tasks.add(t));
+            }
+            await applyAccepted();
+        });
+
+        dismissAllBtn.addEventListener('click', () => panel.remove());
+
+        // Add an "Apply Selected" button at the bottom
+        const footer = panel.createEl('div', { cls: 'mina-weekplan-staging__footer' });
+        const applySelectedBtn = footer.createEl('button', { cls: 'mina-weekplan-staging__apply-selected', text: 'Apply Selected' });
+        applySelectedBtn.addEventListener('click', applyAccepted);
     }
 
     private _buildWeeklyReportContext(weekId: string, dateRange: string, wins: string, lessons: string, focus: string[]): WeeklyReportContext {

@@ -3470,3 +3470,26 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
   .mina-weekplan-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; flex-direction: unset; }
   .mina-weekplan-day__body { display: flex !important; }
 }
+/* ── AI Week Architect Staging Panel ── */
+.mina-weekplan-ai-row{text-align:center;padding:8px 0 4px;}
+.mina-weekplan-ai-btn{background:var(--interactive-accent);color:var(--text-on-accent);border:none;border-radius:10px;padding:8px 18px;font-size:0.85em;cursor:pointer;font-weight:600;}
+.mina-weekplan-ai-btn:hover{filter:brightness(1.1);}
+.mina-weekplan-ai-btn:disabled{opacity:0.6;cursor:wait;}
+.mina-weekplan-staging{background:var(--background-secondary);border:1px solid var(--background-modifier-border);border-radius:12px;padding:12px;margin-top:10px;}
+.mina-weekplan-staging__header{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.mina-weekplan-staging__title{font-weight:700;font-size:0.9em;flex:1;}
+.mina-weekplan-staging__apply-all{background:var(--interactive-accent);color:var(--text-on-accent);border:none;border-radius:8px;padding:4px 12px;font-size:0.8em;cursor:pointer;}
+.mina-weekplan-staging__dismiss{background:transparent;border:1px solid var(--background-modifier-border);border-radius:8px;padding:4px 10px;font-size:0.8em;cursor:pointer;color:var(--text-muted);}
+.mina-weekplan-staging__body{display:flex;flex-direction:column;gap:8px;}
+.mina-weekplan-staging__day{background:var(--background-primary);border-radius:8px;padding:8px 10px;}
+.mina-weekplan-staging__day-label{font-weight:600;font-size:0.82em;margin-bottom:4px;color:var(--text-muted);}
+.mina-weekplan-staging__item{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:0.82em;}
+.mina-weekplan-staging__item-text{flex:1;color:var(--text-normal);}
+.mina-weekplan-staging__accept{background:transparent;border:1px solid var(--background-modifier-border);border-radius:6px;padding:2px 8px;font-size:0.8em;cursor:pointer;color:var(--text-muted);}
+.mina-weekplan-staging__accept.is-accepted{background:var(--interactive-accent);color:var(--text-on-accent);border-color:var(--interactive-accent);}
+.mina-weekplan-staging__footer{text-align:center;padding-top:8px;}
+.mina-weekplan-staging__apply-selected{background:transparent;border:1px solid var(--interactive-accent);color:var(--interactive-accent);border-radius:8px;padding:5px 14px;font-size:0.82em;cursor:pointer;}
+.mina-weekplan-staging__apply-selected:hover{background:var(--interactive-accent);color:var(--text-on-accent);}
+
+/* ── Calendar Intention Chip ── */
+.mina-cal-intention-chip{font-size:0.72em;color:var(--text-muted);font-style:italic;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
