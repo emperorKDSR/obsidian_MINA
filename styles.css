@@ -3260,7 +3260,7 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
 }
 .mina-journal-fab {
     position: absolute;
-    bottom: 18px;
+    bottom: 4px;
     right: 18px;
     width: 48px;
     height: 48px;
