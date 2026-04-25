@@ -1,3 +1,8 @@
+## [1.19.8] - 2026-04-25
+
+### Changed
+- **Journal compose bar**: Row bottom padding reduced by 5px (14px → 9px)
+
 ## [1.19.7] - 2026-04-25
 
 ### Fixed
