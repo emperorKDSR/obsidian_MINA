@@ -3493,3 +3493,20 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
 
 /* ── Calendar Intention Chip ── */
 .mina-cal-intention-chip{font-size:0.72em;color:var(--text-muted);font-style:italic;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+/* ── Week Plan Quick Add ── */
+.mina-weekplan-actions{display:flex;gap:6px;margin-top:4px;}
+.mina-weekplan-new-btn{background:transparent;border:1px dashed var(--interactive-accent);color:var(--interactive-accent);border-radius:8px;padding:4px 10px;font-size:0.78em;cursor:pointer;flex:1;}
+.mina-weekplan-new-btn:hover{background:var(--interactive-accent);color:var(--text-on-accent);border-style:solid;}
+.mina-weekplan-quickadd{display:flex;gap:4px;margin-top:6px;align-items:center;}
+.mina-weekplan-quickadd__input{flex:1;background:var(--background-primary);border:1px solid var(--background-modifier-border);border-radius:8px;padding:6px 10px;font-size:0.82em;color:var(--text-normal);outline:none;}
+.mina-weekplan-quickadd__input:focus{border-color:var(--interactive-accent);}
+.mina-weekplan-quickadd__submit{background:var(--interactive-accent);color:var(--text-on-accent);border:none;border-radius:8px;padding:6px 10px;font-size:0.85em;cursor:pointer;font-weight:700;line-height:1;}
+.mina-weekplan-quickadd__submit:disabled{opacity:0.5;cursor:wait;}
+
+/* ── Load Budget Badge ── */
+.mina-weekplan-day__count--warn{background:var(--text-warning,#e6a817) !important;color:#fff !important;}
+.mina-weekplan-day__count--danger{background:var(--text-error,#e03e3e) !important;color:#fff !important;}
+
+/* ── Task Edit Icon ── */
+.mina-weekplan-task__edit{font-size:0.78em;cursor:pointer;opacity:0.5;margin-left:4px;transition:opacity 0.15s;}
+.mina-weekplan-task__edit:hover{opacity:1;}

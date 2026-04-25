@@ -1,6 +1,7 @@
 import { moment, setIcon, MarkdownRenderer, Platform, TFile, Notice } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
+import { EditTaskModal } from '../modals/EditTaskModal';
 import type { ProjectEntry, TaskEntry, DueEntry, WeeklyReportContext } from '../types';
 
 interface GlanceData {
@@ -345,7 +346,12 @@ export class ReviewTab extends BaseTab {
                 const header = card.createEl('div', { cls: 'mina-weekplan-day__header' });
                 header.createEl('span', { cls: 'mina-weekplan-day__label', text: dayLabel });
                 if (dayTasks.length > 0) {
-                    header.createEl('span', { cls: 'mina-weekplan-day__count', text: String(dayTasks.length) });
+                    const countCls = dayTasks.length >= 6
+                        ? 'mina-weekplan-day__count mina-weekplan-day__count--danger'
+                        : dayTasks.length >= 4
+                            ? 'mina-weekplan-day__count mina-weekplan-day__count--warn'
+                            : 'mina-weekplan-day__count';
+                    header.createEl('span', { cls: countCls, text: String(dayTasks.length) });
                 }
 
                 // Collapsible body
@@ -384,6 +390,7 @@ export class ReviewTab extends BaseTab {
                 // Task list
                 if (dayTasks.length > 0) {
                     const taskList = cardBody.createEl('div', { cls: 'mina-weekplan-day__tasks' });
+                    const now = Date.now();
                     dayTasks.forEach(t => {
                         const taskRow = taskList.createEl('div', { cls: 'mina-weekplan-task' });
                         const checkbox = taskRow.createEl('input', {
@@ -395,6 +402,15 @@ export class ReviewTab extends BaseTab {
                             const priBadge = t.priority === 'high' ? '↑H' : t.priority === 'medium' ? '~M' : '↓L';
                             taskRow.createEl('span', { cls: `mina-weekplan-task__priority mina-weekplan-task__priority--${t.priority}`, text: priBadge });
                         }
+                        // Show edit icon for recently created tasks (< 120s)
+                        const createdMs = moment(t.created, 'YYYY-MM-DD HH:mm:ss').valueOf();
+                        if (now - createdMs < 120_000) {
+                            const editIcon = taskRow.createEl('span', { cls: 'mina-weekplan-task__edit', text: '⚙', attr: { title: 'Edit details' } });
+                            editIcon.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                new EditTaskModal(this.view.app, t, this.vault, this.index, () => renderPlan()).open();
+                            });
+                        }
                         checkbox.addEventListener('change', async () => {
                             await this.vault.editTask(t.filePath, t.body, t.context, t.due, { status: 'done' });
                             renderPlan();
@@ -402,11 +418,55 @@ export class ReviewTab extends BaseTab {
                     });
                 }
 
-                // Assign button
-                const assignBtn = cardBody.createEl('button', { cls: 'mina-weekplan-assign-btn', text: '+ Assign Task' });
+                // Action buttons row
+                const actionsRow = cardBody.createEl('div', { cls: 'mina-weekplan-actions' });
+
+                // Assign existing task button
+                const assignBtn = actionsRow.createEl('button', { cls: 'mina-weekplan-assign-btn', text: '+ Assign Task' });
                 assignBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     this._openTaskPicker(cardBody, assignBtn, dateStr, renderPlan);
+                });
+
+                // New task button (Day-Scoped Quick Add)
+                const newTaskBtn = actionsRow.createEl('button', { cls: 'mina-weekplan-new-btn', text: '+ New Task' });
+                newTaskBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // Toggle off if already open
+                    const existing = cardBody.querySelector('.mina-weekplan-quickadd');
+                    if (existing) { existing.remove(); return; }
+
+                    const quickAdd = cardBody.createEl('div', { cls: 'mina-weekplan-quickadd' });
+                    const quickInput = quickAdd.createEl('input', {
+                        cls: 'mina-weekplan-quickadd__input',
+                        attr: { type: 'text', placeholder: 'What needs to happen this day?' }
+                    }) as HTMLInputElement;
+                    const submitBtn = quickAdd.createEl('button', { cls: 'mina-weekplan-quickadd__submit', text: '↵' });
+
+                    const doCreate = async () => {
+                        const title = quickInput.value.trim();
+                        if (!title) return;
+                        quickInput.disabled = true;
+                        submitBtn.disabled = true;
+                        try {
+                            await this.vault.createTaskFile(title, [], dateStr);
+                            quickAdd.remove();
+                            // Brief delay for index to catch up via file watcher
+                            setTimeout(() => renderPlan(), 300);
+                        } catch (err: any) {
+                            new Notice('Failed to create task: ' + (err?.message || 'Unknown error'));
+                            quickInput.disabled = false;
+                            submitBtn.disabled = false;
+                        }
+                    };
+
+                    quickInput.addEventListener('keydown', (ev) => {
+                        if (ev.key === 'Enter') { ev.preventDefault(); doCreate(); }
+                        if (ev.key === 'Escape') { ev.preventDefault(); quickAdd.remove(); }
+                    });
+                    quickInput.addEventListener('click', (ev) => ev.stopPropagation());
+                    submitBtn.addEventListener('click', (ev) => { ev.stopPropagation(); doCreate(); });
+                    requestAnimationFrame(() => quickInput.focus());
                 });
             }
 
@@ -419,7 +479,7 @@ export class ReviewTab extends BaseTab {
                     return d.isSameOrAfter(baseWeek) && d.isBefore(baseWeek.clone().add(7, 'days'));
                 }).length;
             if (totalIntentions === 0 && totalAssigned === 0) {
-                grid.createEl('div', { cls: 'mina-weekplan-empty', text: 'No tasks planned — tap "+ Assign Task" to build your week' });
+                grid.createEl('div', { cls: 'mina-weekplan-empty', text: 'Start with a theme, then assign or create the 1–3 things that make each day a success.' });
             }
 
             // AI Week Architect button

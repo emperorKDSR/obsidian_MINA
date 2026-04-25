@@ -385,6 +385,14 @@
 
 # Changelog
 
+## [1.21.1] - 2026-04-25
+
+### Added
+- Day-Scoped Quick Add: create new tasks inline on any day card in the Week Plan
+- Load budget badge: task count turns amber (4-5) or red (6+) to signal overplanning
+- Edit icon on recently created tasks to quickly enrich metadata via EditTaskModal
+- Updated empty-state guidance copy for Week Plan section
+
 ## [1.21.0] - 2026-04-25
 
 ### Added
