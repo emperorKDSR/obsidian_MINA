@@ -16,12 +16,10 @@ export class JournalTab extends BaseTab {
     private _renderJournal(container: HTMLElement) {
         container.empty();
 
-        // Last 14 days, descending (newest → oldest at top)
-        const twoWeeksAgo = moment().subtract(14, 'days').startOf('day');
+        // Load all journal entries (no date limit)
         const allEntries = Array.from(this.index.thoughtIndex.values())
             .filter(e =>
-                Array.isArray(e.context) && e.context.includes('journal') &&
-                moment(e.created, 'YYYY-MM-DD HH:mm:ss').isSameOrAfter(twoWeeksAgo)
+                Array.isArray(e.context) && e.context.includes('journal')
             );
         allEntries.sort((a, b) =>
             moment(b.created, 'YYYY-MM-DD HH:mm:ss').valueOf() -
@@ -53,7 +51,7 @@ export class JournalTab extends BaseTab {
             fab.createSpan({ text: 'New Entry', cls: 'mina-journal-fab-label' });
             fab.addEventListener('click', () => this._openNewEntry());
         }
-        scroll.createEl('p', { text: 'Last 14 days', cls: 'mina-journal-subtitle' });
+        scroll.createEl('p', { text: 'All entries', cls: 'mina-journal-subtitle' });
 
         // ── Stats strip ───────────────────────────────────────────────────
         const thisMonth = moment().format('YYYY-MM');

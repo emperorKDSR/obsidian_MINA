@@ -1,3 +1,8 @@
+## [1.19.28] - 2026-04-25
+### Changed
+- Journal: removed 14-day limit; all journal entries are now loaded
+- Subtitle updated to 'All entries' to reflect the change
+
 ## [1.19.27] - 2026-04-25
 ### Changed
 - Journal: entries now sorted descending (newest first)
