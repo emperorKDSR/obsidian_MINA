@@ -3258,6 +3258,32 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
 .mina-journal-root.has-compose-bar .mina-journal-scroll {
     padding-bottom: 16px;
 }
+.mina-journal-fab {
+    position: absolute;
+    bottom: 18px;
+    right: 18px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.mina-journal-fab:active {
+    transform: scale(0.92);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+.mina-journal-fab svg {
+    width: 22px;
+    height: 22px;
+}
 .mina-journal-compose {
     flex-shrink: 0;
     background: var(--background-primary);
