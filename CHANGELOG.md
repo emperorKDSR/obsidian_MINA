@@ -1,3 +1,8 @@
+## [1.19.9] - 2026-04-25
+### Fixed
+- Journal mobile: pinned compose input bar to bottom of screen; entries area is now independently scrollable (fixes flex height chain via CSS `:has()`)
+- CSS: corrected double-dot selector typo `..mina-journal-compose` -> `.mina-journal-compose` that was silently breaking all compose-bar styles
+
 ## [1.19.8] - 2026-04-25
 
 ### Changed
