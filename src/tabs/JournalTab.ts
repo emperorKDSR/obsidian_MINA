@@ -56,42 +56,17 @@ export class JournalTab extends BaseTab {
         this._stat(statsRow, String(monthCount), 'This Month');
         this._stat(statsRow, streak > 0 ? `${streak} 🔥` : '—', 'Streak');
 
-        // ── Search ────────────────────────────────────────────────────────
-        const searchWrap = scroll.createEl('div', { cls: 'mina-journal-search-wrap' });
-        const searchIconEl = searchWrap.createEl('span', { cls: 'mina-journal-search-icon' });
-        setIcon(searchIconEl, 'lucide-search');
-        const searchInput = searchWrap.createEl('input', {
-            cls: 'mina-journal-search',
-            attr: { type: 'text', placeholder: 'Search journal…' }
-        }) as HTMLInputElement;
-        if (this.view.journalSearch) searchInput.value = this.view.journalSearch;
-
         // ── List ──────────────────────────────────────────────────────────
         const listEl = scroll.createEl('div', { cls: 'mina-journal-list' });
-        let debounceTimer: ReturnType<typeof setTimeout>;
 
         const renderList = () => {
             listEl.empty();
-            const q = (this.view.journalSearch || '').toLowerCase().trim();
-            const filtered = q
-                ? allEntries.filter(e =>
-                    e.body.toLowerCase().includes(q) ||
-                    e.title.toLowerCase().includes(q))
-                : allEntries;
-            if (filtered.length === 0) {
-                this.renderEmptyState(listEl, q
-                    ? 'No entries match your search.'
-                    : 'No journal entries yet.\nTap "New Entry" to begin. ✍️');
+            if (allEntries.length === 0) {
+                this.renderEmptyState(listEl, 'No journal entries yet.\nTap + to begin. ✍️');
                 return;
             }
-            this._renderGrouped(listEl, filtered);
+            this._renderGrouped(listEl, allEntries);
         };
-
-        searchInput.addEventListener('input', () => {
-            clearTimeout(debounceTimer);
-            this.view.journalSearch = searchInput.value;
-            debounceTimer = setTimeout(renderList, 150);
-        });
 
         renderList();
     }

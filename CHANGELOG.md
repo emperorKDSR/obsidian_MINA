@@ -1,3 +1,12 @@
+## [1.19.4] - 2026-04-25
+
+### Changed
+- **Journal tab**: Removed search bar — entries always shown in full chronological list
+- **Journal mobile input**: Redesigned as M365-style top sheet
+  - iOS nav-bar header: `Cancel` (muted left) · `✍️ Journal / date` (centered) · `Done` (accent right)
+  - Full-width document textarea — no border, generous padding, 16px font
+  - Bottom action bar (above keyboard): 📎 attach icon · divider · horizontally-scrollable context chips
+
 ## [1.19.3] - 2026-04-25
 
 ### Changed

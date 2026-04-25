@@ -1,4 +1,4 @@
-import { App, Modal, Platform, Notice, moment } from 'obsidian';
+import { App, Modal, Platform, Notice, moment, setIcon } from 'obsidian';
 import MinaPlugin from '../main';
 import { isTablet, attachMediaPasteHandler, attachInlineTriggers } from '../utils';
 
@@ -50,7 +50,7 @@ export class JournalEntryModal extends Modal {
         }
     }
 
-    // ── MOBILE BOTTOM SHEET ────────────────────────────────────────────────
+    // ── MOBILE — M365-STYLE TOP SHEET ─────────────────────────────────────
     private _renderMobileSheet(contentEl: HTMLElement, modalEl: HTMLElement) {
         modalEl.addClass('mina-journal-modal');
         modalEl.addClass('mina-jm-sheet');
@@ -60,29 +60,54 @@ export class JournalEntryModal extends Modal {
         modalEl.style.setProperty('overflow', 'hidden', 'important');
         contentEl.style.setProperty('padding', '0', 'important');
 
-        // Title bar
-        const titleBar = contentEl.createDiv({ cls: 'mina-jm-title-bar' });
-        titleBar.createSpan({ cls: 'mina-jm-title-text', text: '✍️ Journal' });
         const now = moment();
-        titleBar.createSpan({
-            cls: 'mina-jm-title-date',
-            text: now.format('ddd, MMM D · HH:mm')
-        });
 
-        // Textarea
+        // ── M365 nav header: [Cancel]  title/date  [Done] ─────────────────
+        const navHeader = contentEl.createDiv({ cls: 'mina-jm-m365-header' });
+        const cancelBtn = navHeader.createEl('button', { cls: 'mina-jm-m365-cancel', text: 'Cancel' });
+        cancelBtn.addEventListener('click', () => this.close());
+
+        const headerCenter = navHeader.createDiv({ cls: 'mina-jm-m365-center' });
+        headerCenter.createSpan({ cls: 'mina-jm-m365-title', text: '✍️ Journal' });
+        headerCenter.createSpan({ cls: 'mina-jm-m365-date', text: now.format('ddd, MMM D · HH:mm') });
+
+        const saveBtn = navHeader.createEl('button', {
+            cls: 'mina-jm-m365-done',
+            text: this.mode === 'new' ? 'Done' : 'Update'
+        }) as HTMLButtonElement;
+
+        // ── Document textarea ──────────────────────────────────────────────
         const textArea = contentEl.createEl('textarea', {
             cls: 'mina-jm-textarea mina-jm-textarea--mobile',
-            attr: { placeholder: 'Write your entry…' }
+            attr: { placeholder: 'Start writing…' }
         }) as HTMLTextAreaElement;
         textArea.value = this.initialText;
 
-        // Context chips (scrollable, above toolbar)
-        const chipRow = contentEl.createDiv({ cls: 'mina-jm-chip-row' });
+        // ── Hidden file input ──────────────────────────────────────────────
+        const fileInput = contentEl.createEl('input', {
+            attr: { type: 'file', accept: 'image/*,application/pdf', style: 'display:none' }
+        }) as HTMLInputElement;
+        fileInput.addEventListener('change', () => this._handleFileInput(fileInput, textArea, null));
+
+        // ── Bottom action bar: [📎] [divider] [chips…] ────────────────────
+        const actionBar = contentEl.createDiv({ cls: 'mina-jm-m365-bar' });
+        const barLeft = actionBar.createDiv({ cls: 'mina-jm-m365-bar-left' });
+
+        const attachIcon = barLeft.createEl('button', {
+            cls: 'mina-jm-m365-icon-btn',
+            attr: { title: 'Attach image' }
+        });
+        setIcon(attachIcon, 'lucide-image');
+        attachIcon.addEventListener('click', () => fileInput.click());
+
+        barLeft.createSpan({ cls: 'mina-jm-m365-bar-divider' });
+
+        const chipScroll = actionBar.createDiv({ cls: 'mina-jm-m365-chips' });
         const renderChips = () => {
-            chipRow.empty();
+            chipScroll.empty();
             const visible = this.contexts.filter(c => c !== 'journal');
             for (const ctx of visible) {
-                const chip = chipRow.createEl('span', { cls: 'mina-jm-chip' });
+                const chip = chipScroll.createEl('span', { cls: 'mina-jm-chip' });
                 chip.createSpan({ text: `#${ctx}` });
                 const x = chip.createSpan({ text: '×', cls: 'mina-jm-chip-x' });
                 x.addEventListener('click', (e) => {
@@ -92,31 +117,12 @@ export class JournalEntryModal extends Modal {
                 });
             }
             if (visible.length === 0) {
-                chipRow.createSpan({ text: '# inline to add tags', cls: 'mina-jm-chip-hint' });
+                chipScroll.createSpan({ text: 'Use # to tag', cls: 'mina-jm-chip-hint' });
             }
         };
         renderChips();
 
-        // Hidden file input
-        const fileInput = contentEl.createEl('input', {
-            attr: { type: 'file', accept: 'image/*,application/pdf', style: 'display:none' }
-        }) as HTMLInputElement;
-        fileInput.addEventListener('change', () => this._handleFileInput(fileInput, textArea, null));
-
-        // Bottom toolbar
-        const toolbar = contentEl.createDiv({ cls: 'mina-jm-toolbar mina-jm-toolbar--mobile' });
-        const toolbarLeft = toolbar.createDiv({ cls: 'mina-jm-toolbar-left' });
-        const attachBtn = toolbarLeft.createEl('button', { cls: 'mina-jm-attach-btn', text: '📎 Image' });
-        attachBtn.addEventListener('click', () => fileInput.click());
-
-        const toolbarRight = toolbar.createDiv({ cls: 'mina-jm-toolbar-right' });
-        const cancelBtn = toolbarRight.createEl('button', { cls: 'mina-jm-cancel-btn', text: 'Cancel' });
-        cancelBtn.addEventListener('click', () => this.close());
-        const saveBtn = toolbarRight.createEl('button', {
-            cls: 'mina-jm-save-btn',
-            text: this.mode === 'new' ? 'Save' : 'Update'
-        }) as HTMLButtonElement;
-
+        // ── Save logic ────────────────────────────────────────────────────
         const refreshSave = () => {
             const empty = !textArea.value.trim();
             saveBtn.disabled = empty;

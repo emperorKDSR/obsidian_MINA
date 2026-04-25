@@ -3000,6 +3000,63 @@ body.mina-task-edit-active .modal-bg { background: rgba(0,0,0,0.5) !important; }
 body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
 .mina-journal-modal { overflow: hidden !important; }
 
+/* ── M365-STYLE MOBILE SHEET ───────────────────────────────────────────── */
+.mina-jm-m365-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px 10px;
+  padding-top: max(12px, env(safe-area-inset-top, 12px));
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  flex-shrink: 0;
+}
+.mina-jm-m365-cancel {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: 15px; padding: 4px 0;
+  min-width: 64px; text-align: left;
+}
+.mina-jm-m365-center {
+  display: flex; flex-direction: column; align-items: center; flex: 1;
+}
+.mina-jm-m365-title {
+  font-size: 15px; font-weight: 600; color: var(--text-normal); letter-spacing: -0.01em;
+}
+.mina-jm-m365-date {
+  font-size: 11px; color: var(--text-muted); margin-top: 2px;
+}
+.mina-jm-m365-done {
+  background: none; border: none; cursor: pointer;
+  color: var(--interactive-accent); font-size: 15px; font-weight: 700;
+  padding: 4px 0; min-width: 64px; text-align: right;
+}
+.mina-jm-m365-done.is-disabled { opacity: 0.3; pointer-events: none; }
+.mina-jm-m365-bar {
+  display: flex; align-items: center; gap: 0;
+  padding: 6px 12px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
+  border-top: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  flex-shrink: 0;
+}
+.mina-jm-m365-bar-left {
+  display: flex; align-items: center; gap: 2px; flex-shrink: 0;
+}
+.mina-jm-m365-icon-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 6px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); transition: background 0.12s, color 0.12s;
+}
+.mina-jm-m365-icon-btn:active { background: var(--background-modifier-hover); color: var(--text-normal); }
+.mina-jm-m365-icon-btn svg { width: 18px; height: 18px; }
+.mina-jm-m365-bar-divider {
+  width: 1px; height: 20px; background: var(--background-modifier-border);
+  flex-shrink: 0; margin: 0 8px;
+}
+.mina-jm-m365-chips {
+  display: flex; align-items: center; gap: 6px;
+  overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none;
+}
+.mina-jm-m365-chips::-webkit-scrollbar { display: none; }
 /* ── 1. MOBILE BOTTOM SHEET ──────────────────────────────────────────────── */
 .mina-journal-modal > .modal-content { background: var(--background-primary) !important; display: flex !important; flex-direction: column !important; flex: 1 1 auto !important; min-height: 0 !important; overflow: hidden !important; padding: 0 !important; }.mina-jm-sheet {
   position: fixed !important;
@@ -3115,7 +3172,7 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
   box-sizing: border-box;
   padding: 16px;
 }
-.mina-jm-textarea--mobile { font-size: 16px; min-height: 120px; flex: 1 1 auto !important; overflow-y: auto !important; }
+.mina-jm-textarea--mobile { font-size: 16px; min-height: 100px; padding: 16px 18px; letter-spacing: 0.01em; }
 .mina-jm-textarea--tablet { font-size: 15px; min-height: 280px; line-height: 1.7; }
 .mina-jm-textarea--desktop { font-size: 15px; min-height: 280px; line-height: 1.7; }
 .mina-jm-textarea::placeholder { color: var(--jm-muted); opacity: 0.7; }
