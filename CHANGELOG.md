@@ -1,3 +1,7 @@
+## [1.19.19] - 2026-04-25
+### Fixed
+- Journal mobile: use window.innerHeight instead of 100vh for root height calculation — 100vh on iOS includes area behind toolbar
+
 ## [1.19.18] - 2026-04-25
 ### Fixed
 - Journal mobile: compose bar visible again — JS sets explicit root height using getBoundingClientRect
