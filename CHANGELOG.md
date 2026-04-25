@@ -1,3 +1,9 @@
+## [1.19.27] - 2026-04-25
+### Changed
+- Journal: entries now sorted descending (newest first)
+- Journal mobile: New Entry pill button moved inline with Journal header
+- Removed FAB from list bottom (no longer needed with descending sort)
+
 ## [1.19.26] - 2026-04-25
 ### Changed
 - Journal mobile: FAB moved inline into list flow below last entry (no longer floating)
