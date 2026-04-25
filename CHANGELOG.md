@@ -1,3 +1,7 @@
+## [1.19.31] - 2026-04-25
+### Changed
+- Command Center: Management, Features, System clusters now share same accent border/background as Action cluster
+
 ## [1.19.30] - 2026-04-25
 ### Changed
 - Command Center: navigation clusters now wrap responsively to the next row when space is insufficient.
