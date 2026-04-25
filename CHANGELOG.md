@@ -1,3 +1,8 @@
+## [1.19.7] - 2026-04-25
+
+### Fixed
+- **Journal compose bar**: Reverted `max()` CSS (incompatible with Obsidian mobile WebView); compose row bottom padding bumped to 14px for visible breathing room
+
 ## [1.19.6] - 2026-04-25
 
 ### Changed
