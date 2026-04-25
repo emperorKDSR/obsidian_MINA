@@ -385,6 +385,12 @@
 
 # Changelog
 
+## [1.22.1] - 2026-04-25
+
+### Added
+- Calendar: tap the circle/check icon on any task in the detail panel to toggle completion
+
+
 ## [1.22.0] - 2026-04-25
 
 ### Added

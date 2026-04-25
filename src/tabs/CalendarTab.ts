@@ -237,8 +237,14 @@ export class CalendarTab extends BaseTab {
             tasks.sort((a, b) => (a.status === 'done' ? 1 : 0) - (b.status === 'done' ? 1 : 0))
                 .forEach(t => {
                     const item = list.createEl('div', { cls: `mina-cal-detail-item mina-cal-detail-item--task${t.status === 'done' ? ' is-done' : ''}` });
-                    const icon = item.createEl('span', { cls: 'mina-cal-detail-item-icon' });
+                    const icon = item.createEl('span', { cls: 'mina-cal-detail-item-icon mina-cal-detail-item-icon--toggle' });
                     setIcon(icon, t.status === 'done' ? 'check-circle-2' : 'circle');
+                    icon.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const newStatus = t.status === 'done' ? 'open' : 'done';
+                        await this.vault.editTask(t.filePath, t.body, t.context, t.due, { status: newStatus });
+                        setTimeout(() => this.render(renderContainer), 300);
+                    });
                     item.createEl('span', { cls: 'mina-cal-detail-item-title', text: t.title });
                     if (t.priority) item.createEl('span', { cls: `mina-cal-detail-badge mina-cal-badge--${t.priority}`, text: t.priority });
                 });
