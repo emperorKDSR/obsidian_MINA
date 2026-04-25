@@ -1,3 +1,7 @@
+## [1.19.24] - 2026-04-25
+### Fixed
+- Journal mobile: FAB bottom position reduced to 4px
+
 ## [1.19.23] - 2026-04-25
 ### Fixed
 - Journal mobile: always scroll to bottom on load (triple-fire for image rendering)
