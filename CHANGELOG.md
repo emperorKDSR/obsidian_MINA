@@ -385,6 +385,15 @@
 
 # Changelog
 
+## [1.22.0] - 2026-04-25
+
+### Added
+- Calendar Quick Add: + button on the Tasks section header to create tasks inline for the selected day
+- Past-date warning: amber input border when adding tasks to a past date
+- Tasks section always visible in detail panel (even when empty) for immediate task creation
+- Updated empty-state copy to guide users toward the + button
+
+
 ## [1.21.3] - 2026-04-25
 
 ### Fixed
