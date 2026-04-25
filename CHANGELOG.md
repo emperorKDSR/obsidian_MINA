@@ -1,3 +1,7 @@
+## [1.19.33] - 2026-04-25
+### Fixed
+- VaultService: removed 60-character truncation on `title` frontmatter — full first line of thought/task text is now saved as the title property
+
 ## [1.19.32] - 2026-04-25
 ### Fixed
 - Tasks tab: full task title now always visible — changed row to align-items:flex-start so multi-line titles expand correctly
