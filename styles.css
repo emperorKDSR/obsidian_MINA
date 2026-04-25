@@ -3388,3 +3388,9 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
     width: 36px; height: 36px; font-size: 22px; line-height: 1;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
+
+/* Command Center custom cluster styles */
+.mina-pillar-cluster--blocked { background: var(--background-modifier-strong); padding: 10px; border-radius: 10px; }
+.mina-pillar-cluster--features { /* same visual style as action */ }
+.mina-pillar-cluster--action .mina-pillar-item, .mina-pillar-cluster--features .mina-pillar-item { min-width: 90px; }
+

@@ -1,3 +1,9 @@
+## [1.19.29] - 2026-04-25
+### Changed
+- Command Center: removed Weekly/Monthly goals from header
+- Reorganized navigation clusters per design: Action, Management (blocked), Features, System
+- Added CSS for blocked management cluster
+
 ## [1.19.28] - 2026-04-25
 ### Changed
 - Journal: removed 14-day limit; all journal entries are now loaded
