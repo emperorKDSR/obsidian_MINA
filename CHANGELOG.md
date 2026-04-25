@@ -1,3 +1,7 @@
+## [1.19.14] - 2026-04-25
+### Fixed
+- Journal mobile: compose bar now sits above Obsidian's bottom toolbar; removed height:100% override that was extending the view behind the toolbar
+
 ## [1.19.13] - 2026-04-25
 ### Changed
 - Journal mobile: increased compose bar padding by 6px (top 25->28px, bottom 23->26px)
