@@ -1,3 +1,15 @@
+## [1.19.5] - 2026-04-25
+
+### Changed
+- **Journal tab**: Filter to last 14 days only
+- **Journal tab**: Entries sorted ascending (oldest → newest at bottom)
+- **Journal tab**: View scrolls to bottom on load so latest entries are immediately visible
+- **Journal tab (mobile)**: Inline M365 Copilot-style compose bar replaces the "+" nav button
+  - Compact single-line input, expands on focus, auto-grows up to 120px
+  - Attach image button + horizontally-scrollable context chips appear when focused
+  - Send button activates when input has content; `⌘↵` / `Ctrl↵` to submit
+- **Journal cards**: Embedded images show as 72px thumbnails — tap to expand to full width
+
 ## [1.19.4] - 2026-04-25
 
 ### Changed

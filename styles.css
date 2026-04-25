@@ -3251,3 +3251,98 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
 /* ═══════════════════════════════════════════════════════════════════════════
    END JOURNAL ENTRY MODAL
    ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── JOURNAL: COMPOSE BAR ───────────────────────────────────────────────── */
+.mina-journal-root.has-compose-bar .mina-journal-scroll {
+    padding-bottom: var(--mina-spacing-sm);
+}
+.mina-journal-compose {
+    flex-shrink: 0;
+    background: var(--background-primary);
+    border-top: 1px solid var(--background-modifier-border);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    transition: box-shadow 0.2s ease;
+}
+.mina-journal-compose.is-focused {
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+}
+.mina-journal-compose-chips {
+    display: none;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 8px 14px 4px;
+    scrollbar-width: none;
+}
+.mina-journal-compose-chips::-webkit-scrollbar { display: none; }
+.mina-journal-compose.is-focused .mina-journal-compose-chips {
+    display: flex;
+}
+.mina-journal-compose-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 8px 10px;
+}
+.mina-journal-compose-attach {
+    display: flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; flex-shrink: 0;
+    background: none; border: none; border-radius: 8px;
+    color: var(--text-muted); cursor: pointer;
+    transition: color 0.15s;
+}
+.mina-journal-compose-attach:active { color: var(--interactive-accent); }
+.mina-journal-compose-attach svg { width: 18px; height: 18px; }
+.mina-journal-compose-input {
+    flex: 1; min-width: 0;
+    background: var(--background-secondary);
+    border: 1.5px solid var(--background-modifier-border);
+    border-radius: 20px;
+    padding: 8px 14px;
+    font-size: 15px;
+    color: var(--text-normal);
+    resize: none;
+    overflow: hidden;
+    line-height: 1.5;
+    outline: none;
+    height: 36px;
+    max-height: 120px;
+    transition: border-color 0.15s, background 0.15s;
+    font-family: var(--font-text);
+}
+.mina-journal-compose-input:focus {
+    border-color: var(--interactive-accent);
+    background: var(--background-primary);
+}
+.mina-journal-compose-send {
+    display: flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; flex-shrink: 0;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none; border-radius: 50%;
+    cursor: pointer; padding: 0;
+    transition: opacity 0.15s, transform 0.1s;
+    opacity: 0.35;
+}
+.mina-journal-compose-send:not(:disabled) { opacity: 1; }
+.mina-journal-compose-send:not(:disabled):active { transform: scale(0.9); }
+.mina-journal-compose-send svg { width: 15px; height: 15px; }
+
+/* ── JOURNAL: IMAGE THUMBNAILS ──────────────────────────────────────────── */
+.mina-journal-card-body .mina-journal-thumb {
+    max-height: 72px;
+    max-width: 96px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-block;
+    vertical-align: middle;
+    transition: max-height 0.3s ease, max-width 0.3s ease, border-radius 0.3s ease;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+.mina-journal-card-body .mina-journal-thumb.is-thumb-expanded {
+    max-height: 320px;
+    max-width: 100%;
+    border-radius: 12px;
+    object-fit: contain;
+}
