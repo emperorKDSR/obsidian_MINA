@@ -26,7 +26,7 @@ export class VaultService {
 
     private extractTitle(text: string): string {
         const firstLine = text.split('\n').find(l => l.trim()) || text;
-        return firstLine.replace(/[#*_`\[\]]/g, '').trim().substring(0, 60);
+        return firstLine.replace(/[#*_`\[\]]/g, '').trim();
     }
 
     private formatDateTime(d: Date): string {
