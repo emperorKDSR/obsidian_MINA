@@ -1,3 +1,10 @@
+## [1.19.17] - 2026-04-25
+### Fixed
+- Journal mobile: replaced position:fixed compose bar with pure flex-column layout
+- Compose bar sits above Obsidian toolbar via measured padding-bottom on root container
+- Removed complex visualViewport listeners; scroll-to-bottom on focus retained
+- Restored height:100% on :has() rule for proper flex-chain bounding
+
 ## [1.19.16] - 2026-04-25
 ### Fixed
 - Journal mobile: measure actual .mobile-toolbar height via DOM (was guessing 48px CSS fallback)
