@@ -1,3 +1,14 @@
+## [1.19.34] - 2026-04-25
+### Changed
+- Manual (ManualTab + HelpModal): updated all outdated section descriptions to reflect current state
+  - Command Center: removed Weekly/Monthly Goals item; added Navigation Clusters description with 4-cluster layout
+  - Journal: complete rewrite — all-entries feed, newest-first, FAB modal, edit/delete per card
+  - Tasks: added Full Title Display item
+  - Calendar: access now correctly shows MANAGEMENT cluster
+  - Monthly Review navigation: corrected to MANAGEMENT cluster
+  - Compass access: corrected to MANAGEMENT cluster
+  - Memento Mori access: corrected to FEATURES cluster
+
 ## [1.19.33] - 2026-04-25
 ### Fixed
 - VaultService: removed 60-character truncation on `title` frontmatter — full first line of thought/task text is now saved as the title property

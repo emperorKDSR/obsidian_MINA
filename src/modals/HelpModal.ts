@@ -8,10 +8,10 @@ const SECTIONS: HelpSection[] = [
         id: 'home', icon: 'lucide-home', title: 'Command Center', subtitle: 'Your daily launch pad',
         items: [
             { label: 'Greeting & Date', desc: 'Shows today\'s date, your greeting, and your North Star vision at the top.' },
-            { label: 'Zen Mode 🎯', desc: 'Tap the target icon to collapse all navigation and enter deep focus. Tap again to exit.', tip: 'Best used when you only want to see your goals and capture bar.' },
+            { label: 'Zen Mode 🎯', desc: 'Tap the target icon to collapse all navigation and enter deep focus. Tap again to exit.', tip: 'Best used when you only want to see your intelligence card and capture bar.' },
             { label: 'Intelligence Card', desc: 'Live snapshot: open tasks, habits completed, unprocessed thoughts, and total dues. Hit "SYNTHESIZE BRIEFING" to get an AI strategy summary.', tip: 'Requires a Gemini API key configured in Settings → AI.' },
-            { label: 'Weekly & Monthly Goals', desc: 'Your active goals shown at a glance. Tap "Edit" to update them in the Review tabs.' },
-            { label: 'Tablet Experience', desc: 'On tablets (iPad, etc.), MINA automatically upgrades to a desktop-like layout: inline capture bar, horizontal habit bar, expanded goals and navigation, sidebar manual, and hover effects.', tip: 'Tablet is detected when the device short-edge is ≥768px.' },
+            { label: 'Navigation Clusters', desc: 'Four grouped rows: ACTION (Focus, Habits, Journal, Synthesis, Timeline), MANAGEMENT (Tasks, Finance, Projects, Calendar, Weekly, Monthly, Compass), FEATURES (AI Chat, Voice, Compasee, Memento), and SYSTEM (Settings, Manual, Export). Each cluster wraps to the next row automatically on narrow screens.', tip: 'Tap any icon to jump directly to that tab.' },
+            { label: 'Tablet Experience', desc: 'On tablets (iPad, etc.), MINA automatically upgrades to a desktop-like layout: inline capture bar, horizontal habit bar, expanded navigation, sidebar manual, and hover effects.', tip: 'Tablet is detected when the device short-edge is ≥768px.' },
             { label: 'Global Search 🔍', desc: 'Tap the search icon (before Help) or press Mod+Shift+F to open Global Search. Instantly find anything across Thoughts, Tasks, Dues, Projects, and Habits.', tip: 'Also available via Obsidian command palette: "MINA: Global Search".' },
         ]
     },
@@ -153,8 +153,10 @@ const SECTIONS: HelpSection[] = [
     {
         id: 'journal', icon: 'lucide-book-open', title: 'Journal', subtitle: 'Daily freeform writing',
         items: [
-            { label: 'Daily Entry', desc: 'Each day gets its own journal entry file. Use the arrow buttons to navigate between days.' },
-            { label: 'Auto-Save', desc: 'Journal entries save automatically as you type. No need to press save.' },
+            { label: 'All Entries Feed', desc: 'All journal entries shown newest-first in a single scrollable feed. Your full history is always visible — no day-based navigation needed.' },
+            { label: 'New Entry', desc: 'Tap the "+ New Entry" pill in the Journal header to open the entry modal. Write and tap Done (or Save on desktop) to save.', tip: 'On mobile the modal opens as a bottom sheet with Cancel and Done in the header.' },
+            { label: 'Edit & Delete', desc: 'Each entry card has Edit (✏) and Delete (🗑) buttons. Tap Edit to reopen the modal with existing content.' },
+            { label: 'Timestamps', desc: 'Every entry shows its creation date and time below the entry body.' },
         ]
     },
     {
