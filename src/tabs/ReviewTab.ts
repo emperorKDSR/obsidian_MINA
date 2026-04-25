@@ -147,6 +147,12 @@ export class ReviewTab extends BaseTab {
         while (focus.length < 3) focus.push('');
         let isDirty = false;
 
+        // Initialize week plan draft from saved data or empty
+        if (!this.view.weekPlanDraft) {
+            this.view.weekPlanDraft = existing?.dayPlans ?? {};
+        }
+        const dayPlans = this.view.weekPlanDraft;
+
         // Restore any previously generated AI report (session-level or from saved file)
         if (existing?.aiReport && !this.view.weeklyAiReport) {
             this.view.weeklyAiReport = existing.aiReport;
@@ -221,6 +227,9 @@ export class ReviewTab extends BaseTab {
             });
         }
 
+        // ── Next Week Plan Section ──────────────────────────────────
+        this._renderWeekPlanSection(wrap, dayPlans, markDirty);
+
         // ── Save Row ─────────────────────────────────────────────
         const saveRow = wrap.createEl('div', { cls: 'mina-review-save-row' });
         const kbdHint = saveRow.createEl('span', { cls: 'mina-review-kbd-hint' });
@@ -233,7 +242,7 @@ export class ReviewTab extends BaseTab {
             saveBtn.disabled = true;
             const habitHighlight = this.getHabitHighlightText();
             try {
-                await this.vault.saveWeeklyReview(weekId, dateRange, wins, lessons, focus, habitHighlight, this.view.weeklyAiReport ?? undefined);
+                await this.vault.saveWeeklyReview(weekId, dateRange, wins, lessons, focus, habitHighlight, this.view.weeklyAiReport ?? undefined, dayPlans);
                 isDirty = false;
                 dirtyDot.style.display = 'none';
                 saveBtn.textContent = '✓  Saved';
@@ -296,6 +305,199 @@ export class ReviewTab extends BaseTab {
                 }
             }
         });
+    }
+
+    // ── Next Week Plan ────────────────────────────────────────────────
+    private _renderWeekPlanSection(parent: HTMLElement, dayPlans: Record<string, string>, markDirty: () => void): void {
+        const { body: planBody } = this.createSection(parent, 'week-plan', '📅', 'NEXT WEEK PLAN');
+
+        // Week target toggle
+        const targetRow = planBody.createEl('div', { cls: 'mina-weekplan-target-row' });
+        const targetModes: Array<{ key: 'next' | 'this'; label: string }> = [
+            { key: 'next', label: 'Next Week' },
+            { key: 'this', label: 'This Week' },
+        ];
+
+        const renderPlan = () => {
+            // Clear everything below target row
+            const children = Array.from(planBody.children);
+            children.forEach(c => { if (c !== targetRow) c.remove(); });
+
+            const baseWeek = this.view.weekPlanTargetMode === 'this'
+                ? moment().startOf('isoWeek')
+                : moment().add(1, 'week').startOf('isoWeek');
+
+            const grid = planBody.createEl('div', { cls: 'mina-weekplan-grid' });
+
+            const dayKeys = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            for (let d = 0; d < 7; d++) {
+                const dayMoment = baseWeek.clone().add(d, 'days');
+                const dateStr = dayMoment.format('YYYY-MM-DD');
+                const dayLabel = `${dayKeys[d]} · ${dayMoment.format('MMM D')}`;
+
+                // Get tasks due this day
+                const dayTasks = Array.from(this.index.taskIndex.values())
+                    .filter(t => t.status === 'open' && t.due === dateStr);
+
+                const card = grid.createEl('div', { cls: 'mina-weekplan-day' });
+
+                // Header
+                const header = card.createEl('div', { cls: 'mina-weekplan-day__header' });
+                header.createEl('span', { cls: 'mina-weekplan-day__label', text: dayLabel });
+                if (dayTasks.length > 0) {
+                    header.createEl('span', { cls: 'mina-weekplan-day__count', text: String(dayTasks.length) });
+                }
+
+                // Collapsible body
+                const cardBody = card.createEl('div', { cls: 'mina-weekplan-day__body' });
+                const storageKey = `mina-weekplan-collapse-${dateStr}`;
+                const isCollapsed = sessionStorage.getItem(storageKey) === 'true';
+                if (isCollapsed) cardBody.style.display = 'none';
+
+                header.addEventListener('click', () => {
+                    const collapsed = cardBody.style.display === 'none';
+                    if (collapsed) {
+                        cardBody.style.display = 'flex';
+                        sessionStorage.removeItem(storageKey);
+                    } else {
+                        cardBody.style.display = 'none';
+                        sessionStorage.setItem(storageKey, 'true');
+                    }
+                });
+
+                // Intention input
+                const intentionInput = cardBody.createEl('input', {
+                    cls: 'mina-weekplan-day__intention',
+                    attr: {
+                        type: 'text',
+                        placeholder: 'Theme for this day…',
+                        value: dayPlans[dateStr] || '',
+                    }
+                }) as HTMLInputElement;
+                intentionInput.addEventListener('input', () => {
+                    dayPlans[dateStr] = intentionInput.value;
+                    markDirty();
+                });
+                // Prevent header toggle when focusing input
+                intentionInput.addEventListener('click', (e) => e.stopPropagation());
+
+                // Task list
+                if (dayTasks.length > 0) {
+                    const taskList = cardBody.createEl('div', { cls: 'mina-weekplan-day__tasks' });
+                    dayTasks.forEach(t => {
+                        const taskRow = taskList.createEl('div', { cls: 'mina-weekplan-task' });
+                        const checkbox = taskRow.createEl('input', {
+                            cls: 'mina-weekplan-task__check',
+                            attr: { type: 'checkbox' }
+                        }) as HTMLInputElement;
+                        taskRow.createEl('span', { cls: 'mina-weekplan-task__title', text: t.title });
+                        if (t.priority) {
+                            const priBadge = t.priority === 'high' ? '↑H' : t.priority === 'medium' ? '~M' : '↓L';
+                            taskRow.createEl('span', { cls: `mina-weekplan-task__priority mina-weekplan-task__priority--${t.priority}`, text: priBadge });
+                        }
+                        checkbox.addEventListener('change', async () => {
+                            await this.vault.editTask(t.filePath, t.body, t.context, t.due, { status: 'done' });
+                            renderPlan();
+                        });
+                    });
+                }
+
+                // Assign button
+                const assignBtn = cardBody.createEl('button', { cls: 'mina-weekplan-assign-btn', text: '+ Assign Task' });
+                assignBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this._openTaskPicker(cardBody, assignBtn, dateStr, renderPlan);
+                });
+            }
+
+            // Empty state
+            const totalIntentions = Object.values(dayPlans).filter(v => v.trim()).length;
+            const totalAssigned = Array.from(this.index.taskIndex.values())
+                .filter(t => {
+                    if (t.status !== 'open' || !t.due) return false;
+                    const d = moment(t.due, 'YYYY-MM-DD');
+                    return d.isSameOrAfter(baseWeek) && d.isBefore(baseWeek.clone().add(7, 'days'));
+                }).length;
+            if (totalIntentions === 0 && totalAssigned === 0) {
+                grid.createEl('div', { cls: 'mina-weekplan-empty', text: 'No tasks planned — tap "+ Assign Task" to build your week' });
+            }
+        };
+
+        // Render toggle buttons
+        targetModes.forEach(({ key, label }) => {
+            const btn = targetRow.createEl('button', {
+                cls: `mina-weekplan-target-btn${this.view.weekPlanTargetMode === key ? ' is-active' : ''}`,
+                text: label,
+            });
+            btn.addEventListener('click', () => {
+                this.view.weekPlanTargetMode = key;
+                // Re-render toggle active states
+                targetRow.querySelectorAll('.mina-weekplan-target-btn').forEach(b => b.classList.remove('is-active'));
+                btn.classList.add('is-active');
+                renderPlan();
+            });
+        });
+
+        renderPlan();
+    }
+
+    private _openTaskPicker(container: HTMLElement, anchorBtn: HTMLElement, targetDate: string, onAssigned: () => void): void {
+        // If picker already exists, toggle off
+        const existingPicker = container.querySelector('.mina-weekplan-picker');
+        if (existingPicker) { existingPicker.remove(); return; }
+
+        const unscheduled = Array.from(this.index.taskIndex.values())
+            .filter(t => t.status === 'open' && !t.due)
+            .sort((a, b) => {
+                const priOrder = { high: 0, medium: 1, low: 2 };
+                const aPri = priOrder[a.priority || 'low'] ?? 2;
+                const bPri = priOrder[b.priority || 'low'] ?? 2;
+                if (aPri !== bPri) return aPri - bPri;
+                return b.lastUpdate - a.lastUpdate;
+            });
+
+        const picker = container.createEl('div', { cls: 'mina-weekplan-picker' });
+
+        // Search input
+        const searchInput = picker.createEl('input', {
+            cls: 'mina-weekplan-picker__search',
+            attr: { type: 'text', placeholder: 'Search tasks…' }
+        }) as HTMLInputElement;
+
+        const list = picker.createEl('div', { cls: 'mina-weekplan-picker__list' });
+
+        const renderList = (query: string) => {
+            list.empty();
+            const q = query.toLowerCase().trim();
+            const filtered = q
+                ? unscheduled.filter(t => t.title.toLowerCase().includes(q) || t.body.toLowerCase().includes(q))
+                : unscheduled;
+
+            if (filtered.length === 0) {
+                list.createEl('div', { cls: 'mina-weekplan-picker__empty', text: q ? 'No matching tasks' : 'No unscheduled tasks' });
+                return;
+            }
+
+            filtered.slice(0, 12).forEach(t => {
+                const item = list.createEl('div', { cls: 'mina-weekplan-picker__item' });
+                item.createEl('span', { cls: 'mina-weekplan-picker__title', text: t.title });
+                if (t.priority) {
+                    const priBadge = t.priority === 'high' ? '↑H' : t.priority === 'medium' ? '~M' : '↓L';
+                    item.createEl('span', { cls: `mina-weekplan-picker__priority mina-weekplan-picker__priority--${t.priority}`, text: priBadge });
+                }
+                item.addEventListener('click', async () => {
+                    picker.remove();
+                    await this.vault.editTask(t.filePath, t.body, t.context, targetDate);
+                    onAssigned();
+                });
+            });
+        };
+
+        searchInput.addEventListener('input', () => renderList(searchInput.value));
+        renderList('');
+
+        // Auto-focus search
+        requestAnimationFrame(() => searchInput.focus());
     }
 
     private _buildWeeklyReportContext(weekId: string, dateRange: string, wins: string, lessons: string, focus: string[]): WeeklyReportContext {

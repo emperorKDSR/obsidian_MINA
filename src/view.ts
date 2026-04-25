@@ -62,6 +62,10 @@ export class MinaView extends ItemView {
     calendarSelectedDate: string = moment().format('YYYY-MM-DD');
     calendarViewMode: 'month' | 'week' = 'month';
 
+    // Week Plan State
+    weekPlanDraft: Record<string, string> | null = null;
+    weekPlanTargetMode: 'next' | 'this' = 'next';
+
     // Focus State
     focusedTaskIds: Set<string> = new Set();
     focusAiPlan: string | null = null;

@@ -109,6 +109,8 @@ const SECTIONS: HelpSection[] = [
             { label: 'Lessons Learned', desc: 'Capture what you\'d do differently. Turns mistakes into growth.' },
             { label: 'Next Week\'s Focus', desc: 'Set 1–3 priorities for the coming week. These appear on your Home screen.' },
             { label: 'Habit Highlight', desc: 'Your best-performing habit is shown automatically.' },
+            { label: '📅 Next Week Plan', desc: 'Plan your coming week day by day. Each day has an intention input ("Theme for this day") and shows tasks due that day. Use "+ Assign Task" to route unscheduled tasks to specific days.', tip: 'Toggle "This Week / Next Week" to plan the current or upcoming week. On tablet, day cards display in a 7-column grid.' },
+            { label: 'Task Assignment', desc: 'Tap "+ Assign Task" on any day card to open an inline picker of unscheduled open tasks, sorted by priority. Tap a task to set its due date to that day — it appears in Focus tab automatically.' },
             { label: 'Save', desc: 'Press "Save Review" or ⌘↵ to save. Stored as Markdown in your Reviews/Weekly/ folder.', tip: 'The folder is configurable in Folder Config → Reviews Folder.' },
         ]
     },

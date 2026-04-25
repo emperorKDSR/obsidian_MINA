@@ -98,6 +98,7 @@ const SECTIONS: HelpSection[] = [
             { label: 'Lessons Learned', desc: 'Capture what you\'d do differently. Turns mistakes into growth.' },
             { label: 'Next Week\'s Focus', desc: 'Set 1–3 priorities for the coming week. These appear on your Home screen.' },
             { label: 'Habit Highlight', desc: 'Your best-performing habit is shown automatically.' },
+            { label: '📅 Next Week Plan', desc: 'Plan your week day by day. Set intentions per day and assign tasks using the inline picker. Toggle "This Week / Next Week" to plan either.' },
             { label: 'Save', desc: 'Press "Save Review" or ⌘↵ to save. Stored as Markdown in Reviews/Weekly/.' },
         ]
     },
