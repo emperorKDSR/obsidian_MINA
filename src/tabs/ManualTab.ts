@@ -11,10 +11,10 @@ const SECTIONS: HelpSection[] = [
         id: 'home', icon: 'lucide-home', title: 'Command Center', subtitle: 'Your daily launch pad',
         items: [
             { label: 'Greeting & Date', desc: 'Shows today\'s date, your greeting, and your North Star vision at the top.' },
-            { label: 'Zen Mode 🎯', desc: 'Tap the target icon to collapse all navigation and enter deep focus. Tap again to exit.', tip: 'Best used when you only want to see your goals and capture bar.' },
+            { label: 'Zen Mode 🎯', desc: 'Tap the target icon to collapse all navigation and enter deep focus. Tap again to exit.', tip: 'Best used when you only want to see your intelligence card and capture bar.' },
             { label: 'Intelligence Card', desc: 'Live snapshot: open tasks, habits completed, unprocessed thoughts, and total dues. Hit "SYNTHESIZE BRIEFING" to get an AI strategy summary.', tip: 'Requires a Gemini API key configured in Settings → AI.' },
-            { label: 'Weekly & Monthly Goals', desc: 'Your active goals shown at a glance. Tap "Edit" to update them in the Review tabs.' },
-            { label: 'Tablet Experience', desc: 'On tablets (iPad, etc.), MINA automatically upgrades to a desktop-like layout: inline capture bar, horizontal habit bar, expanded goals and navigation, and hover effects.', tip: 'Tablet is detected when the device short-edge is ≥768px.' },
+            { label: 'Navigation Clusters', desc: 'Four grouped rows: ACTION (Focus, Habits, Journal, Synthesis, Timeline), MANAGEMENT (Tasks, Finance, Projects, Calendar, Weekly, Monthly, Compass), FEATURES (AI Chat, Voice, Compasee, Memento), and SYSTEM (Settings, Manual, Export). Each cluster wraps to the next row automatically on narrow screens.', tip: 'Tap any icon to jump directly to that tab.' },
+            { label: 'Tablet Experience', desc: 'On tablets (iPad, etc.), MINA automatically upgrades to a desktop-like layout: inline capture bar, horizontal habit bar, expanded navigation, and hover effects.', tip: 'Tablet is detected when the device short-edge is ≥768px.' },
             { label: 'Global Search 🔍', desc: 'Tap the search icon in the header or press Mod+Shift+F to open Global Search. Instantly find anything across Thoughts, Tasks, Dues, Projects, and Habits.', tip: 'Also available via Obsidian command palette: "MINA: Global Search".' },
         ]
     },
@@ -52,6 +52,7 @@ const SECTIONS: HelpSection[] = [
             { label: 'Status Filters', desc: 'Filter by Open, Done, Waiting, or Someday using the segment bar at the top.' },
             { label: 'Complete a Task', desc: 'Tap the checkbox to mark a task done. It moves to the Done filter.' },
             { label: 'Edit a Task', desc: 'Tap a task card to open the edit modal. Change title, due date, contexts, priority, or energy.' },
+            { label: 'Full Title Display', desc: 'Task titles display in full — no truncation regardless of length. Long tasks wrap naturally across multiple lines.' },
             { label: 'Priority & Energy', desc: 'High/Medium/Low priority and energy tags help you pick the right task for your current state.', tip: 'Ask yourself: "What\'s my energy right now?" and filter accordingly.' },
             { label: 'Recurring Tasks', desc: 'Tasks can repeat daily, weekly, biweekly, or monthly. Set recurrence in the edit modal.' },
             { label: 'Comments', desc: 'Tap the comment icon on a task to add notes or replies beneath it.' },
@@ -114,7 +115,7 @@ const SECTIONS: HelpSection[] = [
     {
         id: 'monthly-review', icon: 'lucide-calendar-range', title: 'Monthly Review', subtitle: 'Set and track monthly goals',
         items: [
-            { label: 'Navigation', desc: 'Access from the SYSTEM cluster in Command Center, or from the monthly goals "Edit" button.' },
+            { label: 'Navigation', desc: 'Access from the MANAGEMENT cluster in Command Center, or from the monthly goals "Edit" button.' },
             { label: 'Monthly Stats', desc: 'Auto-calculated tasks done, thoughts captured, and open tasks for the current month.' },
             { label: 'Habit Adherence', desc: 'Shows completion rate per habit across the month with percentage color coding.' },
             { label: 'Project Progress', desc: 'Visual progress bars for each project showing done/total ratio.' },
@@ -124,7 +125,7 @@ const SECTIONS: HelpSection[] = [
     {
         id: 'compass', icon: 'lucide-compass', title: 'Compass', subtitle: 'Your North Star and long-range direction',
         items: [
-            { label: 'Access', desc: 'Open from the SYSTEM cluster in Command Center. Shows your Quarterly North Star Goals and Life Mission.' },
+            { label: 'Access', desc: 'Open from the MANAGEMENT cluster in Command Center. Shows your Quarterly North Star Goals and Life Mission.' },
             { label: 'North Star Goals', desc: 'Set 3 quarterly goals that define your 90-day strategic priorities. Displayed daily on the Home screen.' },
             { label: 'Life Mission', desc: 'Write your personal "why" — the reason behind all your goals and actions.' },
             { label: 'Quarterly Audit', desc: 'Auto-generated stats showing tasks done, habits completed, and dues paid for the quarter.' },
@@ -165,8 +166,11 @@ const SECTIONS: HelpSection[] = [
     {
         id: 'journal', icon: 'lucide-book-open', title: 'Journal', subtitle: 'Daily freeform writing',
         items: [
-            { label: 'Daily Entry', desc: 'Each day gets its own journal entry file. Use the arrow buttons to navigate between days.' },
-            { label: 'Auto-Save', desc: 'Journal entries save automatically as you type. No need to press save.' },
+            { label: 'All Entries Feed', desc: 'All journal entries are shown in a single scrollable feed, sorted newest-first. There is no day-based navigation — your full history is always visible.' },
+            { label: 'New Entry', desc: 'Tap the "+ New Entry" pill button in the Journal header to open the entry modal. Write your entry and tap Done (or Save on desktop) to save it.', tip: 'On mobile the modal opens as a bottom sheet — Cancel and Done are in the header bar.' },
+            { label: 'Edit & Delete', desc: 'Each entry card has an Edit (✏) and Delete (🗑) button. Tap Edit to reopen the modal with existing content for changes.' },
+            { label: 'Timestamps', desc: 'Every entry is stamped with its creation date and time, displayed below the entry body.' },
+            { label: 'Attach Images', desc: 'In the entry modal tap the paperclip icon to attach an image. It is saved to your Attachments folder and linked inline.' },
         ]
     },
     {
@@ -179,7 +183,7 @@ const SECTIONS: HelpSection[] = [
     {
         id: 'calendar', icon: 'lucide-calendar', title: 'Calendar View', subtitle: 'Visual month & week overview',
         items: [
-            { label: 'Access', desc: 'Open from the ACTION cluster in Command Center (Calendar icon), or via command palette: "MINA: Open View".' },
+            { label: 'Access', desc: 'Open from the MANAGEMENT cluster in Command Center (Calendar icon).' },
             { label: 'Month / Week Toggle', desc: 'Switch between a full month grid and a focused 7-day week view using the toggle in the top-right.', tip: 'Week view shows mini task lists inside each day cell.' },
             { label: 'Event Dots', desc: 'Each day cell shows coloured dots: accent = tasks due, orange = financial dues, green = habits completed. A count badge appears when there are multiple.', tip: 'Green dot glows when you\'ve completed all habits for the day.' },
             { label: 'Day Detail Panel', desc: 'Tap any day cell to see its full detail panel below the grid: tasks with priority badges, dues with amounts, and habits with completion status.' },
@@ -201,7 +205,7 @@ const SECTIONS: HelpSection[] = [
     {
         id: 'memento-mori', icon: 'lucide-hourglass', title: 'Memento Mori', subtitle: 'Your life in weeks — stay present',
         items: [
-            { label: 'Access', desc: 'Open from the SYSTEM cluster in Command Center (Memento button).', tip: 'A powerful daily reminder to focus on what matters.' },
+            { label: 'Access', desc: 'Open from the FEATURES cluster in Command Center (Memento button).', tip: 'A powerful daily reminder to focus on what matters.' },
             { label: 'Setup', desc: 'Set your birth date (YYYY-MM-DD) and life expectancy in Settings → Memento Mori. Without a birth date, the tab shows a setup prompt.' },
             { label: 'Stats Row', desc: 'Shows four key numbers at a glance: your current age, total weeks lived, weeks remaining, and years remaining.' },
             { label: 'Life-in-Weeks Grid', desc: 'Each small square represents one week of your life. Filled squares are weeks already lived; the current week is highlighted in accent colour. The grid spans your full expected lifespan.', tip: 'Scrollable on mobile — the full grid can be tall for a 90-year lifespan.' },
