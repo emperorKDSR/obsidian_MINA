@@ -78,14 +78,15 @@ export class JournalTab extends BaseTab {
         // ── Compose bar (mobile only) ──────────────────────────────────────
         if (isMobilePhone) {
             this._renderComposeBar(root, scroll);
-            // Explicitly bound root height: from its top to the toolbar top
+            // Explicitly bound root height using JS pixel measurements
+            // (100vh on iOS includes area behind toolbar — use innerHeight instead)
             requestAnimationFrame(() => {
                 const obsToolbar = document.querySelector('.mobile-toolbar') as HTMLElement;
                 const toolbarH = obsToolbar ? Math.round(obsToolbar.getBoundingClientRect().height) : 0;
                 const rootTop = Math.round(root.getBoundingClientRect().top);
-                root.style.height = `calc(100vh - ${rootTop}px - ${toolbarH}px)`;
+                const availH = window.innerHeight - rootTop - toolbarH;
+                root.style.height = `${availH}px`;
                 root.style.overflow = 'hidden';
-                // Scroll to bottom after layout settles
                 setTimeout(() => { scroll.scrollTop = scroll.scrollHeight; }, 100);
             });
         }
