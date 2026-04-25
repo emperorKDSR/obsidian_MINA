@@ -3268,10 +3268,14 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
 
 /* ── JOURNAL: COMPOSE BAR ───────────────────────────────────────────────── */
 .mina-journal-root.has-compose-bar .mina-journal-scroll {
-    padding-bottom: var(--mina-spacing-sm);
+    padding-bottom: calc(var(--mobile-toolbar-height, 48px) + 80px);
 }
 .mina-journal-compose {
-    flex-shrink: 0;
+    position: fixed;
+    bottom: var(--mobile-toolbar-height, 48px);
+    left: 0;
+    right: 0;
+    z-index: 200;
     background: var(--background-primary);
     border-top: 1px solid var(--background-modifier-border);
     padding-bottom: 0;
@@ -3296,7 +3300,7 @@ body.mina-journal-sheet-active .modal-container { pointer-events: auto; }
     display: flex;
     align-items: flex-end;
     gap: 8px;
-    padding: 28px 10px 26px;
+    padding: 8px 10px 9px;
 }
 .mina-journal-compose-attach {
     display: flex; align-items: center; justify-content: center;

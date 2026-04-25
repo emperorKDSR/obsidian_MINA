@@ -1,3 +1,9 @@
+## [1.19.15] - 2026-04-25
+### Fixed
+- Journal mobile: compose bar now position:fixed at ottom:var(--mobile-toolbar-height,48px) — sits exactly above Obsidian's action bar
+- Journal mobile: scroll area padding-bottom accounts for toolbar + compose bar height
+- Journal mobile: reverted all manual padding changes back to original (8px/9px)
+
 ## [1.19.14] - 2026-04-25
 ### Fixed
 - Journal mobile: compose bar now sits above Obsidian's bottom toolbar; removed height:100% override that was extending the view behind the toolbar
