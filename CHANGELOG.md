@@ -1,3 +1,14 @@
+## [1.22.6] — Timeline Search: Boolean Operators
+
+### Added
+- **`AND` / `OR` boolean search** in the Timeline search bar:
+  - `jozsef or andras` — entries containing "jozsef" **OR** "andras"
+  - `andras and 1:1` — entries containing **both** "andras" AND "1:1"
+  - `jozsef or andras and 1:1` — "jozsef" OR ("andras" AND "1:1") — `AND` binds tighter
+- Operators are case-insensitive (`AND`, `and`, `Or` all work)
+- Searches across title, body, and context tags
+- Updated placeholder text to hint at the capability: `Search… (use "and" / "or" for multi-criteria)`
+
 ## [1.22.5] — Timeline Header Mobile Fix
 
 ### Fixed
