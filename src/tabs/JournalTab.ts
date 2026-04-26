@@ -120,7 +120,7 @@ export class JournalTab extends BaseTab {
                 async (newText, ctxArr) => {
                     await this.vault.editThought(entry.filePath, newText, ctxArr);
                     this.view.renderView();
-                }).open();
+                }, entry.context).open();
         });
 
         const delBtn = actions.createEl('button', {
