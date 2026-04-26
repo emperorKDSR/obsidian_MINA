@@ -14,6 +14,13 @@ export class TimelineTab extends BaseTab {
     private dayObserver: IntersectionObserver | null = null;
     private sentinelObserver: IntersectionObserver | null = null;
 
+    // Search state
+    private isSearchMode = false;
+    private _searchQuery = '';
+    private _searchHintEl: HTMLElement | null = null;
+    private _searchDebounce: ReturnType<typeof setTimeout> | null = null;
+    private _renderGen = 0;
+
     constructor(view: MinaView) { super(view); }
 
     render(container: HTMLElement) {
@@ -28,6 +35,8 @@ export class TimelineTab extends BaseTab {
         this.loadedDates.clear();
         this.isLoading = false;
 
+        const gen = ++this._renderGen;
+
         const wrap = this.container.createEl('div', { cls: 'mina-tl-wrap' });
 
         this.headerEl = wrap.createEl('div', { cls: 'mina-tl-header-slot' });
@@ -35,19 +44,25 @@ export class TimelineTab extends BaseTab {
 
         this.feedEl = wrap.createEl('div', { cls: 'mina-tl-feed' });
 
+        // If we just returned from search mode, skip loading the infinite feed
+        if (this.isSearchMode) {
+            this._runSearch(this._searchQuery, gen);
+            return;
+        }
+
         const topSentinel = this.feedEl.createEl('div', { cls: 'mina-tl-sentinel mina-tl-sentinel--top' });
 
-        // Initial load: 1 day before, selected, 2 days after
         const selected = moment(this.view.timelineSelectedDate, 'YYYY-MM-DD');
         for (let o = -1; o <= 2; o++) {
+            if (gen !== this._renderGen) return;
             await this.appendDaySection(selected.clone().add(o, 'days'));
         }
 
+        if (gen !== this._renderGen) return;
         this.feedEl.createEl('div', { cls: 'mina-tl-sentinel mina-tl-sentinel--bottom' });
 
-        // Scroll to the selected day instantly (no animation on init)
         setTimeout(() => {
-            if (!this.feedEl) return;
+            if (gen !== this._renderGen || !this.feedEl) return;
             const target = this.feedEl.querySelector<HTMLElement>(`[data-date="${this.view.timelineSelectedDate}"]`);
             if (target) this.feedEl.scrollTop = target.offsetTop - 4;
         }, 20);
@@ -61,12 +76,12 @@ export class TimelineTab extends BaseTab {
         this.sentinelObserver?.disconnect();
         this.dayObserver = null;
         this.sentinelObserver = null;
+        if (this._searchDebounce) { clearTimeout(this._searchDebounce); this._searchDebounce = null; }
     }
 
-    // ── Navigate — partial update, no full re-render ───────────────────────
+    // ── Navigate ───────────────────────────────────────────────────────────
     private navigateToDate(dateStr: string) {
         this.view.timelineSelectedDate = dateStr;
-        // Refresh only the carousel header
         if (this.headerEl) {
             this.headerEl.empty();
             this.renderSpotlightHeader(this.headerEl);
@@ -79,6 +94,36 @@ export class TimelineTab extends BaseTab {
         }
     }
 
+    // ── Search entry / exit ────────────────────────────────────────────────
+    private _enterSearch() {
+        this.isSearchMode = true;
+        this._searchQuery = '';
+        if (this.headerEl) { this.headerEl.empty(); this.renderSpotlightHeader(this.headerEl); }
+        if (this.feedEl) {
+            this.teardown();
+            const gen = ++this._renderGen;
+            this._runSearch('', gen);
+        }
+    }
+
+    private _exitSearch() {
+        this.isSearchMode = false;
+        this._searchQuery = '';
+        this._searchHintEl = null;
+        if (this._searchDebounce) { clearTimeout(this._searchDebounce); this._searchDebounce = null; }
+        this.initTimeline();
+    }
+
+    /** After an edit/delete in search mode, re-run the search to reflect changes. */
+    private _refreshFeed() {
+        if (this.isSearchMode) {
+            const gen = ++this._renderGen;
+            if (this.feedEl) this._runSearch(this._searchQuery, gen);
+        } else {
+            this.initTimeline();
+        }
+    }
+
     // ── Spotlight Header Carousel ──────────────────────────────────────────
     private renderSpotlightHeader(parent: HTMLElement) {
         const header = parent.createEl('div', { cls: 'mina-tl-header' });
@@ -86,55 +131,206 @@ export class TimelineTab extends BaseTab {
         const topBar = header.createEl('div', { cls: 'mina-tl-header-bar' });
         this.renderHomeIcon(topBar);
         topBar.createEl('span', { text: 'TIMELINE', cls: 'mina-tl-title' });
+
+        const searchBtn = topBar.createEl('button', {
+            cls: `mina-tl-search-btn${this.isSearchMode ? ' is-active' : ''}`,
+            attr: { title: 'Search' }
+        });
+        setIcon(searchBtn, 'lucide-search');
+        searchBtn.addEventListener('click', () => {
+            if (this.isSearchMode) this._exitSearch();
+            else this._enterSearch();
+        });
+
         const fab = topBar.createEl('button', { cls: 'mina-tl-capture-fab', attr: { title: 'Capture new thought' } });
         setIcon(fab.createDiv({ cls: 'mina-tl-fab-icon' }), 'lucide-plus');
         fab.createEl('span', { text: 'NEW', cls: 'mina-tl-fab-label' });
         fab.addEventListener('click', () => this.openCapture());
 
-        const activityDates = new Set<string>([
-            ...Array.from(this.index.thoughtIndex.values()).map(t => t.day),
-            ...Array.from(this.index.taskIndex.values()).map(t => t.day),
-        ]);
+        if (this.isSearchMode) {
+            this._renderSearchBar(header);
+        } else {
+            const activityDates = new Set<string>([
+                ...Array.from(this.index.thoughtIndex.values()).map(t => t.day),
+                ...Array.from(this.index.taskIndex.values()).map(t => t.day),
+            ]);
 
-        const selectedMoment = moment(this.view.timelineSelectedDate, 'YYYY-MM-DD');
-        const spotlightRow = header.createEl('div', { cls: 'mina-tl-spotlight-row' });
+            const selectedMoment = moment(this.view.timelineSelectedDate, 'YYYY-MM-DD');
+            const spotlightRow = header.createEl('div', { cls: 'mina-tl-spotlight-row' });
 
-        const prevBtn = spotlightRow.createEl('button', { cls: 'mina-tl-nav-btn', attr: { title: 'Previous day' } });
-        setIcon(prevBtn, 'lucide-chevron-left');
-        prevBtn.addEventListener('click', () =>
-            this.navigateToDate(selectedMoment.clone().subtract(1, 'day').format('YYYY-MM-DD')));
+            const prevBtn = spotlightRow.createEl('button', { cls: 'mina-tl-nav-btn', attr: { title: 'Previous day' } });
+            setIcon(prevBtn, 'lucide-chevron-left');
+            prevBtn.addEventListener('click', () =>
+                this.navigateToDate(selectedMoment.clone().subtract(1, 'day').format('YYYY-MM-DD')));
 
-        const track = spotlightRow.createEl('div', { cls: 'mina-tl-spotlight-track' });
+            const track = spotlightRow.createEl('div', { cls: 'mina-tl-spotlight-track' });
 
-        for (let offset = -2; offset <= 2; offset++) {
-            const date = selectedMoment.clone().add(offset, 'days');
-            const dateStr = date.format('YYYY-MM-DD');
-            const isSpotlight = offset === 0;
-            const isToday = date.isSame(moment(), 'day');
-            const hasActivity = activityDates.has(dateStr);
-            const distCls = isSpotlight ? 'is-spotlight' : Math.abs(offset) === 1 ? 'is-near' : 'is-far';
+            for (let offset = -2; offset <= 2; offset++) {
+                const date = selectedMoment.clone().add(offset, 'days');
+                const dateStr = date.format('YYYY-MM-DD');
+                const isSpotlight = offset === 0;
+                const isToday = date.isSame(moment(), 'day');
+                const hasActivity = activityDates.has(dateStr);
+                const distCls = isSpotlight ? 'is-spotlight' : Math.abs(offset) === 1 ? 'is-near' : 'is-far';
 
-            const item = track.createEl('div', {
-                cls: ['mina-tl-date-item', distCls, isToday ? 'is-today' : ''].filter(Boolean).join(' ')
+                const item = track.createEl('div', {
+                    cls: ['mina-tl-date-item', distCls, isToday ? 'is-today' : ''].filter(Boolean).join(' ')
+                });
+                item.createSpan({ text: isToday ? 'TODAY' : date.format('ddd').toUpperCase(), cls: 'mina-tl-date-dow' });
+                item.createSpan({ text: date.format('D'), cls: 'mina-tl-date-num' });
+                item.createSpan({ text: date.format('MMM').toUpperCase(), cls: 'mina-tl-date-mon' });
+                if (hasActivity) item.createDiv({ cls: 'mina-tl-date-dot' });
+                if (!isSpotlight) item.addEventListener('click', () => this.navigateToDate(dateStr));
+            }
+
+            this.setupSwipeNavigation(track, selectedMoment);
+
+            const nextBtn = spotlightRow.createEl('button', { cls: 'mina-tl-nav-btn', attr: { title: 'Next day' } });
+            setIcon(nextBtn, 'lucide-chevron-right');
+            nextBtn.addEventListener('click', () =>
+                this.navigateToDate(selectedMoment.clone().add(1, 'day').format('YYYY-MM-DD')));
+
+            header.createEl('div', {
+                text: selectedMoment.format('dddd, MMMM D · YYYY').toUpperCase(),
+                cls: 'mina-tl-spotlight-subtitle'
             });
-            item.createSpan({ text: isToday ? 'TODAY' : date.format('ddd').toUpperCase(), cls: 'mina-tl-date-dow' });
-            item.createSpan({ text: date.format('D'), cls: 'mina-tl-date-num' });
-            item.createSpan({ text: date.format('MMM').toUpperCase(), cls: 'mina-tl-date-mon' });
-            if (hasActivity) item.createDiv({ cls: 'mina-tl-date-dot' });
-            if (!isSpotlight) item.addEventListener('click', () => this.navigateToDate(dateStr));
+        }
+    }
+
+    // ── Search Bar ─────────────────────────────────────────────────────────
+    private _renderSearchBar(parent: HTMLElement) {
+        const bar = parent.createEl('div', { cls: 'mina-tl-search-bar' });
+        const input = bar.createEl('input', {
+            cls: 'mina-tl-search-input',
+            attr: { type: 'text', placeholder: 'Search thoughts & tasks…' }
+        }) as HTMLInputElement;
+        (input as HTMLInputElement).value = this._searchQuery;
+
+        const clearBtn = bar.createEl('button', { cls: 'mina-tl-search-close', attr: { title: 'Clear search' } });
+        setIcon(clearBtn, 'lucide-x');
+        clearBtn.style.opacity = this._searchQuery ? '1' : '0';
+        clearBtn.style.pointerEvents = this._searchQuery ? 'auto' : 'none';
+
+        this._searchHintEl = parent.createEl('div', { cls: 'mina-tl-search-hint' });
+        this._updateSearchHint(this._searchQuery, null);
+
+        input.addEventListener('input', () => {
+            this._searchQuery = input.value;
+            clearBtn.style.opacity = input.value ? '1' : '0';
+            clearBtn.style.pointerEvents = input.value ? 'auto' : 'none';
+            if (this._searchDebounce) clearTimeout(this._searchDebounce);
+            this._searchDebounce = setTimeout(() => {
+                const gen = ++this._renderGen;
+                if (this.feedEl) this._runSearch(this._searchQuery, gen);
+            }, 200);
+        });
+
+        clearBtn.addEventListener('click', () => {
+            input.value = '';
+            this._searchQuery = '';
+            clearBtn.style.opacity = '0';
+            clearBtn.style.pointerEvents = 'none';
+            const gen = ++this._renderGen;
+            if (this.feedEl) this._runSearch('', gen);
+            input.focus();
+        });
+
+        input.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Escape') { e.preventDefault(); this._exitSearch(); }
+        });
+
+        setTimeout(() => input.focus(), 50);
+    }
+
+    private _updateSearchHint(query: string, count: number | null) {
+        if (!this._searchHintEl?.isConnected) return;
+        if (!query.trim()) {
+            this._searchHintEl.textContent = '';
+        } else if (count === null) {
+            this._searchHintEl.textContent = '';
+        } else {
+            this._searchHintEl.textContent = count === 0 ? '' : `${count} result${count === 1 ? '' : 's'}`;
+        }
+    }
+
+    // ── Search Results Render ──────────────────────────────────────────────
+    private async _runSearch(query: string, gen: number) {
+        if (!this.feedEl) return;
+        this.teardown();
+        this.feedEl.empty();
+
+        const q = query.toLowerCase().trim();
+
+        if (!q) {
+            this._updateSearchHint('', null);
+            this.feedEl.createEl('div', { cls: 'mina-tl-search-empty', text: 'Type to search thoughts & tasks…' });
+            return;
         }
 
-        this.setupSwipeNavigation(track, selectedMoment);
+        // Filter: one result per file (no multi-date duplicates)
+        type FeedItem = { type: 'task' | 'thought'; entry: any; day: string; time: string };
+        const results: FeedItem[] = [];
 
-        const nextBtn = spotlightRow.createEl('button', { cls: 'mina-tl-nav-btn', attr: { title: 'Next day' } });
-        setIcon(nextBtn, 'lucide-chevron-right');
-        nextBtn.addEventListener('click', () =>
-            this.navigateToDate(selectedMoment.clone().add(1, 'day').format('YYYY-MM-DD')));
+        for (const t of this.index.taskIndex.values()) {
+            if (
+                (t.title || '').toLowerCase().includes(q) ||
+                (t.body || '').toLowerCase().includes(q) ||
+                (t.context || []).some((c: string) => c.toLowerCase().includes(q))
+            ) {
+                results.push({ type: 'task', entry: t, day: t.day || t.due || '', time: (t.created || '').split(' ')[1] || '00:00' });
+            }
+        }
 
-        header.createEl('div', {
-            text: selectedMoment.format('dddd, MMMM D · YYYY').toUpperCase(),
-            cls: 'mina-tl-spotlight-subtitle'
+        for (const t of this.index.thoughtIndex.values()) {
+            if (
+                (t.title || '').toLowerCase().includes(q) ||
+                (t.body || '').toLowerCase().includes(q) ||
+                (t.context || []).some((c: string) => c.toLowerCase().includes(q))
+            ) {
+                results.push({ type: 'thought', entry: t, day: t.day || '', time: (t.created || '').split(' ')[1] || '00:00' });
+            }
+        }
+
+        // Sort by day desc, time desc
+        results.sort((a, b) => {
+            const dc = b.day.localeCompare(a.day);
+            return dc !== 0 ? dc : b.time.localeCompare(a.time);
         });
+
+        this._updateSearchHint(query, results.length);
+
+        if (results.length === 0) {
+            this.feedEl.createEl('div', { cls: 'mina-tl-search-empty', text: `No results for "${query}"` });
+            return;
+        }
+
+        // Group by day
+        const byDay = new Map<string, FeedItem[]>();
+        for (const item of results) {
+            const d = item.day || '0000-00-00';
+            if (!byDay.has(d)) byDay.set(d, []);
+            byDay.get(d)!.push(item);
+        }
+
+        for (const [day, items] of byDay) {
+            if (gen !== this._renderGen) return;
+            const m = moment(day, 'YYYY-MM-DD', true);
+            const isToday = m.isValid() && m.isSame(moment(), 'day');
+            const label = m.isValid()
+                ? (isToday ? `TODAY  ·  ${m.format('ddd, MMM D').toUpperCase()}` : m.format('ddd, MMM D · YYYY').toUpperCase())
+                : 'UNDATED';
+
+            const group = this.feedEl.createEl('div', { cls: 'mina-tl-day-section', attr: { 'data-date': day } });
+            const hdr = group.createEl('div', { cls: `mina-tl-day-header${isToday ? ' is-today' : ''}` });
+            hdr.createEl('span', { cls: 'mina-tl-day-label', text: label });
+            hdr.createEl('span', { cls: 'mina-tl-day-count', text: String(items.length) });
+
+            const spine = group.createEl('div', { cls: 'mina-tl-spine-wrap' });
+            for (const item of items) {
+                if (gen !== this._renderGen) return;
+                spine.appendChild(await this.buildEntryCard(item));
+            }
+        }
     }
 
     // ── Swipe / Drag Navigation ────────────────────────────────────────────
@@ -191,7 +387,6 @@ export class TimelineTab extends BaseTab {
         if (this.loadedDates.has(dateStr) || !this.feedEl) return;
         this.loadedDates.add(dateStr);
         const section = await this.buildDaySection(date);
-        // Preserve scroll offset so content doesn't jump
         const prevScrollTop = this.feedEl.scrollTop;
         const prevHeight = this.feedEl.scrollHeight;
         const topSentinel = this.feedEl.querySelector('.mina-tl-sentinel--top');
@@ -215,7 +410,6 @@ export class TimelineTab extends BaseTab {
         section.className = 'mina-tl-day-section';
         section.dataset.date = dateStr;
 
-        // Sticky day header
         const dayHeader = document.createElement('div');
         dayHeader.className = `mina-tl-day-header${isToday ? ' is-today' : ''}`;
         dayHeader.dataset.dateHeader = dateStr;
@@ -232,7 +426,6 @@ export class TimelineTab extends BaseTab {
         dayHeader.appendChild(countEl);
         section.appendChild(dayHeader);
 
-        // Gather entries
         type FeedItem = { type: 'task' | 'thought'; entry: any; time: string };
         const tasks = Array.from(this.index.taskIndex.values())
             .filter(t => t.day === dateStr || t.due === dateStr);
@@ -287,9 +480,8 @@ export class TimelineTab extends BaseTab {
         if (bottomSentinel) this.sentinelObserver.observe(bottomSentinel);
     }
 
-    // ── Active Day Observer — keeps carousel in sync while scrolling ───────
+    // ── Active Day Observer ────────────────────────────────────────────────
     private setupActiveDayObserver() {
-        // rootMargin: fire when day header enters the top 30% of the feed viewport
         this.dayObserver = new IntersectionObserver((entries) => {
             let best: { date: string; top: number } | null = null;
             for (const e of entries) {
@@ -324,7 +516,6 @@ export class TimelineTab extends BaseTab {
         const card = document.createElement('div');
         card.className = `mina-tl-entry-card mina-tl-entry-card--${item.type}`;
 
-        // Meta
         const meta = document.createElement('div');
         meta.className = 'mina-tl-entry-meta';
         const badge = document.createElement('span');
@@ -337,14 +528,12 @@ export class TimelineTab extends BaseTab {
         meta.appendChild(timeEl);
         card.appendChild(meta);
 
-        // Body
         const body = document.createElement('div');
         body.className = 'mina-tl-entry-body';
         await MarkdownRenderer.render(this.app, item.entry.body || item.entry.title || '', body, item.entry.filePath, this.view);
         this.hookInternalLinks(body, item.entry.filePath);
         card.appendChild(body);
 
-        // Footer
         const footer = document.createElement('div');
         footer.className = 'mina-tl-entry-footer';
         if (item.type === 'task' && item.entry.due) {
@@ -368,7 +557,6 @@ export class TimelineTab extends BaseTab {
         }
         card.appendChild(footer);
 
-        // Actions
         const actions = document.createElement('div');
         actions.className = 'mina-tl-entry-actions';
 
@@ -386,7 +574,7 @@ export class TimelineTab extends BaseTab {
                     const ctxArr = newCtxStr ? parseContextString(newCtxStr) : [];
                     if (item.type === 'task') await this.vault.editTask(item.entry.filePath, newText.replace(/<br>/g, '\n'), ctxArr, newDue || undefined);
                     else await this.vault.editThought(item.entry.filePath, newText.replace(/<br>/g, '\n'), ctxArr);
-                    this.initTimeline();
+                    this._refreshFeed();
                 }
             ).open();
         });
@@ -400,7 +588,7 @@ export class TimelineTab extends BaseTab {
                 await this.vault.deleteFile(item.entry.filePath, item.type === 'task' ? 'tasks' : 'thoughts');
                 if (item.type === 'task') this.index.taskIndex.delete(item.entry.filePath);
                 else this.index.thoughtIndex.delete(item.entry.filePath);
-                entryEl.remove(); // surgical removal — no full re-render needed
+                entryEl.remove();
             }).open();
         });
 
@@ -418,6 +606,8 @@ export class TimelineTab extends BaseTab {
             async (text, ctxs) => {
                 if (!text.trim()) return;
                 await this.vault.createThoughtFile(text, parseContextString(ctxs));
+                this.isSearchMode = false;
+                this._searchQuery = '';
                 this.initTimeline();
             },
             'Capture'
