@@ -202,7 +202,7 @@ export class TimelineTab extends BaseTab {
         const bar = parent.createEl('div', { cls: 'mina-tl-search-bar' });
         const input = bar.createEl('input', {
             cls: 'mina-tl-search-input',
-            attr: { type: 'text', placeholder: 'Search thoughts & tasks…' }
+            attr: { type: 'text', placeholder: 'Search… (use "and" / "or" for multi-criteria)' }
         }) as HTMLInputElement;
         (input as HTMLInputElement).value = this._searchQuery;
 
@@ -253,42 +253,62 @@ export class TimelineTab extends BaseTab {
         }
     }
 
+    // ── Boolean Query Parser ───────────────────────────────────────────────
+    /**
+     * Parses a raw query string into a 2D array:
+     *   outer array = OR groups (ANY must match)
+     *   inner array = AND terms (ALL must match within the group)
+     *
+     * Examples:
+     *   "jozsef or andras"       → [["jozsef"], ["andras"]]
+     *   "andras and 1:1"         → [["andras", "1:1"]]
+     *   "jozsef or andras and 1:1" → [["jozsef"], ["andras", "1:1"]]
+     */
+    private _parseQuery(raw: string): string[][] {
+        const orGroups = raw.toLowerCase().split(/\s+or\s+/);
+        return orGroups
+            .map(group => group.split(/\s+and\s+/).map(t => t.trim()).filter(t => t.length > 0))
+            .filter(g => g.length > 0);
+    }
+
+    /** Returns true if the entry's searchable text satisfies the boolean groups. */
+    private _matchesEntry(entry: any, groups: string[][]): boolean {
+        const haystack = [
+            (entry.title || '').toLowerCase(),
+            (entry.body || '').toLowerCase(),
+            ...(entry.context || []).map((c: string) => c.toLowerCase()),
+        ].join(' ');
+        return groups.some(andTerms => andTerms.every(term => haystack.includes(term)));
+    }
+
     // ── Search Results Render ──────────────────────────────────────────────
     private async _runSearch(query: string, gen: number) {
         if (!this.feedEl) return;
         this.teardown();
         this.feedEl.empty();
 
-        const q = query.toLowerCase().trim();
+        const q = query.trim();
 
         if (!q) {
             this._updateSearchHint('', null);
-            this.feedEl.createEl('div', { cls: 'mina-tl-search-empty', text: 'Type to search thoughts & tasks…' });
+            this.feedEl.createEl('div', { cls: 'mina-tl-search-empty', text: 'Type to search… (use "and" / "or" for multi-criteria)' });
             return;
         }
+
+        const groups = this._parseQuery(q);
 
         // Filter: one result per file (no multi-date duplicates)
         type FeedItem = { type: 'task' | 'thought'; entry: any; day: string; time: string };
         const results: FeedItem[] = [];
 
         for (const t of this.index.taskIndex.values()) {
-            if (
-                (t.title || '').toLowerCase().includes(q) ||
-                (t.body || '').toLowerCase().includes(q) ||
-                (t.context || []).some((c: string) => c.toLowerCase().includes(q))
-            ) {
+            if (this._matchesEntry(t, groups))
                 results.push({ type: 'task', entry: t, day: t.day || t.due || '', time: (t.created || '').split(' ')[1] || '00:00' });
-            }
         }
 
         for (const t of this.index.thoughtIndex.values()) {
-            if (
-                (t.title || '').toLowerCase().includes(q) ||
-                (t.body || '').toLowerCase().includes(q) ||
-                (t.context || []).some((c: string) => c.toLowerCase().includes(q))
-            ) {
+            if (this._matchesEntry(t, groups))
                 results.push({ type: 'thought', entry: t, day: t.day || '', time: (t.created || '').split(' ')[1] || '00:00' });
-            }
         }
 
         // Sort by day desc, time desc
