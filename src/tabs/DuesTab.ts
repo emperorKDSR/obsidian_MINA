@@ -37,7 +37,7 @@ export class DuesTab extends BaseTab {
             cls: 'mina-bills-inline-add-btn'
         });
         addBtnInline.addEventListener('click', () => {
-            new NewDueModal(this.app, this.settings.pfFolder, () => this.renderDuesMode(container)).open();
+            new NewDueModal(this.app, this.settings.pfFolder, async () => { await this.index.buildDueIndex(); this.renderDuesMode(container); }).open();
         });
 
         const analyticsBtn = titleRow.createEl('button', {
@@ -183,7 +183,7 @@ export class DuesTab extends BaseTab {
                             new PaymentModal(
                                 this.app, this.plugin, file,
                                 entry.dueDate,
-                                () => this.renderDuesMode(container)
+                                async () => { await this.index.buildDueIndex(); this.renderDuesMode(container); }
                             ).open();
                         }
                     });
@@ -199,7 +199,7 @@ export class DuesTab extends BaseTab {
         });
         setIcon(fab, 'lucide-plus');
         fab.addEventListener('click', () => {
-            new NewDueModal(this.app, this.settings.pfFolder, () => this.renderDuesMode(container)).open();
+            new NewDueModal(this.app, this.settings.pfFolder, async () => { await this.index.buildDueIndex(); this.renderDuesMode(container); }).open();
         });
     }
 

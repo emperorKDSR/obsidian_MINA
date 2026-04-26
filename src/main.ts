@@ -43,6 +43,7 @@ export default class MinaPlugin extends Plugin {
                 let shouldRefresh = false;
                 if (this.index.isThoughtFile(f.path)) { await this.index.indexThoughtFile(f as TFile); shouldRefresh = true; }
                 else if (this.index.isTaskFile(f.path)) { await this.index.indexTaskFile(f as TFile); shouldRefresh = true; }
+                else if (this.index.isDueFile(f.path)) { await this.index.buildDueIndex(); shouldRefresh = true; }
                 else if (f.path.startsWith((this.settings.habitsFolder || '000 Bin/MINA V2 Habits').replace(/\\/g, '/'))) { await this.index.refreshHabitIndex(); shouldRefresh = true; }
                 if (shouldRefresh) this.notifyRefresh();
             }));
@@ -52,9 +53,10 @@ export default class MinaPlugin extends Plugin {
                 this.notifyRefresh();
             }));
 
-            this.registerEvent(this.app.vault.on('delete', (f) => { 
+            this.registerEvent(this.app.vault.on('delete', async (f) => { 
                 this.index.thoughtIndex.delete(f.path); 
-                this.index.taskIndex.delete(f.path); 
+                this.index.taskIndex.delete(f.path);
+                if (this.index.isDueFile(f.path)) await this.index.buildDueIndex();
                 this.notifyRefresh(); 
             }));
             
@@ -208,6 +210,7 @@ export default class MinaPlugin extends Plugin {
 
         if (this.index.isThoughtFile(file.path)) await this.index.indexThoughtFile(file);
         else if (this.index.isTaskFile(file.path)) await this.index.indexTaskFile(file);
+        else if (this.index.isDueFile(file.path)) await this.index.buildDueIndex();
 
         if (file.path.startsWith(habitsFolder)) await this.index.refreshHabitIndex();
         else if (file.path === capPath) await this.index.buildChecklistIndex();
