@@ -1,3 +1,9 @@
+## [1.22.5] — Timeline Header Mobile Fix
+
+### Fixed
+- **Timeline header hidden on mobile**: `.mina-tl-wrap` was `position: absolute; inset: 0` — uniquely among all MINA tabs — placing the header at position 0 of the container, which on Obsidian mobile overlaps with the system navigation bar. Changed to `flex-grow: 1; min-height: 0` (the standard pattern used by every other MINA tab) so the timeline respects the view's natural flow layout.
+- **Mobile top clearance**: Added `body.is-mobile .mina-tl-header { padding-top: max(env(safe-area-inset-top, 0px) + 12px, 52px) }` to ensure the home button and header bar clear the device status bar / Obsidian nav overlay on all mobile devices.
+
 ## [1.22.4] — Timeline Search
 
 ### Added
