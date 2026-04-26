@@ -2,6 +2,16 @@ import { App, Modal, Platform, Notice, moment, setIcon } from 'obsidian';
 import MinaPlugin from '../main';
 import { isTablet, attachMediaPasteHandler, attachInlineTriggers } from '../utils';
 
+const JOURNAL_TYPES = [
+    { id: 'reflection',  tag: 'reflection',  icon: '🪞', label: 'Reflection',  placeholder: 'Look back… what happened, how did it feel?' },
+    { id: 'realization', tag: 'realization', icon: '⚡', label: 'Realization', placeholder: 'The insight was…' },
+    { id: 'gratitude',   tag: 'gratitude',   icon: '🙏', label: 'Gratitude',   placeholder: 'I\'m grateful for…' },
+    { id: 'idea',        tag: 'idea',        icon: '💡', label: 'Idea',        placeholder: 'What if… capture the spark.' },
+    { id: 'note',        tag: 'note',        icon: '📝', label: 'Note',        placeholder: 'Note to self…' },
+    { id: 'free',        tag: '',            icon: '✍️', label: 'Free Write',  placeholder: 'Start writing…' },
+] as const;
+const TYPE_TAGS: Set<string> = new Set(JOURNAL_TYPES.filter(t => t.tag).map(t => t.tag));
+
 export class JournalEntryModal extends Modal {
     private plugin: MinaPlugin;
     private mode: 'new' | 'edit';
@@ -17,7 +27,8 @@ export class JournalEntryModal extends Modal {
         mode: 'new' | 'edit',
         initialText: string,
         filePath: string | null,
-        onSave: (text: string, contexts: string[]) => Promise<void>
+        onSave: (text: string, contexts: string[]) => Promise<void>,
+        initialContexts?: string[]
     ) {
         super(app);
         this.plugin = plugin;
@@ -25,7 +36,7 @@ export class JournalEntryModal extends Modal {
         this.initialText = initialText.replace(/<br>/g, '\n');
         this.filePath = filePath;
         this.onSave = onSave;
-        this.contexts = [];
+        this.contexts = initialContexts ? [...initialContexts] : [];
     }
 
     onOpen() {
@@ -83,6 +94,9 @@ export class JournalEntryModal extends Modal {
         }) as HTMLTextAreaElement;
         textArea.value = this.initialText;
 
+        // ── Type picker bar ───────────────────────────────────────────────
+        this._renderTypeBar(contentEl, textArea, true);
+
         // ── Hidden file input ──────────────────────────────────────────────
         const fileInput = contentEl.createEl('input', {
             attr: { type: 'file', accept: 'image/*,application/pdf', style: 'display:none' }
@@ -105,7 +119,7 @@ export class JournalEntryModal extends Modal {
         const chipScroll = actionBar.createDiv({ cls: 'mina-jm-m365-chips' });
         const renderChips = () => {
             chipScroll.empty();
-            const visible = this.contexts.filter(c => c !== 'journal');
+            const visible = this.contexts.filter(c => c !== 'journal' && !TYPE_TAGS.has(c));
             for (const ctx of visible) {
                 const chip = chipScroll.createEl('span', { cls: 'mina-jm-chip' });
                 chip.createSpan({ text: `#${ctx}` });
@@ -195,6 +209,12 @@ export class JournalEntryModal extends Modal {
         }) as HTMLTextAreaElement;
         textArea.value = this.initialText;
 
+        // ── Type picker bar ───────────────────────────────────────────────
+        // Insert between header and body via DOM ordering (contentEl is flex column)
+        this._renderTypeBar(contentEl, textArea, false);
+        // Move body after the type bar
+        contentEl.appendChild(body);
+
         // Desktop: image preview strip (right column, hidden until image added)
         let previewStrip: HTMLElement | null = null;
         if (variant === 'desktop') {
@@ -206,7 +226,7 @@ export class JournalEntryModal extends Modal {
         const chipRow = contentEl.createDiv({ cls: 'mina-jm-chip-row mina-jm-chip-row--card' });
         const renderChips = () => {
             chipRow.empty();
-            const visible = this.contexts.filter(c => c !== 'journal');
+            const visible = this.contexts.filter(c => c !== 'journal' && !TYPE_TAGS.has(c));
             for (const ctx of visible) {
                 const chip = chipRow.createEl('span', { cls: 'mina-jm-chip' });
                 chip.createSpan({ text: `#${ctx}` });
@@ -295,6 +315,45 @@ export class JournalEntryModal extends Modal {
             textArea.focus();
             textArea.setSelectionRange(textArea.value.length, textArea.value.length);
         }, 80);
+    }
+
+    // ── TYPE PICKER BAR ──────────────────────────────────────────────────
+    private _renderTypeBar(parent: HTMLElement, textArea: HTMLTextAreaElement, isMobile: boolean) {
+        const bar = parent.createDiv({
+            cls: `mina-jm-type-bar${isMobile ? ' mina-jm-type-bar--mobile' : ' mina-jm-type-bar--card'}`
+        });
+
+        // Determine initial active type from existing contexts
+        let activeId = 'free';
+        for (const type of JOURNAL_TYPES) {
+            if (type.tag && this.contexts.includes(type.tag)) {
+                activeId = type.id;
+                break;
+            }
+        }
+
+        const initialType = JOURNAL_TYPES.find(t => t.id === activeId)!;
+        textArea.placeholder = initialType.placeholder;
+
+        const pillEls = new Map<string, HTMLElement>();
+
+        for (const type of JOURNAL_TYPES) {
+            const pill = bar.createEl('button', {
+                cls: `mina-jm-type-pill${type.id === activeId ? ' is-active' : ''}`
+            });
+            pill.createSpan({ cls: 'mina-jm-type-pill__icon', text: type.icon });
+            pill.createSpan({ cls: 'mina-jm-type-pill__label', text: type.label });
+            pillEls.set(type.id, pill);
+
+            pill.addEventListener('click', () => {
+                for (const el of pillEls.values()) el.removeClass('is-active');
+                pill.addClass('is-active');
+                this.contexts = this.contexts.filter(c => !TYPE_TAGS.has(c));
+                if (type.tag) this.contexts.push(type.tag);
+                textArea.placeholder = type.placeholder;
+                textArea.focus();
+            });
+        }
     }
 
     // ── FILE INPUT HANDLER ────────────────────────────────────────────────
