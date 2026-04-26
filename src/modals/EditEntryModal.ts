@@ -559,7 +559,8 @@ export class EditEntryModal extends Modal {
                     this.plugin.settings.contexts.push(tag);
                 }
             },
-            () => this.plugin.settings.contexts ?? []
+            () => this.plugin.settings.contexts ?? [],
+            this.plugin.settings.peopleFolder
         );
     }
 

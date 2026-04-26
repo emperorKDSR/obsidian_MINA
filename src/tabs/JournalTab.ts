@@ -250,7 +250,8 @@ export class JournalTab extends BaseTab {
             this.app, textarea,
             () => {},
             (tag: string) => { if (!contexts.includes(tag)) { contexts.push(tag); renderChips(); } },
-            () => this.settings.contexts ?? []
+            () => this.settings.contexts ?? [],
+            this.settings.peopleFolder
         );
 
         const doSend = async () => {

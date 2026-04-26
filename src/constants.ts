@@ -177,4 +177,5 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     reviewsFolder: '000 Bin/MINA V2 Reviews',
     reminderHabitsEnabled: true,
     reminderTasksEnabled: true,
+    peopleFolder: '000 Bin/MINA V2 People',
 }

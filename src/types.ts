@@ -69,6 +69,7 @@ export interface MinaSettings {
     reviewsFolder: string;
     reminderHabitsEnabled: boolean;
     reminderTasksEnabled: boolean;
+    peopleFolder: string;
 }
 
 export interface Milestone {

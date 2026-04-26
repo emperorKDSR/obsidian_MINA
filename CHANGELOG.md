@@ -1,3 +1,12 @@
+## [1.22.3] — Person Quick-Create on `/` Trigger
+
+### Added
+- **`PersonSuggestModal` — Create new person inline**: When `/` is typed in any capture input and the typed name has no matching person note, a `➕ Create "[name]"` option appears at the bottom of the suggestions list. Selecting it creates a new markdown note with `category: people` frontmatter in the configured People Folder.
+- **`peopleFolder` setting**: New setting (default: `000 Bin/MINA V2 People`) controls where new person notes are saved. Exposed in the Settings tab under Folders.
+
+### Fixed
+- All `attachInlineTriggers` call sites (CommandCenterTab, EditEntryModal, JournalEntryModal, JournalTab) now pass `peopleFolder` so the create-person path uses the correct folder everywhere.
+
 ## [1.20.0] - 2026-04-25
 ### Added
 - **Next Week Plan**: New collapsible section in Weekly Review for day-by-day planning

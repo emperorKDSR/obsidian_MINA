@@ -161,6 +161,7 @@ export class CommandCenterTab extends BaseTab {
             () => {},               // thoughts have no due date — no-op
             (tag) => addThoughtChip(tag),
             () => thoughtContexts,
+            this.settings.peopleFolder,
         );
         attachMediaPasteHandler(this.app, thoughtArea, () => this.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments');
 
@@ -254,7 +255,7 @@ export class CommandCenterTab extends BaseTab {
                     taskInput.value = cur.substring(0, curPos) + link + cur.substring(curPos);
                     taskInput.setSelectionRange(curPos + link.length, curPos + link.length);
                     taskInput.focus();
-                }).open();
+                }, this.settings.peopleFolder).open();
             }
         });
 
