@@ -176,7 +176,7 @@ export class HabitsTab extends BaseTab {
         for (const habit of habits) {
             const done = completedToday.has(habit.id);
             const btn = bar.createEl('button', { cls: `mina-habit-quick-btn mina-habits-today-btn${done ? ' is-done' : ''}`, attr: { title: habit.name } });
-            btn.insertAdjacentHTML('afterbegin', '<svg class="mina-habit-ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="mina-habit-ring-track" cx="18" cy="18" r="15.9"/><circle class="mina-habit-ring-fill" cx="18" cy="18" r="15.9"/></svg>');
+            btn.insertAdjacentHTML('afterbegin', '<svg class="mina-habit-ring" viewBox="0 0 36 36" aria-hidden="true"><rect class="mina-habit-ring-track" x="2" y="2" width="32" height="32" rx="8" ry="8" pathLength="100"/><rect class="mina-habit-ring-fill" x="2" y="2" width="32" height="32" rx="8" ry="8" pathLength="100"/></svg>');
             btn.createEl('span', { text: habit.icon || '●', cls: 'mina-habit-quick-icon' });
             btn.createEl('span', { text: habit.name, cls: 'mina-habit-quick-label mina-habits-today-label' });
 
