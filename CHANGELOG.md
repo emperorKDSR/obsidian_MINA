@@ -385,6 +385,14 @@
 
 # Changelog
 
+## [1.22.2] - 2026-04-26
+
+### Fixed
+- Finance tab now refreshes immediately after payment or new bill creation
+- Added isDueFile() to IndexService — PF folder files now properly trigger dueIndex rebuild on vault events (create, modify, delete)
+- PaymentModal and NewDueModal callbacks now await buildDueIndex() before re-rendering, eliminating stale-index race condition
+
+
 ## [1.22.1] - 2026-04-25
 
 ### Added

@@ -278,6 +278,11 @@ export class IndexService {
         return path.startsWith(folder + '/') && path.endsWith('.md') && !path.includes('/trash/');
     }
 
+    isDueFile(path: string): boolean {
+        const folder = (this.settings.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/').trim();
+        return path.startsWith(folder + '/') && path.endsWith('.md');
+    }
+
     getProjects(): string[] {
         const p = new Set<string>();
         this.thoughtIndex.forEach(t => { if (t.project) p.add(t.project); });
