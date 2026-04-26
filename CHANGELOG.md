@@ -1,3 +1,19 @@
+## [1.22.4] — Timeline Search
+
+### Added
+- **Search button** (🔍) in the Timeline header bar — toggles search mode; highlights accent-blue when active
+- **Search bar** — replaces the date carousel when active; pill-shaped input with auto-focus, clear (✕) button, and result count hint
+- **`_runSearch()`** — searches all in-memory thoughts and tasks across the full vault (not just loaded days); case-insensitive substring match on title, body, and context tags; results grouped by day (most recent first)
+- **Render-generation token** (`_renderGen`) prevents stale async renders from competing with newer search/timeline renders
+- **Escape** key exits search and returns to the normal infinite-scroll timeline
+- After editing a card in search mode, results refresh with the same query
+
+### UX Details
+- Empty query shows "Type to search…" prompt (no expensive full-vault render)
+- Results use the same day-section structure as the normal timeline (consistent visual language)
+- One result per file (no multi-date duplicates)
+- Exiting search preserves the previously selected timeline date
+
 ## [1.22.3] — Person Quick-Create on `/` Trigger
 
 ### Added
