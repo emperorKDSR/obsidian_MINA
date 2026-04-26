@@ -152,7 +152,8 @@ export class JournalEntryModal extends Modal {
             this.app, textArea,
             () => {},
             (tag: string) => { if (!this.contexts.includes(tag)) { this.contexts.push(tag); renderChips(); } },
-            () => this.plugin.settings.contexts ?? []
+            () => this.plugin.settings.contexts ?? [],
+            this.plugin.settings.peopleFolder
         );
 
         setTimeout(() => {
@@ -286,7 +287,8 @@ export class JournalEntryModal extends Modal {
             this.app, textArea,
             () => {},
             (tag: string) => { if (!this.contexts.includes(tag)) { this.contexts.push(tag); renderChips(); } },
-            () => this.plugin.settings.contexts ?? []
+            () => this.plugin.settings.contexts ?? [],
+            this.plugin.settings.peopleFolder
         );
 
         setTimeout(() => {

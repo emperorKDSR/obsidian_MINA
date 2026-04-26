@@ -62,7 +62,8 @@ export function attachInlineTriggers(
     textArea: HTMLTextAreaElement,
     setDueDate: (d: string) => void,
     onContext?: (tag: string) => void,
-    getContexts?: () => string[]
+    getContexts?: () => string[],
+    peopleFolder?: string
 ): void {
     textArea.addEventListener('input', () => {
         const val = textArea.value;
@@ -110,7 +111,7 @@ export function attachInlineTriggers(
                 textArea.value = cur.substring(0, curPos) + link + cur.substring(curPos);
                 textArea.setSelectionRange(curPos + link.length, curPos + link.length);
                 textArea.focus();
-            }).open();
+            }, peopleFolder).open();
             return;
         }
 
