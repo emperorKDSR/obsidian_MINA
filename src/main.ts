@@ -13,6 +13,7 @@ import { SearchModal } from './modals/SearchModal';
 export default class MinaPlugin extends Plugin {
 	settings: MinaSettings;
     settingsInitialized: boolean = false;
+    zenCaptureDraft: string = '';
     
     // Services
     ai: AiService;
