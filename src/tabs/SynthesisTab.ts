@@ -555,7 +555,7 @@ export class SynthesisTab extends BaseTab {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // Inline Context Picker
+    // Inline Context Tagger (replaces modal for single-card assignment)
     // ═══════════════════════════════════════════════════════════════════════════
 
     private openContextPicker(thought: ThoughtEntry): void {
@@ -569,6 +569,330 @@ export class SynthesisTab extends BaseTab {
             },
             `Assign to "${thought.title.substring(0, 40)}"`,
         ).open();
+    }
+
+    private openInlineTagger(thought: ThoughtEntry, card: HTMLElement): void {
+        // Guard: if tagger already open on this card, just re-focus
+        const existingTagger = card.querySelector<HTMLElement>('.mina-ctx-tagger.is-open');
+        if (existingTagger) {
+            existingTagger.querySelector<HTMLInputElement>('.mina-ctx-tagger-input')?.focus();
+            return;
+        }
+
+        // Close any OTHER open taggers (commit them first)
+        document.querySelectorAll<HTMLElement>('.mina-ctx-tagger.is-open').forEach(t => {
+            (t as any)._commit?.();
+        });
+
+        const cardHdr = card.querySelector<HTMLElement>('.mina-syn-card-hdr');
+        if (!cardHdr) return;
+
+        // Remove existing chips/prompt area
+        cardHdr.querySelector('.mina-syn-card-ctx-chips')?.remove();
+        cardHdr.querySelector('.mina-syn-card-assign-prompt')?.remove();
+
+        // Local state
+        const original = [...(thought.context || [])];
+        let staged = [...original];
+        let focusedIdx = -1;
+        let committed = false;
+        const isPhone = Platform.isMobile && !isTablet();
+
+        // Build DOM
+        const tagger = cardHdr.createEl('div', {
+            cls: 'mina-ctx-tagger is-open',
+            attr: { 'data-thought-path': thought.filePath },
+        });
+
+        const field = tagger.createEl('div', { cls: 'mina-ctx-tagger-field' });
+        const chipsRow = field.createEl('div', { cls: 'mina-ctx-tagger-chips' });
+        const inputWrap = chipsRow.createEl('span', { cls: 'mina-ctx-tagger-input-wrap' });
+        const input = inputWrap.createEl('input', {
+            cls: 'mina-ctx-tagger-input',
+            attr: {
+                type: 'text', spellcheck: 'false',
+                autocomplete: 'off', autocorrect: 'off', autocapitalize: 'none',
+                placeholder: staged.length === 0 ? 'Assign context…' : '',
+            },
+        }) as HTMLInputElement;
+
+        const dropdown = tagger.createEl('div', { cls: 'mina-ctx-tagger-dropdown' });
+
+        // Chip renderer
+        const renderChips = () => {
+            chipsRow.querySelectorAll('.mina-chip--tagger').forEach(c => c.remove());
+            for (const ctx of staged) {
+                const chip = document.createElement('span');
+                chip.className = 'mina-chip mina-chip--ctx mina-chip--tagger';
+                chip.dataset.ctx = ctx;
+                const label = document.createElement('span');
+                label.className = 'mina-chip-label';
+                label.textContent = `#${ctx}`;
+                chip.appendChild(label);
+                const rmBtn = document.createElement('button');
+                rmBtn.className = 'mina-chip-remove';
+                rmBtn.setAttribute('aria-label', `Remove ${ctx}`);
+                rmBtn.setAttribute('tabindex', '-1');
+                rmBtn.textContent = '×';
+                rmBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    chip.classList.add('is-removing');
+                    setTimeout(() => {
+                        staged = staged.filter(c => c !== ctx);
+                        renderChips();
+                        updatePlaceholder();
+                        input.focus();
+                    }, 100);
+                });
+                chip.appendChild(rmBtn);
+                chipsRow.insertBefore(chip, inputWrap);
+            }
+        };
+        renderChips();
+
+        const updatePlaceholder = () => {
+            input.placeholder = staged.length === 0 ? 'Assign context…' : '';
+        };
+
+        // Dropdown builder
+        const buildDropdown = (query: string) => {
+            dropdown.empty();
+            focusedIdx = -1;
+            const sanitized = query.replace(/[^a-z0-9_-]/gi, '').toLowerCase();
+            const allCtx = this.settings.contexts || [];
+            const matches = allCtx
+                .filter(c => !staged.includes(c))
+                .filter(c => !query || c.toLowerCase().includes(sanitized))
+                .slice(0, 5);
+            const exactExists = allCtx.includes(sanitized);
+
+            if (matches.length === 0 && !sanitized) {
+                dropdown.classList.remove('is-visible');
+                return;
+            }
+
+            for (const ctx of matches) {
+                const item = dropdown.createEl('div', {
+                    cls: 'mina-ctx-tagger-item',
+                    attr: { 'data-ctx': ctx, role: 'option' },
+                });
+                item.createEl('span', { cls: 'mina-ctx-tagger-item-dot' });
+                item.createEl('span', { text: `#${ctx}`, cls: 'mina-ctx-tagger-item-label' });
+                item.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    selectCtx(ctx);
+                });
+            }
+
+            if (sanitized && !exactExists && !staged.includes(sanitized)) {
+                const createItem = dropdown.createEl('div', {
+                    cls: 'mina-ctx-tagger-item is-create',
+                    attr: { 'data-ctx': sanitized, role: 'option' },
+                });
+                createItem.createEl('span', { cls: 'mina-ctx-tagger-item-create-icon', text: '+' });
+                createItem.createEl('span', { text: `Create "#${sanitized}"`, cls: 'mina-ctx-tagger-item-label' });
+                createItem.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    createAndSelect(sanitized);
+                });
+            }
+
+            const hasItems = dropdown.childElementCount > 0;
+            dropdown.classList.toggle('is-visible', hasItems);
+
+            if (isPhone && hasItems) {
+                const rect = tagger.getBoundingClientRect();
+                const spaceBelow = window.innerHeight - rect.bottom;
+                dropdown.style.top = spaceBelow < 200 ? 'auto' : 'calc(100% + 4px)';
+                dropdown.style.bottom = spaceBelow < 200 ? 'calc(100% + 4px)' : 'auto';
+            }
+        };
+
+        // Context operations
+        const selectCtx = (ctx: string) => {
+            if (!staged.includes(ctx)) staged.push(ctx);
+            input.value = '';
+            dropdown.classList.remove('is-visible');
+            renderChips();
+            updatePlaceholder();
+            input.focus();
+        };
+
+        const createAndSelect = (name: string) => {
+            if (!this.settings.contexts.includes(name)) {
+                this.settings.contexts.push(name);
+                this.plugin.saveSettings();
+            }
+            selectCtx(name);
+        };
+
+        const confirmTyped = () => {
+            const raw = input.value.trim();
+            const name = raw.replace(/[^a-z0-9_-]/gi, '').toLowerCase();
+            if (!name || !/[a-z]/.test(name)) {
+                tagger.classList.add('is-error');
+                setTimeout(() => tagger.classList.remove('is-error'), 600);
+                return;
+            }
+            if (this.settings.contexts.includes(name)) {
+                selectCtx(name);
+            } else {
+                createAndSelect(name);
+            }
+        };
+
+        // Commit / abort
+        const commit = async () => {
+            if (committed) return;
+            committed = true;
+            tagger.remove();
+            this.rebuildCardCtxArea(cardHdr, thought, staged, card);
+            const changed = staged.length !== original.length || staged.some((c, i) => c !== original[i]);
+            if (changed) {
+                await this.vault.assignContext(thought.filePath, staged, true);
+                if (this.feedFilter === 'no-context' && staged.length > 0) {
+                    this.exitCard(card, () => this.refreshCountsInDOM(
+                        card.closest<HTMLElement>('.mina-syn-shell')!
+                    ));
+                }
+            }
+        };
+
+        const abort = () => {
+            if (committed) return;
+            committed = true;
+            tagger.remove();
+            this.rebuildCardCtxArea(cardHdr, thought, original, card);
+        };
+
+        (tagger as any)._commit = commit;
+
+        // Event listeners
+        input.addEventListener('input', () => {
+            const q = input.value.replace(/,/g, '').trim();
+            buildDropdown(q.toLowerCase());
+        });
+
+        input.addEventListener('keydown', (e: KeyboardEvent) => {
+            const items = Array.from(dropdown.querySelectorAll<HTMLElement>('.mina-ctx-tagger-item'));
+            switch (e.key) {
+                case 'Enter': {
+                    e.preventDefault();
+                    if (focusedIdx >= 0 && items[focusedIdx]) {
+                        const ctx = items[focusedIdx].dataset.ctx!;
+                        items[focusedIdx].classList.contains('is-create')
+                            ? createAndSelect(ctx) : selectCtx(ctx);
+                    } else if (input.value.trim()) {
+                        confirmTyped();
+                    } else {
+                        commit();
+                    }
+                    break;
+                }
+                case ',': {
+                    e.preventDefault();
+                    if (input.value.replace(',', '').trim()) confirmTyped();
+                    break;
+                }
+                case 'ArrowDown': {
+                    e.preventDefault();
+                    focusedIdx = Math.min(focusedIdx + 1, items.length - 1);
+                    items.forEach((el, i) => el.classList.toggle('is-focused', i === focusedIdx));
+                    break;
+                }
+                case 'ArrowUp': {
+                    e.preventDefault();
+                    focusedIdx = Math.max(focusedIdx - 1, -1);
+                    items.forEach((el, i) => el.classList.toggle('is-focused', i === focusedIdx));
+                    break;
+                }
+                case 'Backspace': {
+                    if (input.value === '' && staged.length > 0) {
+                        e.preventDefault();
+                        staged = staged.slice(0, -1);
+                        renderChips();
+                        updatePlaceholder();
+                    }
+                    break;
+                }
+                case 'Escape': {
+                    e.preventDefault();
+                    abort();
+                    break;
+                }
+                case 'Tab': {
+                    if (focusedIdx >= 0 && items[focusedIdx]) {
+                        e.preventDefault();
+                        const ctx = items[focusedIdx].dataset.ctx!;
+                        items[focusedIdx].classList.contains('is-create')
+                            ? createAndSelect(ctx) : selectCtx(ctx);
+                    }
+                    break;
+                }
+            }
+        });
+
+        // Blur = commit (delay for mousedown on suggestion)
+        input.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (!tagger.contains(document.activeElement)) commit();
+            }, 150);
+        });
+
+        // Focus + scroll into view
+        setTimeout(() => {
+            input.focus();
+            if (isPhone) tagger.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 30);
+    }
+
+    /**
+     * Rebuilds static chips/prompt area after tagger closes.
+     */
+    private rebuildCardCtxArea(
+        cardHdr: HTMLElement,
+        thought: ThoughtEntry,
+        contexts: string[],
+        card: HTMLElement,
+    ): void {
+        thought.context = contexts;
+
+        if (contexts.length > 0) {
+            const chipsEl = cardHdr.createEl('div', { cls: 'mina-syn-card-ctx-chips' });
+            for (const ctx of contexts) {
+                const chip = chipsEl.createEl('span', {
+                    text: `#${ctx}`,
+                    cls: 'mina-chip mina-chip--ctx',
+                    attr: { style: 'cursor:pointer;', title: 'Edit contexts' },
+                });
+                chip.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.openInlineTagger(thought, card);
+                });
+            }
+            if (!thought.synthesized) {
+                const addChipBtn = chipsEl.createEl('button', {
+                    cls: 'mina-syn-card-add-ctx',
+                    attr: { title: 'Add context' },
+                });
+                setIcon(addChipBtn, 'tag');
+                addChipBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.openInlineTagger(thought, card);
+                });
+            }
+        } else if (!thought.synthesized) {
+            const assignPrompt = cardHdr.createEl('button', {
+                cls: 'mina-syn-card-assign-prompt',
+                attr: { title: 'Assign context to this thought' },
+            });
+            setIcon(assignPrompt, 'tag');
+            assignPrompt.createEl('span', { text: 'Assign Context' });
+            assignPrompt.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.openInlineTagger(thought, card);
+            });
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -696,7 +1020,7 @@ export class SynthesisTab extends BaseTab {
             {
                 label: 'Assign Context…',
                 icon: 'tag',
-                action: () => this.openContextPicker(thought),
+                action: () => this.openInlineTagger(thought, card),
             },
         ];
 
@@ -977,7 +1301,7 @@ export class SynthesisTab extends BaseTab {
                     chip.title = 'Edit contexts';
                     chip.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        this.openContextPicker(thought);
+                        this.openInlineTagger(thought, card);
                     });
                 }
             });
@@ -989,7 +1313,7 @@ export class SynthesisTab extends BaseTab {
                 setIcon(addChipBtn, 'tag');
                 addChipBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    this.openContextPicker(thought);
+                    this.openInlineTagger(thought, card);
                 });
             }
         } else if (!thought.synthesized) {
@@ -1001,7 +1325,7 @@ export class SynthesisTab extends BaseTab {
             assignPrompt.createEl('span', { text: 'Assign Context' });
             assignPrompt.addEventListener('click', (e) => {
                 e.stopPropagation();
-                this.openContextPicker(thought);
+                this.openInlineTagger(thought, card);
             });
         }
 
@@ -1045,7 +1369,7 @@ export class SynthesisTab extends BaseTab {
 
             assignBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                this.openContextPicker(thought);
+                this.openInlineTagger(thought, card);
             });
 
             // ── Mark Done button ──────────────────────────────────────────────
