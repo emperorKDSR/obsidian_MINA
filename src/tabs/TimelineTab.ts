@@ -25,6 +25,10 @@ export class TimelineTab extends BaseTab {
 
     render(container: HTMLElement) {
         this.container = container;
+        // Ensure the container has a fixed height so the inner flex layout
+        // can constrain the feed scroll area and keep the header frozen.
+        container.style.height = '100%';
+        container.style.overflow = 'hidden';
         this.initTimeline();
     }
 
