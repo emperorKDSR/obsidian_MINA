@@ -133,7 +133,7 @@ export class TimelineTab extends BaseTab {
         const header = parent.createEl('div', { cls: 'mina-tl-header' });
         // The header is frozen inside view-content which already starts below
         // Obsidian's mobile nav bar — override the 52px CSS rule with standard padding.
-        if (Platform.isMobile) header.style.paddingTop = '4px';
+        if (Platform.isMobile) header.style.paddingTop = '0px';
 
         const topBar = header.createEl('div', { cls: 'mina-tl-header-bar' });
         this.renderHomeIcon(topBar);
