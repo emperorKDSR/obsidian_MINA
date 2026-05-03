@@ -1,4 +1,4 @@
-import { moment, MarkdownRenderer, setIcon } from 'obsidian';
+import { moment, MarkdownRenderer, setIcon, Platform } from 'obsidian';
 import type { MinaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from '../modals/EditEntryModal';
@@ -131,6 +131,9 @@ export class TimelineTab extends BaseTab {
     // ── Spotlight Header Carousel ──────────────────────────────────────────
     private renderSpotlightHeader(parent: HTMLElement) {
         const header = parent.createEl('div', { cls: 'mina-tl-header' });
+        // The header is frozen inside view-content which already starts below
+        // Obsidian's mobile nav bar — override the 52px CSS rule with standard padding.
+        if (Platform.isMobile) header.style.paddingTop = '12px';
 
         const topBar = header.createEl('div', { cls: 'mina-tl-header-bar' });
         this.renderHomeIcon(topBar);
