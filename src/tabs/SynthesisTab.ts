@@ -220,6 +220,9 @@ export class SynthesisTab extends BaseTab {
         this.view.synthesisFeedFilter = v;
     }
 
+    private get activeCtxFilter(): string | null { return this.view.synthesisActiveCtxFilter; }
+    private set activeCtxFilter(v: string | null) { this.view.synthesisActiveCtxFilter = v; }
+
     /** Phone: pending thought for the bottom-sheet assign flow. */
     private pendingAssignThought: ThoughtEntry | null = null;
 
@@ -527,13 +530,18 @@ export class SynthesisTab extends BaseTab {
 
             for (const ctx of contexts) {
                 if (hidden.has(ctx)) continue;
+                const isActive = this.activeCtxFilter === ctx;
                 const chip = chipRow.createEl('button', {
-                    cls: 'mina-syn-ctx-chip',
-                    attr: { 'data-ctx': ctx, title: `${counts[ctx] || 0} notes` },
+                    cls: `mina-syn-ctx-chip${isActive ? ' is-active-filter' : ''}`,
+                    attr: { 'data-ctx': ctx, title: `${counts[ctx] || 0} notes — click to filter` },
                 });
                 chip.createSpan({ cls: 'mina-syn-ctx-chip-dot' });
                 chip.createSpan({ text: ctx, cls: 'mina-syn-ctx-chip-name' });
                 chip.createSpan({ text: String(counts[ctx] || 0), cls: 'mina-syn-ctx-chip-count' });
+                chip.addEventListener('click', () => {
+                    this.activeCtxFilter = isActive ? null : ctx;
+                    this.view.renderView();
+                });
             }
 
             const visibleCount = contexts.filter(c => !hidden.has(c)).length;
@@ -959,7 +967,7 @@ export class SynthesisTab extends BaseTab {
 
         if (thought.context && thought.context.length > 0) {
             const chipsEl = cardHdr.createEl('div', { cls: 'mina-syn-card-ctx-chips' });
-            thought.context.slice(0, 3).forEach((ctx) => {
+            thought.context.forEach((ctx) => {
                 const chip = chipsEl.createEl('span', {
                     text: `#${ctx}`,
                     cls: 'mina-chip mina-chip--ctx',
@@ -973,12 +981,6 @@ export class SynthesisTab extends BaseTab {
                     });
                 }
             });
-            if (thought.context.length > 3) {
-                chipsEl.createEl('span', {
-                    text: `+${thought.context.length - 3}`,
-                    cls: 'mina-chip',
-                });
-            }
             if (!thought.synthesized) {
                 const addChipBtn = chipsEl.createEl('button', {
                     cls: 'mina-syn-card-add-ctx',
@@ -991,12 +993,13 @@ export class SynthesisTab extends BaseTab {
                 });
             }
         } else if (!thought.synthesized) {
-            const addCtxBtn = cardHdr.createEl('button', {
-                cls: 'mina-syn-card-add-ctx',
-                attr: { title: 'Add context' },
+            const assignPrompt = cardHdr.createEl('button', {
+                cls: 'mina-syn-card-assign-prompt',
+                attr: { title: 'Assign context to this thought' },
             });
-            setIcon(addCtxBtn, 'tag');
-            addCtxBtn.addEventListener('click', (e) => {
+            setIcon(assignPrompt, 'tag');
+            assignPrompt.createEl('span', { text: 'Assign Context' });
+            assignPrompt.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.openContextPicker(thought);
             });
@@ -1592,14 +1595,25 @@ export class SynthesisTab extends BaseTab {
             .filter((t) => !t.project)
             .sort((a, b) => b.lastThreadUpdate - a.lastThreadUpdate);
 
+        let results: ThoughtEntry[];
         switch (this.feedFilter) {
             case 'no-context':
-                return all.filter((t) => (!t.context || t.context.length === 0) && !t.synthesized);
+                results = all.filter((t) => (!t.context || t.context.length === 0) && !t.synthesized);
+                break;
             case 'with-context':
-                return all.filter((t) => t.context && t.context.length > 0 && !t.synthesized);
+                results = all.filter((t) => t.context && t.context.length > 0 && !t.synthesized);
+                break;
             case 'processed':
-                return all.filter((t) => t.synthesized === true);
+                results = all.filter((t) => t.synthesized === true);
+                break;
         }
+
+        // Apply context chip filter if active
+        if (this.activeCtxFilter) {
+            results = results.filter((t) => t.context && t.context.includes(this.activeCtxFilter!));
+        }
+
+        return results;
     }
 
     private getCountForFilter(

@@ -35,6 +35,7 @@ export class MinaView extends ItemView {
     synthesisSelectMode: boolean = false;
     synthesisSelectedPaths: Set<string> = new Set();
     synthesisCtxStripCollapsed: boolean = false;
+    synthesisActiveCtxFilter: string | null = null;
     _mergePending: number = 0;
 
     // Tasks state — persists across re-renders (viewMode survives vault events)
