@@ -9,6 +9,7 @@ import { PersonSuggestModal } from '../modals/PersonSuggestModal';
 import { HabitConfigModal } from '../modals/HabitConfigModal';
 import { HelpModal } from '../modals/HelpModal';
 import { SearchModal } from '../modals/SearchModal';
+import { ZenCaptureModal } from '../modals/ZenCaptureModal';
 
 export class CommandCenterTab extends BaseTab {
     private parentContainer: HTMLElement;
@@ -122,6 +123,14 @@ export class CommandCenterTab extends BaseTab {
         const thoughtLabel = thoughtBox.createEl('div', { cls: 'mina-capture-box-label' });
         thoughtLabel.createEl('span', { text: '✦', cls: 'mina-capture-box-icon' });
         thoughtLabel.createEl('span', { text: 'THOUGHT', cls: 'mina-capture-box-title' });
+        const expandBtn = thoughtLabel.createEl('button', {
+            cls: 'mina-capture-expand-btn',
+            attr: { title: 'Open Zen Capture' }
+        });
+        setIcon(expandBtn, 'lucide-maximize-2');
+        expandBtn.addEventListener('click', () => {
+            new ZenCaptureModal(this.app, this.plugin).open();
+        });
 
         // Context chips row (populated when user types #tag)
         const thoughtChipRow = thoughtBox.createEl('div', { cls: 'mina-capture-chip-row' });
