@@ -34,6 +34,7 @@ export class MinaView extends ItemView {
     // Synthesis select/merge mode
     synthesisSelectMode: boolean = false;
     synthesisSelectedPaths: Set<string> = new Set();
+    synthesisCtxStripCollapsed: boolean = false;
     _mergePending: number = 0;
 
     // Tasks state — persists across re-renders (viewMode survives vault events)

@@ -4,6 +4,7 @@ import type { ThoughtEntry } from '../types';
 import { BaseTab } from './BaseTab';
 import { isTablet, parseContextString } from '../utils';
 import { EditEntryModal } from '../modals/EditEntryModal';
+import { InlineContextPickerModal } from '../modals/InlineContextPickerModal';
 
 // ── Add-Context Modal ─────────────────────────────────────────────────────────
 class AddContextModal extends Modal {
@@ -111,8 +112,9 @@ class MergeModal extends Modal {
             });
         });
 
-        // Union of contexts
+        // Union of contexts — editable before merging
         const unionContexts = [...new Set(this.thoughts.flatMap(t => t.context))];
+        let editableContexts = [...unionContexts];
         const mergedBodies = this.thoughts.map(t => t.body || '').join('\n\n---\n\n');
 
         body.createEl('label', {
@@ -123,6 +125,44 @@ class MergeModal extends Modal {
             cls: 'mina-merge-textarea',
         }) as HTMLTextAreaElement;
         textarea.value = mergedBodies;
+
+        // Editable context chips
+        body.createEl('label', {
+            text: 'Contexts for merged note',
+            attr: { style: 'font-size:0.78rem; font-weight:600; color:var(--text-muted);' },
+        });
+        const ctxRow = body.createEl('div', { cls: 'mina-merge-ctx-row' });
+
+        const renderMergeCtxChips = () => {
+            ctxRow.empty();
+            for (const ctx of editableContexts) {
+                const chip = ctxRow.createEl('span', { cls: 'mina-chip mina-chip--ctx mina-chip--removable' });
+                chip.createSpan({ text: `#${ctx}` });
+                const x = chip.createEl('button', { cls: 'mina-chip-remove', text: '×' });
+                x.addEventListener('click', () => {
+                    editableContexts = editableContexts.filter(c => c !== ctx);
+                    renderMergeCtxChips();
+                });
+            }
+            const addBtn = ctxRow.createEl('button', { cls: 'mina-chip mina-chip--add', text: '+ Add' });
+            addBtn.addEventListener('click', () => {
+                const inp = document.createElement('input');
+                inp.placeholder = 'context name';
+                inp.style.cssText = 'width:100px; padding:2px 6px; border-radius:4px; border:1px solid var(--background-modifier-border); font-size:0.8em; background:var(--background-primary); color:var(--text-normal);';
+                ctxRow.appendChild(inp);
+                inp.focus();
+                inp.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        const val = inp.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+                        if (val && !editableContexts.includes(val)) editableContexts.push(val);
+                        inp.remove();
+                        renderMergeCtxChips();
+                    }
+                    if (e.key === 'Escape') inp.remove();
+                });
+            });
+        };
+        renderMergeCtxChips();
 
         const footer = contentEl.createEl('div', { cls: 'mina-modal-footer' });
         footer.createEl('span', {
@@ -138,7 +178,7 @@ class MergeModal extends Modal {
         const doMerge = () => {
             const text = textarea.value.trim();
             if (!text) { new Notice('Merged content cannot be empty.'); return; }
-            this.onConfirm(text, unionContexts);
+            this.onConfirm(text, editableContexts);
             this.close();
         };
 
@@ -206,20 +246,16 @@ export class SynthesisTab extends BaseTab {
             ].filter(Boolean).join(' '),
         });
 
-        if (!isPhone) {
-            // ── Desktop: left context panel ───────────────────────────────────
-            const ctxPanel = shell.createEl('div', { cls: 'mina-syn-ctx-panel' });
-            this.renderContextPanel(ctxPanel, shell);
-        }
-
-        // ── Feed (right 2/3 on desktop, full width on phone) ─────────────────
-        const feed = shell.createEl('div', { cls: 'mina-syn-feed' });
+        // ── Single-pane feed (full width on all devices) ──────────────────────
+        const feed = shell.createEl('div', { cls: 'mina-syn-feed mina-syn-feed--full' });
         this.renderFeedPane(feed, shell, isPhone);
 
+        // Context sheet (phone manage flow via strip's + button)
         if (isPhone) {
-            this.renderPhoneNav(shell);
             this.renderContextSheet(shell);
         }
+
+        this.renderFloatingActionBar(shell);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -377,11 +413,9 @@ export class SynthesisTab extends BaseTab {
         isHidden: boolean,
         count: number,
     ): void {
-        const isSelected = this.primedContexts.includes(ctx);
         const row = list.createEl('div', {
             cls: [
                 'mina-syn-ctx-row',
-                isSelected ? 'is-selected' : '',
                 isHidden ? 'is-ctx-hidden' : '',
             ].filter(Boolean).join(' '),
             attr: { 'data-ctx': ctx, tabindex: '0' },
@@ -413,14 +447,6 @@ export class SynthesisTab extends BaseTab {
         delBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
             await this.removeContextFromSettings(ctx, shell);
-        });
-
-        const onSelect = () => {
-            if (!isHidden) this.handleContextRowClick(ctx, shell);
-        };
-        row.addEventListener('click', onSelect);
-        row.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); }
         });
     }
 
@@ -464,13 +490,255 @@ export class SynthesisTab extends BaseTab {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // Context Strip (collapsible horizontal chip row in feed header)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    private renderContextStrip(parent: HTMLElement, shell: HTMLElement): void {
+        const collapsed = this.view.synthesisCtxStripCollapsed;
+        const strip = parent.createDiv({ cls: `mina-syn-ctx-strip${collapsed ? ' is-collapsed' : ''}` });
+
+        // Header row: label + count + add button + collapse button
+        const stripHdr = strip.createDiv({ cls: 'mina-syn-ctx-strip-hdr' });
+        stripHdr.createEl('span', { text: 'CONTEXTS', cls: 'mina-syn-ctx-strip-label' });
+        stripHdr.createEl('span', {
+            text: String((this.settings.contexts || []).length),
+            cls: 'mina-syn-ctx-strip-count',
+        });
+
+        const addCtxBtn = stripHdr.createEl('button', { cls: 'mina-syn-ctx-strip-add', attr: { title: 'Add context' } });
+        setIcon(addCtxBtn, 'plus');
+        addCtxBtn.addEventListener('click', () => this.openAddContextModal(shell));
+
+        const collapseBtn = stripHdr.createEl('button', {
+            cls: 'mina-syn-ctx-strip-collapse',
+            attr: { title: collapsed ? 'Show contexts' : 'Hide contexts' },
+        });
+        setIcon(collapseBtn, collapsed ? 'chevron-down' : 'chevron-up');
+        collapseBtn.addEventListener('click', () => {
+            this.view.synthesisCtxStripCollapsed = !this.view.synthesisCtxStripCollapsed;
+            this.view.renderView();
+        });
+
+        if (!collapsed) {
+            const chipRow = strip.createDiv({ cls: 'mina-syn-ctx-strip-chips' });
+            const contexts = [...(this.settings.contexts || [])].sort((a, b) => a.localeCompare(b));
+            const hidden = new Set<string>(this.settings.hiddenContexts || []);
+            const counts = this.getContextCounts();
+
+            for (const ctx of contexts) {
+                if (hidden.has(ctx)) continue;
+                const chip = chipRow.createEl('button', {
+                    cls: 'mina-syn-ctx-chip',
+                    attr: { 'data-ctx': ctx, title: `${counts[ctx] || 0} notes` },
+                });
+                chip.createSpan({ cls: 'mina-syn-ctx-chip-dot' });
+                chip.createSpan({ text: ctx, cls: 'mina-syn-ctx-chip-name' });
+                chip.createSpan({ text: String(counts[ctx] || 0), cls: 'mina-syn-ctx-chip-count' });
+            }
+
+            const visibleCount = contexts.filter(c => !hidden.has(c)).length;
+            if (visibleCount === 0) {
+                chipRow.createEl('span', {
+                    text: 'No contexts yet — click + to add one',
+                    cls: 'mina-syn-ctx-strip-empty',
+                });
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Inline Context Picker
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    private openContextPicker(thought: ThoughtEntry): void {
+        new InlineContextPickerModal(
+            this.app,
+            this.plugin,
+            thought.context || [],
+            async (selected: string[]) => {
+                await this.vault.assignContext(thought.filePath, selected, true);
+                this.view.renderView();
+            },
+            `Assign to "${thought.title.substring(0, 40)}"`,
+        ).open();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Floating Action Bar
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    private renderFloatingActionBar(shell: HTMLElement): void {
+        if (!this.synthesisSelectMode) return;
+
+        const bar = shell.createEl('div', { cls: 'mina-syn-float-bar' });
+
+        bar.createEl('span', {
+            cls: 'mina-syn-float-bar-count',
+            text: `${this.selectedPaths.size} selected`,
+        });
+
+        const btnRow = bar.createEl('div', { cls: 'mina-syn-float-bar-btns' });
+
+        // Exit select mode button
+        const selectToggle = btnRow.createEl('button', {
+            cls: 'mina-syn-float-bar-btn mina-syn-float-bar-btn--select is-active',
+            attr: { title: 'Exit select mode' },
+        });
+        setIcon(selectToggle, 'check-square');
+        selectToggle.addEventListener('click', () => {
+            this.synthesisSelectMode = false;
+            this.view.synthesisSelectedPaths.clear();
+            this.view.renderView();
+        });
+
+        // Assign context (1+ selected)
+        if (this.selectedPaths.size >= 1) {
+            const assignAllBtn = btnRow.createEl('button', {
+                cls: 'mina-syn-float-bar-btn',
+                attr: { title: 'Assign context to selected' },
+            });
+            setIcon(assignAllBtn, 'tag');
+            assignAllBtn.createEl('span', { text: 'Assign' });
+            assignAllBtn.addEventListener('click', () => {
+                const paths = [...this.selectedPaths];
+                const thoughts = paths
+                    .map(fp => Array.from(this.index.thoughtIndex.values()).find(t => t.filePath === fp))
+                    .filter((t): t is ThoughtEntry => !!t);
+                if (thoughts.length === 0) return;
+                const union = [...new Set(thoughts.flatMap(t => t.context || []))];
+                new InlineContextPickerModal(
+                    this.app, this.plugin, union,
+                    async (selected: string[]) => {
+                        for (const t of thoughts) {
+                            await this.vault.assignContext(t.filePath, selected, false);
+                        }
+                        new Notice(`Contexts assigned to ${thoughts.length} notes.`, 1500);
+                        this.synthesisSelectMode = false;
+                        this.view.synthesisSelectedPaths.clear();
+                        this.view.renderView();
+                    },
+                    `Assign to ${thoughts.length} notes`,
+                ).open();
+            });
+        }
+
+        // Merge (2+ selected)
+        if (this.selectedPaths.size >= 2) {
+            const mergeBtn = btnRow.createEl('button', {
+                cls: 'mina-syn-float-bar-btn mina-syn-float-bar-btn--merge',
+                attr: { title: 'Merge selected notes' },
+            });
+            setIcon(mergeBtn, 'git-merge');
+            mergeBtn.createEl('span', { text: `Merge (${this.selectedPaths.size})` });
+            mergeBtn.addEventListener('click', () => this.openMergeModal(shell));
+        }
+
+        // Done All for selected (1+)
+        if (this.selectedPaths.size >= 1) {
+            const doneAllBtn = btnRow.createEl('button', {
+                cls: 'mina-syn-float-bar-btn mina-syn-float-bar-btn--done',
+                attr: { title: 'Mark selected as Done' },
+            });
+            setIcon(doneAllBtn, 'check-check');
+            doneAllBtn.createEl('span', { text: 'Done' });
+            doneAllBtn.addEventListener('click', async () => {
+                const paths = [...this.selectedPaths];
+                for (const fp of paths) {
+                    await this.vault.markAsSynthesized(fp);
+                }
+                new Notice(`${paths.length} note(s) marked as Done.`, 1500);
+                this.synthesisSelectMode = false;
+                this.view.synthesisSelectedPaths.clear();
+                this.view.renderView();
+            });
+        }
+
+        // Close
+        const closeBtn = btnRow.createEl('button', {
+            cls: 'mina-syn-float-bar-btn mina-syn-float-bar-btn--close',
+            attr: { title: 'Close' },
+        });
+        setIcon(closeBtn, 'x');
+        closeBtn.addEventListener('click', () => {
+            this.synthesisSelectMode = false;
+            this.view.synthesisSelectedPaths.clear();
+            this.view.renderView();
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Right-click context menu (desktop only)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    private showContextMenu(e: MouseEvent, thought: ThoughtEntry, card: HTMLElement, shell: HTMLElement): void {
+        const menu = document.createElement('div');
+        menu.className = 'mina-ctx-menu';
+        menu.style.cssText = `position:fixed;top:${e.clientY}px;left:${e.clientX}px;z-index:9999;`;
+
+        const items: Array<{ label: string; icon: string; action: () => void }> = [
+            {
+                label: 'Select',
+                icon: 'check-square',
+                action: () => {
+                    this.synthesisSelectMode = true;
+                    this.selectedPaths.add(thought.filePath);
+                    this.view.renderView();
+                },
+            },
+            {
+                label: 'Assign Context…',
+                icon: 'tag',
+                action: () => this.openContextPicker(thought),
+            },
+        ];
+
+        if (!thought.synthesized) {
+            items.push({
+                label: 'Mark Done',
+                icon: 'check',
+                action: async () => {
+                    await this.vault.markAsSynthesized(thought.filePath);
+                    this.exitCard(card, () => this.view.renderView());
+                },
+            });
+        }
+
+        items.push({
+            label: 'Delete',
+            icon: 'trash-2',
+            action: async () => {
+                await this.vault.deleteFile(thought.filePath, 'thoughts');
+                this.exitCard(card, () => this.view.renderView());
+            },
+        });
+
+        for (const item of items) {
+            const el = menu.createEl('button', { cls: 'mina-ctx-menu-item', text: item.label });
+            el.addEventListener('click', () => {
+                item.action();
+                menu.remove();
+            });
+        }
+
+        document.body.appendChild(menu);
+
+        const cleanup = (ev: MouseEvent) => {
+            if (!menu.contains(ev.target as Node)) {
+                menu.remove();
+                document.removeEventListener('mousedown', cleanup);
+            }
+        };
+        setTimeout(() => document.addEventListener('mousedown', cleanup), 0);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // Feed Pane (right 2/3)
     // ═══════════════════════════════════════════════════════════════════════════
 
     private renderFeedPane(feed: HTMLElement, shell: HTMLElement, isPhone: boolean): void {
         const hdr = feed.createEl('div', { cls: 'mina-syn-feed-hdr' });
 
-        // ── Top row: home icon + segmented filter + Done All ────────────────
+        // ── Top row: home icon + segmented filter + Select + Done All ─────────
         const hdrTop = hdr.createEl('div', { cls: 'mina-syn-feed-hdr-top' });
         this.renderHomeIcon(hdrTop);
 
@@ -489,15 +757,6 @@ export class SynthesisTab extends BaseTab {
             this.view.renderView();
         });
 
-        // Merge button — visible when 2+ notes selected
-        const mergeHeaderBtn = hdrTop.createEl('button', {
-            cls: `mina-syn-merge-btn${this.selectedPaths.size >= 2 ? '' : ' is-hidden'}`,
-            attr: { title: `Merge selected notes` },
-        });
-        setIcon(mergeHeaderBtn, 'git-merge');
-        mergeHeaderBtn.createEl('span', { text: `Merge (${this.selectedPaths.size})` });
-        mergeHeaderBtn.addEventListener('click', () => this.openMergeModal(shell));
-
         // "Done All" — marks every Mapped note as synthesized
         const doneAllBtn = hdrTop.createEl('button', {
             cls: `mina-syn-feed-done-all${this.feedFilter === 'with-context' ? '' : ' is-hidden'}`,
@@ -506,7 +765,7 @@ export class SynthesisTab extends BaseTab {
         setIcon(doneAllBtn, 'check-check');
         doneAllBtn.createEl('span', { text: 'Done All' });
         doneAllBtn.addEventListener('click', async () => {
-            const thoughts = this.getFilteredThoughts(); // current filter = with-context
+            const thoughts = this.getFilteredThoughts();
             if (thoughts.length === 0) return;
             doneAllBtn.disabled = true;
             for (const t of thoughts) {
@@ -536,21 +795,17 @@ export class SynthesisTab extends BaseTab {
                 if (this.feedFilter === f.key) return;
                 this.feedFilter = f.key;
 
-                // Clear select mode on filter switch
                 if (this.synthesisSelectMode) {
                     this.synthesisSelectMode = false;
                     this.view.synthesisSelectedPaths.clear();
                 }
 
-                // Show/hide Done All based on active filter
                 doneAllBtn.classList.toggle('is-hidden', this.feedFilter !== 'with-context');
 
-                // Animate out, repopulate, animate in
                 feedScroll.addClass('is-switching');
                 setTimeout(() => {
                     this.buildThoughtList(feedScroll, shell, isPhone);
                     feedScroll.removeClass('is-switching');
-                    // Sync filter tab states + counts
                     segBar.querySelectorAll('.mina-seg-btn').forEach((b) => {
                         const el = b as HTMLElement;
                         const key = el.dataset.filter as
@@ -563,11 +818,8 @@ export class SynthesisTab extends BaseTab {
             });
         }
 
-        // ── Context echo strip (desktop only) ────────────────────────────────
-        const ctxEcho = hdr.createEl('div', {
-            cls: `mina-syn-feed-ctx-echo${this.primedContext ? ' is-primed' : ''}`,
-        });
-        this.buildCtxEcho(ctxEcho);
+        // ── Collapsible context strip ─────────────────────────────────────────
+        this.renderContextStrip(hdr, shell);
 
         // ── Inline capture bar (desktop + tablet only) ────────────────────────
         if (!isPhone) {
@@ -650,6 +902,33 @@ export class SynthesisTab extends BaseTab {
             cls: `mina-syn-card${thought.synthesized ? ' is-processed' : ''}`,
         });
 
+        // Desktop: right-click context menu
+        if (!Platform.isMobile) {
+            card.addEventListener('contextmenu', (e: MouseEvent) => {
+                e.preventDefault();
+                this.showContextMenu(e, thought, card, shell);
+            });
+        }
+
+        // Mobile: swipe-right to enter select mode
+        if (Platform.isMobile) {
+            let startX = 0;
+            card.addEventListener('touchstart', (e: TouchEvent) => {
+                startX = e.touches[0].clientX;
+            }, { passive: true });
+            card.addEventListener('touchend', (e: TouchEvent) => {
+                const dx = e.changedTouches[0].clientX - startX;
+                if (dx > 60) {
+                    if (!this.synthesisSelectMode) {
+                        this.synthesisSelectMode = true;
+                        this.view.renderView();
+                    }
+                    this.selectedPaths.add(thought.filePath);
+                    card.classList.add('is-selected');
+                }
+            }, { passive: true });
+        }
+
         // Select-mode checkbox (inbox/mapped: unsynthesized only; Done: all)
         if (this.synthesisSelectMode && (!thought.synthesized || this.feedFilter === 'processed')) {
             const cbWrap = card.createEl('label', { cls: 'mina-syn-card-cb-wrap' });
@@ -685,16 +964,12 @@ export class SynthesisTab extends BaseTab {
                     text: `#${ctx}`,
                     cls: 'mina-chip mina-chip--ctx',
                 });
-                // V2.1: clicking a chip removes that context (un-maps).
-                // Full re-assign picker is V2.2 scope.
                 if (!thought.synthesized) {
                     chip.style.cursor = 'pointer';
-                    chip.title = `Remove #${ctx}`;
+                    chip.title = 'Edit contexts';
                     chip.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        this.vault.removeContext(thought.filePath, ctx).then(() => {
-                            this.view.renderView();
-                        });
+                        this.openContextPicker(thought);
                     });
                 }
             });
@@ -704,6 +979,27 @@ export class SynthesisTab extends BaseTab {
                     cls: 'mina-chip',
                 });
             }
+            if (!thought.synthesized) {
+                const addChipBtn = chipsEl.createEl('button', {
+                    cls: 'mina-syn-card-add-ctx',
+                    attr: { title: 'Add context' },
+                });
+                setIcon(addChipBtn, 'tag');
+                addChipBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.openContextPicker(thought);
+                });
+            }
+        } else if (!thought.synthesized) {
+            const addCtxBtn = cardHdr.createEl('button', {
+                cls: 'mina-syn-card-add-ctx',
+                attr: { title: 'Add context' },
+            });
+            setIcon(addCtxBtn, 'tag');
+            addCtxBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.openContextPicker(thought);
+            });
         }
 
         // ── Body (MarkdownRenderer with expand/collapse) ──────────────────────
@@ -739,48 +1035,14 @@ export class SynthesisTab extends BaseTab {
         if (!thought.synthesized) {
             const actions = card.createEl('div', { cls: 'mina-syn-card-actions' });
 
-            // ── Assign button — visual state driven by primedContexts ─────────
-            const assignedAll =
-                this.primedContexts.length > 0 &&
-                this.primedContexts.every((c) => thought.context.includes(c));
-
-            let assignCls = 'mina-syn-card-btn mina-syn-card-btn--assign';
-            if (assignedAll)                          assignCls += ' is-assigned';
-            else if (this.primedContexts.length > 0) assignCls += ' is-primed';
-
-            const assignLabel = assignedAll
-                ? '✓ Assigned'
-                : this.primedContexts.length === 1
-                    ? `Assign to ${this.primedContexts[0]}`
-                    : this.primedContexts.length > 1
-                        ? `Assign to ${this.primedContexts.length} contexts`
-                        : 'Assign…';
-
-            const assignBtn = actions.createEl('button', { cls: assignCls });
+            const assignBtn = actions.createEl('button', { cls: 'mina-syn-card-btn mina-syn-card-btn--assign' });
             setIcon(assignBtn, 'tag');
-            assignBtn.createEl('span', { text: assignLabel });
-            // Store filePath for syncAllPrimingStates look-up
+            assignBtn.createEl('span', { text: 'Assign…' });
             assignBtn.dataset.thoughtPath = thought.filePath;
 
             assignBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (isPhone) {
-                    this.openContextSheet(shell, thought);
-                } else if (this.primedContexts.length > 0) {
-                    const alreadyAll = this.primedContexts.every((c) =>
-                        thought.context.includes(c),
-                    );
-                    if (!alreadyAll) this.doAssign(thought, card, shell);
-                } else {
-                    // Shake the context panel to prompt selection
-                    const ctxPanel = shell.querySelector(
-                        '.mina-syn-ctx-panel',
-                    ) as HTMLElement | null;
-                    if (ctxPanel) {
-                        ctxPanel.classList.add('is-attention');
-                        setTimeout(() => ctxPanel.classList.remove('is-attention'), 300);
-                    }
-                }
+                this.openContextPicker(thought);
             });
 
             // ── Mark Done button ──────────────────────────────────────────────
@@ -1032,9 +1294,7 @@ export class SynthesisTab extends BaseTab {
             setIcon(icon, 'edit-3');
             trigger.createEl('span', {
                 cls: 'mina-syn-inline-placeholder',
-                text: this.primedContexts.length > 0
-                    ? `Capture to #${this.primedContexts[0]}…`
-                    : 'Quick capture thought…'
+                text: 'Quick capture thought…',
             });
             trigger.addEventListener('click', () => {
                 this.view.synthesisCaptureExpanded = true;
@@ -1047,9 +1307,7 @@ export class SynthesisTab extends BaseTab {
         bar.addClass('is-expanded');
         const textarea = bar.createEl('textarea', {
             cls: 'mina-syn-inline-textarea',
-            attr: { placeholder: this.primedContexts.length > 0
-                ? `Capture to #${this.primedContexts[0]}…`
-                : 'Capture thought…', rows: '3' }
+            attr: { placeholder: 'Capture thought…', rows: '3' },
         }) as HTMLTextAreaElement;
         textarea.value = this.view.synthesisCaptureDraft;
 
@@ -1123,10 +1381,6 @@ export class SynthesisTab extends BaseTab {
             if (!this.settings.contexts.includes(name)) {
                 this.settings.contexts.push(name);
                 await this.plugin.saveSettings();
-            }
-            // Prime the new context and do a full re-render (list must show it)
-            if (!this.primedContexts.includes(name)) {
-                this.primedContexts = [...this.primedContexts, name];
             }
             this.view.renderView();
         }).open();
