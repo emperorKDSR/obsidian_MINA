@@ -3596,3 +3596,36 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
 .mina-syn-card-assign-prompt{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;border:1.5px dashed var(--interactive-accent);background:rgba(var(--interactive-accent-rgb),0.04);color:var(--interactive-accent);font-size:0.75em;font-weight:600;cursor:pointer;transition:all 0.15s;margin-left:auto}
 .mina-syn-card-assign-prompt:hover{background:rgba(var(--interactive-accent-rgb),0.12);border-style:solid}
 .mina-syn-card-assign-prompt svg{width:12px;height:12px}
+/* ═══ Inline Context Tagger v1.26.0 ═══════════════════════════════════════ */
+.mina-ctx-tagger{position:relative;display:inline-flex;flex-direction:column;align-items:stretch;max-width:100%;margin-left:auto}
+.mina-ctx-tagger-field{display:flex;align-items:center;min-height:28px;padding:3px 6px;border-radius:8px;border:1px solid transparent;background:transparent;cursor:text;transition:border-color 0.15s ease,background 0.15s ease,box-shadow 0.15s ease;gap:4px}
+.mina-ctx-tagger:not(.is-open) .mina-ctx-tagger-field{border-color:var(--background-modifier-border);background:rgba(var(--interactive-accent-rgb),0.04)}
+.mina-ctx-tagger:not(.is-open) .mina-ctx-tagger-field:hover{border-color:var(--interactive-accent);background:rgba(var(--interactive-accent-rgb),0.08)}
+.mina-ctx-tagger.is-open .mina-ctx-tagger-field{min-height:34px;border-color:var(--interactive-accent);background:rgba(var(--interactive-accent-rgb),0.06);box-shadow:0 0 0 2px rgba(var(--interactive-accent-rgb),0.15)}
+.mina-ctx-tagger-chips{display:flex;flex-wrap:wrap;align-items:center;gap:4px;flex:1;min-width:0}
+.mina-chip--tagger{display:inline-flex;align-items:center;gap:3px;padding:2px 5px 2px 7px;border-radius:6px;font-size:0.75em;font-weight:500;background:rgba(var(--interactive-accent-rgb),0.12);color:var(--interactive-accent);border:1px solid rgba(var(--interactive-accent-rgb),0.25);white-space:nowrap;animation:mina-chip-pop 0.12s cubic-bezier(0.34,1.56,0.64,1)}
+.mina-chip--tagger .mina-chip-remove{display:flex;align-items:center;justify-content:center;width:14px;height:14px;padding:0;margin-left:1px;border:none;background:none;color:var(--interactive-accent);opacity:0.6;cursor:pointer;border-radius:50%;font-size:0.9em;line-height:1;transition:opacity 0.1s,background 0.1s;flex-shrink:0}
+.mina-chip--tagger .mina-chip-remove:hover{opacity:1;background:rgba(var(--interactive-accent-rgb),0.2)}
+.mina-ctx-tagger-input-wrap{display:inline-flex;align-items:center;min-width:80px;flex:1}
+.mina-ctx-tagger-input{width:100%;min-width:60px;height:24px;padding:0 2px;border:none;background:transparent;color:var(--text-normal);font-size:0.82em;font-family:inherit;outline:none;caret-color:var(--interactive-accent)}
+.mina-ctx-tagger-input::placeholder{color:var(--text-faint);font-style:italic}
+.mina-ctx-tagger:not(.is-open) .mina-ctx-tagger-input-wrap{display:none}
+.mina-ctx-tagger-dropdown{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:200;background:var(--background-primary);border:1px solid var(--background-modifier-border);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.18),0 1px 4px rgba(0,0,0,0.10);overflow:hidden;max-height:0;opacity:0;pointer-events:none;transition:max-height 0.15s ease,opacity 0.12s ease}
+.mina-ctx-tagger-dropdown.is-visible{max-height:232px;opacity:1;pointer-events:all;overflow-y:auto;overscroll-behavior:contain}
+.mina-ctx-tagger-item{display:flex;align-items:center;gap:8px;padding:0 12px;min-height:40px;font-size:0.83em;color:var(--text-normal);cursor:pointer;transition:background 0.08s ease;user-select:none}
+.mina-ctx-tagger-item:hover,.mina-ctx-tagger-item.is-focused{background:rgba(var(--interactive-accent-rgb),0.08)}
+.mina-ctx-tagger-item.is-focused{box-shadow:inset 3px 0 0 var(--interactive-accent)}
+.mina-ctx-tagger-item-dot{width:6px;height:6px;border-radius:50%;background:var(--interactive-accent);opacity:0.55;flex-shrink:0}
+.mina-ctx-tagger-item-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mina-ctx-tagger-item.is-create{color:var(--text-muted);font-style:italic;border-top:1px solid var(--background-modifier-border)}
+.mina-ctx-tagger-item.is-create:hover,.mina-ctx-tagger-item.is-create.is-focused{background:rgba(var(--interactive-accent-rgb),0.05);color:var(--interactive-accent)}
+.mina-ctx-tagger-item-create-icon{width:16px;height:16px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px dashed currentColor;font-size:0.9em;font-style:normal;flex-shrink:0;opacity:0.7}
+.is-phone .mina-ctx-tagger-field{min-height:40px;padding:5px 8px}
+.is-phone .mina-ctx-tagger-input{height:30px;font-size:0.88em}
+.is-phone .mina-ctx-tagger-item{min-height:44px;padding:0 16px;font-size:0.88em}
+.is-phone .mina-chip--tagger .mina-chip-remove{width:20px;height:20px;font-size:1.1em}
+@keyframes mina-chip-pop{0%{transform:scale(0.7);opacity:0}100%{transform:scale(1);opacity:1}}
+.mina-chip--tagger.is-removing{animation:mina-chip-shrink 0.1s ease forwards}
+@keyframes mina-chip-shrink{0%{transform:scale(1);opacity:1;max-width:200px}100%{transform:scale(0.7);opacity:0;max-width:0;padding:0;margin:0}}
+.mina-ctx-tagger.is-error .mina-ctx-tagger-field{border-color:var(--text-error);box-shadow:0 0 0 2px rgba(220,60,60,0.15);animation:mina-tagger-shake 0.25s ease}
+@keyframes mina-tagger-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
