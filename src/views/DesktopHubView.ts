@@ -173,8 +173,8 @@ export class DesktopHubView extends ItemView {
     // ── CENTER Column ─────────────────────────────────────────────────────────
     private renderCenter(parent: HTMLElement) {
         const center = parent.createEl('div', { cls: 'mina-dh-center' });
+        this.renderCapture(center);
         const inner = center.createEl('div', { cls: 'mina-dh-center-inner' });
-        this.renderCapture(inner);
         this.renderTodayFeed(inner);
     }
 

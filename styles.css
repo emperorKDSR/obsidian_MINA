@@ -3896,7 +3896,6 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
 }
 .mina-dh-sidebar:hover .mina-dh-nav-label { opacity: 1; }
 
-/* ── CENTER Column ─────────────────────────────────────────────── */
 /* ── CENTER Column ─────────────────────────────────────────────────────────── */
 .mina-dh-center {
   flex: 1;
@@ -3905,65 +3904,48 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 36px 24px 48px;
 }
 .mina-dh-center-inner {
   width: 100%;
   max-width: 660px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 36px;
+  gap: 28px;
+  padding: 28px 32px 48px;
 }
 
-/* ── Capture ──────────────────────────────────── */
+/* ── Capture — full-width, edge-to-edge ────── */
 .mina-dh-capture-section {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 22px 24px 18px 28px;
-  border-radius: 16px;
-  background: var(--mina-dh-surface);
-  border: 1px solid transparent;
-  transition: border-color 0.22s ease, box-shadow 0.22s ease;
-  overflow: hidden;
-}
-.mina-dh-capture-section::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 20px;
-  bottom: 20px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: var(--mina-dh-accent);
-  opacity: 0;
-  transition: opacity 0.22s ease;
+  padding: 24px 32px 16px;
+  border-bottom: 1px solid var(--mina-dh-border);
+  transition: border-color 0.2s ease;
 }
 .mina-dh-capture-section:focus-within {
-  border-color: rgba(124,58,237,0.35);
-  box-shadow: 0 4px 28px rgba(124,58,237,0.08), 0 1px 6px rgba(0,0,0,0.06);
+  border-bottom-color: rgba(124,58,237,0.4);
 }
-.mina-dh-capture-section:focus-within::before { opacity: 1; }
 
 .mina-dh-capture-textarea {
   width: 100%;
   border: none;
   background: transparent;
   resize: none;
-  font-size: 1em;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 400;
   color: var(--text-normal);
-  line-height: 1.75;
+  line-height: 1.6;
   outline: none;
-  min-height: 72px;
+  min-height: 56px;
   padding: 0;
-  font-family: var(--font-interface);
   caret-color: var(--mina-dh-accent);
 }
 .mina-dh-capture-textarea::placeholder {
   color: var(--text-faint);
-  font-style: italic;
 }
 
 .mina-dh-chip-row {
@@ -3989,17 +3971,15 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
 }
 .mina-dh-chip:hover { background: rgba(124,58,237,0.22); }
 
-/* Footer: hint + expand — only visible on focus */
+/* Footer: hint + expand — fades in on focus */
 .mina-dh-capture-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 14px;
-  padding-top: 10px;
-  border-top: 1px solid var(--mina-dh-border);
+  margin-top: 12px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.18s ease;
 }
 .mina-dh-capture-section:focus-within .mina-dh-capture-footer {
   opacity: 1;
