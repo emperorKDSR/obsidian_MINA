@@ -2,6 +2,16 @@ import { MinaSettings } from './types';
 
 export const VIEW_TYPE_MINA = "mina-v2-view";
 export const VIEW_TYPE_DESKTOP_HUB = "mina-desktop-hub";
+export const VIEW_TYPE_MOBILE_HUB = "mina-mobile-hub";
+
+// Mobile Hub ribbon icon — smartphone with capture indicator
+export const MOBILE_HUB_ICON_ID = "mina-mobile-hub-icon";
+export const MOBILE_HUB_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
+    <rect x="5" y="1" width="14" height="22" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <line x1="9" y1="19" x2="15" y2="19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="12" y1="6" x2="12" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="9" y1="9.5" x2="15" y2="9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</g>`;
 
 // Desktop Hub ribbon icon — three-pane cockpit layout
 export const DESKTOP_HUB_ICON_ID = "mina-desktop-hub-icon";

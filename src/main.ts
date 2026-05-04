@@ -1,9 +1,10 @@
 import { Plugin, TFile, Notice, WorkspaceLeaf, Platform, moment, addIcon } from 'obsidian';
-import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG, GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG, MEMENTO_ICON_ID, MEMENTO_ICON_SVG, TASK_ICON_ID, TASK_ICON_SVG, PF_ICON_ID, PF_ICON_SVG, SETTINGS_ICON_ID, SETTINGS_ICON_SVG, VOICE_ICON_ID, VOICE_ICON_SVG, HOME_ICON_ID, HOME_ICON_SVG, PROJECT_ICON_ID, PROJECT_ICON_SVG, SYNTHESIS_ICON_ID, SYNTHESIS_ICON_SVG, COMPASS_ICON_ID, COMPASS_ICON_SVG, REVIEW_ICON_ID, REVIEW_ICON_SVG, VIEW_TYPE_DESKTOP_HUB, DESKTOP_HUB_ICON_ID, DESKTOP_HUB_ICON_SVG } from './constants';
+import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG, GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG, MEMENTO_ICON_ID, MEMENTO_ICON_SVG, TASK_ICON_ID, TASK_ICON_SVG, PF_ICON_ID, PF_ICON_SVG, SETTINGS_ICON_ID, SETTINGS_ICON_SVG, VOICE_ICON_ID, VOICE_ICON_SVG, HOME_ICON_ID, HOME_ICON_SVG, PROJECT_ICON_ID, PROJECT_ICON_SVG, SYNTHESIS_ICON_ID, SYNTHESIS_ICON_SVG, COMPASS_ICON_ID, COMPASS_ICON_SVG, REVIEW_ICON_ID, REVIEW_ICON_SVG, VIEW_TYPE_DESKTOP_HUB, DESKTOP_HUB_ICON_ID, DESKTOP_HUB_ICON_SVG, VIEW_TYPE_MOBILE_HUB, MOBILE_HUB_ICON_ID, MOBILE_HUB_ICON_SVG } from './constants';
 import { MinaSettings } from './types';
 import { isTablet } from './utils';
 import { MinaView } from './view';
 import { DesktopHubView } from './views/DesktopHubView';
+import { MobileHubView } from './views/MobileHubView';
 import { MinaSettingTab } from './settings';
 
 import { AiService } from './services/AiService';
@@ -80,6 +81,7 @@ export default class MinaPlugin extends Plugin {
 
         this.registerView(VIEW_TYPE_MINA, (leaf) => new MinaView(leaf, this));
         this.registerView(VIEW_TYPE_DESKTOP_HUB, (leaf) => new DesktopHubView(leaf, this));
+        this.registerView(VIEW_TYPE_MOBILE_HUB, (leaf) => new MobileHubView(leaf, this));
 
         // Reminders: hourly nudge for habits and due tasks
         this.registerInterval(window.setInterval(() => this._checkReminders(), 60 * 60 * 1000));
@@ -104,12 +106,15 @@ export default class MinaPlugin extends Plugin {
 		addIcon(SETTINGS_ICON_ID, SETTINGS_ICON_SVG);
         addIcon(HOME_ICON_ID, HOME_ICON_SVG);
         addIcon(DESKTOP_HUB_ICON_ID, DESKTOP_HUB_ICON_SVG);
+        addIcon(MOBILE_HUB_ICON_ID, MOBILE_HUB_ICON_SVG);
 
 		this.addRibbonIcon(HOME_ICON_ID, 'MINA Hub', () => { this.activateView('home', true); });
         this.addRibbonIcon(DESKTOP_HUB_ICON_ID, 'MINA Desktop Hub', () => { this.activateDesktopHub(); });
+        this.addRibbonIcon(MOBILE_HUB_ICON_ID, 'MINA Mobile Hub', () => { this.activateMobileHub(); });
 
         this.addCommand({ id: 'open-mina-home-mode', name: 'MINA: Open Command Center', icon: HOME_ICON_ID, callback: () => { this.activateView('home', true); } });
         this.addCommand({ id: 'open-mina-desktop-hub', name: 'MINA: Open Desktop Hub', icon: DESKTOP_HUB_ICON_ID, callback: () => { this.activateDesktopHub(); } });
+        this.addCommand({ id: 'open-mina-mobile-hub', name: 'MINA: Open Mobile Hub', icon: MOBILE_HUB_ICON_ID, callback: () => { this.activateMobileHub(); } });
         this.addCommand({ id: 'mina-global-search', name: 'MINA: Global Search', icon: 'lucide-search', hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'f' }], callback: () => { new SearchModal(this.app, this).open(); } });
 
 		this.addSettingTab(new MinaSettingTab(this.app, this));
@@ -167,6 +172,22 @@ export default class MinaPlugin extends Plugin {
         const leaf = workspace.getLeaf('window');
         if (leaf) {
             await leaf.setViewState({ type: VIEW_TYPE_DESKTOP_HUB, active: true });
+            workspace.revealLeaf(leaf);
+        }
+    }
+
+    async activateMobileHub() {
+        const { workspace } = this.app;
+        const existing = workspace.getLeavesOfType(VIEW_TYPE_MOBILE_HUB);
+        if (existing.length > 0) {
+            workspace.revealLeaf(existing[0]);
+            return;
+        }
+        const leaf = Platform.isMobile
+            ? workspace.getLeaf(false)
+            : workspace.getLeaf('split', 'vertical');
+        if (leaf) {
+            await leaf.setViewState({ type: VIEW_TYPE_MOBILE_HUB, active: true });
             workspace.revealLeaf(leaf);
         }
     }
@@ -258,6 +279,15 @@ export default class MinaPlugin extends Plugin {
             const hubLeaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_DESKTOP_HUB);
             for (const leaf of hubLeaves) {
                 const view = leaf.view as DesktopHubView;
+                if (view && typeof view.renderView === 'function') {
+                    if (view._capturePending > 0) continue;
+                    view.renderView();
+                }
+            }
+            // Refresh any open Mobile Hub leaves
+            const mobileHubLeaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MOBILE_HUB);
+            for (const leaf of mobileHubLeaves) {
+                const view = leaf.view as MobileHubView;
                 if (view && typeof view.renderView === 'function') {
                     if (view._capturePending > 0) continue;
                     view.renderView();
