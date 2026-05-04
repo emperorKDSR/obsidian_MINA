@@ -173,24 +173,13 @@ export class DesktopHubView extends ItemView {
     // ── CENTER Column ─────────────────────────────────────────────────────────
     private renderCenter(parent: HTMLElement) {
         const center = parent.createEl('div', { cls: 'mina-dh-center' });
-
-        this.renderCapture(center);
-        this.renderTodayFeed(center);
+        const inner = center.createEl('div', { cls: 'mina-dh-center-inner' });
+        this.renderCapture(inner);
+        this.renderTodayFeed(inner);
     }
 
     private renderCapture(parent: HTMLElement) {
         const section = parent.createEl('div', { cls: 'mina-dh-capture-section' });
-
-        const labelRow = section.createEl('div', { cls: 'mina-dh-capture-label' });
-        labelRow.createEl('span', { text: '✦', cls: 'mina-dh-capture-icon' });
-        labelRow.createEl('span', { text: 'THOUGHT', cls: 'mina-dh-capture-title' });
-
-        const expandBtn = labelRow.createEl('button', {
-            cls: 'mina-dh-capture-expand-btn',
-            attr: { title: 'Full capture (⌘K)' }
-        });
-        setIcon(expandBtn, 'lucide-maximize-2');
-        expandBtn.addEventListener('click', () => new ZenCaptureModal(this.app, this.plugin).open());
 
         const chipRow = section.createEl('div', { cls: 'mina-dh-chip-row' });
         let contexts: string[] = [];
@@ -268,14 +257,21 @@ export class DesktopHubView extends ItemView {
             }
         });
 
-        const hint = section.createEl('div', { cls: 'mina-dh-capture-hint' });
+        const footer = section.createEl('div', { cls: 'mina-dh-capture-footer' });
+        const hint = footer.createEl('div', { cls: 'mina-dh-capture-hint' });
         hint.createEl('span', { text: '⌘K', cls: 'mina-dh-capture-kbd' });
-        hint.createEl('span', { text: ' full capture with contexts & projects', cls: 'mina-dh-capture-hint-text' });
+        hint.createEl('span', { text: 'full capture', cls: 'mina-dh-capture-hint-text' });
+        const expandBtn = footer.createEl('button', {
+            cls: 'mina-dh-capture-expand-btn',
+            attr: { title: 'Full capture (⌘K)' }
+        });
+        setIcon(expandBtn, 'lucide-maximize-2');
+        expandBtn.addEventListener('click', () => new ZenCaptureModal(this.app, this.plugin).open());
     }
 
     private renderTodayFeed(parent: HTMLElement) {
         const feed = parent.createEl('div', { cls: 'mina-dh-feed' });
-        feed.createEl('div', { text: "TODAY'S THOUGHTS", cls: 'mina-dh-feed-label' });
+        feed.createEl('div', { text: 'TODAY', cls: 'mina-dh-feed-label' });
 
         const today = moment().format('YYYY-MM-DD');
         const todayThoughts = Array.from(this.plugin.index.thoughtIndex.values())
@@ -284,7 +280,7 @@ export class DesktopHubView extends ItemView {
 
         if (todayThoughts.length === 0) {
             feed.createEl('div', {
-                text: 'No thoughts captured yet today.',
+                text: 'Nothing captured yet — your mind is clear.',
                 cls: 'mina-dh-feed-empty'
             });
             return;
@@ -293,12 +289,13 @@ export class DesktopHubView extends ItemView {
         const list = feed.createEl('div', { cls: 'mina-dh-feed-list' });
         for (const t of todayThoughts) {
             const item = list.createEl('div', { cls: 'mina-dh-feed-item' });
+            item.createEl('span', { cls: 'mina-dh-feed-dot' });
+            const content = item.createEl('div', { cls: 'mina-dh-feed-content' });
             const ts = t.created ? moment(t.created, 'YYYY-MM-DD HH:mm:ss').format('HH:mm') : '';
-            item.createEl('span', { text: ts, cls: 'mina-dh-feed-time' });
-            const bodyWrap = item.createEl('div', { cls: 'mina-dh-feed-body' });
-            bodyWrap.createEl('span', { text: t.body || t.title || '', cls: 'mina-dh-feed-text' });
+            content.createEl('span', { text: ts, cls: 'mina-dh-feed-time' });
+            content.createEl('p', { text: t.body || t.title || '', cls: 'mina-dh-feed-text' });
             if (t.context && t.context.length > 0) {
-                const ctxWrap = bodyWrap.createEl('div', { cls: 'mina-dh-feed-ctx' });
+                const ctxWrap = content.createEl('div', { cls: 'mina-dh-feed-ctx' });
                 for (const ctx of t.context) {
                     ctxWrap.createEl('span', { text: `#${ctx}`, cls: 'mina-dh-feed-ctx-chip' });
                 }
