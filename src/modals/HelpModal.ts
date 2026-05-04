@@ -176,6 +176,19 @@ const SECTIONS: HelpSection[] = [
             { label: 'Habits', desc: 'Add, edit, and archive habits from the ⚙ icon on the Home screen.' },
         ]
     },
+    {
+        id: 'desktop-hub', icon: 'lucide-layout-dashboard', title: 'Desktop Hub', subtitle: 'Premium 3-column cockpit for desktop',
+        items: [
+            { label: 'Opening the Hub', desc: 'Click the cockpit icon in the Obsidian ribbon, or use the command palette → "MINA: Open Desktop Hub". Opens as a dedicated popout window.', tip: 'Requires Obsidian 0.16.0+. On mobile, a notice is shown instead.' },
+            { label: '3-Column Layout', desc: 'LEFT: icon-only navigation sidebar (hover to expand with labels). CENTER: thought capture + today\'s live feed. RIGHT: stats panel + AI Intelligence briefing.' },
+            { label: 'Thought Capture', desc: 'Type your thought in the center textarea and press Enter to save instantly. Use ⌘K to open the inline context tagger and assign tags before saving.', tip: 'Shift+Enter inserts a newline without saving.' },
+            { label: "Today's Feed", desc: 'All thoughts captured today are shown in the center panel, newest first. Each entry shows timestamp, body text, and context chips.' },
+            { label: 'Stats Panel', desc: 'Right panel shows 5 live stats: Open Tasks, Overdue (red when >0), Unsynth Thoughts, Total Dues ($), and Habits ratio. Updates reactively with every vault change.' },
+            { label: 'AI Intelligence', desc: 'Hit "SYNTHESIZE BRIEFING" in the right panel to get a Gemini strategy summary based on your current thoughts, tasks, and context.', tip: 'Requires a Gemini API key in Settings → AI.' },
+            { label: 'Focus Mode 🎯', desc: 'Click the 🎯 button in the top bar to collapse the sidebar and right panel — center capture goes full-width for distraction-free input. Click again to restore.', tip: 'Focus Mode state is saved per-window and survives Obsidian restarts.' },
+            { label: 'Navigation Sidebar', desc: 'Hover the left sidebar to expand it. Four groups: ACTION (Capture, Synthesis, Timeline, Habits, Journal), MANAGE (Tasks, Finance, Projects, Calendar, Monthly, Compass), FEATURES (AI Chat, Voice, Memento, Export), SYSTEM (Settings, Manual).' },
+        ]
+    },
 ];
 
 export class HelpModal extends Modal {

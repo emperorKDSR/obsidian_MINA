@@ -1,6 +1,18 @@
 import { MinaSettings } from './types';
 
 export const VIEW_TYPE_MINA = "mina-v2-view";
+export const VIEW_TYPE_DESKTOP_HUB = "mina-desktop-hub";
+
+// Desktop Hub ribbon icon — three-pane cockpit layout
+export const DESKTOP_HUB_ICON_ID = "mina-desktop-hub-icon";
+export const DESKTOP_HUB_ICON_SVG = `<g transform="translate(8,8) scale(3.3)">
+    <rect x="2" y="3" width="20" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <line x1="8" y1="3" x2="8" y2="17" stroke="currentColor" stroke-width="1" stroke-dasharray="0"/>
+    <line x1="16" y1="3" x2="16" y2="17" stroke="currentColor" stroke-width="1"/>
+    <circle cx="5" cy="8" r="1" fill="currentColor"/>
+    <circle cx="5" cy="11" r="1" fill="currentColor"/>
+    <circle cx="5" cy="14" r="1" fill="currentColor"/>
+</g>`;
 
 // Custom icon — Tactical reticle (precision targeting, cockpit HUD aesthetic)
 export const KATANA_ICON_ID = "mina-katana";
