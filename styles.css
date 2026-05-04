@@ -4078,137 +4078,127 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   min-height: 0;
   overflow-y: auto;
   border-left: 1px solid var(--mina-dh-border);
-  padding: 16px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
   background: var(--background-primary);
   transition: width var(--mina-dh-transition), padding var(--mina-dh-transition);
 }
 
-/* Shared card label */
-.mina-dh-card-label {
-  font-size: 0.65em;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  color: var(--text-faint);
-  margin-bottom: 8px;
+/* ── Task quick-input section ──────────────────────────────────── */
+.mina-dh-task-input-section {
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--mina-dh-border);
 }
-
-/* Stats card */
-.mina-dh-stats-card {
-  background: var(--mina-dh-surface);
-  border-radius: var(--mina-dh-radius);
-  padding: 14px;
-  border: 1px solid var(--mina-dh-border);
-}
-.mina-dh-stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-.mina-dh-stat {
-  background: var(--background-primary);
-  border-radius: 8px;
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  transition: box-shadow var(--mina-dh-transition);
-}
-.mina-dh-stat:hover { box-shadow: 0 0 0 1px var(--mina-dh-accent); }
-.mina-dh-stat-value {
-  font-size: 1.4em;
-  font-weight: 900;
+.mina-dh-task-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--mina-dh-border);
+  border-radius: 0;
+  padding: 6px 0;
+  font-size: 0.88em;
+  font-family: inherit;
   color: var(--text-normal);
-  line-height: 1;
-  letter-spacing: -0.02em;
+  outline: none;
+  transition: border-color var(--mina-dh-transition);
+  box-sizing: border-box;
 }
-.mina-dh-stat-value.is-danger { color: var(--text-error, #e53e3e); }
-.mina-dh-stat-value.is-success { color: var(--color-green, #38a169); }
-.mina-dh-stat-label {
-  font-size: 0.6em;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  color: var(--text-faint);
-}
+.mina-dh-task-input::placeholder { color: var(--text-faint); }
+.mina-dh-task-input:focus { border-bottom-color: var(--mina-dh-accent); }
 
-/* Intelligence card */
-.mina-dh-intel-card {
-  background: var(--mina-dh-surface);
-  border-radius: var(--mina-dh-radius);
-  padding: 14px;
+/* ── Task list section ─────────────────────────────────────────── */
+.mina-dh-task-list-section {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  border: 1px solid var(--mina-dh-border);
-  flex: 1;
-  min-height: 160px;
+  min-height: 0;
+  overflow: hidden;
 }
-.mina-dh-intel-header {
+.mina-dh-task-list-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 12px 14px 8px;
 }
-.mina-dh-intel-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.mina-dh-intel-icon { display: flex; align-items: center; width: 16px; height: 16px; color: var(--mina-dh-accent); }
-.mina-dh-intel-icon svg { width: 15px; height: 15px; }
-.mina-dh-intel-label {
-  font-size: 0.65em;
+.mina-dh-task-list-title {
+  font-size: 0.62em;
   font-weight: 800;
   letter-spacing: 0.12em;
   color: var(--text-faint);
 }
-.mina-dh-intel-ts {
+.mina-dh-task-count {
   font-size: 0.68em;
+  font-weight: 700;
+  color: var(--text-faint);
+  background: var(--mina-dh-surface);
+  border: 1px solid var(--mina-dh-border);
+  border-radius: 20px;
+  padding: 1px 8px;
+  letter-spacing: 0.04em;
+}
+.mina-dh-task-empty {
+  padding: 24px 14px;
+  font-size: 0.82em;
+  color: var(--text-faint);
+  text-align: center;
+  font-style: italic;
+}
+.mina-dh-task-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 0 16px;
+}
+
+/* ── Task item ─────────────────────────────────────────────────── */
+.mina-dh-task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 14px;
+  cursor: default;
+  transition: background var(--mina-dh-transition);
+  border-radius: 0;
+}
+.mina-dh-task-item:hover { background: var(--mina-dh-surface); }
+.mina-dh-task-item.is-completing { opacity: 0.4; pointer-events: none; transition: opacity 0.25s; }
+
+.mina-dh-task-checkbox {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--text-faint);
+  margin-top: 2px;
+  cursor: pointer;
+  transition: border-color var(--mina-dh-transition), background var(--mina-dh-transition), box-shadow var(--mina-dh-transition);
+}
+.mina-dh-task-checkbox:hover {
+  border-color: var(--mina-dh-accent);
+  box-shadow: 0 0 0 3px rgba(124,58,237,0.18);
+}
+.mina-dh-task-item.is-overdue .mina-dh-task-checkbox { border-color: var(--text-error, #e53e3e); }
+
+.mina-dh-task-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.mina-dh-task-title {
+  font-size: 0.86em;
+  color: var(--text-normal);
+  line-height: 1.4;
+  word-break: break-word;
+}
+.mina-dh-task-due {
+  font-size: 0.72em;
   color: var(--text-faint);
   font-family: var(--font-monospace);
+  letter-spacing: 0.02em;
 }
-.mina-dh-intel-body {
-  flex: 1;
-  font-size: 0.84em;
-  color: var(--text-muted);
-  line-height: 1.65;
-  white-space: pre-wrap;
-  word-break: break-word;
-  min-height: 48px;
-}
-.mina-dh-intel-body.has-content { color: var(--text-normal); }
-.mina-dh-intel-body.is-loading {
-  color: var(--text-faint);
-  animation: mina-dh-pulse 1.4s ease-in-out infinite;
-}
-@keyframes mina-dh-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-.mina-dh-intel-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: 1px solid var(--mina-dh-accent);
-  background: transparent;
-  color: var(--mina-dh-accent);
-  font-size: 0.72em;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  transition: all var(--mina-dh-transition);
-  width: 100%;
-}
-.mina-dh-intel-btn:hover:not(:disabled) {
-  background: var(--mina-dh-accent);
-  color: #fff;
-  box-shadow: 0 0 14px rgba(124,58,237,0.4);
-}
-.mina-dh-intel-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.mina-dh-intel-btn-icon { display: flex; align-items: center; width: 14px; height: 14px; }
-.mina-dh-intel-btn-icon svg { width: 14px; height: 14px; }
+.mina-dh-task-due.is-overdue { color: var(--text-error, #e53e3e); font-weight: 600; }
 
 /* ── Focus Mode (collapse sidebar + right) ─────────────────────── */
 .mina-dh-wrap.is-focus-mode .mina-dh-sidebar {

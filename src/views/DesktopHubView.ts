@@ -17,7 +17,6 @@ export class DesktopHubView extends ItemView {
 
     // Guard against DOM updates after view is closed
     private _closed: boolean = false;
-    private _aiActive: boolean = false;
 
     constructor(leaf: WorkspaceLeaf, plugin: MinaPlugin) {
         super(leaf);
@@ -302,125 +301,97 @@ export class DesktopHubView extends ItemView {
     // ── RIGHT Panel ───────────────────────────────────────────────────────────
     private renderRight(parent: HTMLElement) {
         const right = parent.createEl('div', { cls: 'mina-dh-right' });
-        this.renderStats(right);
-        this.renderIntelligence(right);
+        this.renderTaskQuickInput(right);
+        this.renderTaskList(right);
     }
 
-    private renderStats(parent: HTMLElement) {
-        const card = parent.createEl('div', { cls: 'mina-dh-stats-card' });
-        card.createEl('div', { text: 'STATUS', cls: 'mina-dh-card-label' });
+    private renderTaskQuickInput(parent: HTMLElement) {
+        const section = parent.createEl('div', { cls: 'mina-dh-task-input-section' });
+        const input = section.createEl('input', {
+            cls: 'mina-dh-task-input',
+            attr: { type: 'text', placeholder: 'Add a task…' }
+        }) as HTMLInputElement;
 
-        const idx = this.plugin.index;
-        const todayM = moment().startOf('day');
-        const openTasks = Array.from(idx.taskIndex.values()).filter(t => t.status === 'open');
-        const overdue = openTasks.filter(
-            t => t.due && moment(t.due, 'YYYY-MM-DD').isValid() && moment(t.due, 'YYYY-MM-DD').isBefore(todayM, 'day')
-        );
-        const unsynth = Array.from(idx.thoughtIndex.values()).filter(t => !t.synthesized).length;
-        const dues = idx.totalDues || 0;
-        const allHabits = (this.plugin.settings.habits || []).filter(h => !h.archived);
-        const doneHabits = idx.habitStatusIndex.length;
-
-        const grid = card.createEl('div', { cls: 'mina-dh-stats-grid' });
-
-        const addStat = (value: string, label: string, modifier?: 'danger' | 'success') => {
-            const stat = grid.createEl('div', { cls: 'mina-dh-stat' });
-            stat.createEl('div', {
-                text: value,
-                cls: `mina-dh-stat-value${modifier ? ` is-${modifier}` : ''}`
-            });
-            stat.createEl('div', { text: label, cls: 'mina-dh-stat-label' });
-        };
-
-        addStat(String(openTasks.length), 'OPEN TASKS', overdue.length > 0 ? 'danger' : undefined);
-        addStat(String(overdue.length), 'OVERDUE', overdue.length > 0 ? 'danger' : undefined);
-        addStat(String(unsynth), 'THOUGHTS');
-        addStat(`$${dues.toFixed(0)}`, 'DUES', dues > 0 ? 'danger' : undefined);
-        addStat(
-            `${doneHabits}/${allHabits.length}`,
-            'HABITS',
-            doneHabits === allHabits.length && allHabits.length > 0 ? 'success' : undefined
-        );
-    }
-
-    private renderIntelligence(parent: HTMLElement) {
-        const card = parent.createEl('div', { cls: 'mina-dh-intel-card' });
-
-        const header = card.createEl('div', { cls: 'mina-dh-intel-header' });
-        const titleRow = header.createEl('div', { cls: 'mina-dh-intel-title' });
-        const iIcon = titleRow.createDiv({ cls: 'mina-dh-intel-icon' });
-        setIcon(iIcon, 'lucide-sparkles');
-        titleRow.createSpan({ text: 'INTELLIGENCE', cls: 'mina-dh-intel-label' });
-        const tsEl = header.createSpan({ cls: 'mina-dh-intel-ts', text: '' });
-
-        const idx = this.plugin.index;
-        const todayM = moment().startOf('day');
-        const openTasks = Array.from(idx.taskIndex.values()).filter(t => t.status === 'open');
-        const overdue = openTasks.filter(
-            t => t.due && moment(t.due, 'YYYY-MM-DD').isValid() && moment(t.due, 'YYYY-MM-DD').isBefore(todayM, 'day')
-        );
-        const completedHabits = idx.habitStatusIndex.length;
-        const totalHabits = (this.plugin.settings.habits || []).length;
-        const unsynth = Array.from(idx.thoughtIndex.values()).filter(t => !t.synthesized).length;
-        const dues = idx.totalDues || 0;
-
-        const body = card.createEl('div', {
-            text: 'Strategic briefing pending analysis.',
-            cls: 'mina-dh-intel-body'
-        });
-
-        const analyzeBtn = card.createEl('button', { cls: 'mina-dh-intel-btn' });
-        const btnIcon = analyzeBtn.createDiv({ cls: 'mina-dh-intel-btn-icon' });
-        setIcon(btnIcon, 'lucide-sparkles');
-        analyzeBtn.createSpan({ text: 'SYNTHESIZE BRIEFING' });
-
-        analyzeBtn.addEventListener('click', async () => {
-            if (this._aiActive) return;
-            this._aiActive = true;
-            body.empty();
-            body.removeClass('has-content');
-            body.addClass('is-loading');
-            body.setText('');
-            tsEl.setText('');
-            analyzeBtn.disabled = true;
-
+        input.addEventListener('keydown', async (e: KeyboardEvent) => {
+            if (e.key !== 'Enter') return;
+            const raw = input.value.trim();
+            if (!raw) return;
+            input.value = '';
             try {
-                const contextBlock = [
-                    `## Status — ${moment().format('dddd, MMMM D, YYYY')}`,
-                    `**Open Tasks:** ${openTasks.length} (${overdue.length} overdue)`,
-                    `**Habits:** ${completedHabits}/${totalHabits}`,
-                    `**Unprocessed Thoughts:** ${unsynth}`,
-                    `**Financial Obligations:** $${dues.toFixed(2)}`,
-                    this.plugin.settings.northStarGoals?.[0]
-                        ? `**North Star:** ${this.plugin.settings.northStarGoals[0]}`
-                        : '',
-                    overdue.length
-                        ? `**Overdue:** ${overdue.slice(0, 5).map(t => t.title).join(', ')}`
-                        : '',
-                ].filter(Boolean).join('\n');
-
-                const summary = await this.plugin.ai.callGemini(
-                    `${contextBlock}\n\nSharp strategic briefing: what needs attention now? What's at risk? Be direct.`,
-                    [],
-                    false,
-                    [],
-                    idx.thoughtIndex
-                );
-
-                if (this._closed) return;
-                body.removeClass('is-loading');
-                body.setText(summary);
-                body.addClass('has-content');
-                tsEl.setText(moment().format('h:mm A'));
-            } catch (e: any) {
-                if (!this._closed) {
-                    body.removeClass('is-loading');
-                    body.setText('Intelligence offline: ' + e.message);
-                }
-            } finally {
-                this._aiActive = false;
-                if (!this._closed) analyzeBtn.disabled = false;
+                await this.plugin.vault.createTaskFile(raw, []);
+                new Notice('✓ Task added', 1000);
+            } catch {
+                new Notice('Error saving task', 2000);
             }
         });
+    }
+
+    private renderTaskList(parent: HTMLElement) {
+        const section = parent.createEl('div', { cls: 'mina-dh-task-list-section' });
+
+        const todayM = moment().startOf('day');
+        const tasks = Array.from(this.plugin.index.taskIndex.values())
+            .filter(t => t.status === 'open' || t.status === 'waiting')
+            .sort((a, b) => {
+                const aOver = a.due && moment(a.due, 'YYYY-MM-DD').isBefore(todayM, 'day');
+                const bOver = b.due && moment(b.due, 'YYYY-MM-DD').isBefore(todayM, 'day');
+                if (aOver && !bOver) return -1;
+                if (!aOver && bOver) return 1;
+                if (a.due && b.due) return a.due.localeCompare(b.due);
+                if (a.due && !b.due) return -1;
+                if (!a.due && b.due) return 1;
+                return (b.lastUpdate || 0) - (a.lastUpdate || 0);
+            });
+
+        const header = section.createEl('div', { cls: 'mina-dh-task-list-header' });
+        header.createEl('span', { text: 'TASKS', cls: 'mina-dh-task-list-title' });
+        if (tasks.length > 0) {
+            header.createEl('span', { text: String(tasks.length), cls: 'mina-dh-task-count' });
+        }
+
+        if (tasks.length === 0) {
+            section.createEl('div', { text: 'All clear — no open tasks.', cls: 'mina-dh-task-empty' });
+            return;
+        }
+
+        const list = section.createEl('div', { cls: 'mina-dh-task-list' });
+        for (const task of tasks) {
+            const isOverdue = !!(task.due && moment(task.due, 'YYYY-MM-DD').isBefore(todayM, 'day'));
+            const item = list.createEl('div', { cls: `mina-dh-task-item${isOverdue ? ' is-overdue' : ''}` });
+
+            const checkbox = item.createEl('div', { cls: 'mina-dh-task-checkbox' });
+            checkbox.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                item.addClass('is-completing');
+                try {
+                    await this.plugin.vault.updateTaskEntry(task.filePath, {
+                        title: task.title,
+                        dueDate: task.due || null,
+                        recurrence: task.recurrence || null,
+                        priority: task.priority || null,
+                        energy: task.energy || null,
+                        status: 'done',
+                        contexts: task.context || [],
+                        project: task.project || null,
+                    });
+                    item.remove();
+                } catch {
+                    new Notice('Error updating task', 2000);
+                    item.removeClass('is-completing');
+                }
+            });
+
+            const content = item.createEl('div', { cls: 'mina-dh-task-content' });
+            content.createEl('span', { text: task.title, cls: 'mina-dh-task-title' });
+
+            if (task.due) {
+                const dueM = moment(task.due, 'YYYY-MM-DD');
+                const label = isOverdue ? dueM.format('MMM D') : dueM.fromNow();
+                content.createEl('span', {
+                    text: label,
+                    cls: `mina-dh-task-due${isOverdue ? ' is-overdue' : ''}`
+                });
+            }
+        }
     }
 }
