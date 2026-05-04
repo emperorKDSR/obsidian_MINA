@@ -1,3 +1,36 @@
+## [1.27.0] — Desktop Hub: Premium 3-Column Cockpit
+
+### Added
+- **Desktop Hub**: Brand-new standalone `ItemView` (`VIEW_TYPE_DESKTOP_HUB`) — a dedicated popout window designed exclusively for desktop (Windows + macOS). Opens via ribbon icon or command `MINA: Open Desktop Hub`.
+- **3-Column Layout**: LEFT icon-only nav sidebar (hover-expands to 180px with group labels), CENTER thought capture + today's live feed, RIGHT stats + AI intelligence panel.
+- **Thought Capture**: Full-width textarea with Enter-to-save, Shift+Enter for newline, ⌘K inline context tagger, and media paste handler.
+- **Today's Feed**: Live list of all thoughts captured today, sorted newest-first, showing timestamp, body, and context chips.
+- **Stats Panel**: 5-stat reactive grid — Open Tasks, Overdue (danger red when >0), Unsynth Thoughts, Total Dues ($), Habits ratio. Updates on every vault change via the shared `notifyRefresh()` 400ms debounce.
+- **AI Intelligence Card**: SYNTHESIZE BRIEFING button triggers Gemini strategy summary; `_closed` guard prevents DOM updates after view destruction; `_aiActive` prevents duplicate requests.
+- **Focus Mode**: 🎯 top-bar toggle collapses sidebar + right panel with CSS transitions; state persisted via `getState()`/`setState()` (survives Obsidian restarts).
+- **`DESKTOP_HUB_ICON_SVG`**: Custom cockpit SVG icon registered via `addIcon()`.
+- **Platform guard**: `Platform.isDesktop` check — shows notice on mobile instead of rendering.
+- **`versions.json`**: Added `"1.27.0": "0.16.0"` entry; `minAppVersion` bumped to `0.16.0` (required for `getLeaf('window')`).
+- **HelpModal**: New "Desktop Hub" section with 8 entries covering all features.
+
+### Architecture
+- `src/views/DesktopHubView.ts` (new) — standalone `ItemView`; does not extend `BaseTab`; renders on `containerEl.children[1]`; hides Obsidian view header via `children[0]`.
+- `src/main.ts` — `registerView()`, `activateDesktopHub()`, ribbon icon, command, `notifyRefresh()` updated to iterate hub leaves.
+- `src/constants.ts` — `VIEW_TYPE_DESKTOP_HUB`, `DESKTOP_HUB_ICON_ID`, `DESKTOP_HUB_ICON_SVG`.
+- `styles.css` — 535 lines of `.mina-dh-*` CSS: flex cockpit, hover-expand sidebar, focus-mode transitions, `@media (max-width:900px)` responsive fallback.
+
+### Files Modified
+- `src/views/DesktopHubView.ts` (new)
+- `src/constants.ts`
+- `src/main.ts`
+- `src/modals/HelpModal.ts`
+- `manifest.json`
+- `package.json`
+- `versions.json`
+- `styles.css`
+
+---
+
 ## [1.22.6] — Timeline Search: Boolean Operators
 
 ### Added
