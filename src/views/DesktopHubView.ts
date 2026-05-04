@@ -179,6 +179,9 @@ export class DesktopHubView extends ItemView {
 
     private renderCapture(parent: HTMLElement) {
         const section = parent.createEl('div', { cls: 'mina-dh-capture-section' });
+        section.addEventListener('click', (e) => {
+            if (e.target !== textarea) textarea.focus();
+        });
 
         const chipRow = section.createEl('div', { cls: 'mina-dh-chip-row' });
         let contexts: string[] = [];
@@ -196,7 +199,7 @@ export class DesktopHubView extends ItemView {
         const textarea = section.createEl('textarea', {
             cls: 'mina-dh-capture-textarea',
             attr: {
-                placeholder: "What's on your mind… (Enter to save, Shift+Enter for new line)",
+                placeholder: "What's on your mind…",
                 rows: '2'
             }
         }) as HTMLTextAreaElement;

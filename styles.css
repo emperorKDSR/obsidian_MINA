@@ -3917,30 +3917,27 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
 
 /* ── Capture — full-width, edge-to-edge ────── */
 .mina-dh-capture-section {
-  position: relative;
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 0;
-  padding: 24px 32px 16px;
-  border-bottom: 1px solid var(--mina-dh-border);
-  transition: border-color 0.2s ease;
-}
-.mina-dh-capture-section:focus-within {
-  border-bottom-color: rgba(124,58,237,0.4);
+  padding: 28px 32px 16px;
 }
 
 .mina-dh-capture-textarea {
   width: 100%;
+  flex: 1;
   border: none;
   background: transparent;
   resize: none;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 1.1rem;
+  font-family: inherit;
+  font-size: 0.9em;
   font-weight: 400;
   color: var(--text-normal);
   line-height: 1.6;
   outline: none;
-  min-height: 56px;
+  -webkit-appearance: none;
+  min-height: 80px;
   padding: 0;
   caret-color: var(--mina-dh-accent);
 }
