@@ -210,11 +210,15 @@ export class DesktopHubView extends ItemView {
             textarea.style.height = `${textarea.scrollHeight}px`;
         };
 
-        textarea.addEventListener('focus', () => { this._capturePending = 1; });
+        textarea.addEventListener('focus', () => {
+            this._capturePending = 1;
+            syncHeight();
+        });
         textarea.addEventListener('input', () => {
             syncHeight();
             this._capturePending = textarea.value.trim().length > 0 ? 1 : 0;
         });
+        textarea.addEventListener('keyup', () => syncHeight());
 
         attachInlineTriggers(
             this.app,

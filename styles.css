@@ -3919,14 +3919,12 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
 .mina-dh-capture-section {
   display: flex;
   flex-direction: column;
-  flex: 1;
   gap: 0;
   padding: 28px 32px 16px;
 }
 
 .mina-dh-capture-textarea {
   width: 100%;
-  flex: 1;
   border: none;
   background: transparent;
   resize: none;
@@ -3937,8 +3935,9 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   line-height: 1.6;
   outline: none;
   -webkit-appearance: none;
-  min-height: 80px;
+  min-height: 52px;
   padding: 0;
+  overflow: hidden;
   caret-color: var(--mina-dh-accent);
 }
 .mina-dh-capture-textarea::placeholder {
