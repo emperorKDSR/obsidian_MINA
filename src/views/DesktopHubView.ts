@@ -7,7 +7,6 @@ import {
     FOCUS_ICON_ID, MEMENTO_ICON_ID,
 } from '../constants';
 import { attachInlineTriggers, attachMediaPasteHandler } from '../utils';
-import { ZenCaptureModal } from '../modals/ZenCaptureModal';
 
 export class DesktopHubView extends ItemView {
     plugin: MinaPlugin;
@@ -257,16 +256,6 @@ export class DesktopHubView extends ItemView {
             }
         });
 
-        const footer = section.createEl('div', { cls: 'mina-dh-capture-footer' });
-        const hint = footer.createEl('div', { cls: 'mina-dh-capture-hint' });
-        hint.createEl('span', { text: '⌘K', cls: 'mina-dh-capture-kbd' });
-        hint.createEl('span', { text: 'full capture', cls: 'mina-dh-capture-hint-text' });
-        const expandBtn = footer.createEl('button', {
-            cls: 'mina-dh-capture-expand-btn',
-            attr: { title: 'Full capture (⌘K)' }
-        });
-        setIcon(expandBtn, 'lucide-maximize-2');
-        expandBtn.addEventListener('click', () => new ZenCaptureModal(this.app, this.plugin).open());
     }
 
     private renderTodayFeed(parent: HTMLElement) {

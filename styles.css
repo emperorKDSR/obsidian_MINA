@@ -3971,50 +3971,6 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
 }
 .mina-dh-chip:hover { background: rgba(124,58,237,0.22); }
 
-/* Footer: hint + expand — fades in on focus */
-.mina-dh-capture-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 12px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.18s ease;
-}
-.mina-dh-capture-section:focus-within .mina-dh-capture-footer {
-  opacity: 1;
-  pointer-events: auto;
-}
-.mina-dh-capture-hint { display: flex; align-items: center; gap: 6px; }
-.mina-dh-capture-kbd {
-  font-size: 0.65em;
-  font-weight: 700;
-  font-family: var(--font-monospace);
-  background: var(--background-modifier-border);
-  border-radius: 4px;
-  padding: 1px 5px;
-  color: var(--text-faint);
-}
-.mina-dh-capture-hint-text { font-size: 0.72em; color: var(--text-faint); }
-.mina-dh-capture-expand-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--text-faint);
-  padding: 3px 7px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.7em;
-  transition: color 0.15s, background 0.15s;
-}
-.mina-dh-capture-expand-btn:hover {
-  color: var(--mina-dh-accent);
-  background: rgba(124,58,237,0.08);
-}
-.mina-dh-capture-expand-btn svg { width: 12px; height: 12px; }
-
 /* ── Today Feed (Timeline) ────────────────────── */
 .mina-dh-feed { display: flex; flex-direction: column; gap: 14px; }
 .mina-dh-feed-label {
