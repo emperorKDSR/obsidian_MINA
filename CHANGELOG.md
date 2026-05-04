@@ -1,3 +1,27 @@
+## [2.0.0] — MINA Personal OS: Desktop Hub Major Release
+
+### Major Release
+MINA V2 becomes a full **Personal Operating System** with the introduction of the Desktop Hub — a dedicated premium cockpit for desktop users. This release marks the architectural completion of the MINA platform: mobile-first Command Center + desktop-first Hub + reactive Omni-Cache Engine.
+
+### Added
+- **Desktop Hub**: All features from v1.27.0 promoted to the 2.0.0 flagship release.
+  - Premium 3-column cockpit (`VIEW_TYPE_DESKTOP_HUB`) as a dedicated popout window.
+  - LEFT: hover-expand icon nav sidebar (44px → 180px).
+  - CENTER: thought capture textarea + live Today's Feed (newest-first).
+  - RIGHT: 5-stat reactive grid + AI Intelligence briefing.
+  - Focus Mode 🎯 with CSS transitions, persisted state.
+  - `Platform.isDesktop` guard; opens via `getLeaf('window')`.
+  - 535 lines of `.mina-dh-*` premium dark CSS.
+  - HelpModal: Desktop Hub section with 8 entries.
+
+### Architecture Milestone
+- **`minAppVersion`** → `0.16.0` (required for popout window support).
+- `src/views/DesktopHubView.ts` — standalone `ItemView`, fully decoupled from `BaseTab`/`MinaView`.
+- Shared `notifyRefresh()` 400ms debounce extended to cover hub leaves.
+- No new vault watchers; zero-async rendering loop compliance.
+
+---
+
 ## [1.27.0] — Desktop Hub: Premium 3-Column Cockpit
 
 ### Added
