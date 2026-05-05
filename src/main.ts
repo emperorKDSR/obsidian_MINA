@@ -178,14 +178,16 @@ export default class MinaPlugin extends Plugin {
 
     async activateMobileHub() {
         const { workspace } = this.app;
+        if (!Platform.isMobile) {
+            new Notice('MINA Mobile Hub is designed for mobile devices.', 2500);
+            return;
+        }
         const existing = workspace.getLeavesOfType(VIEW_TYPE_MOBILE_HUB);
         if (existing.length > 0) {
             workspace.revealLeaf(existing[0]);
             return;
         }
-        const leaf = Platform.isMobile
-            ? workspace.getLeaf(false)
-            : workspace.getLeaf('split', 'vertical');
+        const leaf = workspace.getLeaf(false);
         if (leaf) {
             await leaf.setViewState({ type: VIEW_TYPE_MOBILE_HUB, active: true });
             workspace.revealLeaf(leaf);
