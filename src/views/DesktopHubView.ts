@@ -17,6 +17,9 @@ export class DesktopHubView extends ItemView {
     _capturePending: number = 0;
     _taskPending: number = 0;
 
+    // Task panel filter: 'upcoming' = next 2 days + undated; 'all' = everything
+    _taskFilter: 'upcoming' | 'all' = 'upcoming';
+
     // Guard against DOM updates after view is closed
     private _closed: boolean = false;
 
@@ -468,7 +471,9 @@ export class DesktopHubView extends ItemView {
         const section = parent.createEl('div', { cls: 'mina-dh-task-list-section' });
 
         const todayM = moment().startOf('day');
-        const tasks = Array.from(this.plugin.index.taskIndex.values())
+        const cutoff = moment().startOf('day').add(2, 'days').endOf('day');
+
+        const allOpen = Array.from(this.plugin.index.taskIndex.values())
             .filter(t => t.status === 'open' || t.status === 'waiting')
             .sort((a, b) => {
                 const aOver = a.due && moment(a.due, 'YYYY-MM-DD').isBefore(todayM, 'day');
@@ -481,14 +486,45 @@ export class DesktopHubView extends ItemView {
                 return (b.lastUpdate || 0) - (a.lastUpdate || 0);
             });
 
+        const tasks = this._taskFilter === 'upcoming'
+            ? allOpen.filter(t => !t.due || moment(t.due, 'YYYY-MM-DD').isSameOrBefore(cutoff, 'day'))
+            : allOpen;
+
+        // ── Header with filter toggle ────────────────────────────
         const header = section.createEl('div', { cls: 'mina-dh-task-list-header' });
         header.createEl('span', { text: 'TASKS', cls: 'mina-dh-task-list-title' });
-        if (tasks.length > 0) {
-            header.createEl('span', { text: String(tasks.length), cls: 'mina-dh-task-count' });
-        }
+
+        const filterGroup = header.createEl('div', { cls: 'mina-dh-task-filter' });
+
+        const pill2 = filterGroup.createEl('button', {
+            text: '2 DAYS',
+            cls: `mina-dh-task-filter-pill${this._taskFilter === 'upcoming' ? ' is-active' : ''}`,
+        });
+        const pillAll = filterGroup.createEl('button', {
+            text: 'ALL',
+            cls: `mina-dh-task-filter-pill${this._taskFilter === 'all' ? ' is-active' : ''}`,
+        });
+
+        pill2.addEventListener('click', () => {
+            if (this._taskFilter === 'upcoming') return;
+            this._taskFilter = 'upcoming';
+            section.remove();
+            this.renderTaskList(parent);
+        });
+        pillAll.addEventListener('click', () => {
+            if (this._taskFilter === 'all') return;
+            this._taskFilter = 'all';
+            section.remove();
+            this.renderTaskList(parent);
+        });
 
         if (tasks.length === 0) {
-            section.createEl('div', { text: 'All clear — no open tasks.', cls: 'mina-dh-task-empty' });
+            section.createEl('div', {
+                text: this._taskFilter === 'upcoming'
+                    ? 'No tasks in the next 2 days.'
+                    : 'All clear — no open tasks.',
+                cls: 'mina-dh-task-empty'
+            });
             return;
         }
 

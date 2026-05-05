@@ -4192,6 +4192,34 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   padding: 1px 8px;
   letter-spacing: 0.04em;
 }
+/* ── Task filter toggle pills ──────────────────────────────────── */
+.mina-dh-task-filter {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--mina-dh-surface);
+  border: 1px solid var(--mina-dh-border);
+  border-radius: 20px;
+  padding: 2px;
+}
+.mina-dh-task-filter-pill {
+  font-size: 0.58em;
+  font-weight: 800;
+  letter-spacing: 0.10em;
+  color: var(--text-faint);
+  background: transparent;
+  border: none;
+  border-radius: 16px;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1.5;
+}
+.mina-dh-task-filter-pill:hover { color: var(--text-normal); }
+.mina-dh-task-filter-pill.is-active {
+  color: var(--mina-dh-accent, #7c3aed);
+  background: rgba(124,58,237,0.12);
+}
 .mina-dh-task-empty {
   padding: 24px 14px;
   font-size: 0.82em;
