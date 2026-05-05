@@ -8,7 +8,6 @@ export class MobileHubView extends ItemView {
     plugin: MinaPlugin;
     _capturePending: number = 0;
     private _closed = false;
-    private _tickInterval: ReturnType<typeof setInterval> | null = null;
     private _viewportHandler: (() => void) | null = null;
 
     constructor(leaf: WorkspaceLeaf, plugin: MinaPlugin) {
@@ -29,9 +28,15 @@ export class MobileHubView extends ItemView {
         if (Platform.isMobile && window.visualViewport) {
             const vp = window.visualViewport;
             this._viewportHandler = () => {
-                const root = this.containerEl.children[1] as HTMLElement;
                 const kbOffset = Math.max(0, window.innerHeight - vp.height - vp.offsetTop);
-                root.style.setProperty('--mina-keyboard-offset', `${kbOffset}px`);
+                this.contentEl.style.setProperty('--mina-keyboard-offset', `${kbOffset}px`);
+                // Dynamically adjust feed scroll bottom padding when keyboard opens
+                const feedScroll = this.contentEl.querySelector('.mina-mh-feed-scroll') as HTMLElement | null;
+                if (feedScroll) {
+                    feedScroll.style.paddingBottom = kbOffset > 0
+                        ? `calc(var(--mh-bar-height, 56px) + ${kbOffset}px + max(8px, env(safe-area-inset-bottom, 0px)))`
+                        : '';
+                }
             };
             vp.addEventListener('resize', this._viewportHandler);
             vp.addEventListener('scroll', this._viewportHandler);
@@ -42,10 +47,6 @@ export class MobileHubView extends ItemView {
 
     async onClose() {
         this._closed = true;
-        if (this._tickInterval !== null) {
-            clearInterval(this._tickInterval);
-            this._tickInterval = null;
-        }
         if (window.visualViewport && this._viewportHandler) {
             window.visualViewport.removeEventListener('resize', this._viewportHandler);
             window.visualViewport.removeEventListener('scroll', this._viewportHandler);
@@ -56,13 +57,7 @@ export class MobileHubView extends ItemView {
     renderView() {
         if (this._capturePending > 0) return;
 
-        // Cancel stale clock before re-render creates a new one
-        if (this._tickInterval !== null) {
-            clearInterval(this._tickInterval);
-            this._tickInterval = null;
-        }
-
-        const root = this.containerEl.children[1] as HTMLElement;
+        const root = this.contentEl;
         root.empty();
         root.addClass('mina-mh-root');
 
@@ -75,32 +70,106 @@ export class MobileHubView extends ItemView {
         }
 
         const wrap = root.createEl('div', { cls: 'mina-mh-wrap' });
-        this.renderTopBar(wrap);
 
-        const body = wrap.createEl('div', { cls: 'mina-mh-body' });
-        this.renderCapture(body);
-        this.renderTodayFeed(body);
+        // Scrollable feed — takes all available height above bar
+        const feedScroll = wrap.createEl('div', { cls: 'mina-mh-feed-scroll' });
+        this.renderWeekFeed(feedScroll);
+
+        // Bottom capture bar — flex footer (NOT position:fixed, Obsidian-safe)
+        const bar = wrap.createEl('div', { cls: 'mina-mh-bar' });
+        this.renderBottomBar(bar);
     }
 
-    // ── Top Bar ───────────────────────────────────────────────────────────────
-    private renderTopBar(parent: HTMLElement) {
-        const bar = parent.createEl('div', { cls: 'mina-mh-topbar' });
-        bar.createEl('span', { text: 'MINA', cls: 'mina-mh-topbar-logo' });
-        bar.createEl('span', { text: moment().format('ddd, MMM D').toUpperCase(), cls: 'mina-mh-topbar-date' });
-        const time = bar.createEl('span', { text: moment().format('HH:mm'), cls: 'mina-mh-topbar-time' });
-        this._tickInterval = setInterval(() => {
-            if (this._closed) {
-                if (this._tickInterval !== null) { clearInterval(this._tickInterval); this._tickInterval = null; }
-                return;
+    // ── 7-Day Feed ─────────────────────────────────────────────────────────────
+    private renderWeekFeed(parent: HTMLElement) {
+        const cutoff = moment().subtract(6, 'days').startOf('day');
+        const today     = moment().format('YYYY-MM-DD');
+        const yesterday = moment().subtract(1, 'day').format('YYYY-MM-DD');
+
+        const thoughts = Array.from(this.plugin.index.thoughtIndex.values())
+            .filter(t => t.day && moment(t.day, 'YYYY-MM-DD', true).isSameOrAfter(cutoff))
+            .sort((a, b) => (b.created || '').localeCompare(a.created || ''));
+
+        if (thoughts.length === 0) {
+            parent.createEl('div', {
+                text: 'Nothing in the last 7 days — your mind has been clear.',
+                cls: 'mina-mh-feed-empty'
+            });
+            return;
+        }
+
+        // Group by day — Map insertion order preserves newest-first sort
+        const byDay = new Map<string, ThoughtEntry[]>();
+        for (const t of thoughts) {
+            const key = t.day!;
+            if (!byDay.has(key)) byDay.set(key, []);
+            byDay.get(key)!.push(t);
+        }
+
+        for (const [day, dayThoughts] of byDay) {
+            const group = parent.createEl('div', { cls: 'mina-mh-day-group' });
+
+            const sep = group.createEl('div', { cls: 'mina-mh-day-sep' });
+            let label: string;
+            if (day === today)          label = 'Today';
+            else if (day === yesterday) label = 'Yesterday';
+            else                        label = moment(day, 'YYYY-MM-DD').format('ddd, MMM D').toUpperCase();
+            sep.createEl('span', { text: label, cls: 'mina-mh-day-sep-label' });
+
+            const dayFeed = group.createEl('div', { cls: 'mina-mh-day-feed' });
+            for (const t of dayThoughts) {
+                this.renderFeedItem(dayFeed, t);
             }
-            time.setText(moment().format('HH:mm'));
-        }, 60_000);
+        }
     }
 
-    // ── Capture ───────────────────────────────────────────────────────────────
-    private renderCapture(parent: HTMLElement) {
-        const section = parent.createEl('div', { cls: 'mina-mh-capture-section' });
-        const card = section.createEl('div', { cls: 'mina-mh-capture-card' });
+    // ── Feed Item ──────────────────────────────────────────────────────────────
+    private renderFeedItem(parent: HTMLElement, t: ThoughtEntry) {
+        const item = parent.createEl('div', { cls: 'mina-mh-feed-item' });
+
+        // Swipe reveal backgrounds — absolute, behind card
+        const delBg = item.createEl('div', { cls: 'mina-mh-swipe-bg-delete' });
+        const delIcon = delBg.createDiv({ cls: 'mina-mh-swipe-icon' });
+        setIcon(delIcon, 'trash-2');
+
+        const editBg = item.createEl('div', { cls: 'mina-mh-swipe-bg-edit' });
+        const editIcon = editBg.createDiv({ cls: 'mina-mh-swipe-icon' });
+        setIcon(editIcon, 'pencil');
+
+        // Content card — the translateX target
+        const card = item.createEl('div', { cls: 'mina-mh-feed-card' });
+
+        const ts = t.created
+            ? moment(t.created, 'YYYY-MM-DD HH:mm:ss').format('HH:mm')
+            : '';
+        if (ts) card.createEl('span', { text: ts, cls: 'mina-mh-feed-time' });
+
+        card.createEl('p', { text: t.body || t.title || '', cls: 'mina-mh-feed-text' });
+
+        if (t.context && t.context.length > 0) {
+            const ctxWrap = card.createEl('div', { cls: 'mina-mh-feed-ctx' });
+            for (const ctx of t.context) {
+                ctxWrap.createEl('span', { text: `#${ctx}`, cls: 'mina-mh-feed-ctx-chip' });
+            }
+        }
+
+        this.attachSwipeGesture(item, card, t);
+    }
+
+    // ── Bottom Capture Bar ─────────────────────────────────────────────────────
+    private renderBottomBar(bar: HTMLElement) {
+        // ── Collapsed pill ──────────────────────────────────────────────────────
+        const pill = bar.createEl('div', { cls: 'mina-mh-bar-pill' });
+        pill.createEl('span', { text: "What's on your mind…", cls: 'mina-mh-bar-hint-text' });
+        const composeBtn = pill.createEl('button', {
+            cls: 'mina-mh-bar-compose-btn',
+            attr: { 'aria-label': 'Compose thought' }
+        });
+        const composeIcon = composeBtn.createDiv({ cls: 'mina-mh-bar-compose-icon' });
+        setIcon(composeIcon, 'pencil');
+
+        // ── Expanded card ───────────────────────────────────────────────────────
+        const card = bar.createEl('div', { cls: 'mina-mh-bar-card' });
 
         const textarea = card.createEl('textarea', {
             cls: 'mina-mh-capture-textarea',
@@ -109,23 +178,39 @@ export class MobileHubView extends ItemView {
 
         const syncHeight = () => {
             textarea.style.height = 'auto';
-            textarea.style.overflowY = 'hidden';
-            textarea.style.height = `${textarea.scrollHeight}px`;
+            textarea.style.height = `${Math.min(textarea.scrollHeight, 130)}px`;
         };
 
-        // Track focus session to safely decrement _capturePending on blur-without-type
         let captureFocused = false;
 
-        textarea.addEventListener('focus', () => {
+        const expand = () => {
+            bar.addClass('mina-mh-bar--expanded');
             if (!captureFocused) { captureFocused = true; this._capturePending++; }
-            syncHeight();
-        });
+            requestAnimationFrame(() => { textarea.focus(); syncHeight(); });
+        };
+
+        const collapse = () => {
+            bar.removeClass('mina-mh-bar--expanded');
+            textarea.value = '';
+            textarea.style.height = '';
+            contexts = [];
+            chipRow.empty();
+            if (captureFocused) { captureFocused = false; this._capturePending = Math.max(0, this._capturePending - 1); }
+        };
+
+        pill.addEventListener('click', expand);
+
         textarea.addEventListener('blur', () => {
+            // Delay so tapping send/chips doesn't prematurely collapse
             if (captureFocused && textarea.value.trim().length === 0) {
-                captureFocused = false;
-                this._capturePending = Math.max(0, this._capturePending - 1);
+                setTimeout(() => {
+                    if (textarea.value.trim().length === 0 && bar.hasClass('mina-mh-bar--expanded')) {
+                        collapse();
+                    }
+                }, 150);
             }
         });
+
         textarea.addEventListener('input', syncHeight);
         textarea.addEventListener('keyup', syncHeight);
 
@@ -151,12 +236,7 @@ export class MobileHubView extends ItemView {
             const raw = textarea.value.trim();
             if (!raw) return;
             const ctxSnapshot = [...contexts];
-            if (captureFocused) { captureFocused = false; this._capturePending = Math.max(0, this._capturePending - 1); }
-            textarea.value = '';
-            textarea.style.height = '';
-            textarea.style.overflowY = '';
-            contexts = [];
-            chipRow.empty();
+            collapse();
             try {
                 await this.plugin.vault.createThoughtFile(raw, ctxSnapshot);
                 new Notice('✦ Thought saved', 1200);
@@ -173,72 +253,146 @@ export class MobileHubView extends ItemView {
 
         const sendBtn = footer.createEl('button', { cls: 'mina-mh-send-btn' });
         const sendIcon = sendBtn.createDiv({ cls: 'mina-mh-send-icon' });
-        setIcon(sendIcon, 'lucide-arrow-up');
+        setIcon(sendIcon, 'arrow-up');
         sendBtn.addEventListener('click', saveThought);
 
         textarea.addEventListener('keydown', (e: KeyboardEvent) => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveThought(); }
-            if (e.key === 'Escape') {
-                textarea.value = '';
-                textarea.style.height = '';
-                textarea.style.overflowY = '';
-                contexts = [];
-                chipRow.empty();
-                if (captureFocused) { captureFocused = false; this._capturePending = Math.max(0, this._capturePending - 1); }
-                textarea.blur();
-            }
+            if (e.key === 'Escape') { collapse(); }
         });
     }
 
-    // ── Today's Thoughts Feed ────────────────────────────────────────────────
-    private renderTodayFeed(parent: HTMLElement) {
-        const container = parent.createEl('div', { cls: 'mina-mh-feed-container' });
-        container.createEl('div', { text: 'TODAY', cls: 'mina-mh-feed-label' });
-        const feed = container.createEl('div', { cls: 'mina-mh-feed' });
+    // ── Swipe Gesture ──────────────────────────────────────────────────────────
+    private attachSwipeGesture(item: HTMLElement, card: HTMLElement, t: ThoughtEntry) {
+        const THRESHOLD = 60;   // px — minimum drag to trigger action
+        const REVEAL    = 80;   // px — locked reveal position
+        const MAX_DRIFT = 16;   // px — vertical drift to cancel swipe
 
-        const today = moment().format('YYYY-MM-DD');
-        const thoughts = Array.from(this.plugin.index.thoughtIndex.values())
-            .filter(t => t.day === today)
-            .sort((a, b) => (b.created || '').localeCompare(a.created || ''));
+        let startX = 0, startY = 0, currentX = 0;
+        let active = false, locked = false;
 
-        if (thoughts.length === 0) {
-            feed.createEl('div', { text: 'Nothing captured yet — your mind is clear.', cls: 'mina-mh-feed-empty' });
-            return;
-        }
+        const getSwipeIcon = (side: 'delete' | 'edit') =>
+            item.querySelector(`.mina-mh-swipe-bg-${side} .mina-mh-swipe-icon`) as HTMLElement | null;
 
-        for (const t of thoughts) {
-            const item = feed.createEl('div', { cls: 'mina-mh-feed-item' });
-            item.createEl('span', { cls: 'mina-mh-feed-dot' });
-            const content = item.createEl('div', { cls: 'mina-mh-feed-content' });
-            const ts = t.created ? moment(t.created, 'YYYY-MM-DD HH:mm:ss').format('HH:mm') : '';
-            if (ts) content.createEl('span', { text: ts, cls: 'mina-mh-feed-time' });
-            content.createEl('p', { text: t.body || t.title || '', cls: 'mina-mh-feed-text' });
-            if (t.context && t.context.length > 0) {
-                const ctxWrap = content.createEl('div', { cls: 'mina-mh-feed-ctx' });
-                for (const ctx of t.context) {
-                    ctxWrap.createEl('span', { text: `#${ctx}`, cls: 'mina-mh-feed-ctx-chip' });
-                }
+        const reset = () => {
+            active = false;
+            locked = false;
+            item.removeClass('mina-mh-feed-item--dragging');
+            item.removeClass('mina-mh-feed-item--swipe-delete');
+            item.removeClass('mina-mh-feed-item--swipe-edit');
+            card.style.transform = '';
+            const di = getSwipeIcon('delete');
+            const ei = getSwipeIcon('edit');
+            if (di) di.style.opacity = '0';
+            if (ei) ei.style.opacity = '0';
+        };
+
+        card.addEventListener('touchstart', (e: TouchEvent) => {
+            if (locked) return;
+            startX   = e.touches[0].clientX;
+            startY   = e.touches[0].clientY;
+            currentX = 0;
+            active   = true;
+            item.addClass('mina-mh-feed-item--dragging');
+        }, { passive: true });
+
+        card.addEventListener('touchmove', (e: TouchEvent) => {
+            if (!active) return;
+            const dx = e.touches[0].clientX - startX;
+            const dy = e.touches[0].clientY - startY;
+
+            // Cancel and let native scroll take over if vertical intent detected
+            if (Math.abs(dy) > MAX_DRIFT && Math.abs(dy) > Math.abs(dx)) {
+                reset();
+                return;
             }
-            // 44×44 touch target wrapper around the visual edit button
-            const editTarget = item.createEl('div', { cls: 'mina-mh-edit-target' });
-            const editBtn = editTarget.createEl('button', {
-                cls: 'mina-mh-feed-edit-btn',
-                attr: { 'aria-label': 'Edit thought' }
-            });
-            setIcon(editBtn, 'lucide-pencil');
-            editBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.makeThoughtEditable(item, content, editTarget, t);
-            });
-        }
+
+            e.preventDefault(); // Block vertical scroll during confirmed horizontal swipe
+            currentX = dx;
+
+            // Rubber-band effect beyond REVEAL distance
+            const clampedX = currentX > 0
+                ? Math.min(currentX, REVEAL + (currentX - REVEAL) * 0.2)
+                : Math.max(currentX, -REVEAL + (currentX + REVEAL) * 0.2);
+
+            card.style.transform = `translateX(${clampedX}px)`;
+
+            // Fade swipe icon proportionally to drag progress
+            const progress = Math.min(Math.abs(currentX) / THRESHOLD, 1);
+            if (currentX < 0) {
+                const icon = getSwipeIcon('delete');
+                if (icon) icon.style.opacity = String(progress);
+            } else if (currentX > 0) {
+                const icon = getSwipeIcon('edit');
+                if (icon) icon.style.opacity = String(progress);
+            }
+        }, { passive: false });
+
+        card.addEventListener('touchend', () => {
+            if (!active) return;
+            item.removeClass('mina-mh-feed-item--dragging');
+            active = false;
+
+            if (currentX < -THRESHOLD) {
+                // ── Swipe LEFT → DELETE ────────────────────────────────────────
+                locked = true;
+                item.addClass('mina-mh-feed-item--swipe-delete');
+
+                const confirmDelete = async () => {
+                    item.style.transition = 'opacity 0.2s ease, max-height 0.25s ease';
+                    item.style.overflow   = 'hidden';
+                    item.style.opacity    = '0';
+                    item.style.maxHeight  = item.offsetHeight + 'px';
+                    requestAnimationFrame(() => { item.style.maxHeight = '0'; });
+                    try {
+                        await this.plugin.vault.deleteFile(t.filePath, 'thoughts');
+                        setTimeout(() => item.remove(), 260);
+                        new Notice('✦ Thought deleted', 1200);
+                    } catch {
+                        new Notice('Error deleting thought', 2500);
+                        item.style.transition = '';
+                        item.style.opacity    = '';
+                        item.style.maxHeight  = '';
+                        reset();
+                    }
+                };
+
+                // Tap red bg to confirm; auto-snap after 2.5s
+                const snapBackTimer = setTimeout(() => reset(), 2500);
+                item.querySelector('.mina-mh-swipe-bg-delete')!
+                    .addEventListener('click', () => {
+                        clearTimeout(snapBackTimer);
+                        confirmDelete();
+                    }, { once: true });
+
+            } else if (currentX > THRESHOLD) {
+                // ── Swipe RIGHT → EDIT ─────────────────────────────────────────
+                locked = true;
+                item.addClass('mina-mh-feed-item--swipe-edit');
+
+                const snapBackTimer = setTimeout(() => reset(), 2500);
+                item.querySelector('.mina-mh-swipe-bg-edit')!
+                    .addEventListener('click', () => {
+                        clearTimeout(snapBackTimer);
+                        reset();
+                        this.makeThoughtEditable(item, card, t);
+                    }, { once: true });
+
+            } else {
+                reset();
+            }
+        }, { passive: true });
+
+        // Tap card while locked → snap back
+        card.addEventListener('click', () => { if (locked) reset(); });
     }
 
-    private makeThoughtEditable(item: HTMLElement, content: HTMLElement, editTarget: HTMLElement, t: ThoughtEntry) {
+    // ── Edit Thought ───────────────────────────────────────────────────────────
+    private makeThoughtEditable(item: HTMLElement, card: HTMLElement, t: ThoughtEntry) {
         if (item.hasClass('is-editing')) return;
         item.addClass('is-editing');
         this._capturePending++;
-        content.style.display = 'none';
-        editTarget.style.display = 'none';
+        card.style.display = 'none';
 
         let editContexts = [...(t.context || [])];
         const form = item.createEl('div', { cls: 'mina-edit-form mina-edit-form--mobile' });
@@ -253,7 +407,10 @@ export class MobileHubView extends ItemView {
         };
         renderChips();
 
-        const textarea = form.createEl('textarea', { cls: 'mina-edit-textarea mina-edit-textarea--mobile', attr: { rows: '3' } }) as HTMLTextAreaElement;
+        const textarea = form.createEl('textarea', {
+            cls: 'mina-edit-textarea mina-edit-textarea--mobile',
+            attr: { rows: '3' }
+        }) as HTMLTextAreaElement;
         textarea.value = t.body || t.title || '';
         const syncH = () => { textarea.style.height = 'auto'; textarea.style.height = `${textarea.scrollHeight}px`; };
         requestAnimationFrame(() => { syncH(); textarea.focus(); textarea.setSelectionRange(textarea.value.length, textarea.value.length); });
@@ -267,17 +424,16 @@ export class MobileHubView extends ItemView {
         );
 
         const actions = form.createEl('div', { cls: 'mina-edit-actions' });
-        const saveBtn = actions.createEl('button', { cls: 'mina-edit-save-btn', text: 'Save' }) as HTMLButtonElement;
+        const saveBtn  = actions.createEl('button', { cls: 'mina-edit-save-btn',   text: 'Save'   }) as HTMLButtonElement;
         const cancelBtn = actions.createEl('button', { cls: 'mina-edit-cancel-btn', text: 'Cancel' });
 
         const exit = (restore: boolean) => {
             item.removeClass('is-editing');
             form.remove();
             this._capturePending = Math.max(0, this._capturePending - 1);
-            if (restore) { content.style.display = ''; editTarget.style.display = ''; }
+            if (restore) card.style.display = '';
         };
 
-        // Save-first: only exit on success, re-enable button on error
         const save = async () => {
             const newText = textarea.value.trim();
             if (!newText) return;
