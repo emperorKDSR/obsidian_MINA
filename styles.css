@@ -4023,6 +4023,26 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   transition: opacity 0.15s;
 }
 .mina-dh-feed-item:hover { opacity: 0.88; }
+.mina-dh-feed-edit-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-faint);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+  margin-top: 1px;
+}
+.mina-dh-feed-item:hover .mina-dh-feed-edit-btn { opacity: 1; }
+.mina-dh-feed-edit-btn:hover { color: var(--mina-dh-accent); background: rgba(124,58,237,0.10); }
+.mina-dh-feed-edit-btn svg { width: 12px; height: 12px; }
 .mina-dh-feed-dot {
   flex-shrink: 0;
   width: 11px;
@@ -4240,6 +4260,26 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   cursor: text;
 }
 .mina-dh-task-due.is-overdue { color: var(--text-error, #e53e3e); font-weight: 600; }
+.mina-dh-task-edit-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-faint);
+  cursor: pointer;
+  opacity: 0;
+  margin-left: auto;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+}
+.mina-dh-task-item:hover .mina-dh-task-edit-btn { opacity: 1; }
+.mina-dh-task-edit-btn:hover { color: var(--mina-dh-accent); background: rgba(124,58,237,0.10); }
+.mina-dh-task-edit-btn svg { width: 12px; height: 12px; }
 
 /* ── Focus Mode (collapse sidebar + right) ─────────────────────── */
 .mina-dh-wrap.is-focus-mode .mina-dh-sidebar {
@@ -4497,5 +4537,89 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   padding: 2px 8px;
   letter-spacing: 0.02em;
 }
+.mina-mh-feed-edit-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-faint);
+  cursor: pointer;
+  opacity: 0.55;
+  margin-top: 1px;
+}
+.mina-mh-feed-edit-btn:active { opacity: 1; background: color-mix(in srgb, var(--text-accent) 12%, transparent); }
+.mina-mh-feed-edit-btn svg { width: 14px; height: 14px; }
 
 /* ── End Mobile Hub ──────────────────────────────────────────── */
+
+/* ── Shared Inline Edit Form (Desktop + Mobile Hub) ──────────── */
+.mina-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.mina-edit-form--mobile { flex: 1; }
+.mina-edit-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 0;
+}
+.mina-edit-textarea {
+  width: 100%;
+  resize: none;
+  overflow: hidden;
+  background: var(--background-modifier-form-field, var(--background-secondary));
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  color: var(--text-normal);
+  font-family: var(--font-text, inherit);
+  font-size: 0.88em;
+  line-height: 1.55;
+  padding: 6px 8px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+.mina-edit-textarea:focus { border-color: var(--interactive-accent); }
+.mina-edit-textarea--mobile { font-size: 0.92em; padding: 8px 10px; border-radius: 8px; }
+.mina-edit-actions {
+  display: flex;
+  gap: 6px;
+}
+.mina-edit-save-btn,
+.mina-edit-cancel-btn {
+  font-size: 0.75em;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: background 0.15s, color 0.15s;
+}
+.mina-edit-save-btn {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent, #fff);
+}
+.mina-edit-save-btn:hover { background: var(--interactive-accent-hover, var(--interactive-accent)); }
+.mina-edit-cancel-btn {
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+}
+.mina-edit-cancel-btn:hover { color: var(--text-normal); }
+.mina-edit-form--mobile .mina-edit-save-btn,
+.mina-edit-form--mobile .mina-edit-cancel-btn {
+  font-size: 0.82em;
+  padding: 5px 16px;
+  min-height: 32px;
+}
+/* ── End Shared Edit Form ──────────────────────────────────────────────────────────── */

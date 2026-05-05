@@ -7,6 +7,7 @@ import {
     FOCUS_ICON_ID, MEMENTO_ICON_ID,
 } from '../constants';
 import { attachInlineTriggers, attachMediaPasteHandler } from '../utils';
+import type { ThoughtEntry, TaskEntry } from '../types';
 
 export class DesktopHubView extends ItemView {
     plugin: MinaPlugin;
@@ -296,7 +297,79 @@ export class DesktopHubView extends ItemView {
                     ctxWrap.createEl('span', { text: `#${ctx}`, cls: 'mina-dh-feed-ctx-chip' });
                 }
             }
+            const editBtn = item.createEl('button', { cls: 'mina-dh-feed-edit-btn', attr: { title: 'Edit thought', 'aria-label': 'Edit thought' } });
+            setIcon(editBtn, 'lucide-pencil');
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.makeThoughtEditable(item, content, editBtn, t);
+            });
         }
+    }
+
+    private makeThoughtEditable(item: HTMLElement, content: HTMLElement, editBtn: HTMLElement, t: ThoughtEntry) {
+        if (item.hasClass('is-editing')) return;
+        item.addClass('is-editing');
+        this._capturePending++;
+        content.style.display = 'none';
+        editBtn.style.display = 'none';
+
+        let editContexts = [...(t.context || [])];
+        const form = item.createEl('div', { cls: 'mina-edit-form' });
+
+        const chipRow = form.createEl('div', { cls: 'mina-edit-chip-row' });
+        const renderChips = () => {
+            chipRow.empty();
+            for (const ctx of editContexts) {
+                const chip = chipRow.createEl('span', { cls: 'mina-dh-chip', text: `#${ctx}` });
+                chip.addEventListener('click', () => { editContexts = editContexts.filter(c => c !== ctx); renderChips(); });
+            }
+        };
+        renderChips();
+
+        const textarea = form.createEl('textarea', { cls: 'mina-edit-textarea', attr: { rows: '2' } }) as HTMLTextAreaElement;
+        textarea.value = t.body || t.title || '';
+        const syncH = () => { textarea.style.height = 'auto'; textarea.style.height = `${textarea.scrollHeight}px`; };
+        requestAnimationFrame(() => { syncH(); textarea.focus(); textarea.setSelectionRange(textarea.value.length, textarea.value.length); });
+        textarea.addEventListener('input', syncH);
+
+        attachInlineTriggers(
+            this.app, textarea, () => {},
+            (tag) => { if (!editContexts.includes(tag)) { editContexts.push(tag); renderChips(); } },
+            () => (this.plugin.settings.contexts ?? []).filter(c => !editContexts.includes(c)),
+            this.plugin.settings.peopleFolder,
+        );
+
+        const actions = form.createEl('div', { cls: 'mina-edit-actions' });
+        const saveBtn = actions.createEl('button', { cls: 'mina-edit-save-btn', text: 'Save' });
+        const cancelBtn = actions.createEl('button', { cls: 'mina-edit-cancel-btn', text: 'Cancel' });
+
+        const exit = (restore: boolean) => {
+            item.removeClass('is-editing');
+            form.remove();
+            this._capturePending = Math.max(0, this._capturePending - 1);
+            if (restore) { content.style.display = ''; editBtn.style.display = ''; }
+        };
+
+        const save = async () => {
+            const newText = textarea.value.trim();
+            if (!newText) return;
+            exit(false);
+            try {
+                await this.plugin.vault.editThought(t.filePath, newText, [...editContexts]);
+                new Notice('✦ Thought updated', 1200);
+            } catch {
+                new Notice('Error updating thought', 2500);
+                content.style.display = '';
+                editBtn.style.display = '';
+            }
+        };
+
+        saveBtn.addEventListener('click', save);
+        cancelBtn.addEventListener('click', () => exit(true));
+        textarea.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save(); }
+            if (e.key === 'Escape') { exit(true); }
+        });
     }
 
     // ── RIGHT Panel ───────────────────────────────────────────────────────────
@@ -457,6 +530,87 @@ export class DesktopHubView extends ItemView {
                     cls: `mina-dh-task-due${isOverdue ? ' is-overdue' : ''}`
                 });
             }
+
+            const editBtn = item.createEl('button', { cls: 'mina-dh-task-edit-btn', attr: { title: 'Edit task', 'aria-label': 'Edit task' } });
+            setIcon(editBtn, 'lucide-pencil');
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.makeTaskEditable(item, checkbox, content, editBtn, task);
+            });
         }
+    }
+
+    private makeTaskEditable(item: HTMLElement, checkbox: HTMLElement, content: HTMLElement, editBtn: HTMLElement, task: TaskEntry) {
+        if (item.hasClass('is-editing')) return;
+        item.addClass('is-editing');
+        this._taskPending++;
+        checkbox.style.display = 'none';
+        content.style.display = 'none';
+        editBtn.style.display = 'none';
+
+        let editContexts = [...(task.context || [])];
+        let editDueDate: string | null = task.due || null;
+        const form = item.createEl('div', { cls: 'mina-edit-form' });
+
+        const chipRow = form.createEl('div', { cls: 'mina-edit-chip-row' });
+        const renderChips = () => {
+            chipRow.empty();
+            for (const ctx of editContexts) {
+                const chip = chipRow.createEl('span', { cls: 'mina-dh-chip', text: `#${ctx}` });
+                chip.addEventListener('click', () => { editContexts = editContexts.filter(c => c !== ctx); renderChips(); });
+            }
+        };
+        renderChips();
+
+        const textarea = form.createEl('textarea', { cls: 'mina-edit-textarea', attr: { rows: '2' } }) as HTMLTextAreaElement;
+        textarea.value = task.title || task.body || '';
+        const syncH = () => { textarea.style.height = 'auto'; textarea.style.height = `${textarea.scrollHeight}px`; };
+        requestAnimationFrame(() => { syncH(); textarea.focus(); textarea.setSelectionRange(textarea.value.length, textarea.value.length); });
+        textarea.addEventListener('input', syncH);
+
+        attachInlineTriggers(
+            this.app, textarea,
+            (d) => { editDueDate = d; },
+            (tag) => { if (!editContexts.includes(tag)) { editContexts.push(tag); renderChips(); } },
+            () => (this.plugin.settings.contexts ?? []).filter(c => !editContexts.includes(c)),
+            this.plugin.settings.peopleFolder,
+        );
+
+        const actions = form.createEl('div', { cls: 'mina-edit-actions' });
+        const saveBtn = actions.createEl('button', { cls: 'mina-edit-save-btn', text: 'Save' });
+        const cancelBtn = actions.createEl('button', { cls: 'mina-edit-cancel-btn', text: 'Cancel' });
+
+        const exit = (restore: boolean) => {
+            item.removeClass('is-editing');
+            form.remove();
+            this._taskPending = Math.max(0, this._taskPending - 1);
+            if (restore) { checkbox.style.display = ''; content.style.display = ''; editBtn.style.display = ''; }
+        };
+
+        const save = async () => {
+            const newText = textarea.value.trim();
+            if (!newText) return;
+            exit(false);
+            try {
+                await this.plugin.vault.editTask(
+                    task.filePath, newText, [...editContexts],
+                    editDueDate || undefined,
+                    { priority: task.priority, energy: task.energy, status: task.status }
+                );
+                new Notice('✓ Task updated', 1000);
+            } catch {
+                new Notice('Error updating task', 2000);
+                checkbox.style.display = '';
+                content.style.display = '';
+                editBtn.style.display = '';
+            }
+        };
+
+        saveBtn.addEventListener('click', save);
+        cancelBtn.addEventListener('click', () => exit(true));
+        textarea.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save(); }
+            if (e.key === 'Escape') { exit(true); }
+        });
     }
 }
