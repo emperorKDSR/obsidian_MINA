@@ -225,7 +225,7 @@ export class DesktopHubView extends ItemView {
             textarea,
             () => {},
             (tag) => addChip(tag),
-            () => contexts,
+            () => (this.plugin.settings.contexts ?? []).filter(c => !contexts.includes(c)),
             this.plugin.settings.peopleFolder,
         );
         attachMediaPasteHandler(
@@ -349,7 +349,7 @@ export class DesktopHubView extends ItemView {
             textarea,
             (d) => { dueDate = d; },
             (tag) => addChip(tag),
-            () => contexts,
+            () => (this.plugin.settings.contexts ?? []).filter(c => !contexts.includes(c)),
             this.plugin.settings.peopleFolder,
         );
         attachMediaPasteHandler(
