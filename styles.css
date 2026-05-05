@@ -4023,7 +4023,6 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   transition: opacity 0.15s;
 }
 .mina-dh-feed-item:hover { opacity: 0.88; }
-.mina-dh-feed-item:hover .mina-dh-copy-btn { opacity: 1; }
 .mina-dh-feed-dot {
   flex-shrink: 0;
   width: 11px;
@@ -4090,37 +4089,7 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
 .mina-dh-task-input-section {
   padding: 14px 14px 10px;
   border-bottom: 1px solid var(--mina-dh-border);
-  cursor: text;
 }
-.mina-dh-task-chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  min-height: 0;
-  margin-bottom: 2px;
-}
-.mina-dh-task-chip-row:empty { display: none; }
-.mina-dh-task-textarea {
-  width: 100%;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--mina-dh-border);
-  border-radius: 0;
-  padding: 6px 0;
-  font-size: 0.88em;
-  font-family: inherit;
-  color: var(--text-normal);
-  outline: none;
-  transition: border-color var(--mina-dh-transition);
-  box-sizing: border-box;
-  resize: none;
-  overflow: hidden;
-  min-height: 28px;
-  line-height: 1.5;
-}
-.mina-dh-task-textarea::placeholder { color: var(--text-faint); }
-.mina-dh-task-textarea:focus { border-bottom-color: var(--mina-dh-accent); }
-/* keep old class in case referenced elsewhere */
 .mina-dh-task-input {
   width: 100%;
   background: transparent;
@@ -4192,7 +4161,6 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   border-radius: 0;
 }
 .mina-dh-task-item:hover { background: var(--mina-dh-surface); }
-.mina-dh-task-item:hover .mina-dh-copy-btn { opacity: 1; }
 .mina-dh-task-item.is-completing { opacity: 0.4; pointer-events: none; transition: opacity 0.25s; }
 
 .mina-dh-task-checkbox {
@@ -4231,28 +4199,6 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   letter-spacing: 0.02em;
 }
 .mina-dh-task-due.is-overdue { color: var(--text-error, #e53e3e); font-weight: 600; }
-
-/* ── Copy Button (feed items + task items) ─────────────────────── */
-.mina-dh-copy-btn {
-  flex-shrink: 0;
-  align-self: flex-start;
-  margin-top: 2px;
-  background: transparent;
-  border: none;
-  padding: 3px 4px;
-  border-radius: 4px;
-  color: var(--text-faint);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.15s, color 0.15s, background 0.12s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.mina-dh-copy-btn:hover {
-  color: var(--text-accent);
-  background: color-mix(in srgb, var(--text-accent) 10%, transparent);
-}
 
 /* ── Focus Mode (collapse sidebar + right) ─────────────────────── */
 .mina-dh-wrap.is-focus-mode .mina-dh-sidebar {
