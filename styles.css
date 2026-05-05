@@ -4210,7 +4210,9 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   background: transparent;
   border: none;
   border-radius: 16px;
-  padding: 2px 8px;
+  padding: 2px 0;
+  min-width: 40px;
+  text-align: center;
   cursor: pointer;
   transition: color 0.15s, background 0.15s;
   line-height: 1.5;
