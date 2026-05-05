@@ -4053,6 +4053,9 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   color: var(--text-faint);
   font-family: var(--font-monospace);
   letter-spacing: 0.05em;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 .mina-dh-feed-text {
   font-size: 0.9em;
@@ -4060,6 +4063,9 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   line-height: 1.6;
   word-break: break-word;
   margin: 0;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 .mina-dh-feed-ctx { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
 .mina-dh-feed-ctx-chip {
@@ -4089,7 +4095,36 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
 .mina-dh-task-input-section {
   padding: 14px 14px 10px;
   border-bottom: 1px solid var(--mina-dh-border);
+  cursor: text;
 }
+.mina-dh-task-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 0;
+  margin-bottom: 2px;
+}
+.mina-dh-task-chip-row:empty { display: none; }
+.mina-dh-task-textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--mina-dh-border);
+  border-radius: 0;
+  padding: 6px 0;
+  font-size: 0.88em;
+  font-family: inherit;
+  color: var(--text-normal);
+  outline: none;
+  transition: border-color var(--mina-dh-transition);
+  box-sizing: border-box;
+  resize: none;
+  overflow: hidden;
+  min-height: 28px;
+  line-height: 1.5;
+}
+.mina-dh-task-textarea::placeholder { color: var(--text-faint); }
+.mina-dh-task-textarea:focus { border-bottom-color: var(--mina-dh-accent); }
 .mina-dh-task-input {
   width: 100%;
   background: transparent;
@@ -4191,12 +4226,18 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   color: var(--text-normal);
   line-height: 1.4;
   word-break: break-word;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 .mina-dh-task-due {
   font-size: 0.72em;
   color: var(--text-faint);
   font-family: var(--font-monospace);
   letter-spacing: 0.02em;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 .mina-dh-task-due.is-overdue { color: var(--text-error, #e53e3e); font-weight: 600; }
 

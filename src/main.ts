@@ -282,7 +282,7 @@ export default class MinaPlugin extends Plugin {
             for (const leaf of hubLeaves) {
                 const view = leaf.view as DesktopHubView;
                 if (view && typeof view.renderView === 'function') {
-                    if (view._capturePending > 0) continue;
+                    if (view._capturePending > 0 || view._taskPending > 0) continue;
                     view.renderView();
                 }
             }

@@ -12,8 +12,9 @@ export class DesktopHubView extends ItemView {
     plugin: MinaPlugin;
     isFocusMode: boolean = false;
 
-    // Suppress re-renders while user is mid-capture
+    // Suppress re-renders while user is mid-capture (thought or task)
     _capturePending: number = 0;
+    _taskPending: number = 0;
 
     // Guard against DOM updates after view is closed
     private _closed: boolean = false;
@@ -50,7 +51,7 @@ export class DesktopHubView extends ItemView {
     }
 
     renderView() {
-        if (this._capturePending > 0) return;
+        if (this._capturePending > 0 || this._taskPending > 0) return;
 
         const root = this.containerEl.children[1] as HTMLElement;
         root.empty();
@@ -307,21 +308,85 @@ export class DesktopHubView extends ItemView {
 
     private renderTaskQuickInput(parent: HTMLElement) {
         const section = parent.createEl('div', { cls: 'mina-dh-task-input-section' });
-        const input = section.createEl('input', {
-            cls: 'mina-dh-task-input',
-            attr: { type: 'text', placeholder: 'Add a task…' }
-        }) as HTMLInputElement;
+        section.addEventListener('click', (e) => {
+            if (e.target !== textarea) textarea.focus();
+        });
 
-        input.addEventListener('keydown', async (e: KeyboardEvent) => {
-            if (e.key !== 'Enter') return;
-            const raw = input.value.trim();
+        const chipRow = section.createEl('div', { cls: 'mina-dh-task-chip-row' });
+        let contexts: string[] = [];
+        let dueDate: string | null = null;
+
+        const addChip = (tag: string) => {
+            if (contexts.includes(tag)) return;
+            contexts.push(tag);
+            const chip = chipRow.createEl('span', { cls: 'mina-dh-chip', text: `#${tag}` });
+            chip.addEventListener('click', () => {
+                contexts = contexts.filter(c => c !== tag);
+                chip.remove();
+            });
+        };
+
+        const textarea = section.createEl('textarea', {
+            cls: 'mina-dh-task-textarea',
+            attr: { placeholder: 'Add a task… (@due, #ctx, /person, [[link)', rows: '1' }
+        }) as HTMLTextAreaElement;
+
+        const syncHeight = () => {
+            textarea.style.height = 'auto';
+            textarea.style.overflowY = 'hidden';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        };
+
+        textarea.addEventListener('focus', () => { this._taskPending = 1; syncHeight(); });
+        textarea.addEventListener('input', () => {
+            syncHeight();
+            this._taskPending = textarea.value.trim().length > 0 ? 1 : 0;
+        });
+        textarea.addEventListener('keyup', () => syncHeight());
+
+        attachInlineTriggers(
+            this.app,
+            textarea,
+            (d) => { dueDate = d; },
+            (tag) => addChip(tag),
+            () => contexts,
+            this.plugin.settings.peopleFolder,
+        );
+        attachMediaPasteHandler(
+            this.app,
+            textarea,
+            () => this.plugin.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments'
+        );
+
+        const saveTask = async () => {
+            const raw = textarea.value.trim();
             if (!raw) return;
-            input.value = '';
+            const ctxSnapshot = [...contexts];
+            const due = dueDate;
+            this._taskPending = 0;
+            textarea.value = '';
+            textarea.style.height = '';
+            textarea.style.overflowY = '';
+            contexts = [];
+            dueDate = null;
+            chipRow.empty();
             try {
-                await this.plugin.vault.createTaskFile(raw, []);
+                await this.plugin.vault.createTaskFile(raw, ctxSnapshot, due || undefined);
                 new Notice('✓ Task added', 1000);
             } catch {
                 new Notice('Error saving task', 2000);
+            }
+        };
+
+        textarea.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveTask(); }
+            if (e.key === 'Escape') {
+                textarea.value = '';
+                contexts = [];
+                dueDate = null;
+                chipRow.empty();
+                this._taskPending = 0;
+                textarea.blur();
             }
         });
     }
