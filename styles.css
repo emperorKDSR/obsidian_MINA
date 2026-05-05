@@ -4293,6 +4293,9 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   border-left-color: transparent;
   overflow: hidden;
 }
+.mina-dh-wrap.is-focus-mode .mina-dh-center-inner {
+  max-width: 860px;
+}
 
 /* ── Responsive fallback: narrow windows ───────────────────────── */
 @media (max-width: 900px) {
