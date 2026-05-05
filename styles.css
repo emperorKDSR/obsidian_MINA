@@ -1,4 +1,4 @@
-/* --- MINA V2 DESIGN LANGUAGE CONSTANTS --- */:root {    --mina-radius: 12px;    --mina-radius-sm: 8px;    --mina-shadow: 0 4px 20px rgba(0,0,0,0.04);    --mina-shadow-hover: 0 8px 30px rgba(0,0,0,0.08);    --mina-spacing: 20px;    --mina-spacing-sm: 12px;    /* ui-p3-max-width: Standardized content max-width */    --mina-content-max-width: 900px;    /* ui-p3-spacing: Bottom padding to clear floating nav bars */    --mina-footer-clearance: 200px;}/* ── Distraction-free: hide Obsidian's view header title bar ── */.workspace-leaf-content[data-type="mina-v2-view"] .view-header {    display: none !important;}.workspace-leaf-content[data-type="mina-v2-view"] .view-content {    padding-top: 0 !important;}/* Minimal drag handle — hide all tab content but keep the strip draggable */.workspace-tabs:has(.workspace-leaf-content[data-type="mina-v2-view"]) .workspace-tab-header-container {    height: 16px !important;    min-height: 16px !important;    cursor: grab !important;    background: var(--background-modifier-border) !important;    opacity: 0.18 !important;    transition: opacity 0.2s !important;    position: relative !important;}.workspace-tabs:has(.workspace-leaf-content[data-type="mina-v2-view"]) .workspace-tab-header-container:hover {    opacity: 0.55 !important;}/* Hide all text, icons, and buttons inside the tab strip */.workspace-tabs:has(.workspace-leaf-content[data-type="mina-v2-view"]) .workspace-tab-header-container * {    visibility: hidden !important;}/* Add a subtle grip indicator in the center */.workspace-tabs:has(.workspace-leaf-content[data-type="mina-v2-view"]) .workspace-tab-header-container::after {    content: '· · · · ·';    visibility: visible !important;    position: absolute;    left: 50%;    top: 50%;    transform: translate(-50%, -50%);    font-size: 8px;    letter-spacing: 3px;    color: var(--text-faint);    pointer-events: none;}/* --- UTILITY LAYOUT CLASSES (ui-css-classes) --- */.mina-tab-wrap {    padding: var(--mina-spacing) var(--mina-spacing-sm) var(--mina-footer-clearance) var(--mina-spacing-sm);    display: flex;    flex-direction: column;    gap: 20px;    overflow-y: auto;    flex-grow: 1;    min-height: 0;    -webkit-overflow-scrolling: touch;    background: var(--background-primary);    max-width: var(--mina-content-max-width);    margin: 0 auto;    width: 100%;}.mina-tab-header {    display: flex;    flex-direction: column;    gap: 4px;    margin-bottom: 4px;}.mina-tab-title {    margin: 0;    font-size: 1.4em;    font-weight: 800;    color: var(--text-normal);    letter-spacing: -0.03em;    line-height: 1.1;}.mina-btn-primary {    background: var(--interactive-accent);    color: var(--text-on-accent);    border: none;    border-radius: var(--mina-radius-sm);    padding: 8px 20px;    font-weight: 700;    cursor: pointer;    transition: opacity 0.15s;}.mina-btn-primary:hover { opacity: 0.9; }.mina-btn-secondary {    background: transparent;    color: var(--text-muted);    border: 1px solid var(--background-modifier-border);    border-radius: var(--mina-radius-sm);    padding: 8px 16px;    font-weight: 600;    cursor: pointer;}/* AI chat bubbles */.mina-ai-user-bubble {    align-self: flex-end;    background: var(--interactive-accent);    color: var(--text-on-accent);    border-radius: 16px 16px 4px 16px;    padding: 10px 14px;    max-width: 80%;    font-size: 0.9em;    line-height: 1.5;    word-break: break-word;}.mina-ai-bot-bubble {    align-self: flex-start;    background: var(--background-secondary-alt);    border: 1px solid var(--background-modifier-border-faint);    border-radius: 4px 16px 16px 16px;    padding: 10px 14px;    max-width: 90%;    font-size: 0.9em;    line-height: 1.5;    word-break: break-word;}/* Modal chrome helpers */.mina-modal-standard {    border-radius: 16px !important;    box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important;    padding: 0 !important;    overflow: hidden !important;}.mina-modal-header {    padding: 20px 24px 16px 24px;    border-bottom: 1px solid var(--background-modifier-border-faint);}.mina-modal-footer {    padding: 16px 24px;    display: flex;    justify-content: flex-end;    gap: 10px;    background: var(--background-secondary);    border-top: 1px solid var(--background-modifier-border-faint);}/* 1. Core Card Elevation (Glass Effect) */.mina-card {    padding: var(--mina-spacing-sm) 16px;    border-radius: var(--mina-radius);    border: 1px solid var(--background-modifier-border-faint);    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);    box-shadow: var(--mina-shadow);    background: var(--background-secondary-alt);}.theme-light .mina-card {    background-color: #ffffff;}.mina-card:hover {    transform: translateY(-2px);    box-shadow: var(--mina-shadow-hover);    border-color: var(--background-modifier-border);}/* 2. Enhanced Blurring */.mina-blurred {    filter: blur(12px) grayscale(0.5);    opacity: 0.6;    transition: all 0.3s ease;}.mina-blurred:hover {    filter: blur(0);    opacity: 1;}/* 3. High-Density Utility */.mina-card-compact, .mina-card-auto-compact {    max-height: 85px !important;    overflow: hidden !important;    position: relative;    mask-image: linear-gradient(to bottom, black 60%, transparent 100%);    -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);}.mina-card-expanded {    max-height: none !important;    mask-image: none !important;    -webkit-mask-image: none !important;}/* ux-p3-hover-css: CSS-driven hover states */.mina-home-btn:hover {    opacity: 1 !important;    background: var(--background-secondary-alt) !important;}.mina-actions-overlay {    opacity: 0;    transition: opacity 0.2s;}.mina-card-row:hover .mina-actions-overlay,.mina-thought-content:hover .mina-actions-overlay {    opacity: 1;}.mina-task-edit-btn {    opacity: 0.3;    transition: opacity 0.2s;    cursor: pointer;}.mina-task-edit-btn:hover {    opacity: 1;}/* 4. Action Row & Tactical Items */.mina-action-btn {width: 32px;    height: 32px;    border-radius: var(--mina-radius-sm);    display: flex;    align-items: center;    justify-content: center;    background: transparent;    border: none;    cursor: pointer;    transition: all 0.15s ease;    opacity: 0.7;}.mina-tactical-row {    display: flex;    align-items: center;    gap: 10px;    padding: 8px 12px;    background: var(--background-primary-alt);    border-radius: var(--mina-radius-sm);    border: 1px solid var(--background-modifier-border-faint);    transition: all 0.2s ease;    cursor: pointer;}.mina-tactical-row:hover {    background: var(--background-secondary-alt);    border-color: var(--interactive-accent);}.mina-tactical-checkbox {    width: 16px;    height: 16px;    border-radius: 4px;    border: 2px solid var(--text-faint);    flex-shrink: 0;    display: flex;    align-items: center;    justify-content: center;    transition: all 0.2s;}.mina-tactical-row.is-done {    opacity: 0.5;}.mina-tactical-row.is-done .mina-tactical-checkbox {    background: var(--interactive-accent);    border-color: var(--interactive-accent);}.mina-tactical-text {    font-size: 0.85em;    font-weight: 600;    color: var(--text-normal);    white-space: nowrap;    overflow: hidden;    text-overflow: ellipsis;}.mina-action-btn:hover {    background: var(--background-secondary-alt);    color: var(--interactive-accent) !important;    opacity: 1;    transform: scale(1.1);}/* 5. Pillar Clusters (Cockpit Hub) */.mina-nav-section {    display: flex;    flex-direction: column;    gap: 14px;    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);    transform-origin: top;}.is-zen-mode .mina-nav-section {    height: 0;    margin: 0 !important;    padding: 0 !important;    opacity: 0;    overflow: hidden;    pointer-events: none;    transform: scaleY(0);}.mina-pillar-cluster {    display: flex;    gap: 8px;    width: 100%;    background: var(--background-secondary-alt);    padding: 6px;    border-radius: 16px;    border: 1px solid var(--background-modifier-border-faint);    box-shadow: var(--mina-shadow);}.mina-pillar-item {    flex: 1;    display: flex;    flex-direction: column;    align-items: center;    justify-content: center;    gap: 6px;    padding: 10px 6px;    border-radius: 12px;    cursor: pointer;    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);    border: 1px solid transparent;}.mina-pillar-item:hover {    background: var(--background-primary);    transform: translateY(-2px);    box-shadow: var(--mina-shadow-hover);    border-color: var(--background-modifier-border);}.mina-pillar-icon {    width: 24px;    height: 24px;    opacity: 0.8;    transition: transform 0.2s ease, color 0.2s ease;}.mina-pillar-item:hover .mina-pillar-icon {    transform: scale(1.1);    color: var(--interactive-accent);    opacity: 1;}.mina-pillar-label {    font-size: 0.6em;    font-weight: 900;    text-transform: uppercase;    letter-spacing: 0.12em;    color: var(--text-faint);    transition: color 0.2s ease;}.mina-pillar-item:hover .mina-pillar-label {    color: var(--text-normal);}/* 6. Dedicated Window Overrides */.mina-dedicated-window {    background-color: var(--background-primary);}.mina-dedicated-window .view-header {    display: none !important;}/* ═══════════════════════════════════════════════════   COMMAND CENTER — Capture + Habits   ═══════════════════════════════════════════════════ *//* Capture bar */.mina-capture-bar {    display: flex;    align-items: center;    gap: 12px;    background: var(--background-secondary-alt);    border: 1px solid var(--background-modifier-border-faint);    border-radius: 14px;    padding: 14px 18px;    cursor: text;    transition: border-color 0.15s, box-shadow 0.15s;    box-shadow: var(--mina-shadow);}.mina-capture-bar:hover {    border-color: var(--interactive-accent);    box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.10);}.mina-capture-icon {    color: var(--interactive-accent);    width: 18px;    height: 18px;    flex-shrink: 0;}.mina-capture-placeholder {    color: var(--text-faint);    font-size: 1em;    font-weight: 500;}/* Habit quick-bar */.mina-habit-quick-bar {    display: flex;    gap: 8px;    overflow-x: auto;    padding: 2px 0 4px;    scrollbar-width: none;    -webkit-overflow-scrolling: touch;}.mina-habit-quick-bar::-webkit-scrollbar { display: none; }.mina-habit-quick-btn {    display: flex;    flex-direction: column;    align-items: center;    gap: 5px;    padding: 10px 12px;    border: 1px solid var(--background-modifier-border);    border-radius: 12px;    background: var(--background-primary);    cursor: pointer;    min-width: 58px;    flex-shrink: 0;    transition: all 0.18s ease;}.mina-habit-quick-btn:hover {    border-color: var(--interactive-accent);    background: var(--background-modifier-hover);}.mina-habit-quick-btn.is-done {    background: rgba(var(--interactive-accent-rgb), 0.10);    border-color: var(--interactive-accent);}.mina-habit-quick-icon {    font-size: 1.2em;    line-height: 1;}.mina-habit-quick-label {    font-size: 0.6em;    font-weight: 700;    color: var(--text-faint);    overflow: hidden;    text-overflow: ellipsis;    white-space: nowrap;    max-width: 54px;    text-align: center;}.mina-habit-quick-btn.is-done .mina-habit-quick-label {    color: var(--interactive-accent);}/* Hub inline task radar row */.mina-hub-task-row {    display: flex;    align-items: center;    gap: 10px;    padding: 9px 12px;    background: var(--background-primary);    border-bottom: 1px solid var(--background-modifier-border-faint);    transition: background 0.12s;}.mina-hub-task-row:last-child { border-bottom: none; }.mina-hub-task-row:hover { background: var(--background-secondary-alt); }.mina-hub-task-row.is-done { opacity: 0.4; }/* Header */.mina-tasks-header {    display: flex;    align-items: center;    justify-content: space-between;    gap: 12px;}.mina-tasks-title-row {    display: flex;    align-items: center;    gap: 10px;    flex: 1;    min-width: 0;}.mina-tasks-add-btn {    display: flex;    align-items: center;    gap: 5px;    padding: 6px 14px;    background: var(--interactive-accent);    color: var(--text-on-accent);    border: none;    border-radius: var(--mina-radius-sm);    font-size: 0.78em;    font-weight: 700;    cursor: pointer;    flex-shrink: 0;    transition: opacity 0.15s;}.mina-tasks-add-btn:hover { opacity: 0.85; }.mina-tasks-add-btn .svg-icon { width: 13px; height: 13px; }/* Search */.mina-tasks-search {    width: 100%;    padding: 8px 14px;    border-radius: 10px;    border: 1px solid var(--background-modifier-border-faint);    background: var(--background-secondary-alt);    color: var(--text-normal);    font-size: 0.875em;    box-sizing: border-box;    outline: none;    transition: border-color 0.15s;}.mina-tasks-search:focus {    border-color: var(--interactive-accent);}/* Segmented Control */.mina-seg-bar {    display: flex;    gap: 0;    background: var(--background-secondary-alt);    border-radius: 10px;    padding: 3px;    border: 1px solid var(--background-modifier-border-faint);    overflow-x: auto;    -webkit-overflow-scrolling: touch;    scrollbar-width: none;}.mina-seg-bar::-webkit-scrollbar { display: none; }.mina-seg-btn {    flex: 1;    display: flex;    align-items: center;    justify-content: center;    gap: 5px;    padding: 5px 10px;    border: none;    border-radius: 7px;    background: transparent;    color: var(--text-muted);    font-size: 0.72em;    font-weight: 700;    cursor: pointer;    white-space: nowrap;    transition: all 0.18s ease;    min-width: 52px;}.mina-seg-btn.is-active {    background: var(--background-primary);    color: var(--text-normal);    box-shadow: 0 1px 4px rgba(0,0,0,0.10);}.mina-seg-count {    font-size: 0.85em;    opacity: 0.6;    font-weight: 600;}/* Task List + Groups */.mina-task-list {    display: flex;    flex-direction: column;    gap: 2px;}.mina-task-group {    display: flex;    flex-direction: column;    margin-bottom: 4px;}.mina-task-group-label {    font-size: 0.68em;    font-weight: 800;    text-transform: uppercase;    letter-spacing: 0.08em;    color: var(--text-faint);    padding: 10px 2px 5px 2px;}.mina-task-group-label.is-danger {    color: var(--text-error);}/* Task Row */.mina-task-row {    display: flex;    align-items: flex-start;    gap: 12px;    padding: 10px 12px;    border-radius: 9px;    background: transparent;    transition: background 0.12s;    cursor: default;    position: relative;}.mina-task-row:hover {    background: var(--background-secondary-alt);}.mina-task-row.is-done {    opacity: 0.45;}/* Circle Checkbox */.mina-task-cb {    width: 18px;    height: 18px;    min-width: 18px;    border-radius: 50%;    border: 2px solid var(--background-modifier-border);    background: transparent;    display: flex;    align-items: center;    justify-content: center;    cursor: pointer;    transition: all 0.18s ease;}.mina-task-cb:hover {    border-color: var(--interactive-accent);    background: rgba(var(--interactive-accent-rgb), 0.08);}.mina-task-cb.is-done {    background: var(--interactive-accent);    border-color: var(--interactive-accent);    color: var(--text-on-accent);}.mina-task-cb .svg-icon { width: 10px; height: 10px; }/* Content */.mina-task-content {    flex: 1;    min-width: 0;    display: flex;    flex-direction: column;    gap: 3px;}.mina-task-title {    font-size: 0.9em;    font-weight: 600;    color: var(--text-normal);    line-height: 1.4;    word-break: break-word;    white-space: normal;    overflow: visible;}.mina-task-title.is-done {    text-decoration: line-through;}/* Meta chips */.mina-task-meta {    display: flex;    flex-wrap: wrap;    gap: 4px;    align-items: center;}.mina-chip {    font-size: 0.66em;    font-weight: 700;    padding: 1px 6px;    border-radius: 4px;    line-height: 1.6;    white-space: nowrap;}.mina-chip--date {    background: var(--background-modifier-border-faint);    color: var(--text-faint);}.mina-chip--date.is-today {    background: rgba(var(--interactive-accent-rgb), 0.12);    color: var(--interactive-accent);}.mina-chip--date.is-overdue {    background: rgba(239, 68, 68, 0.10);    color: var(--text-error);}.mina-chip--pri-high   { background: rgba(239,68,68,0.10);  color: #ef4444; }.mina-chip--pri-medium { background: rgba(245,158,11,0.10); color: #f59e0b; }.mina-chip--pri-low    { background: rgba(148,163,184,0.10); color: #94a3b8; }.mina-chip--ctx {    background: rgba(var(--interactive-accent-rgb), 0.07);    color: var(--text-accent);}/* Action buttons — hidden until row hover */.mina-task-actions {    display: flex;    gap: 1px;    flex-shrink: 0;    opacity: 0;    transition: opacity 0.15s;}.mina-task-row:hover .mina-task-actions {    opacity: 1;}.mina-task-action-btn {    display: flex;    align-items: center;    justify-content: center;    width: 28px;    height: 28px;    border: none;    border-radius: 6px;    background: transparent;    color: var(--text-muted);    cursor: pointer;    transition: all 0.12s;}.mina-task-action-btn:hover {    background: var(--background-modifier-border-faint);    color: var(--text-normal);}.mina-task-action-btn.is-danger:hover {    background: rgba(239, 68, 68, 0.10);    color: var(--text-error);}.mina-task-action-btn .svg-icon { width: 13px; height: 13px; }/* ═══════════════════════════════════════════════════   COMMAND CENTER V2 — Design Council Redesign   ═══════════════════════════════════════════════════ */:root {    --mina-zen-transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);    --mina-habit-size: 64px;    --mina-habit-size-sm: 54px;}/* Wrap */.mina-cc-wrap {    padding: var(--mina-spacing) var(--mina-spacing-sm) 160px;    display: flex;    flex-direction: column;    gap: 18px;    overflow-y: auto;    flex-grow: 1;    min-height: 0;    -webkit-overflow-scrolling: touch;    background: var(--background-primary);    max-width: var(--mina-content-max-width);    margin: 0 auto;    width: 100%;    container-type: inline-size;    container-name: mina-cockpit;}/* Header */.mina-cc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }.mina-cc-greeting { display: flex; flex-direction: column; gap: 4px; min-width: 0; }.mina-cc-date-line { font-size: 0.65em; font-weight: 700; color: var(--text-faint); letter-spacing: 0.1em; text-transform: uppercase; line-height: 1; }.mina-cc-title { margin: 0; font-size: 1.45em; font-weight: 900; color: var(--text-normal); letter-spacing: -0.04em; line-height: 1.1; }.mina-cc-northstar { display: flex; align-items: center; gap: 5px; margin: 2px 0 0; font-size: 0.82em; color: var(--text-muted); font-weight: 500; font-style: italic; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.mina-cc-northstar-star { color: var(--interactive-accent); font-style: normal; font-size: 0.85em; flex-shrink: 0; line-height: 1; }/* Zen toggle button */.mina-zen-btn { border-radius: 50%; border: 1.5px solid var(--background-modifier-border-faint); background: var(--background-secondary-alt); color: var(--text-faint); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }.mina-zen-btn:hover { border-color: var(--interactive-accent); color: var(--interactive-accent); box-shadow: 0 0 0 4px rgba(var(--interactive-accent-rgb), 0.08); transform: scale(1.05); }.mina-zen-btn.is-active { background: var(--interactive-accent); border-color: var(--interactive-accent); color: var(--text-on-accent); box-shadow: 0 0 0 4px rgba(var(--interactive-accent-rgb), 0.18), 0 4px 12px rgba(var(--interactive-accent-rgb), 0.30); }.mina-zen-btn .svg-icon { width: 16px; height: 16px; }/* Zen mode — dramatic */.mina-section--hideable { transition: max-height var(--mina-zen-transition), opacity 0.3s ease, margin var(--mina-zen-transition), padding var(--mina-zen-transition); }.is-zen-mode .mina-section--hideable { max-height: 0 !important; opacity: 0 !important; overflow: hidden !important; margin-top: 0 !important; margin-bottom: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; pointer-events: none !important; }/* Zen banner */.mina-zen-banner { display: none; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 44px 24px 36px; text-align: center; }.is-zen-mode .mina-zen-banner { display: flex; animation: mina-zen-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }@keyframes mina-zen-in { from { opacity: 0; transform: translateY(16px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }.mina-zen-focus-label { font-size: 0.65em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.28em; color: var(--text-faint); }.mina-zen-northstar-display { font-size: 1.45em; font-weight: 700; color: var(--text-normal); letter-spacing: -0.03em; line-height: 1.3; max-width: 380px; }.mina-zen-exit-btn { padding: 8px 22px; border-radius: 20px; border: 1.5px solid var(--background-modifier-border); background: transparent; color: var(--text-muted); font-size: 0.72em; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: border-color 0.2s, color 0.2s; margin-top: 8px; }.mina-zen-exit-btn:hover { border-color: var(--text-normal); color: var(--text-normal); }/* Capture bar — hero */.mina-capture-bar { display: flex; align-items: center; gap: 14px; background: var(--background-secondary-alt); border: 1.5px solid var(--background-modifier-border-faint); border-radius: 16px; padding: 16px 20px; cursor: text; transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s; box-shadow: var(--mina-shadow); position: relative; overflow: hidden; }.mina-capture-bar::after { content: ''; position: absolute; bottom: 0; left: 20px; right: 20px; height: 2px; background: var(--interactive-accent); border-radius: 2px 2px 0 0; opacity: 0; transition: opacity 0.2s; }.mina-capture-bar:hover::after { opacity: 0.45; }.mina-capture-bar:hover { border-color: var(--interactive-accent); box-shadow: 0 0 0 3px rgba(var(--interactive-accent-rgb), 0.08), var(--mina-shadow-hover); transform: translateY(-1px); }.mina-capture-icon-wrap { width: 32px; height: 32px; border-radius: 50%; background: var(--interactive-accent); color: var(--text-on-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }.mina-capture-bar:hover .mina-capture-icon-wrap { transform: scale(1.12) rotate(12deg); }.mina-capture-icon-wrap .svg-icon { width: 14px; height: 14px; }.mina-capture-placeholder { flex: 1; color: var(--text-faint); font-size: 1.0em; font-weight: 500; letter-spacing: -0.01em; user-select: none; }.mina-capture-kbd { font-size: 0.68em; font-weight: 700; color: var(--text-faint); background: var(--background-primary); border: 1px solid var(--background-modifier-border-faint); border-radius: 5px; padding: 2px 7px; letter-spacing: 0.05em; flex-shrink: 0; display: none; }/* Desktop capture bar — collapsed header row */.mina-capture-collapsed-row { display: flex; align-items: center; gap: 14px; width: 100%; cursor: text; }.mina-capture-bar.is-expanded .mina-capture-collapsed-row { display: none; }/* Desktop capture bar — expanded state */.mina-capture-bar.is-expanded {    flex-direction: column;    align-items: stretch;    cursor: default;    border-color: var(--interactive-accent);    box-shadow: 0 0 0 3px rgba(var(--interactive-accent-rgb), 0.1), var(--mina-shadow-hover);    border-radius: 18px;    transform: none;}.mina-capture-bar.is-expanded::after { opacity: 0 !important; }.mina-capture-bar.is-expanded .mina-capture-kbd { display: none; }.mina-capture-bar.is-expanded .mina-capture-icon-wrap { transform: none !important; }/* Expansion body — height-animated reveal */.mina-capture-bar .mina-capture-expand-body {    max-height: 0;    overflow: hidden;    opacity: 0;    transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;    margin-top: 0;}.mina-capture-bar.is-expanded .mina-capture-expand-body {    max-height: 68vh;    opacity: 1;    margin-top: 12px;}/* Desktop dock: mode toggle · chips (flex) · actions */.mina-capture-desktop-dock {    display: flex;    align-items: center;    gap: 8px;    padding-top: 10px;    border-top: 1px solid var(--background-modifier-border-faint);    margin-top: 10px;    flex-wrap: wrap;}.mina-capture-desktop-chip-area {    flex: 1;    min-width: 0;    position: relative;    display: flex;    flex-direction: column;    gap: 4px;}.mina-capture-desktop-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }/* Desktop action buttons — same pill shape */.mina-capture-desktop-actions .mina-capture-inline-cancel {    flex: 1;    min-height: 34px;    padding: 0 16px;    border-radius: 10px;    border: 1.5px solid var(--background-modifier-border-faint);    background: transparent;    color: var(--text-muted);    font-size: 0.75em;    font-weight: 800;    letter-spacing: 0.06em;    text-transform: uppercase;    cursor: pointer;    transition: border-color 0.15s, color 0.15s;    min-width: 0;}.mina-capture-desktop-actions .mina-capture-inline-cancel:hover { border-color: var(--background-modifier-border); color: var(--text-normal); }.mina-capture-desktop-actions .mina-capture-inline-save {    flex: 1;    min-height: 34px;    min-width: 0;    border-radius: 10px;    font-size: 0.75em;}/* Desktop override — smaller chip-add button */.mina-capture-desktop-chip-area .mina-mobile-chip-add {    min-width: 22px;    min-height: 22px;    width: 22px;    height: 22px;    border-radius: 6px;    font-size: 0.9em;    font-weight: 600;    padding: 0;}/* Edit Modal: desktop chip compact density */.mina-capture-desktop-chip-area .mina-mobile-chip {    min-height: 26px;    height: 26px;    padding: 0 10px;    font-size: 0.68em;}/* Mobile capture FAB */.mina-capture-fab { display: none; }.is-mobile .mina-capture-fab { display: flex; align-items: center; gap: 10px; position: sticky; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 100; background: var(--interactive-accent); color: var(--text-on-accent); border: none; border-radius: 28px; padding: 14px 24px; min-height: 52px; box-shadow: 0 4px 20px rgba(0,0,0,0.25), 0 2px 6px rgba(0,0,0,0.15); font-size: 0.92em; font-weight: 700; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; white-space: nowrap; }.is-mobile .mina-capture-fab:active { transform: translateX(-50%) scale(0.96); box-shadow: 0 2px 10px rgba(0,0,0,0.2); }.mina-capture-fab-label { font-size: 0.95em; font-weight: 700; }@media (max-width: 360px) { .is-mobile .mina-capture-fab { border-radius: 50%; width: 56px; height: 56px; padding: 0; justify-content: center; } .mina-capture-fab-label { display: none; } }/* Section scaffolding */.mina-section-label-row { display: flex; align-items: center; justify-content: space-between; min-height: 20px; }.mina-section-label { font-size: 0.62em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-faint); display: flex; align-items: center; gap: 6px; }.mina-section-label-count { font-weight: 700; color: var(--interactive-accent); background: rgba(var(--interactive-accent-rgb), 0.10); padding: 1px 5px; border-radius: 4px; font-size: 1em; }/* Habit section */.mina-habit-section { display: flex; flex-direction: column; gap: 10px; }/* Habit circular buttons — override old rectangular style */.mina-habit-quick-btn { width: var(--mina-habit-size); height: var(--mina-habit-size); border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 0; border: 2px solid var(--background-modifier-border-faint); background: var(--background-secondary-alt); cursor: pointer; flex-shrink: 0; min-width: unset; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s, background 0.2s; position: relative; }.mina-habit-quick-btn:hover { border-color: var(--interactive-accent); background: rgba(var(--interactive-accent-rgb), 0.06); transform: scale(1.07); }.mina-habit-quick-btn.is-done { background: rgba(var(--interactive-accent-rgb), 0.12); border-color: var(--interactive-accent); border-width: 2px; }.mina-habit-quick-btn.just-done { animation: mina-habit-pop 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }@keyframes mina-habit-pop { 0% { transform: scale(1); } 45% { transform: scale(1.24); } 100% { transform: scale(1.07); } }.mina-habit-quick-icon { font-size: 1.25em; line-height: 1; position: relative; z-index: 1; }.mina-habit-quick-label { font-size: 0.58em; font-weight: 700; color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 52px; text-align: center; position: relative; z-index: 1; }.mina-habit-quick-btn.is-done .mina-habit-quick-label { color: var(--interactive-accent); }/* Habit SVG completion ring */.mina-habit-ring { position: absolute; inset: -3px; width: calc(100% + 6px); height: calc(100% + 6px); pointer-events: none; transform: rotate(-90deg); }.mina-habit-ring-track { fill: none; stroke: var(--background-modifier-border-faint); stroke-width: 2; }.mina-habit-ring-fill { fill: none; stroke: var(--interactive-accent); stroke-width: 2.5; stroke-linecap: butt; stroke-dasharray: 0 100; transition: stroke-dasharray 0.45s cubic-bezier(0.4, 0, 0.2, 1); }.mina-habit-quick-btn.is-done .mina-habit-ring-fill { stroke-dasharray: 100 0; stroke-linecap: round; }/* Habit grid (mobile) */.mina-habit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; width: 100%; }.mina-habit-grid .mina-habit-quick-btn { min-width: unset; min-height: 64px; width: 100%; height: auto; border-radius: 14px; padding: 10px 8px; gap: 6px; }.mina-habit-grid .mina-habit-quick-label { font-size: 0.65em; max-width: unset; white-space: normal; text-align: center; line-height: 1.2; }/* Habit progress micro-bar */.mina-habit-progress-bar { height: 3px; border-radius: 2px; background: var(--background-modifier-border-faint); overflow: hidden; margin-top: 2px; }.mina-habit-progress-fill { height: 100%; background: var(--interactive-accent); border-radius: 2px; transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1); }.mina-habit-progress-fill.all-complete { background: var(--color-green, #4caf50); animation: mina-habit-complete-pulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }.mina-habit-quick-bar.all-complete .mina-habit-quick-btn.is-done { border-color: var(--color-green, #4caf50); }@keyframes mina-habit-complete-pulse { 0% { opacity: 1; } 30% { opacity: 0.5; transform: scaleY(1.5); } 100% { opacity: 1; transform: scaleY(1); } }/* Habit gear config button (QW-02) */.mina-habit-config-btn { background: transparent; border: none; color: var(--text-faint); cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-left: auto; opacity: 0.6; transition: opacity 0.15s, color 0.15s; }.mina-habit-config-btn:hover { opacity: 1; color: var(--interactive-accent); }/* Habit tooltip */.mina-habit-tooltip { position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%) translateY(4px); white-space: nowrap; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 6px; padding: 4px 8px; font-size: 0.68em; font-weight: 700; color: var(--text-normal); box-shadow: 0 4px 12px rgba(0,0,0,0.12); pointer-events: none; opacity: 0; transition: opacity 0.15s, transform 0.15s; z-index: 100; }.mina-habit-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 4px solid transparent; border-top-color: var(--background-modifier-border); }.mina-habit-quick-btn:hover .mina-habit-tooltip { opacity: 1; transform: translateX(-50%) translateY(0); }.mina-habit-quick-btn:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }/* Task groups — accented */.mina-task-group--overdue { position: relative; padding-left: 12px; }.mina-task-group--overdue::before { content: ''; position: absolute; left: 0; top: 22px; bottom: 4px; width: 3px; background: var(--text-error); border-radius: 2px; opacity: 0.7; }.mina-task-group--today { position: relative; padding-left: 12px; }.mina-task-group--today::before { content: ''; position: absolute; left: 0; top: 22px; bottom: 4px; width: 3px; background: var(--interactive-accent); border-radius: 2px; opacity: 0.6; }.mina-task-group--collapsible .mina-task-group-label { cursor: pointer; user-select: none; }.mina-task-group--collapsible .mina-task-group-label::after { content: '▾'; font-size: 0.9em; opacity: 0.5; margin-left: 5px; transition: transform 0.2s ease; display: inline-block; vertical-align: middle; }.mina-task-group--collapsible.is-collapsed .mina-task-group-label::after { transform: rotate(-90deg); }.mina-task-group--collapsible.is-collapsed .mina-task-group-body { display: none; }.mina-group-count-badge { display: inline-block; font-size: 0.82em; font-weight: 700; color: white; background: var(--text-faint); border-radius: 8px; padding: 0 5px; line-height: 1.5; vertical-align: middle; margin-left: 4px; opacity: 0.7; }/* Goals dual pane */.mina-goals-pane { display: grid; grid-template-columns: 1fr; gap: 10px; }.mina-goal-card { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; background: var(--background-secondary-alt); border-radius: var(--mina-radius); border: 1px solid var(--background-modifier-border-faint); box-shadow: var(--mina-shadow); min-width: 0; }.mina-goal-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }.mina-goal-card-title { font-size: 0.6em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-faint); }.mina-goal-edit-btn { background: transparent; border: none; font-size: 0.68em; font-weight: 700; color: var(--interactive-accent); cursor: pointer; padding: 2px 4px; opacity: 0.65; transition: opacity 0.15s; border-radius: 4px; }.mina-goal-edit-btn:hover { opacity: 1; }.mina-goal-item { display: flex; align-items: flex-start; gap: 8px; padding: 3px 0; }.mina-goal-num { font-size: 0.65em; font-weight: 800; flex-shrink: 0; min-width: 12px; margin-top: 2px; line-height: 1.55; }.mina-goal-num--weekly { color: var(--interactive-accent); }.mina-goal-num--monthly { color: var(--text-muted); }.mina-goal-text { font-size: 0.83em; font-weight: 500; color: var(--text-normal); line-height: 1.4; word-break: break-word; }.mina-goal-more-link { font-size: 0.72em; font-weight: 700; color: var(--text-faint); background: none; border: none; cursor: pointer; padding: 4px 0 0; text-align: left; transition: color 0.15s; }.mina-goal-more-link:hover { color: var(--interactive-accent); }/* Intelligence premium card */.mina-intel-card { display: flex; flex-direction: column; background: var(--background-secondary-alt); border-radius: var(--mina-radius); border: 1px solid var(--background-modifier-border-faint); box-shadow: var(--mina-shadow); overflow: hidden; }.mina-intel-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid var(--background-modifier-border-faint); }.mina-intel-title-row { display: flex; align-items: center; gap: 7px; }.mina-intel-icon { color: var(--interactive-accent); width: 15px; height: 15px; flex-shrink: 0; }.mina-intel-label { font-size: 0.6em; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase; color: var(--interactive-accent); }.mina-intel-timestamp { font-size: 0.62em; font-weight: 600; color: var(--text-faint); letter-spacing: 0.02em; }.mina-intel-status-strip { display: flex; gap: 0; background: var(--background-primary); border-bottom: 1px solid var(--background-modifier-border-faint); overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }.mina-intel-status-strip::-webkit-scrollbar { display: none; }.mina-intel-stat { display: flex; flex-direction: column; gap: 2px; padding: 10px 16px; flex-shrink: 0; border-right: 1px solid var(--background-modifier-border-faint); min-width: 64px; }.mina-intel-stat:last-child { border-right: none; }.mina-intel-stat-value { font-size: 1.05em; font-weight: 800; color: var(--text-normal); letter-spacing: -0.02em; line-height: 1; }.mina-intel-stat-label { font-size: 0.56em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-faint); line-height: 1; }.mina-intel-stat-value.is-danger { color: var(--text-error); }.mina-intel-stat-value.is-success { color: var(--interactive-accent); }.mina-intel-body { padding: 14px 18px; font-size: 0.88em; color: var(--text-muted); font-style: italic; line-height: 1.65; min-height: 54px; }.mina-intel-body.has-content { font-style: normal; color: var(--text-normal); border-left: 2.5px solid var(--interactive-accent); padding-left: 16px; margin: 10px 18px; padding-top: 10px; padding-bottom: 10px; background: rgba(var(--interactive-accent-rgb), 0.03); border-radius: 0 var(--mina-radius-sm) var(--mina-radius-sm) 0; }.mina-intel-body.is-loading { font-style: normal; color: transparent; background: linear-gradient(90deg, var(--background-modifier-border-faint) 25%, var(--background-modifier-border) 50%, var(--background-modifier-border-faint) 75%); background-size: 200% 100%; animation: mina-shimmer 1.4s ease infinite; border-radius: var(--mina-radius-sm); min-height: 64px; padding: 14px 18px; }@keyframes mina-shimmer { 0% { background-position: 200% center; } 100% { background-position: -200% center; } }.mina-intel-analyze-btn { width: 100%; padding: 12px 18px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; font-size: 0.72em; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: opacity 0.15s; border-top: 1px solid rgba(0,0,0,0.08); }.mina-intel-analyze-btn:hover { opacity: 0.88; }.mina-intel-analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }.mina-intel-analyze-btn .svg-icon { width: 13px; height: 13px; }/* Navigation footer — spatial identity */.mina-nav-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }.mina-nav-cluster-wrap { display: flex; flex-direction: column; gap: 6px; }.mina-cluster-label { font-size: 0.58em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.22em; color: var(--text-faint); padding-left: 2px; margin: 0; }.mina-pillar-cluster--action { background: rgba(var(--interactive-accent-rgb), 0.06); border: 1px solid rgba(var(--interactive-accent-rgb), 0.16); }.mina-pillar-cluster--action .mina-pillar-item { padding: 12px 6px; }.mina-pillar-cluster--action .mina-pillar-item:hover { background: rgba(var(--interactive-accent-rgb), 0.10); border-color: rgba(var(--interactive-accent-rgb), 0.25); }.mina-pillar-cluster--mgmt {
+/* --- MINA V2 DESIGN LANGUAGE CONSTANTS --- */:root {    --mina-radius: 12px;    --mina-radius-sm: 8px;    --mina-shadow: 0 4px 20px rgba(0,0,0,0.04);    --mina-shadow-hover: 0 8px 30px rgba(0,0,0,0.08);    --mina-spacing: 20px;    --mina-spacing-sm: 12px;    /* ui-p3-max-width: Standardized content max-width */    --mina-content-max-width: 900px;    /* ui-p3-spacing: Bottom padding to clear floating nav bars */    --mina-footer-clearance: 200px;  --sv-color-thought: #3b82f6;  --sv-color-task: #10b981;  --sv-color-due: #f59e0b;  --sv-color-project: #8b5cf6;  --sv-color-habit: #ef4444;  --sv-color-journal: #0d9488;}/* ── Distraction-free: hide Obsidian's view header title bar ── */.workspace-leaf-content[data-type="mina-v2-view"] .view-header {    display: none !important;}.workspace-leaf-content[data-type="mina-v2-view"] .view-content {    padding-top: 0 !important;}/* Minimal drag handle — hide all tab content but keep the strip draggable */.workspace-tabs:has(.workspace-leaf-content[data-type="mina-v2-view"]) .workspace-tab-header-container {    height: 16px !important;    min-height: 16px !important;    cursor: grab !important;    background: var(--background-modifier-border) !important;    opacity: 0.18 !important;    transition: opacity 0.2s !important;    position: relative !important;}.workspace-tabs:has(.workspace-leaf-content[data-type="mina-v2-view"]) .workspace-tab-header-container:hover {    opacity: 0.55 !important;}/* Hide all text, icons, and buttons inside the tab strip */.workspace-tabs:has(.workspace-leaf-content[data-type="mina-v2-view"]) .workspace-tab-header-container * {    visibility: hidden !important;}/* Add a subtle grip indicator in the center */.workspace-tabs:has(.workspace-leaf-content[data-type="mina-v2-view"]) .workspace-tab-header-container::after {    content: '· · · · ·';    visibility: visible !important;    position: absolute;    left: 50%;    top: 50%;    transform: translate(-50%, -50%);    font-size: 8px;    letter-spacing: 3px;    color: var(--text-faint);    pointer-events: none;}/* --- UTILITY LAYOUT CLASSES (ui-css-classes) --- */.mina-tab-wrap {    padding: var(--mina-spacing) var(--mina-spacing-sm) var(--mina-footer-clearance) var(--mina-spacing-sm);    display: flex;    flex-direction: column;    gap: 20px;    overflow-y: auto;    flex-grow: 1;    min-height: 0;    -webkit-overflow-scrolling: touch;    background: var(--background-primary);    max-width: var(--mina-content-max-width);    margin: 0 auto;    width: 100%;}.mina-tab-header {    display: flex;    flex-direction: column;    gap: 4px;    margin-bottom: 4px;}.mina-tab-title {    margin: 0;    font-size: 1.4em;    font-weight: 800;    color: var(--text-normal);    letter-spacing: -0.03em;    line-height: 1.1;}.mina-btn-primary {    background: var(--interactive-accent);    color: var(--text-on-accent);    border: none;    border-radius: var(--mina-radius-sm);    padding: 8px 20px;    font-weight: 700;    cursor: pointer;    transition: opacity 0.15s;}.mina-btn-primary:hover { opacity: 0.9; }.mina-btn-secondary {    background: transparent;    color: var(--text-muted);    border: 1px solid var(--background-modifier-border);    border-radius: var(--mina-radius-sm);    padding: 8px 16px;    font-weight: 600;    cursor: pointer;}/* AI chat bubbles */.mina-ai-user-bubble {    align-self: flex-end;    background: var(--interactive-accent);    color: var(--text-on-accent);    border-radius: 16px 16px 4px 16px;    padding: 10px 14px;    max-width: 80%;    font-size: 0.9em;    line-height: 1.5;    word-break: break-word;}.mina-ai-bot-bubble {    align-self: flex-start;    background: var(--background-secondary-alt);    border: 1px solid var(--background-modifier-border-faint);    border-radius: 4px 16px 16px 16px;    padding: 10px 14px;    max-width: 90%;    font-size: 0.9em;    line-height: 1.5;    word-break: break-word;}/* Modal chrome helpers */.mina-modal-standard {    border-radius: 16px !important;    box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important;    padding: 0 !important;    overflow: hidden !important;}.mina-modal-header {    padding: 20px 24px 16px 24px;    border-bottom: 1px solid var(--background-modifier-border-faint);}.mina-modal-footer {    padding: 16px 24px;    display: flex;    justify-content: flex-end;    gap: 10px;    background: var(--background-secondary);    border-top: 1px solid var(--background-modifier-border-faint);}/* 1. Core Card Elevation (Glass Effect) */.mina-card {    padding: var(--mina-spacing-sm) 16px;    border-radius: var(--mina-radius);    border: 1px solid var(--background-modifier-border-faint);    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);    box-shadow: var(--mina-shadow);    background: var(--background-secondary-alt);}.theme-light .mina-card {    background-color: #ffffff;}.mina-card:hover {    transform: translateY(-2px);    box-shadow: var(--mina-shadow-hover);    border-color: var(--background-modifier-border);}/* 2. Enhanced Blurring */.mina-blurred {    filter: blur(12px) grayscale(0.5);    opacity: 0.6;    transition: all 0.3s ease;}.mina-blurred:hover {    filter: blur(0);    opacity: 1;}/* 3. High-Density Utility */.mina-card-compact, .mina-card-auto-compact {    max-height: 85px !important;    overflow: hidden !important;    position: relative;    mask-image: linear-gradient(to bottom, black 60%, transparent 100%);    -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);}.mina-card-expanded {    max-height: none !important;    mask-image: none !important;    -webkit-mask-image: none !important;}/* ux-p3-hover-css: CSS-driven hover states */.mina-home-btn:hover {    opacity: 1 !important;    background: var(--background-secondary-alt) !important;}.mina-actions-overlay {    opacity: 0;    transition: opacity 0.2s;}.mina-card-row:hover .mina-actions-overlay,.mina-thought-content:hover .mina-actions-overlay {    opacity: 1;}.mina-task-edit-btn {    opacity: 0.3;    transition: opacity 0.2s;    cursor: pointer;}.mina-task-edit-btn:hover {    opacity: 1;}/* 4. Action Row & Tactical Items */.mina-action-btn {width: 32px;    height: 32px;    border-radius: var(--mina-radius-sm);    display: flex;    align-items: center;    justify-content: center;    background: transparent;    border: none;    cursor: pointer;    transition: all 0.15s ease;    opacity: 0.7;}.mina-tactical-row {    display: flex;    align-items: center;    gap: 10px;    padding: 8px 12px;    background: var(--background-primary-alt);    border-radius: var(--mina-radius-sm);    border: 1px solid var(--background-modifier-border-faint);    transition: all 0.2s ease;    cursor: pointer;}.mina-tactical-row:hover {    background: var(--background-secondary-alt);    border-color: var(--interactive-accent);}.mina-tactical-checkbox {    width: 16px;    height: 16px;    border-radius: 4px;    border: 2px solid var(--text-faint);    flex-shrink: 0;    display: flex;    align-items: center;    justify-content: center;    transition: all 0.2s;}.mina-tactical-row.is-done {    opacity: 0.5;}.mina-tactical-row.is-done .mina-tactical-checkbox {    background: var(--interactive-accent);    border-color: var(--interactive-accent);}.mina-tactical-text {    font-size: 0.85em;    font-weight: 600;    color: var(--text-normal);    white-space: nowrap;    overflow: hidden;    text-overflow: ellipsis;}.mina-action-btn:hover {    background: var(--background-secondary-alt);    color: var(--interactive-accent) !important;    opacity: 1;    transform: scale(1.1);}/* 5. Pillar Clusters (Cockpit Hub) */.mina-nav-section {    display: flex;    flex-direction: column;    gap: 14px;    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);    transform-origin: top;}.is-zen-mode .mina-nav-section {    height: 0;    margin: 0 !important;    padding: 0 !important;    opacity: 0;    overflow: hidden;    pointer-events: none;    transform: scaleY(0);}.mina-pillar-cluster {    display: flex;    gap: 8px;    width: 100%;    background: var(--background-secondary-alt);    padding: 6px;    border-radius: 16px;    border: 1px solid var(--background-modifier-border-faint);    box-shadow: var(--mina-shadow);}.mina-pillar-item {    flex: 1;    display: flex;    flex-direction: column;    align-items: center;    justify-content: center;    gap: 6px;    padding: 10px 6px;    border-radius: 12px;    cursor: pointer;    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);    border: 1px solid transparent;}.mina-pillar-item:hover {    background: var(--background-primary);    transform: translateY(-2px);    box-shadow: var(--mina-shadow-hover);    border-color: var(--background-modifier-border);}.mina-pillar-icon {    width: 24px;    height: 24px;    opacity: 0.8;    transition: transform 0.2s ease, color 0.2s ease;}.mina-pillar-item:hover .mina-pillar-icon {    transform: scale(1.1);    color: var(--interactive-accent);    opacity: 1;}.mina-pillar-label {    font-size: 0.6em;    font-weight: 900;    text-transform: uppercase;    letter-spacing: 0.12em;    color: var(--text-faint);    transition: color 0.2s ease;}.mina-pillar-item:hover .mina-pillar-label {    color: var(--text-normal);}/* 6. Dedicated Window Overrides */.mina-dedicated-window {    background-color: var(--background-primary);}.mina-dedicated-window .view-header {    display: none !important;}/* ═══════════════════════════════════════════════════   COMMAND CENTER — Capture + Habits   ═══════════════════════════════════════════════════ *//* Capture bar */.mina-capture-bar {    display: flex;    align-items: center;    gap: 12px;    background: var(--background-secondary-alt);    border: 1px solid var(--background-modifier-border-faint);    border-radius: 14px;    padding: 14px 18px;    cursor: text;    transition: border-color 0.15s, box-shadow 0.15s;    box-shadow: var(--mina-shadow);}.mina-capture-bar:hover {    border-color: var(--interactive-accent);    box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.10);}.mina-capture-icon {    color: var(--interactive-accent);    width: 18px;    height: 18px;    flex-shrink: 0;}.mina-capture-placeholder {    color: var(--text-faint);    font-size: 1em;    font-weight: 500;}/* Habit quick-bar */.mina-habit-quick-bar {    display: flex;    gap: 8px;    overflow-x: auto;    padding: 2px 0 4px;    scrollbar-width: none;    -webkit-overflow-scrolling: touch;}.mina-habit-quick-bar::-webkit-scrollbar { display: none; }.mina-habit-quick-btn {    display: flex;    flex-direction: column;    align-items: center;    gap: 5px;    padding: 10px 12px;    border: 1px solid var(--background-modifier-border);    border-radius: 12px;    background: var(--background-primary);    cursor: pointer;    min-width: 58px;    flex-shrink: 0;    transition: all 0.18s ease;}.mina-habit-quick-btn:hover {    border-color: var(--interactive-accent);    background: var(--background-modifier-hover);}.mina-habit-quick-btn.is-done {    background: rgba(var(--interactive-accent-rgb), 0.10);    border-color: var(--interactive-accent);}.mina-habit-quick-icon {    font-size: 1.2em;    line-height: 1;}.mina-habit-quick-label {    font-size: 0.6em;    font-weight: 700;    color: var(--text-faint);    overflow: hidden;    text-overflow: ellipsis;    white-space: nowrap;    max-width: 54px;    text-align: center;}.mina-habit-quick-btn.is-done .mina-habit-quick-label {    color: var(--interactive-accent);}/* Hub inline task radar row */.mina-hub-task-row {    display: flex;    align-items: center;    gap: 10px;    padding: 9px 12px;    background: var(--background-primary);    border-bottom: 1px solid var(--background-modifier-border-faint);    transition: background 0.12s;}.mina-hub-task-row:last-child { border-bottom: none; }.mina-hub-task-row:hover { background: var(--background-secondary-alt); }.mina-hub-task-row.is-done { opacity: 0.4; }/* Header */.mina-tasks-header {    display: flex;    align-items: center;    justify-content: space-between;    gap: 12px;}.mina-tasks-title-row {    display: flex;    align-items: center;    gap: 10px;    flex: 1;    min-width: 0;}.mina-tasks-add-btn {    display: flex;    align-items: center;    gap: 5px;    padding: 6px 14px;    background: var(--interactive-accent);    color: var(--text-on-accent);    border: none;    border-radius: var(--mina-radius-sm);    font-size: 0.78em;    font-weight: 700;    cursor: pointer;    flex-shrink: 0;    transition: opacity 0.15s;}.mina-tasks-add-btn:hover { opacity: 0.85; }.mina-tasks-add-btn .svg-icon { width: 13px; height: 13px; }/* Search */.mina-tasks-search {    width: 100%;    padding: 8px 14px;    border-radius: 10px;    border: 1px solid var(--background-modifier-border-faint);    background: var(--background-secondary-alt);    color: var(--text-normal);    font-size: 0.875em;    box-sizing: border-box;    outline: none;    transition: border-color 0.15s;}.mina-tasks-search:focus {    border-color: var(--interactive-accent);}/* Segmented Control */.mina-seg-bar {    display: flex;    gap: 0;    background: var(--background-secondary-alt);    border-radius: 10px;    padding: 3px;    border: 1px solid var(--background-modifier-border-faint);    overflow-x: auto;    -webkit-overflow-scrolling: touch;    scrollbar-width: none;}.mina-seg-bar::-webkit-scrollbar { display: none; }.mina-seg-btn {    flex: 1;    display: flex;    align-items: center;    justify-content: center;    gap: 5px;    padding: 5px 10px;    border: none;    border-radius: 7px;    background: transparent;    color: var(--text-muted);    font-size: 0.72em;    font-weight: 700;    cursor: pointer;    white-space: nowrap;    transition: all 0.18s ease;    min-width: 52px;}.mina-seg-btn.is-active {    background: var(--background-primary);    color: var(--text-normal);    box-shadow: 0 1px 4px rgba(0,0,0,0.10);}.mina-seg-count {    font-size: 0.85em;    opacity: 0.6;    font-weight: 600;}/* Task List + Groups */.mina-task-list {    display: flex;    flex-direction: column;    gap: 2px;}.mina-task-group {    display: flex;    flex-direction: column;    margin-bottom: 4px;}.mina-task-group-label {    font-size: 0.68em;    font-weight: 800;    text-transform: uppercase;    letter-spacing: 0.08em;    color: var(--text-faint);    padding: 10px 2px 5px 2px;}.mina-task-group-label.is-danger {    color: var(--text-error);}/* Task Row */.mina-task-row {    display: flex;    align-items: flex-start;    gap: 12px;    padding: 10px 12px;    border-radius: 9px;    background: transparent;    transition: background 0.12s;    cursor: default;    position: relative;}.mina-task-row:hover {    background: var(--background-secondary-alt);}.mina-task-row.is-done {    opacity: 0.45;}/* Circle Checkbox */.mina-task-cb {    width: 18px;    height: 18px;    min-width: 18px;    border-radius: 50%;    border: 2px solid var(--background-modifier-border);    background: transparent;    display: flex;    align-items: center;    justify-content: center;    cursor: pointer;    transition: all 0.18s ease;}.mina-task-cb:hover {    border-color: var(--interactive-accent);    background: rgba(var(--interactive-accent-rgb), 0.08);}.mina-task-cb.is-done {    background: var(--interactive-accent);    border-color: var(--interactive-accent);    color: var(--text-on-accent);}.mina-task-cb .svg-icon { width: 10px; height: 10px; }/* Content */.mina-task-content {    flex: 1;    min-width: 0;    display: flex;    flex-direction: column;    gap: 3px;}.mina-task-title {    font-size: 0.9em;    font-weight: 600;    color: var(--text-normal);    line-height: 1.4;    word-break: break-word;    white-space: normal;    overflow: visible;}.mina-task-title.is-done {    text-decoration: line-through;}/* Meta chips */.mina-task-meta {    display: flex;    flex-wrap: wrap;    gap: 4px;    align-items: center;}.mina-chip {    font-size: 0.66em;    font-weight: 700;    padding: 1px 6px;    border-radius: 4px;    line-height: 1.6;    white-space: nowrap;}.mina-chip--date {    background: var(--background-modifier-border-faint);    color: var(--text-faint);}.mina-chip--date.is-today {    background: rgba(var(--interactive-accent-rgb), 0.12);    color: var(--interactive-accent);}.mina-chip--date.is-overdue {    background: rgba(239, 68, 68, 0.10);    color: var(--text-error);}.mina-chip--pri-high   { background: rgba(239,68,68,0.10);  color: #ef4444; }.mina-chip--pri-medium { background: rgba(245,158,11,0.10); color: #f59e0b; }.mina-chip--pri-low    { background: rgba(148,163,184,0.10); color: #94a3b8; }.mina-chip--ctx {    background: rgba(var(--interactive-accent-rgb), 0.07);    color: var(--text-accent);}/* Action buttons — hidden until row hover */.mina-task-actions {    display: flex;    gap: 1px;    flex-shrink: 0;    opacity: 0;    transition: opacity 0.15s;}.mina-task-row:hover .mina-task-actions {    opacity: 1;}.mina-task-action-btn {    display: flex;    align-items: center;    justify-content: center;    width: 28px;    height: 28px;    border: none;    border-radius: 6px;    background: transparent;    color: var(--text-muted);    cursor: pointer;    transition: all 0.12s;}.mina-task-action-btn:hover {    background: var(--background-modifier-border-faint);    color: var(--text-normal);}.mina-task-action-btn.is-danger:hover {    background: rgba(239, 68, 68, 0.10);    color: var(--text-error);}.mina-task-action-btn .svg-icon { width: 13px; height: 13px; }/* ═══════════════════════════════════════════════════   COMMAND CENTER V2 — Design Council Redesign   ═══════════════════════════════════════════════════ */:root {    --mina-zen-transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);    --mina-habit-size: 64px;    --mina-habit-size-sm: 54px;}/* Wrap */.mina-cc-wrap {    padding: var(--mina-spacing) var(--mina-spacing-sm) 160px;    display: flex;    flex-direction: column;    gap: 18px;    overflow-y: auto;    flex-grow: 1;    min-height: 0;    -webkit-overflow-scrolling: touch;    background: var(--background-primary);    max-width: var(--mina-content-max-width);    margin: 0 auto;    width: 100%;    container-type: inline-size;    container-name: mina-cockpit;}/* Header */.mina-cc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }.mina-cc-greeting { display: flex; flex-direction: column; gap: 4px; min-width: 0; }.mina-cc-date-line { font-size: 0.65em; font-weight: 700; color: var(--text-faint); letter-spacing: 0.1em; text-transform: uppercase; line-height: 1; }.mina-cc-title { margin: 0; font-size: 1.45em; font-weight: 900; color: var(--text-normal); letter-spacing: -0.04em; line-height: 1.1; }.mina-cc-northstar { display: flex; align-items: center; gap: 5px; margin: 2px 0 0; font-size: 0.82em; color: var(--text-muted); font-weight: 500; font-style: italic; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.mina-cc-northstar-star { color: var(--interactive-accent); font-style: normal; font-size: 0.85em; flex-shrink: 0; line-height: 1; }/* Zen toggle button */.mina-zen-btn { border-radius: 50%; border: 1.5px solid var(--background-modifier-border-faint); background: var(--background-secondary-alt); color: var(--text-faint); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }.mina-zen-btn:hover { border-color: var(--interactive-accent); color: var(--interactive-accent); box-shadow: 0 0 0 4px rgba(var(--interactive-accent-rgb), 0.08); transform: scale(1.05); }.mina-zen-btn.is-active { background: var(--interactive-accent); border-color: var(--interactive-accent); color: var(--text-on-accent); box-shadow: 0 0 0 4px rgba(var(--interactive-accent-rgb), 0.18), 0 4px 12px rgba(var(--interactive-accent-rgb), 0.30); }.mina-zen-btn .svg-icon { width: 16px; height: 16px; }/* Zen mode — dramatic */.mina-section--hideable { transition: max-height var(--mina-zen-transition), opacity 0.3s ease, margin var(--mina-zen-transition), padding var(--mina-zen-transition); }.is-zen-mode .mina-section--hideable { max-height: 0 !important; opacity: 0 !important; overflow: hidden !important; margin-top: 0 !important; margin-bottom: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; pointer-events: none !important; }/* Zen banner */.mina-zen-banner { display: none; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 44px 24px 36px; text-align: center; }.is-zen-mode .mina-zen-banner { display: flex; animation: mina-zen-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }@keyframes mina-zen-in { from { opacity: 0; transform: translateY(16px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }.mina-zen-focus-label { font-size: 0.65em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.28em; color: var(--text-faint); }.mina-zen-northstar-display { font-size: 1.45em; font-weight: 700; color: var(--text-normal); letter-spacing: -0.03em; line-height: 1.3; max-width: 380px; }.mina-zen-exit-btn { padding: 8px 22px; border-radius: 20px; border: 1.5px solid var(--background-modifier-border); background: transparent; color: var(--text-muted); font-size: 0.72em; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: border-color 0.2s, color 0.2s; margin-top: 8px; }.mina-zen-exit-btn:hover { border-color: var(--text-normal); color: var(--text-normal); }/* Capture bar — hero */.mina-capture-bar { display: flex; align-items: center; gap: 14px; background: var(--background-secondary-alt); border: 1.5px solid var(--background-modifier-border-faint); border-radius: 16px; padding: 16px 20px; cursor: text; transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s; box-shadow: var(--mina-shadow); position: relative; overflow: hidden; }.mina-capture-bar::after { content: ''; position: absolute; bottom: 0; left: 20px; right: 20px; height: 2px; background: var(--interactive-accent); border-radius: 2px 2px 0 0; opacity: 0; transition: opacity 0.2s; }.mina-capture-bar:hover::after { opacity: 0.45; }.mina-capture-bar:hover { border-color: var(--interactive-accent); box-shadow: 0 0 0 3px rgba(var(--interactive-accent-rgb), 0.08), var(--mina-shadow-hover); transform: translateY(-1px); }.mina-capture-icon-wrap { width: 32px; height: 32px; border-radius: 50%; background: var(--interactive-accent); color: var(--text-on-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }.mina-capture-bar:hover .mina-capture-icon-wrap { transform: scale(1.12) rotate(12deg); }.mina-capture-icon-wrap .svg-icon { width: 14px; height: 14px; }.mina-capture-placeholder { flex: 1; color: var(--text-faint); font-size: 1.0em; font-weight: 500; letter-spacing: -0.01em; user-select: none; }.mina-capture-kbd { font-size: 0.68em; font-weight: 700; color: var(--text-faint); background: var(--background-primary); border: 1px solid var(--background-modifier-border-faint); border-radius: 5px; padding: 2px 7px; letter-spacing: 0.05em; flex-shrink: 0; display: none; }/* Desktop capture bar — collapsed header row */.mina-capture-collapsed-row { display: flex; align-items: center; gap: 14px; width: 100%; cursor: text; }.mina-capture-bar.is-expanded .mina-capture-collapsed-row { display: none; }/* Desktop capture bar — expanded state */.mina-capture-bar.is-expanded {    flex-direction: column;    align-items: stretch;    cursor: default;    border-color: var(--interactive-accent);    box-shadow: 0 0 0 3px rgba(var(--interactive-accent-rgb), 0.1), var(--mina-shadow-hover);    border-radius: 18px;    transform: none;}.mina-capture-bar.is-expanded::after { opacity: 0 !important; }.mina-capture-bar.is-expanded .mina-capture-kbd { display: none; }.mina-capture-bar.is-expanded .mina-capture-icon-wrap { transform: none !important; }/* Expansion body — height-animated reveal */.mina-capture-bar .mina-capture-expand-body {    max-height: 0;    overflow: hidden;    opacity: 0;    transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;    margin-top: 0;}.mina-capture-bar.is-expanded .mina-capture-expand-body {    max-height: 68vh;    opacity: 1;    margin-top: 12px;}/* Desktop dock: mode toggle · chips (flex) · actions */.mina-capture-desktop-dock {    display: flex;    align-items: center;    gap: 8px;    padding-top: 10px;    border-top: 1px solid var(--background-modifier-border-faint);    margin-top: 10px;    flex-wrap: wrap;}.mina-capture-desktop-chip-area {    flex: 1;    min-width: 0;    position: relative;    display: flex;    flex-direction: column;    gap: 4px;}.mina-capture-desktop-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }/* Desktop action buttons — same pill shape */.mina-capture-desktop-actions .mina-capture-inline-cancel {    flex: 1;    min-height: 34px;    padding: 0 16px;    border-radius: 10px;    border: 1.5px solid var(--background-modifier-border-faint);    background: transparent;    color: var(--text-muted);    font-size: 0.75em;    font-weight: 800;    letter-spacing: 0.06em;    text-transform: uppercase;    cursor: pointer;    transition: border-color 0.15s, color 0.15s;    min-width: 0;}.mina-capture-desktop-actions .mina-capture-inline-cancel:hover { border-color: var(--background-modifier-border); color: var(--text-normal); }.mina-capture-desktop-actions .mina-capture-inline-save {    flex: 1;    min-height: 34px;    min-width: 0;    border-radius: 10px;    font-size: 0.75em;}/* Desktop override — smaller chip-add button */.mina-capture-desktop-chip-area .mina-mobile-chip-add {    min-width: 22px;    min-height: 22px;    width: 22px;    height: 22px;    border-radius: 6px;    font-size: 0.9em;    font-weight: 600;    padding: 0;}/* Edit Modal: desktop chip compact density */.mina-capture-desktop-chip-area .mina-mobile-chip {    min-height: 26px;    height: 26px;    padding: 0 10px;    font-size: 0.68em;}/* Mobile capture FAB */.mina-capture-fab { display: none; }.is-mobile .mina-capture-fab { display: flex; align-items: center; gap: 10px; position: sticky; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 100; background: var(--interactive-accent); color: var(--text-on-accent); border: none; border-radius: 28px; padding: 14px 24px; min-height: 52px; box-shadow: 0 4px 20px rgba(0,0,0,0.25), 0 2px 6px rgba(0,0,0,0.15); font-size: 0.92em; font-weight: 700; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; white-space: nowrap; }.is-mobile .mina-capture-fab:active { transform: translateX(-50%) scale(0.96); box-shadow: 0 2px 10px rgba(0,0,0,0.2); }.mina-capture-fab-label { font-size: 0.95em; font-weight: 700; }@media (max-width: 360px) { .is-mobile .mina-capture-fab { border-radius: 50%; width: 56px; height: 56px; padding: 0; justify-content: center; } .mina-capture-fab-label { display: none; } }/* Section scaffolding */.mina-section-label-row { display: flex; align-items: center; justify-content: space-between; min-height: 20px; }.mina-section-label { font-size: 0.62em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-faint); display: flex; align-items: center; gap: 6px; }.mina-section-label-count { font-weight: 700; color: var(--interactive-accent); background: rgba(var(--interactive-accent-rgb), 0.10); padding: 1px 5px; border-radius: 4px; font-size: 1em; }/* Habit section */.mina-habit-section { display: flex; flex-direction: column; gap: 10px; }/* Habit circular buttons — override old rectangular style */.mina-habit-quick-btn { width: var(--mina-habit-size); height: var(--mina-habit-size); border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 0; border: 2px solid var(--background-modifier-border-faint); background: var(--background-secondary-alt); cursor: pointer; flex-shrink: 0; min-width: unset; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s, background 0.2s; position: relative; }.mina-habit-quick-btn:hover { border-color: var(--interactive-accent); background: rgba(var(--interactive-accent-rgb), 0.06); transform: scale(1.07); }.mina-habit-quick-btn.is-done { background: rgba(var(--interactive-accent-rgb), 0.12); border-color: var(--interactive-accent); border-width: 2px; }.mina-habit-quick-btn.just-done { animation: mina-habit-pop 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }@keyframes mina-habit-pop { 0% { transform: scale(1); } 45% { transform: scale(1.24); } 100% { transform: scale(1.07); } }.mina-habit-quick-icon { font-size: 1.25em; line-height: 1; position: relative; z-index: 1; }.mina-habit-quick-label { font-size: 0.58em; font-weight: 700; color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 52px; text-align: center; position: relative; z-index: 1; }.mina-habit-quick-btn.is-done .mina-habit-quick-label { color: var(--interactive-accent); }/* Habit SVG completion ring */.mina-habit-ring { position: absolute; inset: -3px; width: calc(100% + 6px); height: calc(100% + 6px); pointer-events: none; transform: rotate(-90deg); }.mina-habit-ring-track { fill: none; stroke: var(--background-modifier-border-faint); stroke-width: 2; }.mina-habit-ring-fill { fill: none; stroke: var(--interactive-accent); stroke-width: 2.5; stroke-linecap: butt; stroke-dasharray: 0 100; transition: stroke-dasharray 0.45s cubic-bezier(0.4, 0, 0.2, 1); }.mina-habit-quick-btn.is-done .mina-habit-ring-fill { stroke-dasharray: 100 0; stroke-linecap: round; }/* Habit grid (mobile) */.mina-habit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; width: 100%; }.mina-habit-grid .mina-habit-quick-btn { min-width: unset; min-height: 64px; width: 100%; height: auto; border-radius: 14px; padding: 10px 8px; gap: 6px; }.mina-habit-grid .mina-habit-quick-label { font-size: 0.65em; max-width: unset; white-space: normal; text-align: center; line-height: 1.2; }/* Habit progress micro-bar */.mina-habit-progress-bar { height: 3px; border-radius: 2px; background: var(--background-modifier-border-faint); overflow: hidden; margin-top: 2px; }.mina-habit-progress-fill { height: 100%; background: var(--interactive-accent); border-radius: 2px; transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1); }.mina-habit-progress-fill.all-complete { background: var(--color-green, #4caf50); animation: mina-habit-complete-pulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }.mina-habit-quick-bar.all-complete .mina-habit-quick-btn.is-done { border-color: var(--color-green, #4caf50); }@keyframes mina-habit-complete-pulse { 0% { opacity: 1; } 30% { opacity: 0.5; transform: scaleY(1.5); } 100% { opacity: 1; transform: scaleY(1); } }/* Habit gear config button (QW-02) */.mina-habit-config-btn { background: transparent; border: none; color: var(--text-faint); cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-left: auto; opacity: 0.6; transition: opacity 0.15s, color 0.15s; }.mina-habit-config-btn:hover { opacity: 1; color: var(--interactive-accent); }/* Habit tooltip */.mina-habit-tooltip { position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%) translateY(4px); white-space: nowrap; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 6px; padding: 4px 8px; font-size: 0.68em; font-weight: 700; color: var(--text-normal); box-shadow: 0 4px 12px rgba(0,0,0,0.12); pointer-events: none; opacity: 0; transition: opacity 0.15s, transform 0.15s; z-index: 100; }.mina-habit-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 4px solid transparent; border-top-color: var(--background-modifier-border); }.mina-habit-quick-btn:hover .mina-habit-tooltip { opacity: 1; transform: translateX(-50%) translateY(0); }.mina-habit-quick-btn:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }/* Task groups — accented */.mina-task-group--overdue { position: relative; padding-left: 12px; }.mina-task-group--overdue::before { content: ''; position: absolute; left: 0; top: 22px; bottom: 4px; width: 3px; background: var(--text-error); border-radius: 2px; opacity: 0.7; }.mina-task-group--today { position: relative; padding-left: 12px; }.mina-task-group--today::before { content: ''; position: absolute; left: 0; top: 22px; bottom: 4px; width: 3px; background: var(--interactive-accent); border-radius: 2px; opacity: 0.6; }.mina-task-group--collapsible .mina-task-group-label { cursor: pointer; user-select: none; }.mina-task-group--collapsible .mina-task-group-label::after { content: '▾'; font-size: 0.9em; opacity: 0.5; margin-left: 5px; transition: transform 0.2s ease; display: inline-block; vertical-align: middle; }.mina-task-group--collapsible.is-collapsed .mina-task-group-label::after { transform: rotate(-90deg); }.mina-task-group--collapsible.is-collapsed .mina-task-group-body { display: none; }.mina-group-count-badge { display: inline-block; font-size: 0.82em; font-weight: 700; color: white; background: var(--text-faint); border-radius: 8px; padding: 0 5px; line-height: 1.5; vertical-align: middle; margin-left: 4px; opacity: 0.7; }/* Goals dual pane */.mina-goals-pane { display: grid; grid-template-columns: 1fr; gap: 10px; }.mina-goal-card { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; background: var(--background-secondary-alt); border-radius: var(--mina-radius); border: 1px solid var(--background-modifier-border-faint); box-shadow: var(--mina-shadow); min-width: 0; }.mina-goal-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }.mina-goal-card-title { font-size: 0.6em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-faint); }.mina-goal-edit-btn { background: transparent; border: none; font-size: 0.68em; font-weight: 700; color: var(--interactive-accent); cursor: pointer; padding: 2px 4px; opacity: 0.65; transition: opacity 0.15s; border-radius: 4px; }.mina-goal-edit-btn:hover { opacity: 1; }.mina-goal-item { display: flex; align-items: flex-start; gap: 8px; padding: 3px 0; }.mina-goal-num { font-size: 0.65em; font-weight: 800; flex-shrink: 0; min-width: 12px; margin-top: 2px; line-height: 1.55; }.mina-goal-num--weekly { color: var(--interactive-accent); }.mina-goal-num--monthly { color: var(--text-muted); }.mina-goal-text { font-size: 0.83em; font-weight: 500; color: var(--text-normal); line-height: 1.4; word-break: break-word; }.mina-goal-more-link { font-size: 0.72em; font-weight: 700; color: var(--text-faint); background: none; border: none; cursor: pointer; padding: 4px 0 0; text-align: left; transition: color 0.15s; }.mina-goal-more-link:hover { color: var(--interactive-accent); }/* Intelligence premium card */.mina-intel-card { display: flex; flex-direction: column; background: var(--background-secondary-alt); border-radius: var(--mina-radius); border: 1px solid var(--background-modifier-border-faint); box-shadow: var(--mina-shadow); overflow: hidden; }.mina-intel-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid var(--background-modifier-border-faint); }.mina-intel-title-row { display: flex; align-items: center; gap: 7px; }.mina-intel-icon { color: var(--interactive-accent); width: 15px; height: 15px; flex-shrink: 0; }.mina-intel-label { font-size: 0.6em; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase; color: var(--interactive-accent); }.mina-intel-timestamp { font-size: 0.62em; font-weight: 600; color: var(--text-faint); letter-spacing: 0.02em; }.mina-intel-status-strip { display: flex; gap: 0; background: var(--background-primary); border-bottom: 1px solid var(--background-modifier-border-faint); overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }.mina-intel-status-strip::-webkit-scrollbar { display: none; }.mina-intel-stat { display: flex; flex-direction: column; gap: 2px; padding: 10px 16px; flex-shrink: 0; border-right: 1px solid var(--background-modifier-border-faint); min-width: 64px; }.mina-intel-stat:last-child { border-right: none; }.mina-intel-stat-value { font-size: 1.05em; font-weight: 800; color: var(--text-normal); letter-spacing: -0.02em; line-height: 1; }.mina-intel-stat-label { font-size: 0.56em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-faint); line-height: 1; }.mina-intel-stat-value.is-danger { color: var(--text-error); }.mina-intel-stat-value.is-success { color: var(--interactive-accent); }.mina-intel-body { padding: 14px 18px; font-size: 0.88em; color: var(--text-muted); font-style: italic; line-height: 1.65; min-height: 54px; }.mina-intel-body.has-content { font-style: normal; color: var(--text-normal); border-left: 2.5px solid var(--interactive-accent); padding-left: 16px; margin: 10px 18px; padding-top: 10px; padding-bottom: 10px; background: rgba(var(--interactive-accent-rgb), 0.03); border-radius: 0 var(--mina-radius-sm) var(--mina-radius-sm) 0; }.mina-intel-body.is-loading { font-style: normal; color: transparent; background: linear-gradient(90deg, var(--background-modifier-border-faint) 25%, var(--background-modifier-border) 50%, var(--background-modifier-border-faint) 75%); background-size: 200% 100%; animation: mina-shimmer 1.4s ease infinite; border-radius: var(--mina-radius-sm); min-height: 64px; padding: 14px 18px; }@keyframes mina-shimmer { 0% { background-position: 200% center; } 100% { background-position: -200% center; } }.mina-intel-analyze-btn { width: 100%; padding: 12px 18px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; font-size: 0.72em; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: opacity 0.15s; border-top: 1px solid rgba(0,0,0,0.08); }.mina-intel-analyze-btn:hover { opacity: 0.88; }.mina-intel-analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }.mina-intel-analyze-btn .svg-icon { width: 13px; height: 13px; }/* Navigation footer — spatial identity */.mina-nav-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }.mina-nav-cluster-wrap { display: flex; flex-direction: column; gap: 6px; }.mina-cluster-label { font-size: 0.58em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.22em; color: var(--text-faint); padding-left: 2px; margin: 0; }.mina-pillar-cluster--action { background: rgba(var(--interactive-accent-rgb), 0.06); border: 1px solid rgba(var(--interactive-accent-rgb), 0.16); }.mina-pillar-cluster--action .mina-pillar-item { padding: 12px 6px; }.mina-pillar-cluster--action .mina-pillar-item:hover { background: rgba(var(--interactive-accent-rgb), 0.10); border-color: rgba(var(--interactive-accent-rgb), 0.25); }.mina-pillar-cluster--mgmt {
     background: rgba(var(--interactive-accent-rgb), 0.06);
     border: 1px solid rgba(var(--interactive-accent-rgb), 0.16);
 }.mina-pillar-cluster--system {
@@ -4657,12 +4657,12 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
 }
 /* ── End Shared Edit Form ──────────────────────────────────────────────────────────── */
 
-/* ══════════════════════════════════════════════════════════════════════════════
-   SearchView  (.mina-sv-*)
-   Full-page ItemView: fixed top bar (input + scope), scrollable results below
-   ══════════════════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   SEARCH VIEW  (.mina-sv-*)
+   Premium minimalist full-page search — Design Council v2
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Root */
+/* ── 1. Root Shell ─────────────────────────────────────────────────────── */
 .mina-sv-root {
   display: flex;
   flex-direction: column;
@@ -4671,265 +4671,388 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   overflow: hidden;
 }
 
-/* ── Top bar ─────────────────────────────────────────────────── */
+/* ── 2. Top Bar ─────────────────────────────────────────────────────────── */
 .mina-sv-top-bar {
   flex-shrink: 0;
-  padding: 16px 20px 0;
+  border-bottom: 1px solid var(--background-modifier-border-faint, var(--background-modifier-border));
   background: var(--background-primary);
-  border-bottom: 1px solid var(--background-modifier-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-/* Input row */
+.mina-sv-top-bar-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 24px 0;
+}
+
+/* ── 3. Input Row — Hero ────────────────────────────────────────────────── */
 .mina-sv-input-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: var(--background-modifier-form-field);
-  border: 1.5px solid var(--background-modifier-border);
-  border-radius: 12px;
-  padding: 8px 14px;
-  margin-bottom: 12px;
-  transition: border-color 0.15s;
+  gap: 12px;
+  background: var(--background-secondary-alt, var(--background-secondary));
+  border: 1.5px solid var(--background-modifier-border-faint, var(--background-modifier-border));
+  border-radius: 16px;
+  padding: 0 18px;
+  height: 52px;
+  transition:
+    border-color var(--mina-dh-transition, 0.22s cubic-bezier(0.4,0,0.2,1)),
+    box-shadow   var(--mina-dh-transition, 0.22s cubic-bezier(0.4,0,0.2,1));
+  box-shadow: var(--mina-shadow, 0 4px 20px rgba(0,0,0,0.04));
 }
 .mina-sv-input-row:focus-within {
   border-color: var(--interactive-accent);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--interactive-accent) 10%, transparent),
+    var(--mina-shadow-hover, 0 8px 30px rgba(0,0,0,0.08));
 }
+
 .mina-sv-search-icon {
-  display: flex;
-  align-items: center;
-  color: var(--text-muted);
   flex-shrink: 0;
-}
-.mina-sv-input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--text-normal);
-  font-size: 1em;
-  padding: 0;
-  line-height: 1.5;
-}
-.mina-sv-input::placeholder { color: var(--text-faint); }
-.mina-sv-kbd-hint { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-.mina-sv-kbd {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.72em;
-  padding: 1px 5px;
-  background: var(--background-modifier-border);
-  border-radius: 4px;
-  color: var(--text-muted);
-  font-family: var(--font-monospace);
+  color: var(--text-faint);
+  transition: color var(--mina-dh-transition, 0.22s cubic-bezier(0.4,0,0.2,1));
 }
+.mina-sv-search-icon svg { width: 18px; height: 18px; }
+.mina-sv-input-row:focus-within .mina-sv-search-icon { color: var(--interactive-accent); }
 
-/* Scope bar */
+.mina-sv-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-normal);
+  font-size: 1.0em;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  outline: none;
+  min-width: 0;
+  line-height: 1;
+}
+.mina-sv-input::placeholder { color: var(--text-faint); font-weight: 400; }
+
+.mina-sv-kbd-hint {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+@media (max-width: 600px) { .mina-sv-kbd-hint { display: none; } }
+
+.mina-sv-kbd {
+  font-size: 0.62em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border-faint, var(--background-modifier-border));
+  border-radius: 6px;
+  padding: 3px 8px;
+  line-height: 1.6;
+  transition: opacity 0.15s;
+}
+.mina-sv-input-row:focus-within .mina-sv-kbd { opacity: 0.4; }
+
+/* ── 4. Scope Bar — Full-Pill Chips ─────────────────────────────────────── */
 .mina-sv-scope-bar {
   display: flex;
-  gap: 4px;
+  gap: 6px;
+  padding: 14px 0 0;
   overflow-x: auto;
-  padding-bottom: 0;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+  mask-image: linear-gradient(to right, black 85%, transparent 100%);
 }
 .mina-sv-scope-bar::-webkit-scrollbar { display: none; }
+
 .mina-sv-scope-btn {
-  display: flex;
+  flex-shrink: 0;
+  display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 6px 14px;
-  border-radius: 10px 10px 0 0;
-  border: 1px solid transparent;
-  border-bottom: none;
+  height: 28px;
+  padding: 0 12px;
+  border: 1.5px solid var(--background-modifier-border-faint, var(--background-modifier-border));
+  border-radius: 20px;
   background: transparent;
   color: var(--text-muted);
-  font-size: 0.8em;
-  font-weight: 500;
+  font-size: 0.72em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.12s, color 0.12s;
-  letter-spacing: 0.02em;
+  transition:
+    background var(--mina-dh-transition, 0.22s cubic-bezier(0.4,0,0.2,1)),
+    border-color var(--mina-dh-transition, 0.22s cubic-bezier(0.4,0,0.2,1)),
+    color var(--mina-dh-transition, 0.22s cubic-bezier(0.4,0,0.2,1)),
+    box-shadow var(--mina-dh-transition, 0.22s cubic-bezier(0.4,0,0.2,1));
+  -webkit-tap-highlight-color: transparent;
 }
 .mina-sv-scope-btn:hover {
-  background: var(--background-modifier-hover);
-  color: var(--text-normal);
+  border-color: var(--interactive-accent);
+  color: var(--interactive-accent);
+  background: color-mix(in srgb, var(--interactive-accent) 6%, transparent);
 }
 .mina-sv-scope-btn.is-active {
-  background: var(--background-secondary);
-  color: var(--interactive-accent);
-  border-color: var(--background-modifier-border);
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: var(--text-on-accent, #fff);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--interactive-accent) 28%, transparent);
 }
-.mina-sv-scope-count {
-  font-size: 0.78em;
-  background: var(--background-modifier-border);
-  border-radius: 8px;
-  padding: 0 5px;
-  min-width: 18px;
-  text-align: center;
-  color: var(--text-muted);
-}
-.mina-sv-scope-btn.is-active .mina-sv-scope-count {
-  background: color-mix(in srgb, var(--interactive-accent) 18%, transparent);
-  color: var(--interactive-accent);
-}
+.mina-sv-scope-count { font-size: 0.88em; font-weight: 800; opacity: 0.75; min-width: 10px; text-align: center; }
+.mina-sv-scope-btn.is-active .mina-sv-scope-count { opacity: 0.9; }
 
-/* ── Results area ─────────────────────────────────────────────── */
+/* ── 5. Results Container ───────────────────────────────────────────────── */
 .mina-sv-results {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 12px 20px 24px;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px max(20px, calc(50% - 360px)) 48px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--background-modifier-border) transparent;
 }
 
-/* Section */
-.mina-sv-section { margin-bottom: 8px; }
+/* ── 6. Section Headers — Type Color ────────────────────────────────────── */
+.mina-sv-section { margin-bottom: 24px; }
+
 .mina-sv-section-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 0 4px;
-  font-size: 0.72em;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  border-bottom: 1px solid var(--background-modifier-border);
-  margin-bottom: 2px;
+  gap: 7px;
+  padding: 0 4px 8px;
+  margin-bottom: 4px;
+  border-bottom: 1.5px solid var(--background-modifier-border-faint, var(--background-modifier-border));
 }
-.mina-sv-section-icon { display: flex; align-items: center; opacity: 0.7; }
-.mina-sv-section-icon svg { width: 12px; height: 12px; }
-.mina-sv-section-label { flex: 1; }
+.mina-sv-section-icon { display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; flex-shrink: 0; }
+.mina-sv-section-icon svg { width: 13px; height: 13px; }
+.mina-sv-section-label { flex: 1; font-size: 0.62em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-faint); }
 .mina-sv-section-count {
-  font-size: 0.85em;
-  background: var(--background-modifier-border);
-  border-radius: 8px;
-  padding: 0 6px;
-  color: var(--text-muted);
+  font-size: 0.65em; font-weight: 800; color: var(--text-faint);
+  background: var(--background-secondary-alt, var(--background-secondary));
+  border: 1px solid var(--background-modifier-border-faint, var(--background-modifier-border));
+  border-radius: 10px; padding: 1px 7px; line-height: 1.6;
 }
 
-/* Result row */
+/* Type-specific accents via [data-type] */
+.mina-sv-section[data-type="thought"] .mina-sv-section-header { border-bottom-color: rgba(59,130,246,0.35); }
+.mina-sv-section[data-type="thought"] .mina-sv-section-icon  { color: var(--sv-color-thought, #3b82f6); }
+.mina-sv-section[data-type="thought"] .mina-sv-section-label { color: var(--sv-color-thought, #3b82f6); opacity: 0.75; }
+
+.mina-sv-section[data-type="task"] .mina-sv-section-header { border-bottom-color: rgba(16,185,129,0.35); }
+.mina-sv-section[data-type="task"] .mina-sv-section-icon  { color: var(--sv-color-task, #10b981); }
+.mina-sv-section[data-type="task"] .mina-sv-section-label { color: var(--sv-color-task, #10b981); opacity: 0.75; }
+
+.mina-sv-section[data-type="due"] .mina-sv-section-header { border-bottom-color: rgba(245,158,11,0.35); }
+.mina-sv-section[data-type="due"] .mina-sv-section-icon  { color: var(--sv-color-due, #f59e0b); }
+.mina-sv-section[data-type="due"] .mina-sv-section-label { color: var(--sv-color-due, #f59e0b); opacity: 0.75; }
+
+.mina-sv-section[data-type="project"] .mina-sv-section-header { border-bottom-color: rgba(139,92,246,0.35); }
+.mina-sv-section[data-type="project"] .mina-sv-section-icon  { color: var(--sv-color-project, #8b5cf6); }
+.mina-sv-section[data-type="project"] .mina-sv-section-label { color: var(--sv-color-project, #8b5cf6); opacity: 0.75; }
+
+.mina-sv-section[data-type="habit"] .mina-sv-section-header { border-bottom-color: rgba(239,68,68,0.35); }
+.mina-sv-section[data-type="habit"] .mina-sv-section-icon  { color: var(--sv-color-habit, #ef4444); }
+.mina-sv-section[data-type="habit"] .mina-sv-section-label { color: var(--sv-color-habit, #ef4444); opacity: 0.75; }
+
+/* ── 7. Result Rows — Left-Border Accent + Hover Motion ─────────────────── */
 .mina-sv-result-row {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.1s;
-}
-.mina-sv-result-row:hover,
-.mina-sv-result-row.is-focused {
-  background: var(--background-modifier-hover);
-}
-.mina-sv-result-icon {
-  display: flex;
   align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
+  gap: 12px;
+  padding: 10px 12px 10px 14px;
+  border-radius: var(--mina-radius-sm, 8px);
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition:
+    background var(--mina-dh-transition, 0.22s cubic-bezier(0.4,0,0.2,1)),
+    border-left-color var(--mina-dh-transition, 0.22s cubic-bezier(0.4,0,0.2,1)),
+    box-shadow var(--mina-dh-transition, 0.22s cubic-bezier(0.4,0,0.2,1)),
+    transform var(--mina-dh-transition, 0.22s cubic-bezier(0.4,0,0.2,1));
+  -webkit-tap-highlight-color: transparent;
+}
+.mina-sv-result-row:hover {
+  background: var(--background-secondary-alt, var(--background-secondary));
+  box-shadow: var(--mina-shadow, 0 4px 20px rgba(0,0,0,0.04));
+  transform: translateX(2px);
+}
+.mina-sv-result-row:has(.mina-sv-result-icon--thought):hover { border-left-color: var(--sv-color-thought, #3b82f6); }
+.mina-sv-result-row:has(.mina-sv-result-icon--task):hover    { border-left-color: var(--sv-color-task, #10b981); }
+.mina-sv-result-row:has(.mina-sv-result-icon--due):hover     { border-left-color: var(--sv-color-due, #f59e0b); }
+.mina-sv-result-row:has(.mina-sv-result-icon--project):hover { border-left-color: var(--sv-color-project, #8b5cf6); }
+.mina-sv-result-row:has(.mina-sv-result-icon--habit):hover   { border-left-color: var(--sv-color-habit, #ef4444); }
+
+.mina-sv-result-row.is-focused {
+  background: var(--background-secondary-alt, var(--background-secondary));
+  box-shadow:
+    var(--mina-shadow, 0 4px 20px rgba(0,0,0,0.04)),
+    inset 0 0 0 1.5px color-mix(in srgb, var(--interactive-accent) 35%, transparent);
+  border-left-color: var(--interactive-accent);
+  transform: translateX(2px);
+  outline: none;
+}
+
+/* ── 8. Result Icons ────────────────────────────────────────────────────── */
+.mina-sv-result-icon {
+  width: 30px; height: 30px; min-width: 30px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  margin-top: 1px;
 }
 .mina-sv-result-icon svg { width: 14px; height: 14px; }
-.mina-sv-result-icon--thought { background: color-mix(in srgb, #3b82f6 12%, transparent); color: #3b82f6; }
-.mina-sv-result-icon--task    { background: color-mix(in srgb, #10b981 12%, transparent); color: #10b981; }
-.mina-sv-result-icon--due     { background: color-mix(in srgb, #f59e0b 12%, transparent); color: #f59e0b; }
-.mina-sv-result-icon--project { background: color-mix(in srgb, #8b5cf6 12%, transparent); color: #8b5cf6; }
-.mina-sv-result-icon--habit   { background: color-mix(in srgb, #ef4444 12%, transparent); color: #ef4444; }
+.mina-sv-result-icon--thought { background: rgba(59,130,246,0.12);  color: var(--sv-color-thought, #3b82f6); }
+.mina-sv-result-icon--task    { background: rgba(16,185,129,0.12);   color: var(--sv-color-task,    #10b981); }
+.mina-sv-result-icon--due     { background: rgba(245,158,11,0.12);   color: var(--sv-color-due,     #f59e0b); }
+.mina-sv-result-icon--project { background: rgba(139,92,246,0.12);   color: var(--sv-color-project, #8b5cf6); }
+.mina-sv-result-icon--habit   { background: rgba(239,68,68,0.12);    color: var(--sv-color-habit,   #ef4444); }
 
-.mina-sv-result-body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
+/* ── 9. Result Body ─────────────────────────────────────────────────────── */
+.mina-sv-result-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+
 .mina-sv-result-title {
-  font-size: 0.9em;
-  font-weight: 500;
-  color: var(--text-normal);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 0.88em; font-weight: 600; color: var(--text-normal);
+  line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;
 }
+
+/* renderMatches highlight — accent color override */
+.mina-sv-result-title .suggestion-highlight,
+.mina-sv-result-snippet .suggestion-highlight {
+  color: var(--interactive-accent);
+  font-weight: 800;
+  background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
 .mina-sv-result-snippet {
-  font-size: 0.78em;
-  color: var(--text-muted);
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
+  font-size: 0.76em; color: var(--text-muted); line-height: 1.45;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;
 }
+
 .mina-sv-result-meta {
   flex-shrink: 0;
-  font-size: 0.72em;
-  color: var(--text-faint);
-  white-space: nowrap;
-  align-self: center;
+  font-size: 0.65em; font-weight: 700; color: var(--text-faint);
+  letter-spacing: 0.02em; white-space: nowrap;
+  background: var(--background-secondary-alt, var(--background-secondary));
+  border: 1px solid var(--background-modifier-border-faint, var(--background-modifier-border));
+  border-radius: 6px; padding: 2px 7px; line-height: 1.6;
 }
 
-/* ── Initial state ────────────────────────────────────────────── */
-.mina-sv-initial {
-  padding: 24px 10px;
-}
+/* ── 10. Quick Jump Grid ────────────────────────────────────────────────── */
+.mina-sv-initial { padding-top: 8px; }
+
 .mina-sv-quickjump-label {
-  display: block;
-  font-size: 0.72em;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  margin-bottom: 12px;
+  display: block; font-size: 0.58em; font-weight: 900;
+  text-transform: uppercase; letter-spacing: 0.18em; color: var(--text-faint); padding: 0 2px 12px;
 }
+
 .mina-sv-quickjump-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 8px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px;
 }
+
 .mina-sv-quickjump-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 16px 8px;
-  background: var(--background-secondary);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 12px;
-  cursor: pointer;
-  color: var(--text-muted);
-  font-size: 0.8em;
-  transition: background 0.1s, color 0.1s;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 20px 12px 16px;
+  background: var(--background-secondary-alt, var(--background-secondary));
+  border: 1px solid var(--background-modifier-border-faint, var(--background-modifier-border));
+  border-radius: var(--mina-radius, 12px); cursor: pointer;
+  transition:
+    transform var(--mina-dh-transition, 0.22s cubic-bezier(0.4,0,0.2,1)),
+    box-shadow var(--mina-dh-transition, 0.22s cubic-bezier(0.4,0,0.2,1)),
+    border-color var(--mina-dh-transition, 0.22s cubic-bezier(0.4,0,0.2,1)),
+    background var(--mina-dh-transition, 0.22s cubic-bezier(0.4,0,0.2,1));
+  box-shadow: var(--mina-shadow, 0 4px 20px rgba(0,0,0,0.04));
+  -webkit-tap-highlight-color: transparent;
 }
 .mina-sv-quickjump-btn:hover {
-  background: var(--background-modifier-hover);
-  color: var(--text-normal);
+  transform: translateY(-3px);
+  box-shadow: var(--mina-shadow-hover, 0 8px 30px rgba(0,0,0,0.08));
+  border-color: var(--background-modifier-border);
+  background: var(--background-primary);
 }
-.mina-sv-quickjump-icon { display: flex; }
-.mina-sv-quickjump-icon svg { width: 20px; height: 20px; }
-.mina-sv-quickjump-label-text { font-weight: 500; }
+.mina-sv-quickjump-btn:active {
+  transform: translateY(-1px) scale(0.98);
+  box-shadow: var(--mina-shadow, 0 4px 20px rgba(0,0,0,0.04));
+}
 
-/* ── Empty state ──────────────────────────────────────────────── */
+.mina-sv-quickjump-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: transform var(--mina-dh-transition, 0.22s cubic-bezier(0.4,0,0.2,1));
+}
+.mina-sv-quickjump-btn:hover .mina-sv-quickjump-icon { transform: scale(1.08); }
+.mina-sv-quickjump-icon svg { width: 16px; height: 16px; }
+
+.mina-sv-quickjump-btn[data-tab="timeline"]     .mina-sv-quickjump-icon { background: rgba(59,130,246,0.12);  color: var(--sv-color-thought, #3b82f6); }
+.mina-sv-quickjump-btn[data-tab="review-tasks"] .mina-sv-quickjump-icon { background: rgba(16,185,129,0.12);  color: var(--sv-color-task,    #10b981); }
+.mina-sv-quickjump-btn[data-tab="dues"]         .mina-sv-quickjump-icon { background: rgba(245,158,11,0.12);  color: var(--sv-color-due,     #f59e0b); }
+.mina-sv-quickjump-btn[data-tab="projects"]     .mina-sv-quickjump-icon { background: rgba(139,92,246,0.12);  color: var(--sv-color-project, #8b5cf6); }
+.mina-sv-quickjump-btn[data-tab="habits"]       .mina-sv-quickjump-icon { background: rgba(239,68,68,0.12);   color: var(--sv-color-habit,   #ef4444); }
+.mina-sv-quickjump-btn[data-tab="journal"]      .mina-sv-quickjump-icon { background: rgba(13,148,136,0.12);  color: var(--sv-color-journal, #0d9488); }
+
+.mina-sv-quickjump-label-text {
+  font-size: 0.72em; font-weight: 700; color: var(--text-muted);
+  letter-spacing: 0.01em; text-align: center; line-height: 1.2;
+  transition: color var(--mina-dh-transition, 0.22s cubic-bezier(0.4,0,0.2,1));
+}
+.mina-sv-quickjump-btn:hover .mina-sv-quickjump-label-text { color: var(--text-normal); }
+
+/* ── 11. Empty State ────────────────────────────────────────────────────── */
 .mina-sv-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 60px 20px;
-  text-align: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 64px 24px 48px; text-align: center;
+  animation: mina-sv-empty-in 0.28s cubic-bezier(0.4,0,0.2,1) both;
 }
+@keyframes mina-sv-empty-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .mina-sv-empty-icon {
+  width: 60px; height: 60px; border-radius: 18px;
+  background: var(--background-secondary-alt, var(--background-secondary));
+  border: 1px solid var(--background-modifier-border-faint, var(--background-modifier-border));
+  display: flex; align-items: center; justify-content: center;
   color: var(--text-faint);
-  opacity: 0.5;
+  box-shadow: var(--mina-shadow, 0 4px 20px rgba(0,0,0,0.04));
+  flex-shrink: 0;
 }
-.mina-sv-empty-icon svg { width: 40px; height: 40px; }
+.mina-sv-empty-icon svg { width: 24px; height: 24px; opacity: 0.55; }
+
 .mina-sv-empty-text {
-  font-size: 0.95em;
-  font-weight: 500;
-  color: var(--text-muted);
+  font-size: 0.95em; font-weight: 700; color: var(--text-normal);
+  letter-spacing: -0.02em; line-height: 1.3; max-width: 280px; display: block;
 }
+
 .mina-sv-empty-sub {
-  font-size: 0.8em;
-  color: var(--text-faint);
+  font-size: 0.78em; font-weight: 500; color: var(--text-muted);
+  line-height: 1.55; max-width: 260px; display: block; margin-top: -4px;
 }
-/* ── End SearchView ──────────────────────────────────────────────────────────── */
+
+/* ── 12. Mobile ─────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .mina-sv-top-bar-inner { padding: 16px 16px 0; }
+  .mina-sv-input-row { height: 48px; padding: 0 14px; border-radius: 14px; }
+  .mina-sv-results { padding: 16px 16px 48px; }
+  .mina-sv-quickjump-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .mina-sv-quickjump-btn { padding: 16px 8px 12px; gap: 8px; }
+  .mina-sv-quickjump-icon { width: 32px; height: 32px; }
+  .mina-sv-result-row:hover { transform: none; }
+}
+
+/* ── 13. Reduced Motion ─────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .mina-sv-result-row,
+  .mina-sv-quickjump-btn,
+  .mina-sv-scope-btn,
+  .mina-sv-empty {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    transform: none !important;
+  }
+}
+/* ── End SearchView ──────────────────────────────────────────────────────── */

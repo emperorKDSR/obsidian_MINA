@@ -90,9 +90,10 @@ export class SearchView extends ItemView {
     private renderView(root: HTMLElement) {
         // ── Top bar: input + scope ───────────────────────────────
         const topBar = root.createEl('div', { cls: 'mina-sv-top-bar' });
+        const topBarInner = topBar.createEl('div', { cls: 'mina-sv-top-bar-inner' });
 
         // Input row
-        const inputRow = topBar.createEl('div', { cls: 'mina-sv-input-row' });
+        const inputRow = topBarInner.createEl('div', { cls: 'mina-sv-input-row' });
         const searchIconEl = inputRow.createEl('span', { cls: 'mina-sv-search-icon' });
         setIcon(searchIconEl, 'lucide-search');
 
@@ -110,7 +111,7 @@ export class SearchView extends ItemView {
         kbdHint.createEl('kbd', { text: 'ESC', cls: 'mina-sv-kbd' });
 
         // Scope bar
-        this.scopeBar = topBar.createEl('div', { cls: 'mina-sv-scope-bar', attr: { role: 'tablist' } });
+        this.scopeBar = topBarInner.createEl('div', { cls: 'mina-sv-scope-bar', attr: { role: 'tablist' } });
         for (const scope of SCOPES) {
             const btn = this.scopeBar.createEl('button', {
                 cls: `mina-sv-scope-btn${scope.id === this.activeScope ? ' is-active' : ''}`,
@@ -311,7 +312,7 @@ export class SearchView extends ItemView {
 
         for (const [type, items] of Object.entries(grouped)) {
             if (!items) continue;
-            const section = this.resultsEl.createEl('div', { cls: 'mina-sv-section' });
+            const section = this.resultsEl.createEl('div', { cls: 'mina-sv-section', attr: { 'data-type': type } });
             const secHdr = section.createEl('div', { cls: 'mina-sv-section-header' });
             const secIcon = secHdr.createEl('span', { cls: 'mina-sv-section-icon' });
             setIcon(secIcon, TYPE_ICONS[type] ?? 'lucide-file');
