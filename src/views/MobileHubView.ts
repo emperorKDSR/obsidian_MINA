@@ -24,18 +24,19 @@ export class MobileHubView extends ItemView {
         const header = this.containerEl.children[0] as HTMLElement;
         if (header) header.style.display = 'none';
 
-        // Keyboard avoidance: track soft keyboard height via visualViewport
+        // Keyboard avoidance: shrink root to visual viewport height so the
+        // bottom bar stays above the soft keyboard instead of sliding behind it.
         if (Platform.isMobile && window.visualViewport) {
             const vp = window.visualViewport;
             this._viewportHandler = () => {
                 const kbOffset = Math.max(0, window.innerHeight - vp.height - vp.offsetTop);
                 this.contentEl.style.setProperty('--mina-keyboard-offset', `${kbOffset}px`);
-                // Dynamically adjust feed scroll bottom padding when keyboard opens
-                const feedScroll = this.contentEl.querySelector('.mina-mh-feed-scroll') as HTMLElement | null;
-                if (feedScroll) {
-                    feedScroll.style.paddingBottom = kbOffset > 0
-                        ? `calc(var(--mh-bar-height, 56px) + ${kbOffset}px + max(8px, env(safe-area-inset-bottom, 0px)))`
-                        : '';
+                // Resize root to the visible viewport — flex layout then naturally
+                // keeps the bar visible just above the keyboard.
+                if (kbOffset > 0) {
+                    this.contentEl.style.height = `${vp.height}px`;
+                } else {
+                    this.contentEl.style.height = '';
                 }
             };
             vp.addEventListener('resize', this._viewportHandler);
@@ -60,6 +61,8 @@ export class MobileHubView extends ItemView {
         const root = this.contentEl;
         root.empty();
         root.addClass('mina-mh-root');
+        // Inline style overrides Obsidian's .view-content mobile padding
+        root.style.padding = '0';
 
         if (!Platform.isMobile) {
             root.createEl('div', {

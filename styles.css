@@ -4374,13 +4374,16 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   height: 100%;
   overflow: hidden;
   background: var(--mh-surface);
+  /* Override Obsidian's mobile .view-content safe-area padding */
+  padding: 0 !important;
 }
 
 .mina-mh-wrap {
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden;
+  /* No overflow:hidden — it causes WKWebView compositing blank on input focus */
+  overflow: clip;
 }
 
 /* ── Desktop notice ──────────────────────────────────────────── */
@@ -4599,6 +4602,10 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   padding-right: env(safe-area-inset-right, 0px);
   box-shadow: 0 -1px 0 var(--mh-border), 0 -4px 16px rgba(0,0,0,0.06);
   transition: box-shadow 0.18s ease;
+  /* Force own GPU compositing layer — prevents blank-screen repaints on iOS WKWebView */
+  transform: translateZ(0);
+  position: relative;
+  z-index: 2;
 }
 
 .mina-mh-bar--expanded {
@@ -4693,7 +4700,8 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
 /* ── Capture Textarea ────────────────────────────────────────── */
 .mina-mh-capture-textarea {
   width: 100%;
-  background: transparent;
+  /* Explicit bg prevents text invisibility when WKWebView repaints layers */
+  background: var(--background-primary);
   border: none;
   outline: none;
   resize: none;
