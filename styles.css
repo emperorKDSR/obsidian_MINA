@@ -4348,9 +4348,27 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
 
 
 /* ═══════════════════════════════════════════════════════════════
-   MINA MOBILE HUB  ·  mina-mh-*
-   Single-column, touch-first, safe-area-aware quick capture
+   MINA MOBILE HUB v2  ·  mina-mh-*
+   Premium Minimalism · Touch-first · Safe-area-aware
    ═══════════════════════════════════════════════════════════════ */
+
+/* ── Scoped design tokens ────────────────────────────────────── */
+.mina-mh-root {
+  --mh-card-radius:       16px;
+  --mh-card-surface:      var(--background-secondary-alt, var(--background-secondary));
+  --mh-card-border:       var(--background-modifier-border-faint, var(--background-modifier-border));
+  --mh-card-shadow:       0 2px 10px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+  --mh-card-shadow-focus: 0 2px 10px rgba(0,0,0,0.06),
+                          0 0 0 2.5px color-mix(in srgb, var(--interactive-accent) 28%, transparent);
+  --mh-accent:            var(--interactive-accent);
+  --mh-accent-faint:      color-mix(in srgb, var(--interactive-accent) 10%, transparent);
+  --mh-accent-tap:        color-mix(in srgb, var(--interactive-accent) 20%, transparent);
+  --mh-gutter:            16px;
+  --mh-topbar-h:          52px;
+  --mh-dot-size:          8px;
+  /* Set by JS visualViewport listener on keyboard open */
+  --mina-keyboard-offset: 0px;
+}
 
 /* ── Root & Wrap ─────────────────────────────────────────────── */
 .mina-mh-root {
@@ -4358,6 +4376,7 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   overflow: hidden;
   background: var(--background-primary);
 }
+
 .mina-mh-wrap {
   display: flex;
   flex-direction: column;
@@ -4365,55 +4384,102 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   overflow: hidden;
 }
 
+/* ── Desktop notice (non-mobile guard) ───────────────────────── */
+.mina-mh-desktop-notice {
+  color: var(--text-muted);
+  font-size: 0.9em;
+  text-align: center;
+  margin-top: 80px;
+  padding: 24px;
+  line-height: 1.6;
+}
+
 /* ── Top Bar ─────────────────────────────────────────────────── */
 .mina-mh-topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  padding-top: max(12px, env(safe-area-inset-top));
-  border-bottom: 1px solid var(--background-modifier-border);
+  padding: max(12px, env(safe-area-inset-top)) var(--mh-gutter) 12px;
+  border-bottom: 1px solid var(--background-modifier-border-faint, var(--background-modifier-border));
   background: var(--background-primary);
   flex-shrink: 0;
   gap: 8px;
+  min-height: var(--mh-topbar-h);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
+
 .mina-mh-topbar-logo {
-  font-size: 0.75em;
+  font-size: 0.72em;
   font-weight: 900;
-  letter-spacing: 0.18em;
-  color: var(--text-accent);
+  letter-spacing: 0.2em;
+  color: var(--mh-accent);
+  min-width: 44px;
 }
+
 .mina-mh-topbar-date {
   flex: 1;
   text-align: center;
-  font-size: 0.68em;
+  font-size: 0.63em;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.13em;
   color: var(--text-faint);
+  text-transform: uppercase;
 }
+
 .mina-mh-topbar-time {
-  font-size: 0.72em;
+  font-size: 0.7em;
   font-weight: 700;
   color: var(--text-muted);
   font-family: var(--font-monospace);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
+  min-width: 44px;
+  text-align: right;
 }
 
-/* ── Body (scrollable middle) ────────────────────────────────── */
+/* ── Body ────────────────────────────────────────────────────── */
 .mina-mh-body {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
+  /* Keyboard avoidance: compress body when soft keyboard opens */
+  max-height: calc(
+    100dvh
+    - var(--mh-topbar-h)
+    - max(0px, env(safe-area-inset-top))
+    - var(--mina-keyboard-offset, 0px)
+  );
+  transition: max-height 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Capture Section ─────────────────────────────────────────── */
 .mina-mh-capture-section {
-  padding: 14px 16px 10px;
-  border-bottom: 1px solid var(--background-modifier-border);
+  padding: 14px var(--mh-gutter) 10px;
   flex-shrink: 0;
 }
+
+/* ── Capture Card — elevated glass surface ───────────────────── */
+.mina-mh-capture-card {
+  background:    var(--mh-card-surface);
+  border:        1px solid var(--mh-card-border);
+  border-radius: var(--mh-card-radius);
+  box-shadow:    var(--mh-card-shadow);
+  padding:       14px 14px 10px;
+  display:       flex;
+  flex-direction: column;
+  gap:           8px;
+  transition:    border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.mina-mh-capture-card:focus-within {
+  border-color: color-mix(in srgb, var(--mh-accent) 45%, transparent);
+  box-shadow:   var(--mh-card-shadow-focus);
+}
+
+/* ── Capture Textarea ────────────────────────────────────────── */
 .mina-mh-capture-textarea {
   width: 100%;
   background: transparent;
@@ -4421,54 +4487,97 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   outline: none;
   resize: none;
   padding: 0;
-  font-family: inherit;
-  font-size: 1rem;
-  line-height: 1.55;
+  font-family: var(--font-text, inherit);
+  /* ≥16px prevents iOS WKWebView auto-zoom on focus */
+  font-size: max(16px, 1rem);
+  line-height: 1.6;
   color: var(--text-normal);
-  min-height: 52px;
+  min-height: 48px;
   overflow: hidden;
   box-sizing: border-box;
 }
+
 .mina-mh-capture-textarea::placeholder {
   color: var(--text-faint);
 }
 
-/* Chip row */
+/* ── Chip Row ─────────────────────────────────────────────────  */
 .mina-mh-chip-row {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 6px;
-  min-height: 0;
 }
+
+.mina-mh-chip-row:empty {
+  display: none;
+}
+
 .mina-mh-chip {
   font-size: 0.75em;
   font-weight: 600;
-  color: var(--text-accent);
-  background: color-mix(in srgb, var(--text-accent) 10%, transparent);
+  color: var(--mh-accent);
+  background: var(--mh-accent-faint);
   border-radius: 20px;
-  padding: 3px 10px;
+  padding: 5px 12px;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
   cursor: pointer;
   letter-spacing: 0.02em;
-  min-height: 28px;
-  display: flex;
-  align-items: center;
+  user-select: none;
+  transition: background 0.12s;
 }
-.mina-mh-chip:active { opacity: 0.6; }
 
-/* Capture footer: hint + send button */
+.mina-mh-chip:active {
+  background: var(--mh-accent-tap);
+}
+
+/* ── Capture Footer ───────────────────────────────────────────  */
 .mina-mh-capture-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 10px;
+  gap: 8px;
+  flex-wrap: nowrap;
 }
+
+/* ── # Hint Badge ─────────────────────────────────────────────  */
 .mina-mh-capture-hint {
-  font-size: 0.68em;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.67em;
   color: var(--text-faint);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
 }
+
+.mina-mh-hint-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: var(--font-monospace);
+  font-size: 1em;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+
+.mina-mh-hint-label {
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Send Button — 36×36 visual, 44×44 touch via padding ─────── */
 .mina-mh-send-btn {
   display: flex;
   align-items: center;
@@ -4477,15 +4586,34 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   height: 36px;
   border-radius: 50%;
   border: none;
-  background: var(--text-accent);
+  background: var(--mh-accent);
   color: #fff;
   cursor: pointer;
   flex-shrink: 0;
-  transition: opacity 0.15s, transform 0.15s;
+  padding: 4px;
+  margin: -4px;
+  box-sizing: content-box;
+  transition: opacity 0.15s, transform 0.12s;
 }
-.mina-mh-send-btn:active { opacity: 0.75; transform: scale(0.93); }
-.mina-mh-send-icon { display: flex; align-items: center; width: 18px; height: 18px; }
-.mina-mh-send-icon svg { width: 18px; height: 18px; }
+
+.mina-mh-send-btn:active {
+  opacity: 0.72;
+  transform: scale(0.88);
+}
+
+.mina-mh-send-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+}
+
+.mina-mh-send-icon svg {
+  width: 18px;
+  height: 18px;
+}
 
 /* ── Feed Container ──────────────────────────────────────────── */
 .mina-mh-feed-container {
@@ -4496,46 +4624,71 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   overflow: hidden;
 }
 
-/* Feed list */
 .mina-mh-feed-label {
-  padding: 10px 16px 4px;
-  font-size: 0.62em;
+  padding: 10px var(--mh-gutter) 4px;
+  font-size: 0.6em;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.16em;
   color: var(--text-faint);
+  text-transform: uppercase;
   flex-shrink: 0;
 }
+
 .mina-mh-feed {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 0 16px;
+  padding-top: 4px;
+  padding-bottom: max(28px, env(safe-area-inset-bottom, 0px));
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
+
 .mina-mh-feed-empty {
-  padding: 32px 16px;
+  padding: 44px var(--mh-gutter);
   font-size: 0.88em;
   color: var(--text-faint);
   text-align: center;
   font-style: italic;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
-/* Thought feed items */
+/* ── Feed Items ──────────────────────────────────────────────── */
 .mina-mh-feed-item {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 10px 16px;
+  padding: 11px var(--mh-gutter);
+  border-bottom: 1px solid var(--background-modifier-border-faint, var(--background-modifier-border));
+  transition: background 0.18s ease;
 }
+
+.mina-mh-feed-item:last-child {
+  border-bottom: none;
+}
+
+.mina-mh-feed-item:active {
+  background: color-mix(in srgb, var(--mh-accent) 4%, var(--background-primary));
+}
+
+.mina-mh-feed-item.is-editing {
+  background: color-mix(in srgb, var(--mh-accent) 5%, var(--background-primary));
+  border-bottom-color: transparent;
+}
+
+/* ── Timeline Dot ────────────────────────────────────────────── */
 .mina-mh-feed-dot {
   flex-shrink: 0;
-  width: 7px;
-  height: 7px;
+  width: var(--mh-dot-size);
+  height: var(--mh-dot-size);
   border-radius: 50%;
-  background: var(--text-accent);
+  background: var(--mh-accent);
   margin-top: 6px;
-  opacity: 0.6;
+  opacity: 0.55;
 }
+
+/* ── Feed Content ────────────────────────────────────────────── */
 .mina-mh-feed-content {
   flex: 1;
   min-width: 0;
@@ -4543,51 +4696,82 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   flex-direction: column;
   gap: 3px;
 }
+
 .mina-mh-feed-time {
-  font-size: 0.7em;
+  font-size: 0.67em;
   color: var(--text-faint);
   font-family: var(--font-monospace);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
+
 .mina-mh-feed-text {
   margin: 0;
-  font-size: 0.92em;
+  font-size: 0.93em;
   color: var(--text-normal);
   line-height: 1.55;
   word-break: break-word;
 }
+
 .mina-mh-feed-ctx {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  margin-top: 4px;
+  margin-top: 3px;
 }
+
 .mina-mh-feed-ctx-chip {
-  font-size: 0.72em;
-  color: var(--text-accent);
-  background: color-mix(in srgb, var(--text-accent) 10%, transparent);
+  font-size: 0.7em;
+  color: var(--mh-accent);
+  background: var(--mh-accent-faint);
   border-radius: 20px;
-  padding: 2px 8px;
+  padding: 2px 9px;
   letter-spacing: 0.02em;
 }
-.mina-mh-feed-edit-btn {
+
+/* ── Edit Button — 44×44 touch target ───────────────────────── */
+.mina-mh-edit-target {
   flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  margin: -6px -6px 0 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  cursor: pointer;
+}
+
+.mina-mh-feed-edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   padding: 0;
   background: none;
   border: none;
   border-radius: 8px;
   color: var(--text-faint);
   cursor: pointer;
-  opacity: 0.55;
-  margin-top: 1px;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.12s ease;
 }
-.mina-mh-feed-edit-btn:active { opacity: 1; background: color-mix(in srgb, var(--text-accent) 12%, transparent); }
-.mina-mh-feed-edit-btn svg { width: 14px; height: 14px; }
+
+.mina-mh-feed-item:hover .mina-mh-feed-edit-btn {
+  opacity: 0.55;
+}
+
+/* Always visible at reduced opacity on touch devices */
+@media (hover: none) {
+  .mina-mh-feed-edit-btn { opacity: 0.4; }
+}
+
+.mina-mh-feed-edit-btn:active,
+.mina-mh-edit-target:active .mina-mh-feed-edit-btn {
+  opacity: 1;
+  background: color-mix(in srgb, var(--mh-accent) 14%, transparent);
+}
+
+.mina-mh-feed-edit-btn svg { width: 15px; height: 15px; }
 
 /* ── End Mobile Hub ──────────────────────────────────────────── */
 
@@ -4595,65 +4779,103 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
 .mina-edit-form {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   flex: 1;
   min-width: 0;
 }
-.mina-edit-form--mobile { flex: 1; }
+
+.mina-edit-form--mobile {
+  flex: 1;
+  width: 100%;
+  gap: 8px;
+}
+
 .mina-edit-chip-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  min-height: 0;
+  gap: 6px;
 }
+
+.mina-edit-chip-row:empty {
+  display: none;
+}
+
 .mina-edit-textarea {
   width: 100%;
   resize: none;
   overflow: hidden;
-  background: var(--background-modifier-form-field, var(--background-secondary));
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 6px;
+  background: var(--background-primary);
+  border: 1.5px solid var(--background-modifier-border);
+  border-radius: 10px;
   color: var(--text-normal);
   font-family: var(--font-text, inherit);
-  font-size: 0.88em;
+  /* ≥16px prevents iOS zoom on focus */
+  font-size: max(16px, 0.95em);
   line-height: 1.55;
-  padding: 6px 8px;
-  outline: none;
+  padding: 10px 12px;
   box-sizing: border-box;
-  transition: border-color 0.15s;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
-.mina-edit-textarea:focus { border-color: var(--interactive-accent); }
-.mina-edit-textarea--mobile { font-size: 0.92em; padding: 8px 10px; border-radius: 8px; }
+
+.mina-edit-textarea:focus {
+  border-color: var(--interactive-accent);
+  box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--interactive-accent) 12%, transparent);
+  outline: none;
+}
+
+.mina-edit-textarea--mobile {
+  font-size: max(16px, 0.92em);
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
 .mina-edit-actions {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
 }
+
 .mina-edit-save-btn,
 .mina-edit-cancel-btn {
-  font-size: 0.75em;
-  font-weight: 600;
-  padding: 3px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  min-height: 38px;
+  min-width: 72px;
+  padding: 0 18px;
   border-radius: 20px;
   border: none;
   cursor: pointer;
+  font-size: 0.82em;
+  font-weight: 600;
   letter-spacing: 0.03em;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s ease, opacity 0.12s ease;
 }
+
 .mina-edit-save-btn {
   background: var(--interactive-accent);
   color: var(--text-on-accent, #fff);
 }
-.mina-edit-save-btn:hover { background: var(--interactive-accent-hover, var(--interactive-accent)); }
+
+.mina-edit-save-btn:active { opacity: 0.78; }
+.mina-edit-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .mina-edit-cancel-btn {
   background: var(--background-modifier-border);
   color: var(--text-muted);
 }
-.mina-edit-cancel-btn:hover { color: var(--text-normal); }
+
+.mina-edit-cancel-btn:active {
+  color: var(--text-normal);
+  background: var(--background-modifier-border-hover, var(--background-modifier-border));
+}
+
 .mina-edit-form--mobile .mina-edit-save-btn,
 .mina-edit-form--mobile .mina-edit-cancel-btn {
-  font-size: 0.82em;
-  padding: 5px 16px;
-  min-height: 32px;
+  height: 40px;
+  min-height: 40px;
+  font-size: 0.85em;
 }
 /* ── End Shared Edit Form ──────────────────────────────────────────────────────────── */
 

@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, Platform, moment, setIcon, Notice, ViewStateResult } from 'obsidian';
+import { ItemView, WorkspaceLeaf, Platform, moment, setIcon, Notice } from 'obsidian';
 import type MinaPlugin from '../main';
 import { VIEW_TYPE_MOBILE_HUB } from '../constants';
 import { attachInlineTriggers, attachMediaPasteHandler } from '../utils';
@@ -8,6 +8,8 @@ export class MobileHubView extends ItemView {
     plugin: MinaPlugin;
     _capturePending: number = 0;
     private _closed = false;
+    private _tickInterval: ReturnType<typeof setInterval> | null = null;
+    private _viewportHandler: (() => void) | null = null;
 
     constructor(leaf: WorkspaceLeaf, plugin: MinaPlugin) {
         super(leaf);
@@ -22,15 +24,43 @@ export class MobileHubView extends ItemView {
         this._closed = false;
         const header = this.containerEl.children[0] as HTMLElement;
         if (header) header.style.display = 'none';
+
+        // Keyboard avoidance: track soft keyboard height via visualViewport
+        if (Platform.isMobile && window.visualViewport) {
+            const vp = window.visualViewport;
+            this._viewportHandler = () => {
+                const root = this.containerEl.children[1] as HTMLElement;
+                const kbOffset = Math.max(0, window.innerHeight - vp.height - vp.offsetTop);
+                root.style.setProperty('--mina-keyboard-offset', `${kbOffset}px`);
+            };
+            vp.addEventListener('resize', this._viewportHandler);
+            vp.addEventListener('scroll', this._viewportHandler);
+        }
+
         this.renderView();
     }
 
     async onClose() {
         this._closed = true;
+        if (this._tickInterval !== null) {
+            clearInterval(this._tickInterval);
+            this._tickInterval = null;
+        }
+        if (window.visualViewport && this._viewportHandler) {
+            window.visualViewport.removeEventListener('resize', this._viewportHandler);
+            window.visualViewport.removeEventListener('scroll', this._viewportHandler);
+            this._viewportHandler = null;
+        }
     }
 
     renderView() {
         if (this._capturePending > 0) return;
+
+        // Cancel stale clock before re-render creates a new one
+        if (this._tickInterval !== null) {
+            clearInterval(this._tickInterval);
+            this._tickInterval = null;
+        }
 
         const root = this.containerEl.children[1] as HTMLElement;
         root.empty();
@@ -39,7 +69,7 @@ export class MobileHubView extends ItemView {
         if (!Platform.isMobile) {
             root.createEl('div', {
                 text: '⊕ MINA Mobile Hub is designed for mobile devices.',
-                attr: { style: 'color: var(--text-muted); font-size: 0.9em; text-align: center; margin-top: 80px; padding: 24px;' }
+                cls: 'mina-mh-desktop-notice'
             });
             return;
         }
@@ -58,8 +88,11 @@ export class MobileHubView extends ItemView {
         bar.createEl('span', { text: 'MINA', cls: 'mina-mh-topbar-logo' });
         bar.createEl('span', { text: moment().format('ddd, MMM D').toUpperCase(), cls: 'mina-mh-topbar-date' });
         const time = bar.createEl('span', { text: moment().format('HH:mm'), cls: 'mina-mh-topbar-time' });
-        const tick = setInterval(() => {
-            if (this._closed) { clearInterval(tick); return; }
+        this._tickInterval = setInterval(() => {
+            if (this._closed) {
+                if (this._tickInterval !== null) { clearInterval(this._tickInterval); this._tickInterval = null; }
+                return;
+            }
             time.setText(moment().format('HH:mm'));
         }, 60_000);
     }
@@ -67,8 +100,9 @@ export class MobileHubView extends ItemView {
     // ── Capture ───────────────────────────────────────────────────────────────
     private renderCapture(parent: HTMLElement) {
         const section = parent.createEl('div', { cls: 'mina-mh-capture-section' });
+        const card = section.createEl('div', { cls: 'mina-mh-capture-card' });
 
-        const textarea = section.createEl('textarea', {
+        const textarea = card.createEl('textarea', {
             cls: 'mina-mh-capture-textarea',
             attr: { placeholder: "What's on your mind…", rows: '3' }
         }) as HTMLTextAreaElement;
@@ -79,14 +113,23 @@ export class MobileHubView extends ItemView {
             textarea.style.height = `${textarea.scrollHeight}px`;
         };
 
-        textarea.addEventListener('focus', () => { this._capturePending = 1; syncHeight(); });
-        textarea.addEventListener('input', () => {
+        // Track focus session to safely decrement _capturePending on blur-without-type
+        let captureFocused = false;
+
+        textarea.addEventListener('focus', () => {
+            if (!captureFocused) { captureFocused = true; this._capturePending++; }
             syncHeight();
-            this._capturePending = textarea.value.trim().length > 0 ? 1 : 0;
         });
+        textarea.addEventListener('blur', () => {
+            if (captureFocused && textarea.value.trim().length === 0) {
+                captureFocused = false;
+                this._capturePending = Math.max(0, this._capturePending - 1);
+            }
+        });
+        textarea.addEventListener('input', syncHeight);
         textarea.addEventListener('keyup', syncHeight);
 
-        const chipRow = section.createEl('div', { cls: 'mina-mh-chip-row' });
+        const chipRow = card.createEl('div', { cls: 'mina-mh-chip-row' });
         let contexts: string[] = [];
 
         const addChip = (tag: string) => {
@@ -96,14 +139,19 @@ export class MobileHubView extends ItemView {
             chip.addEventListener('click', () => { contexts = contexts.filter(c => c !== tag); chip.remove(); });
         };
 
-        attachInlineTriggers(this.app, textarea, () => {}, (tag) => addChip(tag), () => contexts, this.plugin.settings.peopleFolder);
+        attachInlineTriggers(
+            this.app, textarea, () => {},
+            (tag) => addChip(tag),
+            () => (this.plugin.settings.contexts ?? []).filter(c => !contexts.includes(c)),
+            this.plugin.settings.peopleFolder
+        );
         attachMediaPasteHandler(this.app, textarea, () => this.plugin.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments');
 
         const saveThought = async () => {
             const raw = textarea.value.trim();
             if (!raw) return;
             const ctxSnapshot = [...contexts];
-            this._capturePending = 0;
+            if (captureFocused) { captureFocused = false; this._capturePending = Math.max(0, this._capturePending - 1); }
             textarea.value = '';
             textarea.style.height = '';
             textarea.style.overflowY = '';
@@ -117,7 +165,12 @@ export class MobileHubView extends ItemView {
             }
         };
 
-        const footer = section.createEl('div', { cls: 'mina-mh-capture-footer' });
+        const footer = card.createEl('div', { cls: 'mina-mh-capture-footer' });
+
+        const hint = footer.createEl('div', { cls: 'mina-mh-capture-hint' });
+        hint.createEl('span', { cls: 'mina-mh-hint-badge', text: '#' });
+        hint.createEl('span', { cls: 'mina-mh-hint-label', text: 'context' });
+
         const sendBtn = footer.createEl('button', { cls: 'mina-mh-send-btn' });
         const sendIcon = sendBtn.createDiv({ cls: 'mina-mh-send-icon' });
         setIcon(sendIcon, 'lucide-arrow-up');
@@ -128,9 +181,10 @@ export class MobileHubView extends ItemView {
             if (e.key === 'Escape') {
                 textarea.value = '';
                 textarea.style.height = '';
+                textarea.style.overflowY = '';
                 contexts = [];
                 chipRow.empty();
-                this._capturePending = 0;
+                if (captureFocused) { captureFocused = false; this._capturePending = Math.max(0, this._capturePending - 1); }
                 textarea.blur();
             }
         });
@@ -165,21 +219,26 @@ export class MobileHubView extends ItemView {
                     ctxWrap.createEl('span', { text: `#${ctx}`, cls: 'mina-mh-feed-ctx-chip' });
                 }
             }
-            const editBtn = item.createEl('button', { cls: 'mina-mh-feed-edit-btn', attr: { title: 'Edit', 'aria-label': 'Edit thought' } });
+            // 44×44 touch target wrapper around the visual edit button
+            const editTarget = item.createEl('div', { cls: 'mina-mh-edit-target' });
+            const editBtn = editTarget.createEl('button', {
+                cls: 'mina-mh-feed-edit-btn',
+                attr: { 'aria-label': 'Edit thought' }
+            });
             setIcon(editBtn, 'lucide-pencil');
             editBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                this.makeThoughtEditable(item, content, editBtn, t);
+                this.makeThoughtEditable(item, content, editTarget, t);
             });
         }
     }
 
-    private makeThoughtEditable(item: HTMLElement, content: HTMLElement, editBtn: HTMLElement, t: ThoughtEntry) {
+    private makeThoughtEditable(item: HTMLElement, content: HTMLElement, editTarget: HTMLElement, t: ThoughtEntry) {
         if (item.hasClass('is-editing')) return;
         item.addClass('is-editing');
         this._capturePending++;
         content.style.display = 'none';
-        editBtn.style.display = 'none';
+        editTarget.style.display = 'none';
 
         let editContexts = [...(t.context || [])];
         const form = item.createEl('div', { cls: 'mina-edit-form mina-edit-form--mobile' });
@@ -197,7 +256,7 @@ export class MobileHubView extends ItemView {
         const textarea = form.createEl('textarea', { cls: 'mina-edit-textarea mina-edit-textarea--mobile', attr: { rows: '3' } }) as HTMLTextAreaElement;
         textarea.value = t.body || t.title || '';
         const syncH = () => { textarea.style.height = 'auto'; textarea.style.height = `${textarea.scrollHeight}px`; };
-        requestAnimationFrame(() => { syncH(); textarea.focus(); });
+        requestAnimationFrame(() => { syncH(); textarea.focus(); textarea.setSelectionRange(textarea.value.length, textarea.value.length); });
         textarea.addEventListener('input', syncH);
 
         attachInlineTriggers(
@@ -208,27 +267,30 @@ export class MobileHubView extends ItemView {
         );
 
         const actions = form.createEl('div', { cls: 'mina-edit-actions' });
-        const saveBtn = actions.createEl('button', { cls: 'mina-edit-save-btn', text: 'Save' });
+        const saveBtn = actions.createEl('button', { cls: 'mina-edit-save-btn', text: 'Save' }) as HTMLButtonElement;
         const cancelBtn = actions.createEl('button', { cls: 'mina-edit-cancel-btn', text: 'Cancel' });
 
         const exit = (restore: boolean) => {
             item.removeClass('is-editing');
             form.remove();
             this._capturePending = Math.max(0, this._capturePending - 1);
-            if (restore) { content.style.display = ''; editBtn.style.display = ''; }
+            if (restore) { content.style.display = ''; editTarget.style.display = ''; }
         };
 
+        // Save-first: only exit on success, re-enable button on error
         const save = async () => {
             const newText = textarea.value.trim();
             if (!newText) return;
-            exit(false);
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving…';
             try {
                 await this.plugin.vault.editThought(t.filePath, newText, [...editContexts]);
+                exit(false);
                 new Notice('✦ Thought updated', 1200);
             } catch {
                 new Notice('Error updating thought', 2500);
-                content.style.display = '';
-                editBtn.style.display = '';
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save';
             }
         };
 
