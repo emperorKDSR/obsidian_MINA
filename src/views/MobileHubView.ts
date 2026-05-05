@@ -24,20 +24,21 @@ export class MobileHubView extends ItemView {
         const header = this.containerEl.children[0] as HTMLElement;
         if (header) header.style.display = 'none';
 
-        // Keyboard avoidance: shrink root to visual viewport height so the
-        // bottom bar stays above the soft keyboard instead of sliding behind it.
+        // Keyboard avoidance: shrink the root's content area when soft keyboard
+        // opens so the flex layout keeps the bar visible above the keyboard.
+        // Uses padding-bottom + box-sizing:border-box on root — safer than
+        // resizing contentEl.style.height which can exceed parent bounds.
         if (Platform.isMobile && window.visualViewport) {
             const vp = window.visualViewport;
             this._viewportHandler = () => {
                 const kbOffset = Math.max(0, window.innerHeight - vp.height - vp.offsetTop);
                 this.contentEl.style.setProperty('--mina-keyboard-offset', `${kbOffset}px`);
-                // Resize root to the visible viewport — flex layout then naturally
-                // keeps the bar visible just above the keyboard.
-                if (kbOffset > 0) {
-                    this.contentEl.style.height = `${vp.height}px`;
-                } else {
-                    this.contentEl.style.height = '';
-                }
+                // Inline !important so it overrides our CSS `padding:0 !important`
+                this.contentEl.style.setProperty(
+                    'padding-bottom',
+                    kbOffset > 0 ? `${kbOffset}px` : '0',
+                    'important'
+                );
             };
             vp.addEventListener('resize', this._viewportHandler);
             vp.addEventListener('scroll', this._viewportHandler);
@@ -61,8 +62,8 @@ export class MobileHubView extends ItemView {
         const root = this.contentEl;
         root.empty();
         root.addClass('mina-mh-root');
-        // Inline style overrides Obsidian's .view-content mobile padding
-        root.style.padding = '0';
+        // Inline !important beats Obsidian's .view-content mobile padding (incl. safe-area-inset-top)
+        root.style.setProperty('padding', '0', 'important');
 
         if (!Platform.isMobile) {
             root.createEl('div', {
@@ -297,6 +298,9 @@ export class MobileHubView extends ItemView {
             currentX = 0;
             active   = true;
             item.addClass('mina-mh-feed-item--dragging');
+            // Stop propagation so Obsidian's document-level sidebar swipe
+            // gesture doesn't also fire when the user swipes a feed card
+            e.stopPropagation();
         }, { passive: true });
 
         card.addEventListener('touchmove', (e: TouchEvent) => {
@@ -311,6 +315,7 @@ export class MobileHubView extends ItemView {
             }
 
             e.preventDefault(); // Block vertical scroll during confirmed horizontal swipe
+            e.stopPropagation();
             currentX = dx;
 
             // Rubber-band effect beyond REVEAL distance
@@ -331,8 +336,9 @@ export class MobileHubView extends ItemView {
             }
         }, { passive: false });
 
-        card.addEventListener('touchend', () => {
+        card.addEventListener('touchend', (e: TouchEvent) => {
             if (!active) return;
+            e.stopPropagation();
             item.removeClass('mina-mh-feed-item--dragging');
             active = false;
 

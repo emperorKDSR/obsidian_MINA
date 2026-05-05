@@ -4374,16 +4374,22 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   height: 100%;
   overflow: hidden;
   background: var(--mh-surface);
-  /* Override Obsidian's mobile .view-content safe-area padding */
+  /* Override Obsidian's mobile .view-content safe-area padding.
+     box-sizing:border-box so adding padding-bottom for keyboard avoidance
+     shrinks the content area (and thus the wrap) without resizing the element */
   padding: 0 !important;
+  box-sizing: border-box;
 }
 
 .mina-mh-wrap {
   display: flex;
   flex-direction: column;
   height: 100%;
-  /* No overflow:hidden — it causes WKWebView compositing blank on input focus */
-  overflow: clip;
+  overflow: hidden;
+  /* Force own GPU compositing layer — prevents WKWebView blank-screen
+     repaint when textarea gets focus inside overflow:hidden */
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 /* ── Desktop notice ──────────────────────────────────────────── */
