@@ -11,12 +11,22 @@ type PersonItem = TFile | { create: true; name: string };
 export class PersonSuggestModal extends SuggestModal<PersonItem> {
     private onChoose: (file: TFile) => void;
     private peopleFolder: string;
+    private initialQuery: string;
 
-    constructor(app: App, onChoose: (file: TFile) => void, peopleFolder?: string) {
+    constructor(app: App, onChoose: (file: TFile) => void, peopleFolder?: string, initialQuery?: string) {
         super(app);
         this.onChoose = onChoose;
         this.peopleFolder = (peopleFolder || '000 Bin/MINA V2 People').replace(/\\/g, '/');
+        this.initialQuery = initialQuery || '';
         this.setPlaceholder('Search people… or type a name to create');
+    }
+
+    onOpen() {
+        super.onOpen();
+        if (this.initialQuery) {
+            this.inputEl.value = this.initialQuery;
+            this.inputEl.dispatchEvent(new Event('input'));
+        }
     }
 
     getSuggestions(query: string): PersonItem[] {

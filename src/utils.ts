@@ -70,7 +70,7 @@ export function attachInlineTriggers(
         const pos = textArea.selectionStart ?? val.length;
         const before = val.substring(0, pos);
 
-        // @word<space> → NLP date
+        // @word<space> → NLP date first; if not a date, treat as @mention → person wikilink
         const atMatch = before.match(/@(\S+)\s$/);
         if (atMatch) {
             const parsed = parseNaturalDate(atMatch[1]);
@@ -82,6 +82,20 @@ export function attachInlineTriggers(
                 setDueDate(parsed);
                 return;
             }
+            // Not a date → open person picker with the typed word as initial query
+            const word = atMatch[1];
+            const removeFrom = pos - atMatch[0].length;
+            textArea.value = val.substring(0, removeFrom) + val.substring(pos);
+            textArea.setSelectionRange(removeFrom, removeFrom);
+            new PersonSuggestModal(app, (file) => {
+                const link = `[[${file.basename}]] `;
+                const cur = textArea.value;
+                const curPos = textArea.selectionStart ?? removeFrom;
+                textArea.value = cur.substring(0, curPos) + link + cur.substring(curPos);
+                textArea.setSelectionRange(curPos + link.length, curPos + link.length);
+                textArea.focus();
+            }, peopleFolder, word).open();
+            return;
         }
 
         // # at start or after whitespace → open ContextSuggestModal
