@@ -12,8 +12,9 @@ export class DesktopHubView extends ItemView {
     plugin: MinaPlugin;
     isFocusMode: boolean = false;
 
-    // Suppress re-renders while user is mid-capture
+    // Suppress re-renders while user is mid-capture (thought or task)
     _capturePending: number = 0;
+    _taskPending: number = 0;
 
     // Guard against DOM updates after view is closed
     private _closed: boolean = false;
@@ -50,7 +51,7 @@ export class DesktopHubView extends ItemView {
     }
 
     renderView() {
-        if (this._capturePending > 0) return;
+        if (this._capturePending > 0 || this._taskPending > 0) return;
 
         const root = this.containerEl.children[1] as HTMLElement;
         root.empty();
@@ -295,6 +296,13 @@ export class DesktopHubView extends ItemView {
                     ctxWrap.createEl('span', { text: `#${ctx}`, cls: 'mina-dh-feed-ctx-chip' });
                 }
             }
+            const copyBtn = item.createEl('button', { cls: 'mina-dh-copy-btn', attr: { title: 'Copy', 'aria-label': 'Copy thought' } });
+            copyBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+            copyBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                await navigator.clipboard.writeText(t.body || t.title || '');
+                new Notice('✦ Copied', 900);
+            });
         }
     }
 
@@ -307,21 +315,85 @@ export class DesktopHubView extends ItemView {
 
     private renderTaskQuickInput(parent: HTMLElement) {
         const section = parent.createEl('div', { cls: 'mina-dh-task-input-section' });
-        const input = section.createEl('input', {
-            cls: 'mina-dh-task-input',
-            attr: { type: 'text', placeholder: 'Add a task…' }
-        }) as HTMLInputElement;
+        section.addEventListener('click', (e) => {
+            if (e.target !== textarea) textarea.focus();
+        });
 
-        input.addEventListener('keydown', async (e: KeyboardEvent) => {
-            if (e.key !== 'Enter') return;
-            const raw = input.value.trim();
+        const chipRow = section.createEl('div', { cls: 'mina-dh-task-chip-row' });
+        let contexts: string[] = [];
+        let dueDate: string | null = null;
+
+        const addChip = (tag: string) => {
+            if (contexts.includes(tag)) return;
+            contexts.push(tag);
+            const chip = chipRow.createEl('span', { cls: 'mina-dh-chip', text: `#${tag}` });
+            chip.addEventListener('click', () => {
+                contexts = contexts.filter(c => c !== tag);
+                chip.remove();
+            });
+        };
+
+        const textarea = section.createEl('textarea', {
+            cls: 'mina-dh-task-textarea',
+            attr: { placeholder: 'Add a task… (@due, #ctx, /person, [[link)', rows: '1' }
+        }) as HTMLTextAreaElement;
+
+        const syncHeight = () => {
+            textarea.style.height = 'auto';
+            textarea.style.overflowY = 'hidden';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        };
+
+        textarea.addEventListener('focus', () => { this._taskPending = 1; syncHeight(); });
+        textarea.addEventListener('input', () => {
+            syncHeight();
+            this._taskPending = textarea.value.trim().length > 0 ? 1 : 0;
+        });
+        textarea.addEventListener('keyup', () => syncHeight());
+
+        attachInlineTriggers(
+            this.app,
+            textarea,
+            (d) => { dueDate = d; },
+            (tag) => addChip(tag),
+            () => contexts,
+            this.plugin.settings.peopleFolder,
+        );
+        attachMediaPasteHandler(
+            this.app,
+            textarea,
+            () => this.plugin.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments'
+        );
+
+        const saveTask = async () => {
+            const raw = textarea.value.trim();
             if (!raw) return;
-            input.value = '';
+            const ctxSnapshot = [...contexts];
+            const due = dueDate;
+            this._taskPending = 0;
+            textarea.value = '';
+            textarea.style.height = '';
+            textarea.style.overflowY = '';
+            contexts = [];
+            dueDate = null;
+            chipRow.empty();
             try {
-                await this.plugin.vault.createTaskFile(raw, []);
+                await this.plugin.vault.createTaskFile(raw, ctxSnapshot, due || undefined);
                 new Notice('✓ Task added', 1000);
             } catch {
                 new Notice('Error saving task', 2000);
+            }
+        };
+
+        textarea.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveTask(); }
+            if (e.key === 'Escape') {
+                textarea.value = '';
+                contexts = [];
+                dueDate = null;
+                chipRow.empty();
+                this._taskPending = 0;
+                textarea.blur();
             }
         });
     }
@@ -392,6 +464,14 @@ export class DesktopHubView extends ItemView {
                     cls: `mina-dh-task-due${isOverdue ? ' is-overdue' : ''}`
                 });
             }
+
+            const copyBtn = item.createEl('button', { cls: 'mina-dh-copy-btn', attr: { title: 'Copy', 'aria-label': 'Copy task' } });
+            copyBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+            copyBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                await navigator.clipboard.writeText(task.title);
+                new Notice('✦ Copied', 900);
+            });
         }
     }
 }
