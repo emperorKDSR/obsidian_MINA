@@ -4400,11 +4400,9 @@ body.is-mobile .mina-syn-float-bar{position:fixed}.modal.mina-zen-capture .modal
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  padding-top: max(12px, env(safe-area-inset-top, 0px));
-  /* Bottom padding clears the flex bar; updated by JS when keyboard opens */
+  padding-top: 8px;
+  /* Bottom padding clears the flex bar + home indicator; updated by JS when keyboard opens */
   padding-bottom: calc(var(--mh-bar-height) + max(16px, env(safe-area-inset-bottom, 0px)));
-  padding-left:  env(safe-area-inset-left, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
 }
 
 /* ── Feed Empty ──────────────────────────────────────────────── */
