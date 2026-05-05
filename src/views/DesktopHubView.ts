@@ -122,6 +122,7 @@ export class DesktopHubView extends ItemView {
             {
                 title: 'ACTION',
                 items: [
+                    { label: 'Search', icon: 'lucide-search', tab: 'search' },
                     { label: 'Focus', icon: FOCUS_ICON_ID, tab: 'focus' },
                     { label: 'Synthesis', icon: SYNTHESIS_ICON_ID, tab: 'synthesis' },
                     { label: 'Journal', icon: JOURNAL_ICON_ID, tab: 'journal' },
@@ -168,7 +169,10 @@ export class DesktopHubView extends ItemView {
                 const iconWrap = btn.createEl('span', { cls: 'mina-dh-nav-icon' });
                 setIcon(iconWrap, item.icon);
                 btn.createEl('span', { text: item.label, cls: 'mina-dh-nav-label' });
-                btn.addEventListener('click', () => this.plugin.activateView(item.tab, false));
+                btn.addEventListener('click', () => {
+                    if (item.tab === 'search') { this.plugin.activateSearchView(); }
+                    else { this.plugin.activateView(item.tab, false); }
+                });
             }
         }
     }

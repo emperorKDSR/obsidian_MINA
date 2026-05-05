@@ -3,6 +3,7 @@ import { MinaSettings } from './types';
 export const VIEW_TYPE_MINA = "mina-v2-view";
 export const VIEW_TYPE_DESKTOP_HUB = "mina-desktop-hub";
 export const VIEW_TYPE_MOBILE_HUB = "mina-mobile-hub";
+export const VIEW_TYPE_SEARCH = "mina-search-view";
 
 // Mobile Hub ribbon icon — smartphone with capture indicator
 export const MOBILE_HUB_ICON_ID = "mina-mobile-hub-icon";
