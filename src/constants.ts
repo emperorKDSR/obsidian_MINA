@@ -1,11 +1,11 @@
-import { MinaSettings } from './types';
+import { DiwaSettings } from './types';
 
-export const VIEW_TYPE_MINA = "mina-v2-view";
-export const VIEW_TYPE_DESKTOP_HUB = "mina-desktop-hub";
-export const VIEW_TYPE_SEARCH = "mina-search-view";
+export const VIEW_TYPE_DIWA = "diwa-v2-view";
+export const VIEW_TYPE_DESKTOP_HUB = "diwa-desktop-hub";
+export const VIEW_TYPE_SEARCH = "diwa-search-view";
 
 // Desktop Hub ribbon icon — three-pane cockpit layout
-export const DESKTOP_HUB_ICON_ID = "mina-desktop-hub-icon";
+export const DESKTOP_HUB_ICON_ID = "diwa-desktop-hub-icon";
 export const DESKTOP_HUB_ICON_SVG = `<g transform="translate(8,8) scale(3.3)">
     <rect x="2" y="3" width="20" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
     <line x1="8" y1="3" x2="8" y2="17" stroke="currentColor" stroke-width="1" stroke-dasharray="0"/>
@@ -16,7 +16,7 @@ export const DESKTOP_HUB_ICON_SVG = `<g transform="translate(8,8) scale(3.3)">
 </g>`;
 
 // Custom icon — Tactical reticle (precision targeting, cockpit HUD aesthetic)
-export const KATANA_ICON_ID = "mina-katana";
+export const KATANA_ICON_ID = "diwa-katana";
 
 // addIcon content — transform maps 24x24 coords into Obsidian's 100×100 icon space
 export const KATANA_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
@@ -37,19 +37,19 @@ export const NINJA_AVATAR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox
     <line x1="17" y1="12" x2="22.5" y2="12"/>
 </svg>`;
 
-export const JOURNAL_ICON_ID = "mina-journal-icon";
+export const JOURNAL_ICON_ID = "diwa-journal-icon";
 export const JOURNAL_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M15 5l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </g>`;
 
-export const DAILY_ICON_ID = "mina-daily-icon";
+export const DAILY_ICON_ID = "diwa-daily-icon";
 export const DAILY_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/>
     <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </g>`;
 
-export const AI_CHAT_ICON_ID = "mina-ai-icon";
+export const AI_CHAT_ICON_ID = "diwa-ai-icon";
 export const AI_CHAT_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <rect x="5" y="6" width="14" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
     <circle cx="9" cy="11" r="1.5" fill="currentColor"/>
@@ -58,20 +58,20 @@ export const AI_CHAT_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <path d="M9 15h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </g>`;
 
-export const TIMELINE_ICON_ID = "mina-timeline-icon";
+export const TIMELINE_ICON_ID = "diwa-timeline-icon";
 export const TIMELINE_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
     <path d="M12 6v6l4 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </g>`;
 
-export const FOCUS_ICON_ID = "mina-focus-icon";
+export const FOCUS_ICON_ID = "diwa-focus-icon";
 export const FOCUS_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
     <circle cx="12" cy="12" r="3" fill="currentColor"/>
     <path d="M12 2v3M12 19v3M2 12h3M19 12h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </g>`;
 
-export const GRUNDFOS_ICON_ID = "mina-grundfos-icon";
+export const GRUNDFOS_ICON_ID = "diwa-grundfos-icon";
 export const GRUNDFOS_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <circle cx="9" cy="14" r="5" fill="none" stroke="currentColor" stroke-width="2"/>
     <path d="M14 14h5M16.5 14v-6M19 8h-2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -79,24 +79,24 @@ export const GRUNDFOS_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <path d="M12 5H6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </g>`;
 
-export const MEMENTO_ICON_ID = "mina-memento-icon";
+export const MEMENTO_ICON_ID = "diwa-memento-icon";
 export const MEMENTO_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <path d="M5 2h14M5 22h14M5 2l7 8 7-8M5 22l7-8 7 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </g>`;
 
-export const TASK_ICON_ID = "mina-task-icon";
+export const TASK_ICON_ID = "diwa-task-icon";
 export const TASK_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <polyline points="9 11 12 14 22 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </g>`;
 
-export const PF_ICON_ID = "mina-pf-icon";
+export const PF_ICON_ID = "diwa-pf-icon";
 export const PF_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <line x1="12" y1="1" x2="12" y2="23" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </g>`;
 
-export const VOICE_ICON_ID = "mina-voice-icon";
+export const VOICE_ICON_ID = "diwa-voice-icon";
 export const VOICE_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M19 10v1a7 7 0 0 1-14 0v-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -104,26 +104,26 @@ export const VOICE_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <line x1="8" y1="22" x2="16" y2="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </g>`;
 
-export const SETTINGS_ICON_ID = "mina-settings-icon";
+export const SETTINGS_ICON_ID = "diwa-settings-icon";
 export const SETTINGS_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V11a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </g>`;
 
-export const HOME_ICON_ID = "mina-home-icon";
+export const HOME_ICON_ID = "diwa-home-icon";
 // Crown — fits the Emperor / Personal OS brand
 export const HOME_ICON_SVG = `<path fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" d="M12 80 L12 50 L30 64 L50 14 L70 64 L88 50 L88 80"/><rect x="10" y="74" width="80" height="12" rx="4" fill="currentColor"/><circle cx="50" cy="14" r="6" fill="currentColor"/><circle cx="12" cy="50" r="5" fill="currentColor"/><circle cx="88" cy="50" r="5" fill="currentColor"/>`;
 
-export const PROJECT_ICON_ID = "mina-project-icon";
+export const PROJECT_ICON_ID = "diwa-project-icon";
 export const PROJECT_ICON_SVG = `<g transform="translate(10,10) scale(3.5)"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>`;
 
-export const SYNTHESIS_ICON_ID = "mina-synthesis-icon";
+export const SYNTHESIS_ICON_ID = "diwa-synthesis-icon";
 export const SYNTHESIS_ICON_SVG = `<g transform="translate(10,10) scale(3.5)"><path d="M9 18h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10 22h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 2a7 7 0 0 0-7 7c0 2.32 1.25 4.34 3.12 5.5L9 18h6l.88-3.5C17.75 13.34 19 11.32 19 9a7 7 0 0 0-7-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>`;
 
-export const COMPASS_ICON_ID = "mina-compass-icon";
+export const COMPASS_ICON_ID = "diwa-compass-icon";
 export const COMPASS_ICON_SVG = `<g transform="translate(10,10) scale(3.5)"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>`;
 
-export const REVIEW_ICON_ID = "mina-review-icon";
+export const REVIEW_ICON_ID = "diwa-review-icon";
 export const REVIEW_ICON_SVG = `<g transform="translate(10,10) scale(3.5)"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16" y1="2" x2="16" y2="6" fill="none" stroke="currentColor" stroke-width="2"/><line x1="8" y1="2" x2="8" y2="6" fill="none" stroke="currentColor" stroke-width="2"/><line x1="3" y1="10" x2="21" y2="10" fill="none" stroke="currentColor" stroke-width="2"/><polyline points="9 16 11 18 15 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>`;
 
 // Action Icons (Simple paths for 16x16 viewbox)
@@ -138,24 +138,24 @@ export const ICON_EYE = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" 
 export const ICON_EYE_OFF = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
 export const ICON_CHECKLIST = '<polyline points="9 11 12 14 22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
 
-export const DEFAULT_SETTINGS: MinaSettings = {
+export const DEFAULT_SETTINGS: DiwaSettings = {
     captureFolder: '000 Bin',
-	captureFilePath: 'mina_v2.md',
-    tasksFilePath: 'mina_2.md',
-    thoughtsFolder: '000 Bin/MINA V2',
-    tasksFolder: '000 Bin/MINA V2 Tasks',
-    pfFolder: '000 Bin/MINA V2 PF',
+	captureFilePath: 'diwa_v2.md',
+    tasksFilePath: 'diwa_2.md',
+    thoughtsFolder: '000 Bin/DIWA V2',
+    tasksFolder: '000 Bin/DIWA V2 Tasks',
+    pfFolder: '000 Bin/DIWA V2 PF',
 	dateFormat: 'YYYY-MM-DD',
     timeFormat: 'HH:mm',
-    contexts: [], 
+    contexts: [],
     hiddenContexts: [],
     selectedContexts: [],
     geminiApiKey: '',
     geminiModel: 'gemini-1.5-pro',
     maxOutputTokens: 65536,
     newNoteFolder: '000 Bin',
-    voiceMemoFolder: '000 Bin/MINA V2 Voice',
-    aiChatFolder: '000 Bin/MINA V2 AI Chat',
+    voiceMemoFolder: '000 Bin/DIWA V2 Voice',
+    aiChatFolder: '000 Bin/DIWA V2 AI Chat',
     transcriptionLanguage: 'English',
     dailySectionStates: {},
     showDailySections: true,
@@ -177,7 +177,7 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     lifeExpectancy: 90,
     customModes: [],
     customModeOrders: {},
-    habitsFolder: '000 Bin/MINA V2 Habits',
+    habitsFolder: '000 Bin/DIWA V2 Habits',
     habits: [],
     weeklyGoals: [],
     monthlyGoals: [],
@@ -185,10 +185,10 @@ export const DEFAULT_SETTINGS: MinaSettings = {
     northStarGoals: [],
     enableAutoClassification: false,
     lifeMission: '',
-    attachmentsFolder: '000 Bin/MINA V2 Attachments',
+    attachmentsFolder: '000 Bin/DIWA V2 Attachments',
     projectsFolder: 'Projects',
-    reviewsFolder: '000 Bin/MINA V2 Reviews',
+    reviewsFolder: '000 Bin/DIWA V2 Reviews',
     reminderHabitsEnabled: true,
     reminderTasksEnabled: true,
-    peopleFolder: '000 Bin/MINA V2 People',
+    peopleFolder: '000 Bin/DIWA V2 People',
 }
