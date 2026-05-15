@@ -1,6 +1,6 @@
 import { DiwaSettings } from './types';
 
-export const VIEW_TYPE_DIWA = "diwa-v2-view";
+export const VIEW_TYPE_DIWA = "diwa-view";
 export const VIEW_TYPE_DESKTOP_HUB = "diwa-desktop-hub";
 export const VIEW_TYPE_SEARCH = "diwa-search-view";
 
@@ -140,11 +140,11 @@ export const ICON_CHECKLIST = '<polyline points="9 11 12 14 22 4" stroke="curren
 
 export const DEFAULT_SETTINGS: DiwaSettings = {
     captureFolder: '000 Bin',
-	captureFilePath: 'diwa_v2.md',
-    tasksFilePath: 'diwa_2.md',
-    thoughtsFolder: '000 Bin/DIWA V2',
-    tasksFolder: '000 Bin/DIWA V2 Tasks',
-    pfFolder: '000 Bin/DIWA V2 PF',
+	captureFilePath: 'diwa.md',
+    tasksFilePath: 'diwa_tasks.md',
+    thoughtsFolder: '000 Bin/DIWA',
+    tasksFolder: '000 Bin/DIWA Tasks',
+    pfFolder: '000 Bin/DIWA PF',
 	dateFormat: 'YYYY-MM-DD',
     timeFormat: 'HH:mm',
     contexts: [],
@@ -154,8 +154,8 @@ export const DEFAULT_SETTINGS: DiwaSettings = {
     geminiModel: 'gemini-1.5-pro',
     maxOutputTokens: 65536,
     newNoteFolder: '000 Bin',
-    voiceMemoFolder: '000 Bin/DIWA V2 Voice',
-    aiChatFolder: '000 Bin/DIWA V2 AI Chat',
+    voiceMemoFolder: '000 Bin/DIWA Voice',
+    aiChatFolder: '000 Bin/DIWA AI Chat',
     transcriptionLanguage: 'English',
     dailySectionStates: {},
     showDailySections: true,
@@ -177,7 +177,7 @@ export const DEFAULT_SETTINGS: DiwaSettings = {
     lifeExpectancy: 90,
     customModes: [],
     customModeOrders: {},
-    habitsFolder: '000 Bin/DIWA V2 Habits',
+    habitsFolder: '000 Bin/DIWA Habits',
     habits: [],
     weeklyGoals: [],
     monthlyGoals: [],
@@ -185,11 +185,11 @@ export const DEFAULT_SETTINGS: DiwaSettings = {
     northStarGoals: [],
     enableAutoClassification: false,
     lifeMission: '',
-    attachmentsFolder: '000 Bin/DIWA V2 Attachments',
+    attachmentsFolder: '000 Bin/DIWA Attachments',
     projectsFolder: 'Projects',
-    reviewsFolder: '000 Bin/DIWA V2 Reviews',
+    reviewsFolder: '000 Bin/DIWA Reviews',
     reminderHabitsEnabled: true,
     reminderTasksEnabled: true,
-    peopleFolder: '000 Bin/DIWA V2 People',
+    peopleFolder: '000 Bin/DIWA People',
 }
 
