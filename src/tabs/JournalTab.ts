@@ -28,42 +28,42 @@ export class JournalTab extends BaseTab {
 
         const isMobilePhone = Platform.isMobile && !isTablet();
 
-        const root = container.createEl('div', { cls: 'mina-journal-root' });
+        const root = container.createEl('div', { cls: 'diwa-journal-root' });
         if (isMobilePhone) root.addClass('has-compose-bar');
-        const scroll = root.createEl('div', { cls: 'mina-journal-scroll' });
+        const scroll = root.createEl('div', { cls: 'diwa-journal-scroll' });
 
         // ── Nav row ───────────────────────────────────────────────────────
-        const navRow = scroll.createEl('div', { cls: 'mina-journal-nav-row' });
+        const navRow = scroll.createEl('div', { cls: 'diwa-journal-nav-row' });
         this.renderHomeIcon(navRow);
         if (!isMobilePhone) {
-            const newBtn = navRow.createEl('button', { cls: 'mina-journal-new-btn' });
+            const newBtn = navRow.createEl('button', { cls: 'diwa-journal-new-btn' });
             const btnIcon = newBtn.createSpan(); setIcon(btnIcon, 'lucide-pencil');
             newBtn.createSpan({ text: 'New Entry' });
             newBtn.addEventListener('click', () => this._openNewEntry());
         }
 
         // ── Title row (header + FAB pill inline on mobile) ────────────────
-        const titleRow = scroll.createEl('div', { cls: 'mina-journal-title-row' });
-        titleRow.createEl('h2', { text: 'Journal', cls: 'mina-journal-title' });
+        const titleRow = scroll.createEl('div', { cls: 'diwa-journal-title-row' });
+        titleRow.createEl('h2', { text: 'Journal', cls: 'diwa-journal-title' });
         if (isMobilePhone) {
-            const fab = titleRow.createEl('button', { cls: 'mina-journal-fab', attr: { 'aria-label': 'New entry' } });
+            const fab = titleRow.createEl('button', { cls: 'diwa-journal-fab', attr: { 'aria-label': 'New entry' } });
             setIcon(fab, 'lucide-pencil');
-            fab.createSpan({ text: 'New Entry', cls: 'mina-journal-fab-label' });
+            fab.createSpan({ text: 'New Entry', cls: 'diwa-journal-fab-label' });
             fab.addEventListener('click', () => this._openNewEntry());
         }
-        scroll.createEl('p', { text: 'All entries', cls: 'mina-journal-subtitle' });
+        scroll.createEl('p', { text: 'All entries', cls: 'diwa-journal-subtitle' });
 
         // ── Stats strip ───────────────────────────────────────────────────
         const thisMonth = moment().format('YYYY-MM');
         const monthCount = allEntries.filter(e => e.day && e.day.startsWith(thisMonth)).length;
         const streak = this._calcStreak(allEntries);
-        const statsRow = scroll.createEl('div', { cls: 'mina-journal-stats' });
+        const statsRow = scroll.createEl('div', { cls: 'diwa-journal-stats' });
         this._stat(statsRow, String(allEntries.length), 'Entries');
         this._stat(statsRow, String(monthCount), 'This Month');
         this._stat(statsRow, streak > 0 ? `${streak} 🔥` : '—', 'Streak');
 
         // ── List ──────────────────────────────────────────────────────────
-        const listEl = scroll.createEl('div', { cls: 'mina-journal-list' });
+        const listEl = scroll.createEl('div', { cls: 'diwa-journal-list' });
         const renderList = () => {
             listEl.empty();
             if (allEntries.length === 0) {
@@ -83,7 +83,7 @@ export class JournalTab extends BaseTab {
             const label = this._groupLabel(entry.day || entry.created.split(' ')[0], today, yesterday);
             if (label !== currentGroup) {
                 currentGroup = label;
-                listEl.createEl('div', { cls: 'mina-journal-group-header', text: label });
+                listEl.createEl('div', { cls: 'diwa-journal-group-header', text: label });
             }
             this._renderCard(listEl, entry);
         }
@@ -105,14 +105,14 @@ export class JournalTab extends BaseTab {
             ? entry.created.split(' ')[1].substring(0, 5)
             : '';
 
-        const card = listEl.createEl('div', { cls: 'mina-journal-card' });
+        const card = listEl.createEl('div', { cls: 'diwa-journal-card' });
 
         // ── Card head: time + actions ─────────────────────────────────────
-        const cardHead = card.createEl('div', { cls: 'mina-journal-card-head' });
-        if (timePart) cardHead.createEl('span', { cls: 'mina-journal-card-time', text: timePart });
-        const actions = cardHead.createEl('div', { cls: 'mina-journal-card-actions' });
+        const cardHead = card.createEl('div', { cls: 'diwa-journal-card-head' });
+        if (timePart) cardHead.createEl('span', { cls: 'diwa-journal-card-time', text: timePart });
+        const actions = cardHead.createEl('div', { cls: 'diwa-journal-card-actions' });
 
-        const editBtn = actions.createEl('button', { cls: 'mina-journal-act-btn', attr: { title: 'Edit entry' } });
+        const editBtn = actions.createEl('button', { cls: 'diwa-journal-act-btn', attr: { title: 'Edit entry' } });
         setIcon(editBtn, 'lucide-pencil');
         editBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -124,7 +124,7 @@ export class JournalTab extends BaseTab {
         });
 
         const delBtn = actions.createEl('button', {
-            cls: 'mina-journal-act-btn mina-journal-act-btn--del', attr: { title: 'Delete entry' }
+            cls: 'diwa-journal-act-btn diwa-journal-act-btn--del', attr: { title: 'Delete entry' }
         });
         setIcon(delBtn, 'lucide-trash-2');
         delBtn.addEventListener('click', (e) => {
@@ -136,7 +136,7 @@ export class JournalTab extends BaseTab {
         });
 
         // ── Body ──────────────────────────────────────────────────────────
-        const bodyEl = card.createEl('div', { cls: 'mina-journal-card-body' });
+        const bodyEl = card.createEl('div', { cls: 'diwa-journal-card-body' });
         MarkdownRenderer.render(this.app, entry.body, bodyEl, entry.filePath, this.view);
         this.hookInternalLinks(bodyEl, entry.filePath);
         this.hookImageZoom(bodyEl);
@@ -145,7 +145,7 @@ export class JournalTab extends BaseTab {
         // Thumbnail images — tap to open full-screen zoomable lightbox
         setTimeout(() => {
             bodyEl.querySelectorAll('img').forEach((img: HTMLElement) => {
-                img.addClass('mina-journal-thumb');
+                img.addClass('diwa-journal-thumb');
                 img.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const src = (img as HTMLImageElement).src;
@@ -157,13 +157,13 @@ export class JournalTab extends BaseTab {
         // ── Footer: context chips + reply count ───────────────────────────
         const visibleCtx = entry.context.filter(c => c !== 'journal');
         if (visibleCtx.length > 0 || entry.children.length > 0) {
-            const footer = card.createEl('div', { cls: 'mina-journal-card-footer' });
+            const footer = card.createEl('div', { cls: 'diwa-journal-card-footer' });
             for (const ctx of visibleCtx) {
-                footer.createEl('span', { cls: 'mina-journal-ctx-chip', text: `#${ctx}` });
+                footer.createEl('span', { cls: 'diwa-journal-ctx-chip', text: `#${ctx}` });
             }
             if (entry.children.length > 0) {
                 footer.createEl('span', {
-                    cls: 'mina-journal-reply-badge',
+                    cls: 'diwa-journal-reply-badge',
                     text: `${entry.children.length} repl${entry.children.length === 1 ? 'y' : 'ies'}`
                 });
             }
@@ -173,17 +173,17 @@ export class JournalTab extends BaseTab {
     // ── INLINE COMPOSE BAR ─────────────────────────────────────────────────
     private _renderComposeBar(root: HTMLElement, scroll: HTMLElement) {
         let contexts: string[] = [];
-        const compose = root.createDiv({ cls: 'mina-journal-compose' });
+        const compose = root.createDiv({ cls: 'diwa-journal-compose' });
 
         // Chips row — appears above input when focused and chips exist
-        const chipsWrap = compose.createDiv({ cls: 'mina-journal-compose-chips' });
+        const chipsWrap = compose.createDiv({ cls: 'diwa-journal-compose-chips' });
         const renderChips = () => {
             chipsWrap.empty();
             const visible = contexts.filter(c => c !== 'journal');
             for (const ctx of visible) {
-                const chip = chipsWrap.createEl('span', { cls: 'mina-jm-chip' });
+                const chip = chipsWrap.createEl('span', { cls: 'diwa-jm-chip' });
                 chip.createSpan({ text: `#${ctx}` });
-                const x = chip.createSpan({ text: '×', cls: 'mina-jm-chip-x' });
+                const x = chip.createSpan({ text: '×', cls: 'diwa-jm-chip-x' });
                 x.addEventListener('click', (e) => {
                     e.stopPropagation();
                     contexts = contexts.filter(c => c !== ctx);
@@ -192,25 +192,25 @@ export class JournalTab extends BaseTab {
             }
         };
 
-        const row = compose.createDiv({ cls: 'mina-journal-compose-row' });
+        const row = compose.createDiv({ cls: 'diwa-journal-compose-row' });
 
         const fileInput = compose.createEl('input', {
             attr: { type: 'file', accept: 'image/*,application/pdf', style: 'display:none' }
         }) as HTMLInputElement;
 
         const attachBtn = row.createEl('button', {
-            cls: 'mina-journal-compose-attach', attr: { title: 'Attach image' }
+            cls: 'diwa-journal-compose-attach', attr: { title: 'Attach image' }
         });
         setIcon(attachBtn, 'lucide-image');
         attachBtn.addEventListener('click', () => fileInput.click());
 
         const textarea = row.createEl('textarea', {
-            cls: 'mina-journal-compose-input',
+            cls: 'diwa-journal-compose-input',
             attr: { placeholder: 'Write a journal entry…', rows: '1' }
         }) as HTMLTextAreaElement;
 
         const sendBtn = row.createEl('button', {
-            cls: 'mina-journal-compose-send', attr: { title: 'Save entry' }
+            cls: 'diwa-journal-compose-send', attr: { title: 'Save entry' }
         }) as HTMLButtonElement;
         setIcon(sendBtn, 'lucide-send');
         sendBtn.disabled = true;
@@ -305,13 +305,13 @@ export class JournalTab extends BaseTab {
 
     // ── FULL-SCREEN IMAGE LIGHTBOX WITH PINCH ZOOM ───────────────────────
     private _openImageLightbox(src: string) {
-        const overlay = document.body.createDiv({ cls: 'mina-journal-lightbox' });
+        const overlay = document.body.createDiv({ cls: 'diwa-journal-lightbox' });
         const imgEl = overlay.createEl('img', {
-            cls: 'mina-journal-lightbox-img',
+            cls: 'diwa-journal-lightbox-img',
             attr: { src }
         }) as HTMLImageElement;
 
-        const closeBtn = overlay.createEl('button', { cls: 'mina-journal-lightbox-close', text: '×' });
+        const closeBtn = overlay.createEl('button', { cls: 'diwa-journal-lightbox-close', text: '×' });
         closeBtn.addEventListener('click', () => overlay.remove());
         overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
 
@@ -380,8 +380,9 @@ export class JournalTab extends BaseTab {
     }
 
     private _stat(parent: HTMLElement, value: string, label: string) {
-        const s = parent.createEl('div', { cls: 'mina-journal-stat' });
-        s.createEl('div', { cls: 'mina-journal-stat-val', text: value });
-        s.createEl('div', { cls: 'mina-journal-stat-lbl', text: label });
+        const s = parent.createEl('div', { cls: 'diwa-journal-stat' });
+        s.createEl('div', { cls: 'diwa-journal-stat-val', text: value });
+        s.createEl('div', { cls: 'diwa-journal-stat-lbl', text: label });
     }
 }
+

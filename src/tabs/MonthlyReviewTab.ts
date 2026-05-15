@@ -12,14 +12,14 @@ export class MonthlyReviewTab extends BaseTab {
     async renderMonthlyReview(container: HTMLElement) {
         container.empty();
 
-        const wrap = container.createEl('div', { cls: 'mina-tab-wrap mina-monthly-wrap' });
+        const wrap = container.createEl('div', { cls: 'diwa-tab-wrap diwa-monthly-wrap' });
 
         // Header
         const now = moment();
         this.renderPageHeader(wrap, 'Monthly Review', now.format('MMMM YYYY'));
 
         // Stats Row
-        const statsRow = wrap.createEl('div', { cls: 'mina-monthly-stats' });
+        const statsRow = wrap.createEl('div', { cls: 'diwa-monthly-stats' });
 
         const monthStart = now.clone().startOf('month').format('YYYY-MM-DD');
         const monthEnd = now.clone().endOf('month').format('YYYY-MM-DD');
@@ -36,10 +36,10 @@ export class MonthlyReviewTab extends BaseTab {
         const processedThoughts = monthThoughts.filter(t => t.synthesized);
 
         const statCard = (label: string, value: string | number, sub?: string, subColor?: string) => {
-            const card = statsRow.createEl('div', { cls: 'mina-monthly-stat-card' });
-            card.createEl('div', { text: String(value), cls: 'mina-monthly-stat-value' });
-            card.createEl('div', { text: label, cls: 'mina-monthly-stat-label' });
-            if (sub) card.createEl('div', { text: sub, cls: 'mina-monthly-stat-sub', attr: { style: subColor ? `color: ${subColor}` : '' } });
+            const card = statsRow.createEl('div', { cls: 'diwa-monthly-stat-card' });
+            card.createEl('div', { text: String(value), cls: 'diwa-monthly-stat-value' });
+            card.createEl('div', { text: label, cls: 'diwa-monthly-stat-label' });
+            if (sub) card.createEl('div', { text: sub, cls: 'diwa-monthly-stat-sub', attr: { style: subColor ? `color: ${subColor}` : '' } });
         };
 
         statCard('Tasks Done', doneTasks.length, `${completionRate}% this month`);
@@ -47,8 +47,8 @@ export class MonthlyReviewTab extends BaseTab {
         statCard('Open Tasks', allOpen.length, 'remaining');
 
         // 3. Habit Adherence — scan all daily files in the current month (QW-01)
-        const habitsSection = wrap.createEl('div', { cls: 'mina-monthly-section' });
-        habitsSection.createEl('h3', { text: 'Habit Adherence', cls: 'mina-section-label' });
+        const habitsSection = wrap.createEl('div', { cls: 'diwa-monthly-section' });
+        habitsSection.createEl('h3', { text: 'Habit Adherence', cls: 'diwa-section-label' });
 
         const habits = (this.settings.habits || []).filter(h => !h.archived);
         if (habits.length === 0) {
@@ -72,18 +72,18 @@ export class MonthlyReviewTab extends BaseTab {
             for (const habit of habits) {
                 const done = habitCounts.get(habit.id) ?? 0;
                 const pct = now.date() > 0 ? Math.round((done / now.date()) * 100) : 0;
-                const row = habitsSection.createEl('div', { cls: 'mina-monthly-habit-row' });
-                row.createEl('span', { text: `${habit.icon || '•'} ${habit.name}`, cls: 'mina-monthly-habit-name' });
-                const right = row.createEl('span', { cls: 'mina-monthly-habit-stats' });
-                right.createEl('span', { text: `${done}/${daysInMonth}`, cls: 'mina-monthly-habit-count' });
+                const row = habitsSection.createEl('div', { cls: 'diwa-monthly-habit-row' });
+                row.createEl('span', { text: `${habit.icon || '•'} ${habit.name}`, cls: 'diwa-monthly-habit-name' });
+                const right = row.createEl('span', { cls: 'diwa-monthly-habit-stats' });
+                right.createEl('span', { text: `${done}/${daysInMonth}`, cls: 'diwa-monthly-habit-count' });
                 const pctColor = pct >= 80 ? 'var(--color-green)' : pct >= 50 ? 'var(--interactive-accent)' : 'var(--text-faint)';
-                right.createEl('span', { text: `${pct}%`, cls: 'mina-monthly-habit-pct', attr: { style: `color: ${pctColor}` } });
+                right.createEl('span', { text: `${pct}%`, cls: 'diwa-monthly-habit-pct', attr: { style: `color: ${pctColor}` } });
             }
         }
 
         // 4. Project Progress
-        const projectsSection = wrap.createEl('div', { cls: 'mina-monthly-section' });
-        projectsSection.createEl('h3', { text: 'Project Progress', cls: 'mina-section-label' });
+        const projectsSection = wrap.createEl('div', { cls: 'diwa-monthly-section' });
+        projectsSection.createEl('h3', { text: 'Project Progress', cls: 'diwa-section-label' });
 
         const projectMap = new Map<string, { open: number; done: number }>();
         allTasks.forEach(t => {
@@ -100,18 +100,18 @@ export class MonthlyReviewTab extends BaseTab {
             Array.from(projectMap.entries()).sort((a, b) => a[0].localeCompare(b[0])).forEach(([name, counts]) => {
                 const total = counts.open + counts.done;
                 const pct = total > 0 ? Math.round((counts.done / total) * 100) : 0;
-                const row = projectsSection.createEl('div', { cls: 'mina-monthly-project-row' });
-                const labelRow = row.createEl('div', { cls: 'mina-monthly-project-header' });
-                labelRow.createEl('span', { text: name, cls: 'mina-monthly-project-name' });
-                labelRow.createEl('span', { text: `${counts.done}/${total} · ${pct}%`, cls: 'mina-monthly-project-stat' });
-                const bar = row.createEl('div', { cls: 'mina-monthly-progress-track' });
-                bar.createEl('div', { cls: 'mina-monthly-progress-fill', attr: { style: `width: ${pct}%` } });
+                const row = projectsSection.createEl('div', { cls: 'diwa-monthly-project-row' });
+                const labelRow = row.createEl('div', { cls: 'diwa-monthly-project-header' });
+                labelRow.createEl('span', { text: name, cls: 'diwa-monthly-project-name' });
+                labelRow.createEl('span', { text: `${counts.done}/${total} · ${pct}%`, cls: 'diwa-monthly-project-stat' });
+                const bar = row.createEl('div', { cls: 'diwa-monthly-progress-track' });
+                bar.createEl('div', { cls: 'diwa-monthly-progress-fill', attr: { style: `width: ${pct}%` } });
             });
         }
 
         // 5. Next Month Focus
-        const focusSection = wrap.createEl('div', { cls: 'mina-monthly-focus' });
-        focusSection.createEl('h3', { text: 'Next Month\'s Focus', cls: 'mina-monthly-focus-title' });
+        const focusSection = wrap.createEl('div', { cls: 'diwa-monthly-focus' });
+        focusSection.createEl('h3', { text: 'Next Month\'s Focus', cls: 'diwa-monthly-focus-title' });
 
         const monthId = now.format('YYYY-MM');
         // Load from MD file first (source of truth), fallback to settings
@@ -124,7 +124,7 @@ export class MonthlyReviewTab extends BaseTab {
             const val = goals[i] || '';
             const inp = focusSection.createEl('input', {
                 type: 'text',
-                cls: 'mina-monthly-goal-input',
+                cls: 'diwa-monthly-goal-input',
                 attr: { placeholder: `Monthly goal ${i + 1}...`, value: val }
             });
             inp.addEventListener('change', async () => {
@@ -137,3 +137,4 @@ export class MonthlyReviewTab extends BaseTab {
         }
     }
 }
+

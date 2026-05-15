@@ -76,20 +76,20 @@ export class ReviewTab extends BaseTab {
     }
 
     private createSection(parent: HTMLElement, id: string, emoji: string, label: string): { section: HTMLElement; body: HTMLElement; toggle: HTMLElement } {
-        const section = parent.createEl('div', { cls: 'mina-review-section' });
-        const header = section.createEl('div', { cls: 'mina-review-section-header' });
+        const section = parent.createEl('div', { cls: 'diwa-review-section' });
+        const header = section.createEl('div', { cls: 'diwa-review-section-header' });
         header.setAttribute('data-section-id', id);
 
-        const left = header.createEl('div', { cls: 'mina-review-section-header-left' });
-        left.createEl('span', { cls: 'mina-review-section-icon', text: emoji });
-        left.createEl('span', { cls: 'mina-review-section-title', text: label });
+        const left = header.createEl('div', { cls: 'diwa-review-section-header-left' });
+        left.createEl('span', { cls: 'diwa-review-section-icon', text: emoji });
+        left.createEl('span', { cls: 'diwa-review-section-title', text: label });
 
-        const toggleEl = header.createEl('span', { cls: 'mina-review-section-toggle' });
+        const toggleEl = header.createEl('span', { cls: 'diwa-review-section-toggle' });
         setIcon(toggleEl, 'chevron-down');
 
-        const body = section.createEl('div', { cls: 'mina-review-section-body' });
+        const body = section.createEl('div', { cls: 'diwa-review-section-body' });
 
-        const storageKey = `mina-review-collapse-${id}`;
+        const storageKey = `diwa-review-collapse-${id}`;
         const isCollapsed = sessionStorage.getItem(storageKey) === 'true';
         if (isCollapsed) {
             body.style.display = 'none';
@@ -159,22 +159,22 @@ export class ReviewTab extends BaseTab {
             this.view.weeklyAiReport = existing.aiReport;
         }
 
-        const wrap = container.createEl('div', { cls: 'mina-review-wrap' });
+        const wrap = container.createEl('div', { cls: 'diwa-review-wrap' });
         wrap.setAttribute('container-type', 'inline-size');
 
         // ── Header ──────────────────────────────────────────────
-        const header = wrap.createEl('div', { cls: 'mina-review-header' });
-        const navRow = header.createEl('div', { cls: 'mina-review-nav-row' });
+        const header = wrap.createEl('div', { cls: 'diwa-review-header' });
+        const navRow = header.createEl('div', { cls: 'diwa-review-nav-row' });
         this.renderHomeIcon(navRow);
-        const dirtyDot = navRow.createEl('span', { cls: 'mina-review-dirty-dot' });
+        const dirtyDot = navRow.createEl('span', { cls: 'diwa-review-dirty-dot' });
         dirtyDot.style.display = 'none';
 
-        header.createEl('h2', { text: 'Weekly Review', cls: 'mina-tab-title' });
-        const subtitleRow = header.createEl('div', { cls: 'mina-review-subtitle-row' });
-        subtitleRow.createEl('span', { cls: 'mina-review-week-label', text: weekLabel });
+        header.createEl('h2', { text: 'Weekly Review', cls: 'diwa-tab-title' });
+        const subtitleRow = header.createEl('div', { cls: 'diwa-review-subtitle-row' });
+        subtitleRow.createEl('span', { cls: 'diwa-review-week-label', text: weekLabel });
         if (existing?.saved) {
             const rel = moment(existing.saved, 'YYYY-MM-DD HH:mm:ss').fromNow();
-            subtitleRow.createEl('span', { cls: 'mina-review-saved-badge', text: `Saved ${rel}` });
+            subtitleRow.createEl('span', { cls: 'diwa-review-saved-badge', text: `Saved ${rel}` });
         }
 
         const markDirty = () => {
@@ -185,27 +185,27 @@ export class ReviewTab extends BaseTab {
         this.renderGlancePanel(wrap, weekId);
 
         // ── Body: two-column on desktop ──────────────────────────
-        const body = wrap.createEl('div', { cls: 'mina-review-body' });
-        const leftCol = body.createEl('div', { cls: 'mina-review-col--left' });
-        const rightCol = body.createEl('div', { cls: 'mina-review-col--right' });
+        const body = wrap.createEl('div', { cls: 'diwa-review-body' });
+        const leftCol = body.createEl('div', { cls: 'diwa-review-col--left' });
+        const rightCol = body.createEl('div', { cls: 'diwa-review-col--right' });
 
         // Wins section
         const { body: winsBody } = this.createSection(leftCol, 'wins', '🏆', 'THIS WEEK\'S WINS');
-        this.createAutoResizeTextarea(winsBody, 'mina-review-textarea', 'What went well this week…', wins, v => { wins = v; markDirty(); });
+        this.createAutoResizeTextarea(winsBody, 'diwa-review-textarea', 'What went well this week…', wins, v => { wins = v; markDirty(); });
 
         // Lessons section
         const { body: lessonsBody } = this.createSection(leftCol, 'lessons', '📚', 'LESSONS LEARNED');
-        this.createAutoResizeTextarea(lessonsBody, 'mina-review-textarea', 'What would you do differently…', lessons, v => { lessons = v; markDirty(); });
+        this.createAutoResizeTextarea(lessonsBody, 'diwa-review-textarea', 'What would you do differently…', lessons, v => { lessons = v; markDirty(); });
 
         // Focus section
         const { body: focusBody } = this.createSection(rightCol, 'focus', '🎯', 'NEXT WEEK\'S FOCUS');
-        const focusList = focusBody.createEl('div', { cls: 'mina-review-focus-list' });
+        const focusList = focusBody.createEl('div', { cls: 'diwa-review-focus-list' });
         const placeholders = ['Primary focus for next week…', 'Secondary focus…', 'Third priority…'];
         const focusInputs: HTMLInputElement[] = [];
         for (let i = 0; i < 3; i++) {
-            const item = focusList.createEl('div', { cls: 'mina-review-focus-item' });
-            item.createEl('span', { cls: 'mina-review-focus-num', text: String(i + 1) });
-            const inp = item.createEl('input', { cls: 'mina-review-input', attr: { type: 'text', placeholder: placeholders[i], value: focus[i] || '' } }) as HTMLInputElement;
+            const item = focusList.createEl('div', { cls: 'diwa-review-focus-item' });
+            item.createEl('span', { cls: 'diwa-review-focus-num', text: String(i + 1) });
+            const inp = item.createEl('input', { cls: 'diwa-review-input', attr: { type: 'text', placeholder: placeholders[i], value: focus[i] || '' } }) as HTMLInputElement;
             inp.addEventListener('input', () => { focus[i] = inp.value; markDirty(); });
             focusInputs.push(inp);
         }
@@ -214,16 +214,16 @@ export class ReviewTab extends BaseTab {
         const { body: habitBody } = this.createSection(rightCol, 'habit-highlight', '💡', 'HABIT HIGHLIGHT');
         const highlightText = this.getHabitHighlightText();
         if (highlightText) {
-            const hlCard = habitBody.createEl('div', { cls: 'mina-review-habit-highlight' });
+            const hlCard = habitBody.createEl('div', { cls: 'diwa-review-habit-highlight' });
             const habits = (this.settings.habits || []).filter(h => !h.archived);
             const found = habits.find(h => highlightText.includes(h.name));
-            hlCard.createEl('span', { cls: 'mina-review-habit-highlight-emoji', text: found?.icon || '💡' });
-            const hlInfo = hlCard.createEl('div', { cls: 'mina-review-habit-highlight-info' });
-            hlInfo.createEl('div', { cls: 'mina-review-habit-name', text: found?.name || 'Top Habit' });
-            hlInfo.createEl('div', { cls: 'mina-review-habit-streak', text: highlightText.split('—')[1]?.trim() || '' });
+            hlCard.createEl('span', { cls: 'diwa-review-habit-highlight-emoji', text: found?.icon || '💡' });
+            const hlInfo = hlCard.createEl('div', { cls: 'diwa-review-habit-highlight-info' });
+            hlInfo.createEl('div', { cls: 'diwa-review-habit-name', text: found?.name || 'Top Habit' });
+            hlInfo.createEl('div', { cls: 'diwa-review-habit-streak', text: highlightText.split('—')[1]?.trim() || '' });
         } else {
             habitBody.createEl('div', {
-                cls: 'mina-review-habit-highlight--empty',
+                cls: 'diwa-review-habit-highlight--empty',
                 text: 'No habit data yet — complete habits to see highlights'
             });
         }
@@ -232,10 +232,10 @@ export class ReviewTab extends BaseTab {
         this._renderWeekPlanSection(wrap, dayPlans, markDirty, () => ({ wins, lessons, focus }));
 
         // ── Save Row ─────────────────────────────────────────────
-        const saveRow = wrap.createEl('div', { cls: 'mina-review-save-row' });
-        const kbdHint = saveRow.createEl('span', { cls: 'mina-review-kbd-hint' });
+        const saveRow = wrap.createEl('div', { cls: 'diwa-review-save-row' });
+        const kbdHint = saveRow.createEl('span', { cls: 'diwa-review-kbd-hint' });
         kbdHint.textContent = Platform.isMacOS ? '⌘↵ to save' : 'Ctrl+↵ to save';
-        const saveBtn = saveRow.createEl('button', { cls: 'mina-review-save-btn', text: '💾  Save Review' });
+        const saveBtn = saveRow.createEl('button', { cls: 'diwa-review-save-btn', text: '💾  Save Review' });
 
         const doSave = async () => {
             if (saveBtn.disabled) return;
@@ -273,15 +273,15 @@ export class ReviewTab extends BaseTab {
         this._renderAiSection(wrap, weekId, dateRange, () => ({ wins, lessons, focus }), doSave);
 
         // ── Previous Week Card ────────────────────────────────────
-        const prevCard = wrap.createEl('div', { cls: 'mina-review-prev-card is-collapsed' });
-        const prevTrigger = prevCard.createEl('div', { cls: 'mina-review-prev-card__trigger' });
-        const prevLeft = prevTrigger.createEl('div', { cls: 'mina-review-prev-card__left' });
-        prevLeft.createEl('span', { cls: 'mina-section-label', text: '📅 PREVIOUS WEEK' });
-        prevLeft.createEl('span', { cls: 'mina-review-prev-week-chip', text: prevWeekLabel });
-        const prevChevron = prevTrigger.createEl('span', { cls: 'mina-review-prev-card__chevron' });
+        const prevCard = wrap.createEl('div', { cls: 'diwa-review-prev-card is-collapsed' });
+        const prevTrigger = prevCard.createEl('div', { cls: 'diwa-review-prev-card__trigger' });
+        const prevLeft = prevTrigger.createEl('div', { cls: 'diwa-review-prev-card__left' });
+        prevLeft.createEl('span', { cls: 'diwa-section-label', text: '📅 PREVIOUS WEEK' });
+        prevLeft.createEl('span', { cls: 'diwa-review-prev-week-chip', text: prevWeekLabel });
+        const prevChevron = prevTrigger.createEl('span', { cls: 'diwa-review-prev-card__chevron' });
         setIcon(prevChevron, 'chevron-down');
 
-        const prevBody = prevCard.createEl('div', { cls: 'mina-review-prev-card__body' });
+        const prevBody = prevCard.createEl('div', { cls: 'diwa-review-prev-card__body' });
         let prevLoaded = false;
 
         prevTrigger.addEventListener('click', async () => {
@@ -292,17 +292,17 @@ export class ReviewTab extends BaseTab {
                 const reviewsRoot = (this.settings.reviewsFolder || '000 Bin/DIWA V2 Reviews').trim();
                 const prevFile = this.app.vault.getAbstractFileByPath(`${reviewsRoot}/Weekly/${prevWeekId}.md`);
                 if (prevFile instanceof TFile) {
-                    prevBody.createEl('span', { cls: 'mina-review-readonly-badge', text: 'READ-ONLY' });
-                    const rendered = prevBody.createEl('div', { cls: 'mina-review-prev-content' });
+                    prevBody.createEl('span', { cls: 'diwa-review-readonly-badge', text: 'READ-ONLY' });
+                    const rendered = prevBody.createEl('div', { cls: 'diwa-review-prev-content' });
                     const content = await this.app.vault.read(prevFile);
                     const bodyOnly = content.replace(/^---\n[\s\S]*?\n---\n/, '').trim();
                     await MarkdownRenderer.render(this.app, bodyOnly, rendered, prevFile.path, this.view);
-                    const openBtn = prevBody.createEl('button', { cls: 'mina-btn-secondary mina-review-prev-open-btn', text: 'Open in Vault →' });
+                    const openBtn = prevBody.createEl('button', { cls: 'diwa-btn-secondary diwa-review-prev-open-btn', text: 'Open in Vault →' });
                     openBtn.addEventListener('click', () => {
                         this.app.workspace.openLinkText(prevFile.path, '', Platform.isMobile ? 'tab' : 'window');
                     });
                 } else {
-                    prevBody.createEl('div', { text: 'No review found for last week.', cls: 'mina-review-prev-empty' });
+                    prevBody.createEl('div', { text: 'No review found for last week.', cls: 'diwa-review-prev-empty' });
                 }
             }
         });
@@ -313,7 +313,7 @@ export class ReviewTab extends BaseTab {
         const { body: planBody } = this.createSection(parent, 'week-plan', '📅', 'NEXT WEEK PLAN');
 
         // Week target toggle
-        const targetRow = planBody.createEl('div', { cls: 'mina-weekplan-target-row' });
+        const targetRow = planBody.createEl('div', { cls: 'diwa-weekplan-target-row' });
         const targetModes: Array<{ key: 'next' | 'this'; label: string }> = [
             { key: 'next', label: 'Next Week' },
             { key: 'this', label: 'This Week' },
@@ -328,7 +328,7 @@ export class ReviewTab extends BaseTab {
                 ? moment().startOf('isoWeek')
                 : moment().add(1, 'week').startOf('isoWeek');
 
-            const grid = planBody.createEl('div', { cls: 'mina-weekplan-grid' });
+            const grid = planBody.createEl('div', { cls: 'diwa-weekplan-grid' });
 
             const dayKeys = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
             for (let d = 0; d < 7; d++) {
@@ -340,23 +340,23 @@ export class ReviewTab extends BaseTab {
                 const dayTasks = Array.from(this.index.taskIndex.values())
                     .filter(t => t.status === 'open' && t.due === dateStr);
 
-                const card = grid.createEl('div', { cls: 'mina-weekplan-day' });
+                const card = grid.createEl('div', { cls: 'diwa-weekplan-day' });
 
                 // Header
-                const header = card.createEl('div', { cls: 'mina-weekplan-day__header' });
-                header.createEl('span', { cls: 'mina-weekplan-day__label', text: dayLabel });
+                const header = card.createEl('div', { cls: 'diwa-weekplan-day__header' });
+                header.createEl('span', { cls: 'diwa-weekplan-day__label', text: dayLabel });
                 if (dayTasks.length > 0) {
                     const countCls = dayTasks.length >= 6
-                        ? 'mina-weekplan-day__count mina-weekplan-day__count--danger'
+                        ? 'diwa-weekplan-day__count diwa-weekplan-day__count--danger'
                         : dayTasks.length >= 4
-                            ? 'mina-weekplan-day__count mina-weekplan-day__count--warn'
-                            : 'mina-weekplan-day__count';
+                            ? 'diwa-weekplan-day__count diwa-weekplan-day__count--warn'
+                            : 'diwa-weekplan-day__count';
                     header.createEl('span', { cls: countCls, text: String(dayTasks.length) });
                 }
 
                 // Collapsible body
-                const cardBody = card.createEl('div', { cls: 'mina-weekplan-day__body' });
-                const storageKey = `mina-weekplan-collapse-${dateStr}`;
+                const cardBody = card.createEl('div', { cls: 'diwa-weekplan-day__body' });
+                const storageKey = `diwa-weekplan-collapse-${dateStr}`;
                 const isCollapsed = sessionStorage.getItem(storageKey) === 'true';
                 if (isCollapsed) cardBody.style.display = 'none';
 
@@ -373,7 +373,7 @@ export class ReviewTab extends BaseTab {
 
                 // Intention input
                 const intentionInput = cardBody.createEl('input', {
-                    cls: 'mina-weekplan-day__intention',
+                    cls: 'diwa-weekplan-day__intention',
                     attr: {
                         type: 'text',
                         placeholder: 'Theme for this day…',
@@ -389,23 +389,23 @@ export class ReviewTab extends BaseTab {
 
                 // Task list
                 if (dayTasks.length > 0) {
-                    const taskList = cardBody.createEl('div', { cls: 'mina-weekplan-day__tasks' });
+                    const taskList = cardBody.createEl('div', { cls: 'diwa-weekplan-day__tasks' });
                     const now = Date.now();
                     dayTasks.forEach(t => {
-                        const taskRow = taskList.createEl('div', { cls: 'mina-weekplan-task' });
+                        const taskRow = taskList.createEl('div', { cls: 'diwa-weekplan-task' });
                         const checkbox = taskRow.createEl('input', {
-                            cls: 'mina-weekplan-task__check',
+                            cls: 'diwa-weekplan-task__check',
                             attr: { type: 'checkbox' }
                         }) as HTMLInputElement;
-                        taskRow.createEl('span', { cls: 'mina-weekplan-task__title', text: t.title });
+                        taskRow.createEl('span', { cls: 'diwa-weekplan-task__title', text: t.title });
                         if (t.priority) {
                             const priBadge = t.priority === 'high' ? '↑H' : t.priority === 'medium' ? '~M' : '↓L';
-                            taskRow.createEl('span', { cls: `mina-weekplan-task__priority mina-weekplan-task__priority--${t.priority}`, text: priBadge });
+                            taskRow.createEl('span', { cls: `diwa-weekplan-task__priority diwa-weekplan-task__priority--${t.priority}`, text: priBadge });
                         }
                         // Show edit icon for recently created tasks (< 120s)
                         const createdMs = moment(t.created, 'YYYY-MM-DD HH:mm:ss').valueOf();
                         if (now - createdMs < 120_000) {
-                            const editIcon = taskRow.createEl('span', { cls: 'mina-weekplan-task__edit', text: '⚙', attr: { title: 'Edit details' } });
+                            const editIcon = taskRow.createEl('span', { cls: 'diwa-weekplan-task__edit', text: '⚙', attr: { title: 'Edit details' } });
                             editIcon.addEventListener('click', (e) => {
                                 e.stopPropagation();
                                 new EditTaskModal(this.view.app, t, this.vault, this.index, () => renderPlan()).open();
@@ -419,29 +419,29 @@ export class ReviewTab extends BaseTab {
                 }
 
                 // Action buttons row
-                const actionsRow = cardBody.createEl('div', { cls: 'mina-weekplan-actions' });
+                const actionsRow = cardBody.createEl('div', { cls: 'diwa-weekplan-actions' });
 
                 // Assign existing task button
-                const assignBtn = actionsRow.createEl('button', { cls: 'mina-weekplan-assign-btn', text: '+ Assign Task' });
+                const assignBtn = actionsRow.createEl('button', { cls: 'diwa-weekplan-assign-btn', text: '+ Assign Task' });
                 assignBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     this._openTaskPicker(cardBody, assignBtn, dateStr, renderPlan);
                 });
 
                 // New task button (Day-Scoped Quick Add)
-                const newTaskBtn = actionsRow.createEl('button', { cls: 'mina-weekplan-new-btn', text: '+ New Task' });
+                const newTaskBtn = actionsRow.createEl('button', { cls: 'diwa-weekplan-new-btn', text: '+ New Task' });
                 newTaskBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     // Toggle off if already open
-                    const existing = cardBody.querySelector('.mina-weekplan-quickadd');
+                    const existing = cardBody.querySelector('.diwa-weekplan-quickadd');
                     if (existing) { existing.remove(); return; }
 
-                    const quickAdd = cardBody.createEl('div', { cls: 'mina-weekplan-quickadd' });
+                    const quickAdd = cardBody.createEl('div', { cls: 'diwa-weekplan-quickadd' });
                     const quickInput = quickAdd.createEl('input', {
-                        cls: 'mina-weekplan-quickadd__input',
+                        cls: 'diwa-weekplan-quickadd__input',
                         attr: { type: 'text', placeholder: 'What needs to happen this day?' }
                     }) as HTMLInputElement;
-                    const submitBtn = quickAdd.createEl('button', { cls: 'mina-weekplan-quickadd__submit', text: '↵' });
+                    const submitBtn = quickAdd.createEl('button', { cls: 'diwa-weekplan-quickadd__submit', text: '↵' });
 
                     const doCreate = async () => {
                         const title = quickInput.value.trim();
@@ -479,12 +479,12 @@ export class ReviewTab extends BaseTab {
                     return d.isSameOrAfter(baseWeek) && d.isBefore(baseWeek.clone().add(7, 'days'));
                 }).length;
             if (totalIntentions === 0 && totalAssigned === 0) {
-                grid.createEl('div', { cls: 'mina-weekplan-empty', text: 'Start with a theme, then assign or create the 1–3 things that make each day a success.' });
+                grid.createEl('div', { cls: 'diwa-weekplan-empty', text: 'Start with a theme, then assign or create the 1–3 things that make each day a success.' });
             }
 
             // AI Week Architect button
-            const aiRow = planBody.createEl('div', { cls: 'mina-weekplan-ai-row' });
-            const aiBtn = aiRow.createEl('button', { cls: 'mina-weekplan-ai-btn', text: '✨ AI Week Architect' });
+            const aiRow = planBody.createEl('div', { cls: 'diwa-weekplan-ai-row' });
+            const aiBtn = aiRow.createEl('button', { cls: 'diwa-weekplan-ai-btn', text: '✨ AI Week Architect' });
             aiBtn.addEventListener('click', async () => {
                 aiBtn.disabled = true;
                 aiBtn.textContent = '⏳ Planning…';
@@ -521,13 +521,13 @@ export class ReviewTab extends BaseTab {
         // Render toggle buttons
         targetModes.forEach(({ key, label }) => {
             const btn = targetRow.createEl('button', {
-                cls: `mina-weekplan-target-btn${this.view.weekPlanTargetMode === key ? ' is-active' : ''}`,
+                cls: `diwa-weekplan-target-btn${this.view.weekPlanTargetMode === key ? ' is-active' : ''}`,
                 text: label,
             });
             btn.addEventListener('click', () => {
                 this.view.weekPlanTargetMode = key;
                 // Re-render toggle active states
-                targetRow.querySelectorAll('.mina-weekplan-target-btn').forEach(b => b.classList.remove('is-active'));
+                targetRow.querySelectorAll('.diwa-weekplan-target-btn').forEach(b => b.classList.remove('is-active'));
                 btn.classList.add('is-active');
                 renderPlan();
             });
@@ -538,7 +538,7 @@ export class ReviewTab extends BaseTab {
 
     private _openTaskPicker(container: HTMLElement, anchorBtn: HTMLElement, targetDate: string, onAssigned: () => void): void {
         // If picker already exists, toggle off
-        const existingPicker = container.querySelector('.mina-weekplan-picker');
+        const existingPicker = container.querySelector('.diwa-weekplan-picker');
         if (existingPicker) { existingPicker.remove(); return; }
 
         const unscheduled = Array.from(this.index.taskIndex.values())
@@ -551,15 +551,15 @@ export class ReviewTab extends BaseTab {
                 return b.lastUpdate - a.lastUpdate;
             });
 
-        const picker = container.createEl('div', { cls: 'mina-weekplan-picker' });
+        const picker = container.createEl('div', { cls: 'diwa-weekplan-picker' });
 
         // Search input
         const searchInput = picker.createEl('input', {
-            cls: 'mina-weekplan-picker__search',
+            cls: 'diwa-weekplan-picker__search',
             attr: { type: 'text', placeholder: 'Search tasks…' }
         }) as HTMLInputElement;
 
-        const list = picker.createEl('div', { cls: 'mina-weekplan-picker__list' });
+        const list = picker.createEl('div', { cls: 'diwa-weekplan-picker__list' });
 
         const renderList = (query: string) => {
             list.empty();
@@ -569,16 +569,16 @@ export class ReviewTab extends BaseTab {
                 : unscheduled;
 
             if (filtered.length === 0) {
-                list.createEl('div', { cls: 'mina-weekplan-picker__empty', text: q ? 'No matching tasks' : 'No unscheduled tasks' });
+                list.createEl('div', { cls: 'diwa-weekplan-picker__empty', text: q ? 'No matching tasks' : 'No unscheduled tasks' });
                 return;
             }
 
             filtered.slice(0, 12).forEach(t => {
-                const item = list.createEl('div', { cls: 'mina-weekplan-picker__item' });
-                item.createEl('span', { cls: 'mina-weekplan-picker__title', text: t.title });
+                const item = list.createEl('div', { cls: 'diwa-weekplan-picker__item' });
+                item.createEl('span', { cls: 'diwa-weekplan-picker__title', text: t.title });
                 if (t.priority) {
                     const priBadge = t.priority === 'high' ? '↑H' : t.priority === 'medium' ? '~M' : '↓L';
-                    item.createEl('span', { cls: `mina-weekplan-picker__priority mina-weekplan-picker__priority--${t.priority}`, text: priBadge });
+                    item.createEl('span', { cls: `diwa-weekplan-picker__priority diwa-weekplan-picker__priority--${t.priority}`, text: priBadge });
                 }
                 item.addEventListener('click', async () => {
                     picker.remove();
@@ -603,16 +603,16 @@ export class ReviewTab extends BaseTab {
         onDone: () => void
     ): void {
         // Remove existing panel
-        container.querySelector('.mina-weekplan-staging')?.remove();
+        container.querySelector('.diwa-weekplan-staging')?.remove();
 
-        const panel = container.createEl('div', { cls: 'mina-weekplan-staging' });
-        const header = panel.createEl('div', { cls: 'mina-weekplan-staging__header' });
-        header.createEl('span', { cls: 'mina-weekplan-staging__title', text: '✨ AI Suggestions' });
+        const panel = container.createEl('div', { cls: 'diwa-weekplan-staging' });
+        const header = panel.createEl('div', { cls: 'diwa-weekplan-staging__header' });
+        header.createEl('span', { cls: 'diwa-weekplan-staging__title', text: '✨ AI Suggestions' });
 
-        const applyAllBtn = header.createEl('button', { cls: 'mina-weekplan-staging__apply-all', text: 'Apply All' });
-        const dismissAllBtn = header.createEl('button', { cls: 'mina-weekplan-staging__dismiss', text: '✕' });
+        const applyAllBtn = header.createEl('button', { cls: 'diwa-weekplan-staging__apply-all', text: 'Apply All' });
+        const dismissAllBtn = header.createEl('button', { cls: 'diwa-weekplan-staging__dismiss', text: '✕' });
 
-        const body = panel.createEl('div', { cls: 'mina-weekplan-staging__body' });
+        const body = panel.createEl('div', { cls: 'diwa-weekplan-staging__body' });
 
         // Track accepted state per item
         const accepted: Map<string, { intention: boolean; tasks: Set<string> }> = new Map();
@@ -626,13 +626,13 @@ export class ReviewTab extends BaseTab {
 
             accepted.set(date, { intention: false, tasks: new Set() });
 
-            const dayRow = body.createEl('div', { cls: 'mina-weekplan-staging__day' });
-            dayRow.createEl('div', { cls: 'mina-weekplan-staging__day-label', text: dayLabel });
+            const dayRow = body.createEl('div', { cls: 'diwa-weekplan-staging__day' });
+            dayRow.createEl('div', { cls: 'diwa-weekplan-staging__day-label', text: dayLabel });
 
             if (plan.intention) {
-                const intentionRow = dayRow.createEl('div', { cls: 'mina-weekplan-staging__item' });
-                intentionRow.createEl('span', { cls: 'mina-weekplan-staging__item-text', text: `🎯 ${plan.intention}` });
-                const acceptBtn = intentionRow.createEl('button', { cls: 'mina-weekplan-staging__accept', text: '✓' });
+                const intentionRow = dayRow.createEl('div', { cls: 'diwa-weekplan-staging__item' });
+                intentionRow.createEl('span', { cls: 'diwa-weekplan-staging__item-text', text: `🎯 ${plan.intention}` });
+                const acceptBtn = intentionRow.createEl('button', { cls: 'diwa-weekplan-staging__accept', text: '✓' });
                 acceptBtn.addEventListener('click', () => {
                     accepted.get(date)!.intention = true;
                     acceptBtn.classList.add('is-accepted');
@@ -642,9 +642,9 @@ export class ReviewTab extends BaseTab {
 
             if (plan.tasks && plan.tasks.length > 0) {
                 plan.tasks.forEach(taskTitle => {
-                    const taskRow = dayRow.createEl('div', { cls: 'mina-weekplan-staging__item' });
-                    taskRow.createEl('span', { cls: 'mina-weekplan-staging__item-text', text: `○ ${taskTitle}` });
-                    const acceptBtn = taskRow.createEl('button', { cls: 'mina-weekplan-staging__accept', text: '✓' });
+                    const taskRow = dayRow.createEl('div', { cls: 'diwa-weekplan-staging__item' });
+                    taskRow.createEl('span', { cls: 'diwa-weekplan-staging__item-text', text: `○ ${taskTitle}` });
+                    const acceptBtn = taskRow.createEl('button', { cls: 'diwa-weekplan-staging__accept', text: '✓' });
                     acceptBtn.addEventListener('click', () => {
                         accepted.get(date)!.tasks.add(taskTitle);
                         acceptBtn.classList.add('is-accepted');
@@ -690,8 +690,8 @@ export class ReviewTab extends BaseTab {
         dismissAllBtn.addEventListener('click', () => panel.remove());
 
         // Add an "Apply Selected" button at the bottom
-        const footer = panel.createEl('div', { cls: 'mina-weekplan-staging__footer' });
-        const applySelectedBtn = footer.createEl('button', { cls: 'mina-weekplan-staging__apply-selected', text: 'Apply Selected' });
+        const footer = panel.createEl('div', { cls: 'diwa-weekplan-staging__footer' });
+        const applySelectedBtn = footer.createEl('button', { cls: 'diwa-weekplan-staging__apply-selected', text: 'Apply Selected' });
         applySelectedBtn.addEventListener('click', applyAccepted);
     }
 
@@ -766,20 +766,20 @@ export class ReviewTab extends BaseTab {
         getFormData: () => { wins: string; lessons: string; focus: string[] },
         doSave: () => Promise<void>
     ): void {
-        const section = parent.createEl('div', { cls: 'mina-review-ai-section' });
-        const sectionHeader = section.createEl('div', { cls: 'mina-review-ai-header' });
-        const titleEl = sectionHeader.createEl('span', { cls: 'mina-review-ai-title' });
-        setIcon(titleEl.createEl('span', { cls: 'mina-review-ai-title-icon' }), 'lucide-sparkles');
+        const section = parent.createEl('div', { cls: 'diwa-review-ai-section' });
+        const sectionHeader = section.createEl('div', { cls: 'diwa-review-ai-header' });
+        const titleEl = sectionHeader.createEl('span', { cls: 'diwa-review-ai-title' });
+        setIcon(titleEl.createEl('span', { cls: 'diwa-review-ai-title-icon' }), 'lucide-sparkles');
         titleEl.createEl('span', { text: 'AI Weekly Brief' });
 
-        const actionsEl = sectionHeader.createEl('div', { cls: 'mina-review-ai-actions' });
+        const actionsEl = sectionHeader.createEl('div', { cls: 'diwa-review-ai-actions' });
 
-        const resultCard = section.createEl('div', { cls: 'mina-review-ai-card' });
+        const resultCard = section.createEl('div', { cls: 'diwa-review-ai-card' });
 
         const showResult = (report: string) => {
             resultCard.removeClass('is-empty');
             resultCard.empty();
-            const content = resultCard.createEl('div', { cls: 'mina-review-ai-content' });
+            const content = resultCard.createEl('div', { cls: 'diwa-review-ai-content' });
             MarkdownRenderer.render(this.app, report, content, '', this.view);
             this.hookInternalLinks(content, '');
         };
@@ -787,16 +787,16 @@ export class ReviewTab extends BaseTab {
         const showLoading = () => {
             resultCard.removeClass('is-empty');
             resultCard.empty();
-            const loadingEl = resultCard.createEl('div', { cls: 'mina-review-ai-loading' });
-            loadingEl.createEl('span', { cls: 'mina-ai-dot' });
-            loadingEl.createEl('span', { cls: 'mina-ai-dot' });
-            loadingEl.createEl('span', { cls: 'mina-ai-dot' });
+            const loadingEl = resultCard.createEl('div', { cls: 'diwa-review-ai-loading' });
+            loadingEl.createEl('span', { cls: 'diwa-ai-dot' });
+            loadingEl.createEl('span', { cls: 'diwa-ai-dot' });
+            loadingEl.createEl('span', { cls: 'diwa-ai-dot' });
         };
 
         const showError = (msg: string) => {
             resultCard.removeClass('is-empty');
             resultCard.empty();
-            resultCard.createEl('div', { cls: 'mina-review-ai-error', text: `⚠ ${msg}` });
+            resultCard.createEl('div', { cls: 'diwa-review-ai-error', text: `⚠ ${msg}` });
         };
 
         // Build action buttons — rebuilt after generate
@@ -804,8 +804,8 @@ export class ReviewTab extends BaseTab {
             actionsEl.empty();
 
             if (hasReport) {
-                const copyBtn = actionsEl.createEl('button', { cls: 'mina-review-ai-action-btn', text: 'Copy' });
-                setIcon(copyBtn.createEl('span', { cls: 'mina-review-ai-btn-icon' }), 'lucide-copy');
+                const copyBtn = actionsEl.createEl('button', { cls: 'diwa-review-ai-action-btn', text: 'Copy' });
+                setIcon(copyBtn.createEl('span', { cls: 'diwa-review-ai-btn-icon' }), 'lucide-copy');
                 copyBtn.addEventListener('click', async () => {
                     try {
                         await navigator.clipboard.writeText(this.view.weeklyAiReport || '');
@@ -815,8 +815,8 @@ export class ReviewTab extends BaseTab {
                     }
                 });
 
-                const saveBtn = actionsEl.createEl('button', { cls: 'mina-review-ai-action-btn', text: 'Save to Review' });
-                setIcon(saveBtn.createEl('span', { cls: 'mina-review-ai-btn-icon' }), 'lucide-save');
+                const saveBtn = actionsEl.createEl('button', { cls: 'diwa-review-ai-action-btn', text: 'Save to Review' });
+                setIcon(saveBtn.createEl('span', { cls: 'diwa-review-ai-btn-icon' }), 'lucide-save');
                 saveBtn.addEventListener('click', async () => {
                     saveBtn.disabled = true;
                     saveBtn.textContent = 'Saving…';
@@ -834,7 +834,7 @@ export class ReviewTab extends BaseTab {
                 });
             }
 
-            const genBtn = actionsEl.createEl('button', { cls: 'mina-review-ai-gen-btn', text: hasReport ? '↺ Regenerate' : '✨ Generate AI Brief' });
+            const genBtn = actionsEl.createEl('button', { cls: 'diwa-review-ai-gen-btn', text: hasReport ? '↺ Regenerate' : '✨ Generate AI Brief' });
             genBtn.addEventListener('click', async () => {
                 genBtn.disabled = true;
                 const { wins, lessons, focus } = getFormData();
@@ -865,19 +865,19 @@ export class ReviewTab extends BaseTab {
     }
 
     private renderGlancePanel(parent: HTMLElement, weekId: string): void {
-        const glance = parent.createEl('div', { cls: 'mina-review-glance' });
+        const glance = parent.createEl('div', { cls: 'diwa-review-glance' });
         if (this.glanceCollapsed) glance.classList.add('is-collapsed');
 
-        const glanceHeader = glance.createEl('div', { cls: 'mina-review-glance__header' });
-        glanceHeader.createEl('span', { cls: 'mina-review-glance__title', text: '⚡ WEEK AT A GLANCE' });
+        const glanceHeader = glance.createEl('div', { cls: 'diwa-review-glance__header' });
+        glanceHeader.createEl('span', { cls: 'diwa-review-glance__title', text: '⚡ WEEK AT A GLANCE' });
 
-        const glanceActions = glanceHeader.createEl('div', { cls: 'mina-review-glance__actions' });
-        const refreshBtn = glanceActions.createEl('button', { cls: 'mina-review-glance__refresh', attr: { title: 'Refresh' } });
+        const glanceActions = glanceHeader.createEl('div', { cls: 'diwa-review-glance__actions' });
+        const refreshBtn = glanceActions.createEl('button', { cls: 'diwa-review-glance__refresh', attr: { title: 'Refresh' } });
         setIcon(refreshBtn, 'refresh-cw');
-        const toggleBtn = glanceActions.createEl('button', { cls: 'mina-review-glance__toggle', attr: { title: 'Collapse' } });
+        const toggleBtn = glanceActions.createEl('button', { cls: 'diwa-review-glance__toggle', attr: { title: 'Collapse' } });
         setIcon(toggleBtn, this.glanceCollapsed ? 'chevron-right' : 'chevron-down');
 
-        const glanceBody = glance.createEl('div', { cls: 'mina-review-glance__body' });
+        const glanceBody = glance.createEl('div', { cls: 'diwa-review-glance__body' });
         const render = () => {
             glanceBody.empty();
             const data = this.computeGlanceData(weekId);
@@ -955,76 +955,77 @@ export class ReviewTab extends BaseTab {
     }
 
     private renderGlanceTasks(parent: HTMLElement, tasks: { completed: TaskEntry[]; overdue: TaskEntry[] }): void {
-        const card = parent.createEl('div', { cls: 'mina-glance-card' });
-        const hdr = card.createEl('div', { cls: 'mina-glance-card__header' });
-        hdr.createEl('span', { cls: 'mina-glance-card__icon', text: '✅' });
-        hdr.createEl('span', { cls: 'mina-glance-card__title', text: 'TASKS' });
+        const card = parent.createEl('div', { cls: 'diwa-glance-card' });
+        const hdr = card.createEl('div', { cls: 'diwa-glance-card__header' });
+        hdr.createEl('span', { cls: 'diwa-glance-card__icon', text: '✅' });
+        hdr.createEl('span', { cls: 'diwa-glance-card__title', text: 'TASKS' });
 
-        const statRow = card.createEl('div', { cls: 'mina-glance-stat-row' });
-        statRow.createEl('span', { cls: 'mina-glance-stat mina-glance-stat--done', text: `${tasks.completed.length} done` });
-        statRow.createEl('span', { cls: 'mina-glance-stat-sep', text: '·' });
-        statRow.createEl('span', { cls: 'mina-glance-stat mina-glance-stat--overdue', text: `${tasks.overdue.length} overdue` });
+        const statRow = card.createEl('div', { cls: 'diwa-glance-stat-row' });
+        statRow.createEl('span', { cls: 'diwa-glance-stat diwa-glance-stat--done', text: `${tasks.completed.length} done` });
+        statRow.createEl('span', { cls: 'diwa-glance-stat-sep', text: '·' });
+        statRow.createEl('span', { cls: 'diwa-glance-stat diwa-glance-stat--overdue', text: `${tasks.overdue.length} overdue` });
 
-        const list = card.createEl('ul', { cls: 'mina-glance-list' });
+        const list = card.createEl('ul', { cls: 'diwa-glance-list' });
         tasks.completed.slice(0, 6).forEach(t => {
-            list.createEl('li', { cls: 'mina-glance-item mina-glance-item--done', text: t.title });
+            list.createEl('li', { cls: 'diwa-glance-item diwa-glance-item--done', text: t.title });
         });
         if (tasks.completed.length === 0 && tasks.overdue.length === 0) {
-            list.createEl('li', { cls: 'mina-glance-item mina-glance-item--empty', text: 'No task activity this week' });
+            list.createEl('li', { cls: 'diwa-glance-item diwa-glance-item--empty', text: 'No task activity this week' });
         }
     }
 
     private renderGlanceHabits(parent: HTMLElement, habits: { habit: { id: string; name: string; icon: string }; count: number }[]): void {
         if (habits.length === 0) return;
-        const card = parent.createEl('div', { cls: 'mina-glance-card' });
-        const hdr = card.createEl('div', { cls: 'mina-glance-card__header' });
-        hdr.createEl('span', { cls: 'mina-glance-card__icon', text: '🔁' });
-        hdr.createEl('span', { cls: 'mina-glance-card__title', text: 'HABITS' });
+        const card = parent.createEl('div', { cls: 'diwa-glance-card' });
+        const hdr = card.createEl('div', { cls: 'diwa-glance-card__header' });
+        hdr.createEl('span', { cls: 'diwa-glance-card__icon', text: '🔁' });
+        hdr.createEl('span', { cls: 'diwa-glance-card__title', text: 'HABITS' });
 
         habits.forEach(({ habit, count }) => {
-            const row = card.createEl('div', { cls: 'mina-glance-habit-row' });
-            row.createEl('span', { cls: 'mina-glance-habit-icon', text: habit.icon });
-            row.createEl('span', { cls: 'mina-glance-habit-name', text: habit.name });
-            const barWrap = row.createEl('div', { cls: 'mina-glance-habit-bar' });
-            const fill = barWrap.createEl('div', { cls: 'mina-glance-habit-fill' });
+            const row = card.createEl('div', { cls: 'diwa-glance-habit-row' });
+            row.createEl('span', { cls: 'diwa-glance-habit-icon', text: habit.icon });
+            row.createEl('span', { cls: 'diwa-glance-habit-name', text: habit.name });
+            const barWrap = row.createEl('div', { cls: 'diwa-glance-habit-bar' });
+            const fill = barWrap.createEl('div', { cls: 'diwa-glance-habit-fill' });
             fill.style.width = `${Math.round((count / 7) * 100)}%`;
-            row.createEl('span', { cls: 'mina-glance-habit-count', text: `${count}/7` });
+            row.createEl('span', { cls: 'diwa-glance-habit-count', text: `${count}/7` });
         });
     }
 
     private renderGlanceProjects(parent: HTMLElement, projects: ProjectEntry[]): void {
         if (projects.length === 0) return;
-        const card = parent.createEl('div', { cls: 'mina-glance-card' });
-        const hdr = card.createEl('div', { cls: 'mina-glance-card__header' });
-        hdr.createEl('span', { cls: 'mina-glance-card__icon', text: '🗂' });
-        hdr.createEl('span', { cls: 'mina-glance-card__title', text: 'ACTIVE PROJECTS' });
+        const card = parent.createEl('div', { cls: 'diwa-glance-card' });
+        const hdr = card.createEl('div', { cls: 'diwa-glance-card__header' });
+        hdr.createEl('span', { cls: 'diwa-glance-card__icon', text: '🗂' });
+        hdr.createEl('span', { cls: 'diwa-glance-card__title', text: 'ACTIVE PROJECTS' });
 
         projects.forEach(p => {
-            const row = card.createEl('div', { cls: 'mina-glance-project-row' });
-            const dot = row.createEl('span', { cls: 'mina-glance-project-dot' });
+            const row = card.createEl('div', { cls: 'diwa-glance-project-row' });
+            const dot = row.createEl('span', { cls: 'diwa-glance-project-dot' });
             if (p.color) dot.style.background = p.color;
-            row.createEl('span', { cls: 'mina-glance-project-name', text: p.name });
-            row.createEl('span', { cls: `mina-glance-project-status mina-glance-project-status--${p.status}`, text: p.status });
+            row.createEl('span', { cls: 'diwa-glance-project-name', text: p.name });
+            row.createEl('span', { cls: `diwa-glance-project-status diwa-glance-project-status--${p.status}`, text: p.status });
         });
     }
 
     private renderGlanceFinance(parent: HTMLElement, finance: { paid: DueEntry[]; overdue: DueEntry[] }): void {
         if (finance.paid.length === 0 && finance.overdue.length === 0) return;
-        const card = parent.createEl('div', { cls: 'mina-glance-card' });
-        const hdr = card.createEl('div', { cls: 'mina-glance-card__header' });
-        hdr.createEl('span', { cls: 'mina-glance-card__icon', text: '💳' });
-        hdr.createEl('span', { cls: 'mina-glance-card__title', text: 'FINANCE' });
+        const card = parent.createEl('div', { cls: 'diwa-glance-card' });
+        const hdr = card.createEl('div', { cls: 'diwa-glance-card__header' });
+        hdr.createEl('span', { cls: 'diwa-glance-card__icon', text: '💳' });
+        hdr.createEl('span', { cls: 'diwa-glance-card__title', text: 'FINANCE' });
 
         finance.paid.forEach(d => {
-            const row = card.createEl('div', { cls: 'mina-glance-finance-row mina-glance-finance-row--paid' });
-            row.createEl('span', { cls: 'mina-glance-finance-icon', text: '✓' });
-            row.createEl('span', { cls: 'mina-glance-finance-name', text: d.title });
+            const row = card.createEl('div', { cls: 'diwa-glance-finance-row diwa-glance-finance-row--paid' });
+            row.createEl('span', { cls: 'diwa-glance-finance-icon', text: '✓' });
+            row.createEl('span', { cls: 'diwa-glance-finance-name', text: d.title });
         });
         finance.overdue.forEach(d => {
-            const row = card.createEl('div', { cls: 'mina-glance-finance-row mina-glance-finance-row--overdue' });
-            row.createEl('span', { cls: 'mina-glance-finance-icon', text: '⚠' });
-            row.createEl('span', { cls: 'mina-glance-finance-name', text: d.title });
+            const row = card.createEl('div', { cls: 'diwa-glance-finance-row diwa-glance-finance-row--overdue' });
+            row.createEl('span', { cls: 'diwa-glance-finance-icon', text: '⚠' });
+            row.createEl('span', { cls: 'diwa-glance-finance-name', text: d.title });
         });
     }
 }
+
 

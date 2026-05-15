@@ -30,18 +30,18 @@ export class NewProjectModal extends Modal {
     }
 
     onOpen() {
-        this.modalEl.addClass('mina-new-project-modal');
+        this.modalEl.addClass('diwa-new-project-modal');
         const { contentEl } = this;
         contentEl.empty();
 
-        contentEl.createEl('h2', { text: 'New Project', cls: 'mina-modal-title' });
+        contentEl.createEl('h2', { text: 'New Project', cls: 'diwa-modal-title' });
 
         // Name
-        const nameWrap = contentEl.createDiv('mina-field-group');
-        nameWrap.createEl('label', { text: 'Project Name', cls: 'mina-field-label' });
+        const nameWrap = contentEl.createDiv('diwa-field-group');
+        nameWrap.createEl('label', { text: 'Project Name', cls: 'diwa-field-label' });
         const nameInput = nameWrap.createEl('input', {
             type: 'text',
-            cls: 'mina-field-input',
+            cls: 'diwa-field-input',
             attr: { placeholder: 'e.g. Launch MINA Plugin', autocomplete: 'off' }
         });
         nameInput.value = this.name;
@@ -49,26 +49,26 @@ export class NewProjectModal extends Modal {
         setTimeout(() => nameInput.focus(), 50);
 
         // Goal
-        const goalWrap = contentEl.createDiv('mina-field-group');
-        goalWrap.createEl('label', { text: 'Goal / Outcome', cls: 'mina-field-label' });
+        const goalWrap = contentEl.createDiv('diwa-field-group');
+        goalWrap.createEl('label', { text: 'Goal / Outcome', cls: 'diwa-field-label' });
         const goalTextarea = goalWrap.createEl('textarea', {
-            cls: 'mina-field-textarea',
+            cls: 'diwa-field-textarea',
             attr: { placeholder: 'What does success look like?', rows: '3' }
         });
         goalTextarea.value = this.goal;
         goalTextarea.addEventListener('input', () => { this.goal = goalTextarea.value.trim(); });
 
         // Status
-        const statusWrap = contentEl.createDiv('mina-field-group');
-        statusWrap.createEl('label', { text: 'Status', cls: 'mina-field-label' });
-        const segBar = statusWrap.createDiv('mina-seg-bar');
+        const statusWrap = contentEl.createDiv('diwa-field-group');
+        statusWrap.createEl('label', { text: 'Status', cls: 'diwa-field-label' });
+        const segBar = statusWrap.createDiv('diwa-seg-bar');
         const statuses: { val: ProjectEntry['status']; label: string }[] = [
             { val: 'active', label: 'Active' },
             { val: 'on-hold', label: 'On Hold' },
         ];
         const segBtns: HTMLButtonElement[] = [];
         statuses.forEach(s => {
-            const btn = segBar.createEl('button', { text: s.label, cls: 'mina-seg-btn' });
+            const btn = segBar.createEl('button', { text: s.label, cls: 'diwa-seg-btn' });
             if (s.val === this.status) btn.addClass('is-active');
             btn.addEventListener('click', () => {
                 this.status = s.val;
@@ -79,22 +79,22 @@ export class NewProjectModal extends Modal {
         });
 
         // Due date
-        const dueWrap = contentEl.createDiv('mina-field-group');
-        dueWrap.createEl('label', { text: 'Due Date (optional)', cls: 'mina-field-label' });
+        const dueWrap = contentEl.createDiv('diwa-field-group');
+        dueWrap.createEl('label', { text: 'Due Date (optional)', cls: 'diwa-field-label' });
         const dueInput = dueWrap.createEl('input', {
             type: 'date',
-            cls: 'mina-field-input'
+            cls: 'diwa-field-input'
         });
         dueInput.value = this.due;
         dueInput.addEventListener('change', () => { this.due = dueInput.value; });
 
         // Color picker
-        const colorWrap = contentEl.createDiv('mina-field-group');
-        colorWrap.createEl('label', { text: 'Color', cls: 'mina-field-label' });
-        const colorPicker = colorWrap.createDiv('mina-project-color-picker');
+        const colorWrap = contentEl.createDiv('diwa-field-group');
+        colorWrap.createEl('label', { text: 'Color', cls: 'diwa-field-label' });
+        const colorPicker = colorWrap.createDiv('diwa-project-color-picker');
         const swatches: HTMLElement[] = [];
         PROJECT_COLORS.forEach(c => {
-            const swatch = colorPicker.createDiv('mina-color-swatch');
+            const swatch = colorPicker.createDiv('diwa-color-swatch');
             swatch.style.setProperty('--swatch-color', c.hex);
             swatch.setAttribute('title', c.label);
             if (c.hex === this.color) swatch.addClass('is-selected');
@@ -107,11 +107,11 @@ export class NewProjectModal extends Modal {
         });
 
         // Actions
-        const actions = contentEl.createDiv('mina-modal-actions');
-        const cancelBtn = actions.createEl('button', { text: 'Cancel', cls: 'mina-btn mina-btn--ghost' });
+        const actions = contentEl.createDiv('diwa-modal-actions');
+        const cancelBtn = actions.createEl('button', { text: 'Cancel', cls: 'diwa-btn diwa-btn--ghost' });
         cancelBtn.addEventListener('click', () => this.close());
 
-        const createBtn = actions.createEl('button', { text: 'Create Project', cls: 'mina-btn mina-btn--primary' });
+        const createBtn = actions.createEl('button', { text: 'Create Project', cls: 'diwa-btn diwa-btn--primary' });
         createBtn.addEventListener('click', () => this.submit());
 
         // Allow Enter to submit from name field
@@ -148,3 +148,4 @@ export class NewProjectModal extends Modal {
         this.contentEl.empty();
     }
 }
+

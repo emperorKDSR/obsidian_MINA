@@ -41,12 +41,12 @@ export class TimelineTab extends BaseTab {
 
         const gen = ++this._renderGen;
 
-        const wrap = this.container.createEl('div', { cls: 'mina-tl-wrap' });
+        const wrap = this.container.createEl('div', { cls: 'diwa-tl-wrap' });
 
-        this.headerEl = wrap.createEl('div', { cls: 'mina-tl-header-slot' });
+        this.headerEl = wrap.createEl('div', { cls: 'diwa-tl-header-slot' });
         this.renderSpotlightHeader(this.headerEl);
 
-        this.feedEl = wrap.createEl('div', { cls: 'mina-tl-feed' });
+        this.feedEl = wrap.createEl('div', { cls: 'diwa-tl-feed' });
 
         // If we just returned from search mode, skip loading the infinite feed
         if (this.isSearchMode) {
@@ -54,7 +54,7 @@ export class TimelineTab extends BaseTab {
             return;
         }
 
-        const topSentinel = this.feedEl.createEl('div', { cls: 'mina-tl-sentinel mina-tl-sentinel--top' });
+        const topSentinel = this.feedEl.createEl('div', { cls: 'diwa-tl-sentinel diwa-tl-sentinel--top' });
 
         const selected = moment(this.view.timelineSelectedDate, 'YYYY-MM-DD');
         for (let o = -1; o <= 2; o++) {
@@ -63,7 +63,7 @@ export class TimelineTab extends BaseTab {
         }
 
         if (gen !== this._renderGen) return;
-        this.feedEl.createEl('div', { cls: 'mina-tl-sentinel mina-tl-sentinel--bottom' });
+        this.feedEl.createEl('div', { cls: 'diwa-tl-sentinel diwa-tl-sentinel--bottom' });
 
         setTimeout(() => {
             if (gen !== this._renderGen || !this.feedEl) return;
@@ -130,17 +130,17 @@ export class TimelineTab extends BaseTab {
 
     // ── Spotlight Header Carousel ──────────────────────────────────────────
     private renderSpotlightHeader(parent: HTMLElement) {
-        const header = parent.createEl('div', { cls: 'mina-tl-header' });
+        const header = parent.createEl('div', { cls: 'diwa-tl-header' });
         // The header is frozen inside view-content which already starts below
         // Obsidian's mobile nav bar — override the 52px CSS rule with standard padding.
         if (Platform.isMobile) header.style.paddingTop = '0px';
 
-        const topBar = header.createEl('div', { cls: 'mina-tl-header-bar' });
+        const topBar = header.createEl('div', { cls: 'diwa-tl-header-bar' });
         this.renderHomeIcon(topBar);
-        topBar.createEl('span', { text: 'TIMELINE', cls: 'mina-tl-title' });
+        topBar.createEl('span', { text: 'TIMELINE', cls: 'diwa-tl-title' });
 
         const searchBtn = topBar.createEl('button', {
-            cls: `mina-tl-search-btn${this.isSearchMode ? ' is-active' : ''}`,
+            cls: `diwa-tl-search-btn${this.isSearchMode ? ' is-active' : ''}`,
             attr: { title: 'Search' }
         });
         setIcon(searchBtn, 'lucide-search');
@@ -149,9 +149,9 @@ export class TimelineTab extends BaseTab {
             else this._enterSearch();
         });
 
-        const fab = topBar.createEl('button', { cls: 'mina-tl-capture-fab', attr: { title: 'Capture new thought' } });
-        setIcon(fab.createDiv({ cls: 'mina-tl-fab-icon' }), 'lucide-plus');
-        fab.createEl('span', { text: 'NEW', cls: 'mina-tl-fab-label' });
+        const fab = topBar.createEl('button', { cls: 'diwa-tl-capture-fab', attr: { title: 'Capture new thought' } });
+        setIcon(fab.createDiv({ cls: 'diwa-tl-fab-icon' }), 'lucide-plus');
+        fab.createEl('span', { text: 'NEW', cls: 'diwa-tl-fab-label' });
         fab.addEventListener('click', () => this.openCapture());
 
         if (this.isSearchMode) {
@@ -163,14 +163,14 @@ export class TimelineTab extends BaseTab {
             ]);
 
             const selectedMoment = moment(this.view.timelineSelectedDate, 'YYYY-MM-DD');
-            const spotlightRow = header.createEl('div', { cls: 'mina-tl-spotlight-row' });
+            const spotlightRow = header.createEl('div', { cls: 'diwa-tl-spotlight-row' });
 
-            const prevBtn = spotlightRow.createEl('button', { cls: 'mina-tl-nav-btn', attr: { title: 'Previous day' } });
+            const prevBtn = spotlightRow.createEl('button', { cls: 'diwa-tl-nav-btn', attr: { title: 'Previous day' } });
             setIcon(prevBtn, 'lucide-chevron-left');
             prevBtn.addEventListener('click', () =>
                 this.navigateToDate(selectedMoment.clone().subtract(1, 'day').format('YYYY-MM-DD')));
 
-            const track = spotlightRow.createEl('div', { cls: 'mina-tl-spotlight-track' });
+            const track = spotlightRow.createEl('div', { cls: 'diwa-tl-spotlight-track' });
 
             for (let offset = -2; offset <= 2; offset++) {
                 const date = selectedMoment.clone().add(offset, 'days');
@@ -181,44 +181,44 @@ export class TimelineTab extends BaseTab {
                 const distCls = isSpotlight ? 'is-spotlight' : Math.abs(offset) === 1 ? 'is-near' : 'is-far';
 
                 const item = track.createEl('div', {
-                    cls: ['mina-tl-date-item', distCls, isToday ? 'is-today' : ''].filter(Boolean).join(' ')
+                    cls: ['diwa-tl-date-item', distCls, isToday ? 'is-today' : ''].filter(Boolean).join(' ')
                 });
-                item.createSpan({ text: isToday ? 'TODAY' : date.format('ddd').toUpperCase(), cls: 'mina-tl-date-dow' });
-                item.createSpan({ text: date.format('D'), cls: 'mina-tl-date-num' });
-                item.createSpan({ text: date.format('MMM').toUpperCase(), cls: 'mina-tl-date-mon' });
-                if (hasActivity) item.createDiv({ cls: 'mina-tl-date-dot' });
+                item.createSpan({ text: isToday ? 'TODAY' : date.format('ddd').toUpperCase(), cls: 'diwa-tl-date-dow' });
+                item.createSpan({ text: date.format('D'), cls: 'diwa-tl-date-num' });
+                item.createSpan({ text: date.format('MMM').toUpperCase(), cls: 'diwa-tl-date-mon' });
+                if (hasActivity) item.createDiv({ cls: 'diwa-tl-date-dot' });
                 if (!isSpotlight) item.addEventListener('click', () => this.navigateToDate(dateStr));
             }
 
             this.setupSwipeNavigation(track, selectedMoment);
 
-            const nextBtn = spotlightRow.createEl('button', { cls: 'mina-tl-nav-btn', attr: { title: 'Next day' } });
+            const nextBtn = spotlightRow.createEl('button', { cls: 'diwa-tl-nav-btn', attr: { title: 'Next day' } });
             setIcon(nextBtn, 'lucide-chevron-right');
             nextBtn.addEventListener('click', () =>
                 this.navigateToDate(selectedMoment.clone().add(1, 'day').format('YYYY-MM-DD')));
 
             header.createEl('div', {
                 text: selectedMoment.format('dddd, MMMM D · YYYY').toUpperCase(),
-                cls: 'mina-tl-spotlight-subtitle'
+                cls: 'diwa-tl-spotlight-subtitle'
             });
         }
     }
 
     // ── Search Bar ─────────────────────────────────────────────────────────
     private _renderSearchBar(parent: HTMLElement) {
-        const bar = parent.createEl('div', { cls: 'mina-tl-search-bar' });
+        const bar = parent.createEl('div', { cls: 'diwa-tl-search-bar' });
         const input = bar.createEl('input', {
-            cls: 'mina-tl-search-input',
+            cls: 'diwa-tl-search-input',
             attr: { type: 'text', placeholder: 'Search… (use "and" / "or" for multi-criteria)' }
         }) as HTMLInputElement;
         (input as HTMLInputElement).value = this._searchQuery;
 
-        const clearBtn = bar.createEl('button', { cls: 'mina-tl-search-close', attr: { title: 'Clear search' } });
+        const clearBtn = bar.createEl('button', { cls: 'diwa-tl-search-close', attr: { title: 'Clear search' } });
         setIcon(clearBtn, 'lucide-x');
         clearBtn.style.opacity = this._searchQuery ? '1' : '0';
         clearBtn.style.pointerEvents = this._searchQuery ? 'auto' : 'none';
 
-        this._searchHintEl = parent.createEl('div', { cls: 'mina-tl-search-hint' });
+        this._searchHintEl = parent.createEl('div', { cls: 'diwa-tl-search-hint' });
         this._updateSearchHint(this._searchQuery, null);
 
         input.addEventListener('input', () => {
@@ -298,7 +298,7 @@ export class TimelineTab extends BaseTab {
 
         if (!q) {
             this._updateSearchHint('', null);
-            this.feedEl.createEl('div', { cls: 'mina-tl-search-empty', text: 'Type to search… (use "and" / "or" for multi-criteria)' });
+            this.feedEl.createEl('div', { cls: 'diwa-tl-search-empty', text: 'Type to search… (use "and" / "or" for multi-criteria)' });
             return;
         }
 
@@ -327,7 +327,7 @@ export class TimelineTab extends BaseTab {
         this._updateSearchHint(query, results.length);
 
         if (results.length === 0) {
-            this.feedEl.createEl('div', { cls: 'mina-tl-search-empty', text: `No results for "${query}"` });
+            this.feedEl.createEl('div', { cls: 'diwa-tl-search-empty', text: `No results for "${query}"` });
             return;
         }
 
@@ -347,12 +347,12 @@ export class TimelineTab extends BaseTab {
                 ? (isToday ? `TODAY  ·  ${m.format('ddd, MMM D').toUpperCase()}` : m.format('ddd, MMM D · YYYY').toUpperCase())
                 : 'UNDATED';
 
-            const group = this.feedEl.createEl('div', { cls: 'mina-tl-day-section', attr: { 'data-date': day } });
-            const hdr = group.createEl('div', { cls: `mina-tl-day-header${isToday ? ' is-today' : ''}` });
-            hdr.createEl('span', { cls: 'mina-tl-day-label', text: label });
-            hdr.createEl('span', { cls: 'mina-tl-day-count', text: String(items.length) });
+            const group = this.feedEl.createEl('div', { cls: 'diwa-tl-day-section', attr: { 'data-date': day } });
+            const hdr = group.createEl('div', { cls: `diwa-tl-day-header${isToday ? ' is-today' : ''}` });
+            hdr.createEl('span', { cls: 'diwa-tl-day-label', text: label });
+            hdr.createEl('span', { cls: 'diwa-tl-day-count', text: String(items.length) });
 
-            const spine = group.createEl('div', { cls: 'mina-tl-spine-wrap' });
+            const spine = group.createEl('div', { cls: 'diwa-tl-spine-wrap' });
             for (const item of items) {
                 if (gen !== this._renderGen) return;
                 spine.appendChild(await this.buildEntryCard(item));
@@ -403,7 +403,7 @@ export class TimelineTab extends BaseTab {
         if (this.loadedDates.has(dateStr) || !this.feedEl) return;
         this.loadedDates.add(dateStr);
         const section = await this.buildDaySection(date);
-        const bottomSentinel = this.feedEl.querySelector('.mina-tl-sentinel--bottom');
+        const bottomSentinel = this.feedEl.querySelector('.diwa-tl-sentinel--bottom');
         if (bottomSentinel) this.feedEl.insertBefore(section, bottomSentinel);
         else this.feedEl.appendChild(section);
         this.observeDayHeader(section);
@@ -416,7 +416,7 @@ export class TimelineTab extends BaseTab {
         const section = await this.buildDaySection(date);
         const prevScrollTop = this.feedEl.scrollTop;
         const prevHeight = this.feedEl.scrollHeight;
-        const topSentinel = this.feedEl.querySelector('.mina-tl-sentinel--top');
+        const topSentinel = this.feedEl.querySelector('.diwa-tl-sentinel--top');
         if (topSentinel) topSentinel.after(section);
         else this.feedEl.insertBefore(section, this.feedEl.firstChild);
         this.feedEl.scrollTop = prevScrollTop + (this.feedEl.scrollHeight - prevHeight);
@@ -434,22 +434,22 @@ export class TimelineTab extends BaseTab {
         const isToday = date.isSame(moment(), 'day');
 
         const section = document.createElement('div');
-        section.className = 'mina-tl-day-section';
+        section.className = 'diwa-tl-day-section';
         section.dataset.date = dateStr;
 
         const dayHeader = document.createElement('div');
-        dayHeader.className = `mina-tl-day-header${isToday ? ' is-today' : ''}`;
+        dayHeader.className = `diwa-tl-day-header${isToday ? ' is-today' : ''}`;
         dayHeader.dataset.dateHeader = dateStr;
 
         const labelEl = document.createElement('span');
-        labelEl.className = 'mina-tl-day-label';
+        labelEl.className = 'diwa-tl-day-label';
         labelEl.textContent = isToday
             ? `TODAY  ·  ${date.format('ddd, MMM D').toUpperCase()}`
             : date.format('ddd, MMM D · YYYY').toUpperCase();
         dayHeader.appendChild(labelEl);
 
         const countEl = document.createElement('span');
-        countEl.className = 'mina-tl-day-count';
+        countEl.className = 'diwa-tl-day-count';
         dayHeader.appendChild(countEl);
         section.appendChild(dayHeader);
 
@@ -466,13 +466,13 @@ export class TimelineTab extends BaseTab {
         if (entries.length === 0) {
             countEl.textContent = '—';
             const emptyEl = document.createElement('div');
-            emptyEl.className = 'mina-tl-day-empty';
+            emptyEl.className = 'diwa-tl-day-empty';
             emptyEl.textContent = 'Nothing captured.';
             section.appendChild(emptyEl);
         } else {
             countEl.textContent = String(entries.length);
             const spineWrap = document.createElement('div');
-            spineWrap.className = 'mina-tl-spine-wrap';
+            spineWrap.className = 'diwa-tl-spine-wrap';
             for (const item of entries) {
                 spineWrap.appendChild(await this.buildEntryCard(item));
             }
@@ -489,7 +489,7 @@ export class TimelineTab extends BaseTab {
                 if (!entry.isIntersecting || this.isLoading) continue;
                 this.isLoading = true;
                 const sorted = Array.from(this.loadedDates).sort();
-                if (entry.target.classList.contains('mina-tl-sentinel--top')) {
+                if (entry.target.classList.contains('diwa-tl-sentinel--top')) {
                     const earliest = moment(sorted[0], 'YYYY-MM-DD');
                     await this.prependDaySection(earliest.clone().subtract(1, 'day'));
                     await this.prependDaySection(earliest.clone().subtract(2, 'days'));
@@ -503,7 +503,7 @@ export class TimelineTab extends BaseTab {
         }, { root: this.feedEl, rootMargin: '200px', threshold: 0 });
 
         this.sentinelObserver.observe(topSentinel);
-        const bottomSentinel = this.feedEl?.querySelector('.mina-tl-sentinel--bottom');
+        const bottomSentinel = this.feedEl?.querySelector('.diwa-tl-sentinel--bottom');
         if (bottomSentinel) this.sentinelObserver.observe(bottomSentinel);
     }
 
@@ -534,49 +534,49 @@ export class TimelineTab extends BaseTab {
     // ── Entry Card ─────────────────────────────────────────────────────────
     private async buildEntryCard(item: { type: 'task' | 'thought'; entry: any; time: string }): Promise<HTMLElement> {
         const entryEl = document.createElement('div');
-        entryEl.className = 'mina-tl-entry';
+        entryEl.className = 'diwa-tl-entry';
 
         const nodeEl = document.createElement('div');
-        nodeEl.className = 'mina-tl-entry-node';
+        nodeEl.className = 'diwa-tl-entry-node';
         entryEl.appendChild(nodeEl);
 
         const card = document.createElement('div');
-        card.className = `mina-tl-entry-card mina-tl-entry-card--${item.type}`;
+        card.className = `diwa-tl-entry-card diwa-tl-entry-card--${item.type}`;
 
         const meta = document.createElement('div');
-        meta.className = 'mina-tl-entry-meta';
+        meta.className = 'diwa-tl-entry-meta';
         const badge = document.createElement('span');
-        badge.className = `mina-tl-type-badge mina-tl-type-badge--${item.type}`;
+        badge.className = `diwa-tl-type-badge diwa-tl-type-badge--${item.type}`;
         badge.textContent = item.type === 'thought' ? '✦ THOUGHT' : '✓ TASK';
         const timeEl = document.createElement('span');
-        timeEl.className = 'mina-tl-entry-time';
+        timeEl.className = 'diwa-tl-entry-time';
         timeEl.textContent = item.time.substring(0, 5);
         meta.appendChild(badge);
         meta.appendChild(timeEl);
         card.appendChild(meta);
 
         const body = document.createElement('div');
-        body.className = 'mina-tl-entry-body';
+        body.className = 'diwa-tl-entry-body';
         await MarkdownRenderer.render(this.app, item.entry.body || item.entry.title || '', body, item.entry.filePath, this.view);
         this.hookInternalLinks(body, item.entry.filePath);
         card.appendChild(body);
 
         const footer = document.createElement('div');
-        footer.className = 'mina-tl-entry-footer';
+        footer.className = 'diwa-tl-entry-footer';
         if (item.type === 'task' && item.entry.due) {
             const dueM = moment(item.entry.due, 'YYYY-MM-DD');
             const isOverdue = item.entry.status !== 'done' && dueM.isValid() && dueM.isBefore(moment(), 'day');
             const dueEl = document.createElement('span');
-            dueEl.className = `mina-tl-due${isOverdue ? ' is-overdue' : ''}`;
+            dueEl.className = `diwa-tl-due${isOverdue ? ' is-overdue' : ''}`;
             dueEl.textContent = `📅 ${item.entry.due}`;
             footer.appendChild(dueEl);
         }
         if (item.entry.context?.length > 0) {
             const pills = document.createElement('div');
-            pills.className = 'mina-tl-ctx-pills';
+            pills.className = 'diwa-tl-ctx-pills';
             for (const ctx of item.entry.context) {
                 const pill = document.createElement('span');
-                pill.className = 'mina-tl-ctx-pill';
+                pill.className = 'diwa-tl-ctx-pill';
                 pill.textContent = `#${ctx}`;
                 pills.appendChild(pill);
             }
@@ -585,10 +585,10 @@ export class TimelineTab extends BaseTab {
         card.appendChild(footer);
 
         const actions = document.createElement('div');
-        actions.className = 'mina-tl-entry-actions';
+        actions.className = 'diwa-tl-entry-actions';
 
         const editBtn = document.createElement('button');
-        editBtn.className = 'mina-tl-action-btn';
+        editBtn.className = 'diwa-tl-action-btn';
         editBtn.title = 'Edit';
         setIcon(editBtn, 'lucide-pencil');
         editBtn.addEventListener('click', () => {
@@ -607,7 +607,7 @@ export class TimelineTab extends BaseTab {
         });
 
         const delBtn = document.createElement('button');
-        delBtn.className = 'mina-tl-action-btn mina-tl-action-btn--danger';
+        delBtn.className = 'diwa-tl-action-btn diwa-tl-action-btn--danger';
         delBtn.title = 'Delete';
         setIcon(delBtn, 'lucide-trash-2');
         delBtn.addEventListener('click', () => {
@@ -641,4 +641,5 @@ export class TimelineTab extends BaseTab {
         ).open();
     }
 }
+
 

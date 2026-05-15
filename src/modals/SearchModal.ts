@@ -1,7 +1,7 @@
 import { App, Modal, setIcon, Platform } from 'obsidian';
 import type DiwaPlugin from '../main';
 import { isTablet } from '../utils';
-import { VIEW_TYPE_MINA } from '../constants';
+import { VIEW_TYPE_DIWA } from '../constants';
 
 interface SearchResult {
     type: 'thought' | 'task' | 'due' | 'project' | 'habit';
@@ -61,32 +61,32 @@ export class SearchModal extends Modal {
         const isPhone = Platform.isMobile && !isTablet();
 
         modalEl.empty();
-        modalEl.addClass('mina-search-overlay');
+        modalEl.addClass('diwa-search-overlay');
 
         if (isPhone) {
-            modalEl.addClass('mina-search-phone');
-            document.body.addClass('mina-search-phone-open');
+            modalEl.addClass('diwa-search-phone');
+            document.body.addClass('diwa-search-phone-open');
         }
 
         this.panelEl = modalEl.createEl('div', {
-            cls: 'mina-search-panel',
+            cls: 'diwa-search-panel',
             attr: { role: 'dialog', 'aria-modal': 'true', 'aria-label': 'MINA Global Search' }
         });
 
         // Input row
-        const inputRow = this.panelEl.createEl('div', { cls: 'mina-search-input-row' });
+        const inputRow = this.panelEl.createEl('div', { cls: 'diwa-search-input-row' });
 
         if (isPhone) {
-            const backBtn = inputRow.createEl('span', { cls: 'mina-search-back-btn' });
+            const backBtn = inputRow.createEl('span', { cls: 'diwa-search-back-btn' });
             setIcon(backBtn, 'lucide-arrow-left');
             backBtn.addEventListener('click', () => this.closeWithAnimation());
         } else {
-            const iconEl = inputRow.createEl('span', { cls: 'mina-search-icon' });
+            const iconEl = inputRow.createEl('span', { cls: 'diwa-search-icon' });
             setIcon(iconEl, 'lucide-search');
         }
 
         this.inputEl = inputRow.createEl('input', {
-            cls: 'mina-search-input',
+            cls: 'diwa-search-input',
             attr: {
                 type: 'text',
                 placeholder: isPhone ? 'Search MINA…' : 'Search across all of MINA…',
@@ -97,7 +97,7 @@ export class SearchModal extends Modal {
         });
 
         if (isPhone) {
-            const clearBtn = inputRow.createEl('span', { cls: 'mina-search-clear-btn' });
+            const clearBtn = inputRow.createEl('span', { cls: 'diwa-search-clear-btn' });
             setIcon(clearBtn, 'lucide-x-circle');
             clearBtn.addEventListener('click', () => {
                 this.inputEl.value = '';
@@ -105,32 +105,32 @@ export class SearchModal extends Modal {
                 this.inputEl.focus();
             });
         } else {
-            inputRow.createEl('span', { cls: 'mina-search-kbd-hint', text: 'ESC' });
+            inputRow.createEl('span', { cls: 'diwa-search-kbd-hint', text: 'ESC' });
         }
 
         // Scope bar
-        this.scopeBar = this.panelEl.createEl('div', { cls: 'mina-search-scope-bar', attr: { role: 'tablist' } });
+        this.scopeBar = this.panelEl.createEl('div', { cls: 'diwa-search-scope-bar', attr: { role: 'tablist' } });
         for (const scope of SCOPES) {
             const btn = this.scopeBar.createEl('button', {
-                cls: `mina-search-scope-btn${scope.id === this.activeScope ? ' is-active' : ''}`,
+                cls: `diwa-search-scope-btn${scope.id === this.activeScope ? ' is-active' : ''}`,
                 attr: { 'data-scope': scope.id }
             });
             btn.createEl('span', { text: scope.label });
-            btn.createEl('span', { cls: 'mina-search-scope-count', text: '0' });
+            btn.createEl('span', { cls: 'diwa-search-scope-count', text: '0' });
             btn.addEventListener('click', () => this.setScope(scope.id));
         }
 
         // Body
-        this.bodyEl = this.panelEl.createEl('div', { cls: 'mina-search-body', attr: { role: 'listbox', 'aria-live': 'polite' } });
+        this.bodyEl = this.panelEl.createEl('div', { cls: 'diwa-search-body', attr: { role: 'listbox', 'aria-live': 'polite' } });
 
         // Footer (desktop / tablet only)
         if (!Platform.isMobile || isTablet()) {
-            const footer = this.panelEl.createEl('div', { cls: 'mina-search-footer' });
+            const footer = this.panelEl.createEl('div', { cls: 'diwa-search-footer' });
             const hints: [string, string][] = [['↑↓', 'Navigate'], ['↵', 'Open'], ['ESC', 'Close']];
             hints.forEach(([key, label], i) => {
-                if (i > 0) footer.createEl('div', { cls: 'mina-search-footer-divider' });
-                const hint = footer.createEl('div', { cls: 'mina-search-footer-hint' });
-                hint.createEl('kbd', { cls: 'mina-search-footer-kbd', text: key });
+                if (i > 0) footer.createEl('div', { cls: 'diwa-search-footer-divider' });
+                const hint = footer.createEl('div', { cls: 'diwa-search-footer-hint' });
+                hint.createEl('kbd', { cls: 'diwa-search-footer-kbd', text: key });
                 hint.createEl('span', { text: ` ${label}` });
             });
         }
@@ -155,9 +155,9 @@ export class SearchModal extends Modal {
     }
 
     onClose() {
-        this.modalEl.removeClass('mina-search-overlay');
-        this.modalEl.removeClass('mina-search-phone');
-        document.body.removeClass('mina-search-phone-open');
+        this.modalEl.removeClass('diwa-search-overlay');
+        this.modalEl.removeClass('diwa-search-phone');
+        document.body.removeClass('diwa-search-phone-open');
         if (this.viewportResizeHandler && window.visualViewport) {
             window.visualViewport.removeEventListener('resize', this.viewportResizeHandler);
             this.viewportResizeHandler = null;
@@ -175,7 +175,7 @@ export class SearchModal extends Modal {
         let isDragging = false;
 
         this.panelEl.addEventListener('touchstart', (e: TouchEvent) => {
-            if ((e.target as HTMLElement).closest('.mina-search-body')) return;
+            if ((e.target as HTMLElement).closest('.diwa-search-body')) return;
             startY = e.touches[0].clientY;
             isDragging = true;
         }, { passive: true });
@@ -198,11 +198,11 @@ export class SearchModal extends Modal {
             if (delta > 80) {
                 this.closeWithAnimation();
             } else {
-                this.panelEl.addClass('mina-search-snapping-back');
+                this.panelEl.addClass('diwa-search-snapping-back');
                 this.panelEl.style.transform = '';
                 this.panelEl.style.transition = '';
                 setTimeout(() => {
-                    if (this.panelEl) this.panelEl.removeClass('mina-search-snapping-back');
+                    if (this.panelEl) this.panelEl.removeClass('diwa-search-snapping-back');
                 }, 320);
             }
             currentY = 0; startY = 0;
@@ -225,7 +225,7 @@ export class SearchModal extends Modal {
 
     private setScope(scopeId: string) {
         this.activeScope = scopeId;
-        this.scopeBar.querySelectorAll('.mina-search-scope-btn').forEach(btn => {
+        this.scopeBar.querySelectorAll('.diwa-search-scope-btn').forEach(btn => {
             btn.classList.toggle('is-active', btn.getAttribute('data-scope') === scopeId);
         });
         this.onQueryChange();
@@ -277,7 +277,7 @@ export class SearchModal extends Modal {
         this.close();
         // Use setTimeout to let the modal fully close before re-rendering the view
         setTimeout(() => {
-            const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MINA);
+            const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_DIWA);
             if (leaves.length > 0) {
                 const view = leaves[0].view as any;
                 this.app.workspace.setActiveLeaf(leaves[0], { focus: true });
@@ -373,9 +373,9 @@ export class SearchModal extends Modal {
         this.allResults = results;
 
         // Update scope counts
-        this.scopeBar.querySelectorAll('.mina-search-scope-btn').forEach(btn => {
+        this.scopeBar.querySelectorAll('.diwa-search-scope-btn').forEach(btn => {
             const scope = btn.getAttribute('data-scope') || 'all';
-            const countEl = btn.querySelector('.mina-search-scope-count') as HTMLElement;
+            const countEl = btn.querySelector('.diwa-search-scope-count') as HTMLElement;
             if (countEl) countEl.textContent = String(counts[scope] || 0);
         });
 
@@ -400,33 +400,33 @@ export class SearchModal extends Modal {
         }
 
         for (const [type, items] of Object.entries(grouped)) {
-            const section = this.bodyEl.createEl('div', { cls: 'mina-search-section' });
-            const header = section.createEl('div', { cls: 'mina-search-section-header' });
-            const typeIcon = header.createEl('span', { cls: 'mina-search-section-type-icon' });
+            const section = this.bodyEl.createEl('div', { cls: 'diwa-search-section' });
+            const header = section.createEl('div', { cls: 'diwa-search-section-header' });
+            const typeIcon = header.createEl('span', { cls: 'diwa-search-section-type-icon' });
             setIcon(typeIcon, TYPE_ICONS[type] || 'lucide-file');
-            header.createEl('span', { cls: 'mina-search-section-type-label', text: type.charAt(0).toUpperCase() + type.slice(1) + 's' });
-            header.createEl('span', { cls: 'mina-search-section-result-count', text: String(items.length) });
+            header.createEl('span', { cls: 'diwa-search-section-type-label', text: type.charAt(0).toUpperCase() + type.slice(1) + 's' });
+            header.createEl('span', { cls: 'diwa-search-section-result-count', text: String(items.length) });
 
             for (let i = 0; i < items.length; i++) {
                 const item = items[i];
                 const row = section.createEl('div', {
-                    cls: 'mina-search-result-item',
-                    attr: { role: 'option', 'aria-selected': 'false', style: `--mina-search-i: ${Math.min(this.resultEls.length, 5)}` }
+                    cls: 'diwa-search-result-item',
+                    attr: { role: 'option', 'aria-selected': 'false', style: `--diwa-search-i: ${Math.min(this.resultEls.length, 5)}` }
                 });
 
-                const iconWrap = row.createEl('div', { cls: `mina-search-result-icon mina-search-result-icon--${item.type}` });
+                const iconWrap = row.createEl('div', { cls: `diwa-search-result-icon diwa-search-result-icon--${item.type}` });
                 setIcon(iconWrap, TYPE_ICONS[item.type] || 'lucide-file');
 
-                const body = row.createEl('div', { cls: 'mina-search-result-body' });
-                const titleEl = body.createEl('span', { cls: 'mina-search-result-title' });
+                const body = row.createEl('div', { cls: 'diwa-search-result-body' });
+                const titleEl = body.createEl('span', { cls: 'diwa-search-result-title' });
                 titleEl.innerHTML = this.highlightMatch(item.title, query);
                 if (item.preview) {
-                    body.createEl('span', { cls: 'mina-search-result-preview', text: item.preview });
+                    body.createEl('span', { cls: 'diwa-search-result-preview', text: item.preview });
                 }
 
                 if (item.meta) {
-                    const meta = row.createEl('div', { cls: 'mina-search-result-meta' });
-                    meta.createEl('span', { cls: 'mina-chip mina-chip--date', text: item.meta });
+                    const meta = row.createEl('div', { cls: 'diwa-search-result-meta' });
+                    meta.createEl('span', { cls: 'diwa-chip diwa-chip--date', text: item.meta });
                 }
 
                 row.addEventListener('click', () => this.activateResult(item));
@@ -441,19 +441,19 @@ export class SearchModal extends Modal {
         this.focusedIndex = -1;
         this.allResults = [];
 
-        const initial = this.bodyEl.createEl('div', { cls: 'mina-search-initial' });
-        initial.createEl('span', { cls: 'mina-search-recents-label', text: 'Quick Jump' });
+        const initial = this.bodyEl.createEl('div', { cls: 'diwa-search-initial' });
+        initial.createEl('span', { cls: 'diwa-search-recents-label', text: 'Quick Jump' });
 
-        const grid = initial.createEl('div', { cls: 'mina-search-quickjump-grid' });
+        const grid = initial.createEl('div', { cls: 'diwa-search-quickjump-grid' });
         for (const tab of QUICKJUMP_TABS) {
-            const btn = grid.createEl('button', { cls: 'mina-search-quickjump-btn', attr: { 'data-tab': tab.id } });
+            const btn = grid.createEl('button', { cls: 'diwa-search-quickjump-btn', attr: { 'data-tab': tab.id } });
             const icon = btn.createEl('span', { cls: 'svg-icon' });
             setIcon(icon, tab.icon);
-            btn.createEl('span', { cls: 'mina-search-quickjump-label', text: tab.label });
+            btn.createEl('span', { cls: 'diwa-search-quickjump-label', text: tab.label });
             btn.addEventListener('click', () => {
                 this.close();
                 setTimeout(() => {
-                    const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MINA);
+                    const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_DIWA);
                     if (leaves.length > 0) {
                         const view = leaves[0].view as any;
                         this.app.workspace.setActiveLeaf(leaves[0], { focus: true });
@@ -465,16 +465,16 @@ export class SearchModal extends Modal {
         }
 
         // Reset scope counts
-        this.scopeBar.querySelectorAll('.mina-search-scope-count').forEach(el => { (el as HTMLElement).textContent = '0'; });
+        this.scopeBar.querySelectorAll('.diwa-search-scope-count').forEach(el => { (el as HTMLElement).textContent = '0'; });
     }
 
     private renderEmptyState(query: string) {
-        const empty = this.bodyEl.createEl('div', { cls: 'mina-search-empty' });
-        const icon = empty.createEl('span', { cls: 'mina-search-empty-icon' });
+        const empty = this.bodyEl.createEl('div', { cls: 'diwa-search-empty' });
+        const icon = empty.createEl('span', { cls: 'diwa-search-empty-icon' });
         setIcon(icon, 'lucide-search-x');
-        const text = empty.createEl('span', { cls: 'mina-search-empty-text' });
-        text.innerHTML = `No results for <span class="mina-search-empty-query">"${this.escapeHtml(query)}"</span>`;
-        empty.createEl('span', { cls: 'mina-search-empty-sub', text: 'Try searching by title, tag, or date — or switch scope to All.' });
+        const text = empty.createEl('span', { cls: 'diwa-search-empty-text' });
+        text.innerHTML = `No results for <span class="diwa-search-empty-query">"${this.escapeHtml(query)}"</span>`;
+        empty.createEl('span', { cls: 'diwa-search-empty-sub', text: 'Try searching by title, tag, or date — or switch scope to All.' });
     }
 
     private highlightMatch(text: string, query: string): string {
@@ -506,3 +506,4 @@ export class SearchModal extends Modal {
         return dateStr.split(' ')[0];
     }
 }
+

@@ -59,7 +59,7 @@ export class DesktopHubView extends ItemView {
 
         const root = this.containerEl.children[1] as HTMLElement;
         root.empty();
-        root.addClass('mina-dh-root');
+        root.addClass('diwa-dh-root');
 
         if (!Platform.isDesktop) {
             root.createEl('div', {
@@ -69,12 +69,12 @@ export class DesktopHubView extends ItemView {
             return;
         }
 
-        const wrap = root.createEl('div', { cls: 'mina-dh-wrap' });
+        const wrap = root.createEl('div', { cls: 'diwa-dh-wrap' });
         if (this.isFocusMode) wrap.addClass('is-focus-mode');
 
         this.renderTopBar(wrap);
 
-        const cols = wrap.createEl('div', { cls: 'mina-dh-cols' });
+        const cols = wrap.createEl('div', { cls: 'diwa-dh-cols' });
         this.renderSidebar(cols);
         this.renderCenter(cols);
         this.renderRight(cols);
@@ -82,30 +82,30 @@ export class DesktopHubView extends ItemView {
 
     // ── Top Bar ───────────────────────────────────────────────────────────────
     private renderTopBar(parent: HTMLElement) {
-        const bar = parent.createEl('div', { cls: 'mina-dh-topbar' });
+        const bar = parent.createEl('div', { cls: 'diwa-dh-topbar' });
 
-        const left = bar.createEl('div', { cls: 'mina-dh-topbar-left' });
-        left.createEl('span', { text: 'MINA', cls: 'mina-dh-topbar-logo' });
+        const left = bar.createEl('div', { cls: 'diwa-dh-topbar-left' });
+        left.createEl('span', { text: 'MINA', cls: 'diwa-dh-topbar-logo' });
         const hour = new Date().getHours();
         const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-        left.createEl('span', { text: `${greeting}, Emperor.`, cls: 'mina-dh-topbar-greeting' });
+        left.createEl('span', { text: `${greeting}, Emperor.`, cls: 'diwa-dh-topbar-greeting' });
 
-        const center = bar.createEl('div', { cls: 'mina-dh-topbar-center' });
+        const center = bar.createEl('div', { cls: 'diwa-dh-topbar-center' });
         center.createEl('span', {
             text: moment().format('dddd · MMMM D, YYYY').toUpperCase(),
-            cls: 'mina-dh-topbar-date'
+            cls: 'diwa-dh-topbar-date'
         });
         const northStar = this.plugin.settings.northStarGoals?.[0];
         if (northStar) {
-            center.createEl('span', { text: `★ ${northStar}`, cls: 'mina-dh-topbar-northstar' });
+            center.createEl('span', { text: `★ ${northStar}`, cls: 'diwa-dh-topbar-northstar' });
         }
 
-        const right = bar.createEl('div', { cls: 'mina-dh-topbar-right' });
+        const right = bar.createEl('div', { cls: 'diwa-dh-topbar-right' });
         const focusBtn = right.createEl('button', {
-            cls: `mina-dh-focus-btn${this.isFocusMode ? ' is-active' : ''}`,
+            cls: `diwa-dh-focus-btn${this.isFocusMode ? ' is-active' : ''}`,
             attr: { title: this.isFocusMode ? 'Exit Focus Mode' : 'Enter Focus Mode' }
         });
-        const focusIcon = focusBtn.createDiv({ cls: 'mina-dh-focus-btn-icon' });
+        const focusIcon = focusBtn.createDiv({ cls: 'diwa-dh-focus-btn-icon' });
         setIcon(focusIcon, 'lucide-target');
         focusBtn.createSpan({ text: this.isFocusMode ? 'EXIT FOCUS' : 'FOCUS MODE' });
         focusBtn.addEventListener('click', () => {
@@ -116,7 +116,7 @@ export class DesktopHubView extends ItemView {
 
     // ── LEFT Sidebar ──────────────────────────────────────────────────────────
     private renderSidebar(parent: HTMLElement) {
-        const sidebar = parent.createEl('nav', { cls: 'mina-dh-sidebar', attr: { 'aria-label': 'MINA Navigation' } });
+        const sidebar = parent.createEl('nav', { cls: 'diwa-dh-sidebar', attr: { 'aria-label': 'MINA Navigation' } });
 
         const groups: { title: string; items: { label: string; icon: string; tab: string }[] }[] = [
             {
@@ -143,7 +143,7 @@ export class DesktopHubView extends ItemView {
             {
                 title: 'FEATURES',
                 items: [
-                    { label: 'AI Chat', icon: AI_CHAT_ICON_ID, tab: 'mina-ai' },
+                    { label: 'AI Chat', icon: AI_CHAT_ICON_ID, tab: 'diwa-ai' },
                     { label: 'Voice', icon: 'lucide-mic', tab: 'voice-note' },
                     { label: 'Habits', icon: 'lucide-flame', tab: 'habits' },
                     { label: 'Memento', icon: MEMENTO_ICON_ID, tab: 'memento-mori' },
@@ -159,16 +159,16 @@ export class DesktopHubView extends ItemView {
         ];
 
         for (const group of groups) {
-            const groupEl = sidebar.createEl('div', { cls: 'mina-dh-nav-group' });
-            groupEl.createEl('span', { text: group.title, cls: 'mina-dh-nav-group-label' });
+            const groupEl = sidebar.createEl('div', { cls: 'diwa-dh-nav-group' });
+            groupEl.createEl('span', { text: group.title, cls: 'diwa-dh-nav-group-label' });
             for (const item of group.items) {
                 const btn = groupEl.createEl('button', {
-                    cls: 'mina-dh-nav-item',
+                    cls: 'diwa-dh-nav-item',
                     attr: { title: item.label, 'aria-label': item.label }
                 });
-                const iconWrap = btn.createEl('span', { cls: 'mina-dh-nav-icon' });
+                const iconWrap = btn.createEl('span', { cls: 'diwa-dh-nav-icon' });
                 setIcon(iconWrap, item.icon);
-                btn.createEl('span', { text: item.label, cls: 'mina-dh-nav-label' });
+                btn.createEl('span', { text: item.label, cls: 'diwa-dh-nav-label' });
                 btn.addEventListener('click', () => {
                     if (item.tab === 'search') { this.plugin.activateSearchView(); }
                     else { this.plugin.activateView(item.tab, false); }
@@ -179,25 +179,25 @@ export class DesktopHubView extends ItemView {
 
     // ── CENTER Column ─────────────────────────────────────────────────────────
     private renderCenter(parent: HTMLElement) {
-        const center = parent.createEl('div', { cls: 'mina-dh-center' });
+        const center = parent.createEl('div', { cls: 'diwa-dh-center' });
         this.renderCapture(center);
-        const inner = center.createEl('div', { cls: 'mina-dh-center-inner' });
+        const inner = center.createEl('div', { cls: 'diwa-dh-center-inner' });
         this.renderTodayFeed(inner);
     }
 
     private renderCapture(parent: HTMLElement) {
-        const section = parent.createEl('div', { cls: 'mina-dh-capture-section' });
+        const section = parent.createEl('div', { cls: 'diwa-dh-capture-section' });
         section.addEventListener('click', (e) => {
             if (e.target !== textarea) textarea.focus();
         });
 
-        const chipRow = section.createEl('div', { cls: 'mina-dh-chip-row' });
+        const chipRow = section.createEl('div', { cls: 'diwa-dh-chip-row' });
         let contexts: string[] = [];
 
         const addChip = (tag: string) => {
             if (contexts.includes(tag)) return;
             contexts.push(tag);
-            const chip = chipRow.createEl('span', { cls: 'mina-dh-chip', text: `#${tag}` });
+            const chip = chipRow.createEl('span', { cls: 'diwa-dh-chip', text: `#${tag}` });
             chip.addEventListener('click', () => {
                 contexts = contexts.filter(c => c !== tag);
                 chip.remove();
@@ -205,7 +205,7 @@ export class DesktopHubView extends ItemView {
         };
 
         const textarea = section.createEl('textarea', {
-            cls: 'mina-dh-capture-textarea',
+            cls: 'diwa-dh-capture-textarea',
             attr: {
                 placeholder: "What's on your mind…",
                 rows: '2'
@@ -274,8 +274,8 @@ export class DesktopHubView extends ItemView {
     }
 
     private renderTodayFeed(parent: HTMLElement) {
-        const feed = parent.createEl('div', { cls: 'mina-dh-feed' });
-        feed.createEl('div', { text: 'TODAY', cls: 'mina-dh-feed-label' });
+        const feed = parent.createEl('div', { cls: 'diwa-dh-feed' });
+        feed.createEl('div', { text: 'TODAY', cls: 'diwa-dh-feed-label' });
 
         const today = moment().format('YYYY-MM-DD');
         const todayThoughts = Array.from(this.plugin.index.thoughtIndex.values())
@@ -285,26 +285,26 @@ export class DesktopHubView extends ItemView {
         if (todayThoughts.length === 0) {
             feed.createEl('div', {
                 text: 'Nothing captured yet — your mind is clear.',
-                cls: 'mina-dh-feed-empty'
+                cls: 'diwa-dh-feed-empty'
             });
             return;
         }
 
-        const list = feed.createEl('div', { cls: 'mina-dh-feed-list' });
+        const list = feed.createEl('div', { cls: 'diwa-dh-feed-list' });
         for (const t of todayThoughts) {
-            const item = list.createEl('div', { cls: 'mina-dh-feed-item' });
-            item.createEl('span', { cls: 'mina-dh-feed-dot' });
-            const content = item.createEl('div', { cls: 'mina-dh-feed-content' });
+            const item = list.createEl('div', { cls: 'diwa-dh-feed-item' });
+            item.createEl('span', { cls: 'diwa-dh-feed-dot' });
+            const content = item.createEl('div', { cls: 'diwa-dh-feed-content' });
             const ts = t.created ? moment(t.created, 'YYYY-MM-DD HH:mm:ss').format('HH:mm') : '';
-            content.createEl('span', { text: ts, cls: 'mina-dh-feed-time' });
-            content.createEl('p', { text: t.body || t.title || '', cls: 'mina-dh-feed-text' });
+            content.createEl('span', { text: ts, cls: 'diwa-dh-feed-time' });
+            content.createEl('p', { text: t.body || t.title || '', cls: 'diwa-dh-feed-text' });
             if (t.context && t.context.length > 0) {
-                const ctxWrap = content.createEl('div', { cls: 'mina-dh-feed-ctx' });
+                const ctxWrap = content.createEl('div', { cls: 'diwa-dh-feed-ctx' });
                 for (const ctx of t.context) {
-                    ctxWrap.createEl('span', { text: `#${ctx}`, cls: 'mina-dh-feed-ctx-chip' });
+                    ctxWrap.createEl('span', { text: `#${ctx}`, cls: 'diwa-dh-feed-ctx-chip' });
                 }
             }
-            const editBtn = item.createEl('button', { cls: 'mina-dh-feed-edit-btn', attr: { title: 'Edit thought', 'aria-label': 'Edit thought' } });
+            const editBtn = item.createEl('button', { cls: 'diwa-dh-feed-edit-btn', attr: { title: 'Edit thought', 'aria-label': 'Edit thought' } });
             setIcon(editBtn, 'lucide-pencil');
             editBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -321,19 +321,19 @@ export class DesktopHubView extends ItemView {
         editBtn.style.display = 'none';
 
         let editContexts = [...(t.context || [])];
-        const form = item.createEl('div', { cls: 'mina-edit-form' });
+        const form = item.createEl('div', { cls: 'diwa-edit-form' });
 
-        const chipRow = form.createEl('div', { cls: 'mina-edit-chip-row' });
+        const chipRow = form.createEl('div', { cls: 'diwa-edit-chip-row' });
         const renderChips = () => {
             chipRow.empty();
             for (const ctx of editContexts) {
-                const chip = chipRow.createEl('span', { cls: 'mina-dh-chip', text: `#${ctx}` });
+                const chip = chipRow.createEl('span', { cls: 'diwa-dh-chip', text: `#${ctx}` });
                 chip.addEventListener('click', () => { editContexts = editContexts.filter(c => c !== ctx); renderChips(); });
             }
         };
         renderChips();
 
-        const textarea = form.createEl('textarea', { cls: 'mina-edit-textarea', attr: { rows: '2' } }) as HTMLTextAreaElement;
+        const textarea = form.createEl('textarea', { cls: 'diwa-edit-textarea', attr: { rows: '2' } }) as HTMLTextAreaElement;
         textarea.value = t.body || t.title || '';
         const syncH = () => { textarea.style.height = 'auto'; textarea.style.height = `${textarea.scrollHeight}px`; };
         requestAnimationFrame(() => { syncH(); textarea.focus(); textarea.setSelectionRange(textarea.value.length, textarea.value.length); });
@@ -346,9 +346,9 @@ export class DesktopHubView extends ItemView {
             this.plugin.settings.peopleFolder,
         );
 
-        const actions = form.createEl('div', { cls: 'mina-edit-actions' });
-        const saveBtn = actions.createEl('button', { cls: 'mina-edit-save-btn', text: 'Save' });
-        const cancelBtn = actions.createEl('button', { cls: 'mina-edit-cancel-btn', text: 'Cancel' });
+        const actions = form.createEl('div', { cls: 'diwa-edit-actions' });
+        const saveBtn = actions.createEl('button', { cls: 'diwa-edit-save-btn', text: 'Save' });
+        const cancelBtn = actions.createEl('button', { cls: 'diwa-edit-cancel-btn', text: 'Cancel' });
 
         const exit = (restore: boolean) => {
             item.removeClass('is-editing');
@@ -381,25 +381,25 @@ export class DesktopHubView extends ItemView {
 
     // ── RIGHT Panel ───────────────────────────────────────────────────────────
     private renderRight(parent: HTMLElement) {
-        const right = parent.createEl('div', { cls: 'mina-dh-right' });
+        const right = parent.createEl('div', { cls: 'diwa-dh-right' });
         this.renderTaskQuickInput(right);
         this.renderTaskList(right);
     }
 
     private renderTaskQuickInput(parent: HTMLElement) {
-        const section = parent.createEl('div', { cls: 'mina-dh-task-input-section' });
+        const section = parent.createEl('div', { cls: 'diwa-dh-task-input-section' });
         section.addEventListener('click', (e) => {
             if (e.target !== textarea) textarea.focus();
         });
 
-        const chipRow = section.createEl('div', { cls: 'mina-dh-task-chip-row' });
+        const chipRow = section.createEl('div', { cls: 'diwa-dh-task-chip-row' });
         let contexts: string[] = [];
         let dueDate: string | null = null;
 
         const addChip = (tag: string) => {
             if (contexts.includes(tag)) return;
             contexts.push(tag);
-            const chip = chipRow.createEl('span', { cls: 'mina-dh-chip', text: `#${tag}` });
+            const chip = chipRow.createEl('span', { cls: 'diwa-dh-chip', text: `#${tag}` });
             chip.addEventListener('click', () => {
                 contexts = contexts.filter(c => c !== tag);
                 chip.remove();
@@ -407,7 +407,7 @@ export class DesktopHubView extends ItemView {
         };
 
         const textarea = section.createEl('textarea', {
-            cls: 'mina-dh-task-textarea',
+            cls: 'diwa-dh-task-textarea',
             attr: { placeholder: 'Add a task… (@due, #ctx, /person, [[link)', rows: '1' }
         }) as HTMLTextAreaElement;
 
@@ -472,7 +472,7 @@ export class DesktopHubView extends ItemView {
     }
 
     private renderTaskList(parent: HTMLElement) {
-        const section = parent.createEl('div', { cls: 'mina-dh-task-list-section' });
+        const section = parent.createEl('div', { cls: 'diwa-dh-task-list-section' });
 
         const todayM = moment().startOf('day');
         const cutoff = moment().startOf('day').add(2, 'days').endOf('day');
@@ -495,18 +495,18 @@ export class DesktopHubView extends ItemView {
             : allOpen;
 
         // ── Header with filter toggle ────────────────────────────
-        const header = section.createEl('div', { cls: 'mina-dh-task-list-header' });
-        header.createEl('span', { text: 'TASKS', cls: 'mina-dh-task-list-title' });
+        const header = section.createEl('div', { cls: 'diwa-dh-task-list-header' });
+        header.createEl('span', { text: 'TASKS', cls: 'diwa-dh-task-list-title' });
 
-        const filterGroup = header.createEl('div', { cls: 'mina-dh-task-filter' });
+        const filterGroup = header.createEl('div', { cls: 'diwa-dh-task-filter' });
 
         const pill2 = filterGroup.createEl('button', {
             text: '2 DAYS',
-            cls: `mina-dh-task-filter-pill${this._taskFilter === 'upcoming' ? ' is-active' : ''}`,
+            cls: `diwa-dh-task-filter-pill${this._taskFilter === 'upcoming' ? ' is-active' : ''}`,
         });
         const pillAll = filterGroup.createEl('button', {
             text: 'ALL',
-            cls: `mina-dh-task-filter-pill${this._taskFilter === 'all' ? ' is-active' : ''}`,
+            cls: `diwa-dh-task-filter-pill${this._taskFilter === 'all' ? ' is-active' : ''}`,
         });
 
         pill2.addEventListener('click', () => {
@@ -527,17 +527,17 @@ export class DesktopHubView extends ItemView {
                 text: this._taskFilter === 'upcoming'
                     ? 'No tasks in the next 2 days.'
                     : 'All clear — no open tasks.',
-                cls: 'mina-dh-task-empty'
+                cls: 'diwa-dh-task-empty'
             });
             return;
         }
 
-        const list = section.createEl('div', { cls: 'mina-dh-task-list' });
+        const list = section.createEl('div', { cls: 'diwa-dh-task-list' });
         for (const task of tasks) {
             const isOverdue = !!(task.due && moment(task.due, 'YYYY-MM-DD').isBefore(todayM, 'day'));
-            const item = list.createEl('div', { cls: `mina-dh-task-item${isOverdue ? ' is-overdue' : ''}` });
+            const item = list.createEl('div', { cls: `diwa-dh-task-item${isOverdue ? ' is-overdue' : ''}` });
 
-            const checkbox = item.createEl('div', { cls: 'mina-dh-task-checkbox' });
+            const checkbox = item.createEl('div', { cls: 'diwa-dh-task-checkbox' });
             checkbox.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 item.addClass('is-completing');
@@ -559,19 +559,19 @@ export class DesktopHubView extends ItemView {
                 }
             });
 
-            const content = item.createEl('div', { cls: 'mina-dh-task-content' });
-            content.createEl('span', { text: task.title, cls: 'mina-dh-task-title' });
+            const content = item.createEl('div', { cls: 'diwa-dh-task-content' });
+            content.createEl('span', { text: task.title, cls: 'diwa-dh-task-title' });
 
             if (task.due) {
                 const dueM = moment(task.due, 'YYYY-MM-DD');
                 const label = isOverdue ? dueM.format('MMM D') : dueM.fromNow();
                 content.createEl('span', {
                     text: label,
-                    cls: `mina-dh-task-due${isOverdue ? ' is-overdue' : ''}`
+                    cls: `diwa-dh-task-due${isOverdue ? ' is-overdue' : ''}`
                 });
             }
 
-            const editBtn = item.createEl('button', { cls: 'mina-dh-task-edit-btn', attr: { title: 'Edit task', 'aria-label': 'Edit task' } });
+            const editBtn = item.createEl('button', { cls: 'diwa-dh-task-edit-btn', attr: { title: 'Edit task', 'aria-label': 'Edit task' } });
             setIcon(editBtn, 'lucide-pencil');
             editBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -590,19 +590,19 @@ export class DesktopHubView extends ItemView {
 
         let editContexts = [...(task.context || [])];
         let editDueDate: string | null = task.due || null;
-        const form = item.createEl('div', { cls: 'mina-edit-form' });
+        const form = item.createEl('div', { cls: 'diwa-edit-form' });
 
-        const chipRow = form.createEl('div', { cls: 'mina-edit-chip-row' });
+        const chipRow = form.createEl('div', { cls: 'diwa-edit-chip-row' });
         const renderChips = () => {
             chipRow.empty();
             for (const ctx of editContexts) {
-                const chip = chipRow.createEl('span', { cls: 'mina-dh-chip', text: `#${ctx}` });
+                const chip = chipRow.createEl('span', { cls: 'diwa-dh-chip', text: `#${ctx}` });
                 chip.addEventListener('click', () => { editContexts = editContexts.filter(c => c !== ctx); renderChips(); });
             }
         };
         renderChips();
 
-        const textarea = form.createEl('textarea', { cls: 'mina-edit-textarea', attr: { rows: '2' } }) as HTMLTextAreaElement;
+        const textarea = form.createEl('textarea', { cls: 'diwa-edit-textarea', attr: { rows: '2' } }) as HTMLTextAreaElement;
         textarea.value = task.title || task.body || '';
         const syncH = () => { textarea.style.height = 'auto'; textarea.style.height = `${textarea.scrollHeight}px`; };
         requestAnimationFrame(() => { syncH(); textarea.focus(); textarea.setSelectionRange(textarea.value.length, textarea.value.length); });
@@ -616,9 +616,9 @@ export class DesktopHubView extends ItemView {
             this.plugin.settings.peopleFolder,
         );
 
-        const actions = form.createEl('div', { cls: 'mina-edit-actions' });
-        const saveBtn = actions.createEl('button', { cls: 'mina-edit-save-btn', text: 'Save' });
-        const cancelBtn = actions.createEl('button', { cls: 'mina-edit-cancel-btn', text: 'Cancel' });
+        const actions = form.createEl('div', { cls: 'diwa-edit-actions' });
+        const saveBtn = actions.createEl('button', { cls: 'diwa-edit-save-btn', text: 'Save' });
+        const cancelBtn = actions.createEl('button', { cls: 'diwa-edit-cancel-btn', text: 'Cancel' });
 
         const exit = (restore: boolean) => {
             item.removeClass('is-editing');
@@ -654,3 +654,4 @@ export class DesktopHubView extends ItemView {
         });
     }
 }
+

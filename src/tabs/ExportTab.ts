@@ -12,7 +12,7 @@ export class ExportTab extends BaseTab {
 
     render(container: HTMLElement) {
         container.empty();
-        const wrap = container.createEl('div', { cls: 'mina-export-wrap' });
+        const wrap = container.createEl('div', { cls: 'diwa-export-wrap' });
 
         // ── Header ────────────────────────────────────────────────────────
         const headerRow = wrap.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px; margin-bottom: 4px;' } });
@@ -23,26 +23,26 @@ export class ExportTab extends BaseTab {
         const taskCount = this.index.taskIndex.size;
 
         // ── Thoughts Export ───────────────────────────────────────────────
-        const thoughtCard = wrap.createEl('div', { cls: 'mina-export-card' });
-        thoughtCard.createEl('div', { text: '💭 Thoughts Export', cls: 'mina-export-card-title' });
-        thoughtCard.createEl('span', { text: `${thoughtCount} thoughts`, cls: 'mina-export-count-badge' });
-        thoughtCard.createEl('div', { text: 'Exports all thoughts as a CSV file into your thoughts folder.', cls: 'mina-export-card-desc' });
-        const thoughtBtn = thoughtCard.createEl('button', { text: 'Export as CSV', cls: 'mina-export-btn' });
+        const thoughtCard = wrap.createEl('div', { cls: 'diwa-export-card' });
+        thoughtCard.createEl('div', { text: '💭 Thoughts Export', cls: 'diwa-export-card-title' });
+        thoughtCard.createEl('span', { text: `${thoughtCount} thoughts`, cls: 'diwa-export-count-badge' });
+        thoughtCard.createEl('div', { text: 'Exports all thoughts as a CSV file into your thoughts folder.', cls: 'diwa-export-card-desc' });
+        const thoughtBtn = thoughtCard.createEl('button', { text: 'Export as CSV', cls: 'diwa-export-btn' });
         thoughtBtn.addEventListener('click', () => this._exportThoughts(thoughtBtn));
 
         // ── Tasks Export ──────────────────────────────────────────────────
-        const taskCard = wrap.createEl('div', { cls: 'mina-export-card' });
-        taskCard.createEl('div', { text: '✅ Tasks Export', cls: 'mina-export-card-title' });
-        taskCard.createEl('span', { text: `${taskCount} tasks`, cls: 'mina-export-count-badge' });
-        taskCard.createEl('div', { text: 'Exports all tasks as a CSV file into your tasks folder.', cls: 'mina-export-card-desc' });
-        const taskBtn = taskCard.createEl('button', { text: 'Export as CSV', cls: 'mina-export-btn' });
+        const taskCard = wrap.createEl('div', { cls: 'diwa-export-card' });
+        taskCard.createEl('div', { text: '✅ Tasks Export', cls: 'diwa-export-card-title' });
+        taskCard.createEl('span', { text: `${taskCount} tasks`, cls: 'diwa-export-count-badge' });
+        taskCard.createEl('div', { text: 'Exports all tasks as a CSV file into your tasks folder.', cls: 'diwa-export-card-desc' });
+        const taskBtn = taskCard.createEl('button', { text: 'Export as CSV', cls: 'diwa-export-btn' });
         taskBtn.addEventListener('click', () => this._exportTasks(taskBtn));
 
         // ── Full Backup ───────────────────────────────────────────────────
-        const backupCard = wrap.createEl('div', { cls: 'mina-export-card' });
-        backupCard.createEl('div', { text: '💾 Full Backup', cls: 'mina-export-card-title' });
-        backupCard.createEl('div', { text: 'Creates a JSON backup of thoughts, tasks, projects, and settings (no API keys).', cls: 'mina-export-card-desc' });
-        const backupBtn = backupCard.createEl('button', { text: 'Create Backup', cls: 'mina-export-btn' });
+        const backupCard = wrap.createEl('div', { cls: 'diwa-export-card' });
+        backupCard.createEl('div', { text: '💾 Full Backup', cls: 'diwa-export-card-title' });
+        backupCard.createEl('div', { text: 'Creates a JSON backup of thoughts, tasks, projects, and settings (no API keys).', cls: 'diwa-export-card-desc' });
+        const backupBtn = backupCard.createEl('button', { text: 'Create Backup', cls: 'diwa-export-btn' });
         backupBtn.addEventListener('click', () => this._createBackup(backupBtn));
     }
 
@@ -147,3 +147,4 @@ export class ExportTab extends BaseTab {
         }
     }
 }
+

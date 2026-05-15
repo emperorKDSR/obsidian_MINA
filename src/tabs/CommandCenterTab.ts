@@ -19,11 +19,11 @@ export class CommandCenterTab extends BaseTab {
     render(container: HTMLElement) {
         this.parentContainer = container;
         container.empty();
-        container.addClass('mina-cockpit-root');
+        container.addClass('diwa-cockpit-root');
         if (this.view.isZenMode) container.addClass('is-zen-mode');
         else container.removeClass('is-zen-mode');
 
-        const wrap = container.createEl('div', { cls: 'mina-cc-wrap' });
+        const wrap = container.createEl('div', { cls: 'diwa-cc-wrap' });
 
         this.renderHeader(wrap);
 
@@ -36,23 +36,23 @@ export class CommandCenterTab extends BaseTab {
         this.renderHabitQuickBar(wrap);
         this.renderZenBanner(wrap);
         // Goals removed per design — do not render weekly/monthly goals here
-        // const goalsDual = wrap.createEl('div', { cls: 'mina-goals-pane mina-section--hideable' });
+        // const goalsDual = wrap.createEl('div', { cls: 'diwa-goals-pane diwa-section--hideable' });
         // this.renderWeeklyGoals(goalsDual);
         // this.renderMonthlyGoals(goalsDual);
         this.renderNavigationFooter(wrap);
     }
 
     private renderHeader(parent: HTMLElement) {
-        const headerRow = parent.createEl('div', { cls: 'mina-cc-header' });
-        const greetingCol = headerRow.createEl('div', { cls: 'mina-cc-greeting' });
+        const headerRow = parent.createEl('div', { cls: 'diwa-cc-header' });
+        const greetingCol = headerRow.createEl('div', { cls: 'diwa-cc-greeting' });
         const hour = new Date().getHours();
         const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-        greetingCol.createEl('div', { text: moment().format('dddd · MMMM D').toUpperCase(), cls: 'mina-cc-date-line' });
-        greetingCol.createEl('h1', { text: `${greeting}, Emperor.`, cls: 'mina-cc-title' });
+        greetingCol.createEl('div', { text: moment().format('dddd · MMMM D').toUpperCase(), cls: 'diwa-cc-date-line' });
+        greetingCol.createEl('h1', { text: `${greeting}, Emperor.`, cls: 'diwa-cc-title' });
         const vision = this.settings.northStarGoals?.[0];
         if (vision) {
-            const ns = greetingCol.createEl('div', { cls: 'mina-cc-northstar' });
-            ns.createEl('span', { text: '★', cls: 'mina-cc-northstar-star' });
+            const ns = greetingCol.createEl('div', { cls: 'diwa-cc-northstar' });
+            ns.createEl('span', { text: '★', cls: 'diwa-cc-northstar-star' });
             ns.createEl('span', { text: vision });
         }
         const isPhone = Platform.isMobile && !isTablet();
@@ -63,21 +63,21 @@ export class CommandCenterTab extends BaseTab {
         const btnCluster = headerRow.createEl('div', { attr: { style: 'display:flex; align-items:center; gap:4px; flex-shrink:0;' } });
 
         const searchBtn = btnCluster.createEl('button', {
-            cls: 'mina-zen-btn',
+            cls: 'diwa-zen-btn',
             attr: { title: 'Global Search  Mod+Shift+F', style: btnSize }
         });
         setIcon(searchBtn, 'lucide-search');
         searchBtn.addEventListener('click', () => { new SearchModal(this.app, this.plugin).open(); });
 
         const helpBtn = btnCluster.createEl('button', {
-            cls: 'mina-zen-btn',
+            cls: 'diwa-zen-btn',
             attr: { title: 'Open manual', style: btnSize }
         });
         setIcon(helpBtn, 'lucide-circle-help');
         helpBtn.addEventListener('click', () => { this.view.activeTab = 'manual'; this.view.renderView(); });
 
         const zenToggle = btnCluster.createEl('button', {
-            cls: `mina-zen-btn${this.view.isZenMode ? ' is-active' : ''}`,
+            cls: `diwa-zen-btn${this.view.isZenMode ? ' is-active' : ''}`,
             attr: { title: this.view.isZenMode ? 'Exit Zen' : 'Enter Zen', style: btnSize }
         });
         setIcon(zenToggle, 'lucide-target');
@@ -90,12 +90,12 @@ export class CommandCenterTab extends BaseTab {
 
     private renderSearchPill(parent: HTMLElement) {
         const pill = parent.createEl('div', {
-            cls: 'mina-search-pill',
+            cls: 'diwa-search-pill',
             attr: { role: 'button', 'aria-label': 'Search MINA', tabindex: '0' }
         });
-        const icon = pill.createEl('span', { cls: 'mina-search-pill-icon' });
+        const icon = pill.createEl('span', { cls: 'diwa-search-pill-icon' });
         setIcon(icon, 'lucide-search');
-        pill.createEl('span', { cls: 'mina-search-pill-text', text: 'Search MINA…' });
+        pill.createEl('span', { cls: 'diwa-search-pill-text', text: 'Search MINA…' });
         pill.addEventListener('click', () => new SearchModal(this.app, this.plugin).open());
         pill.addEventListener('keydown', (e: KeyboardEvent) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -106,25 +106,25 @@ export class CommandCenterTab extends BaseTab {
     }
 
     private renderZenBanner(parent: HTMLElement) {
-        const banner = parent.createEl('div', { cls: 'mina-zen-banner' });
-        banner.createEl('div', { text: 'FOCUS MODE', cls: 'mina-zen-focus-label' });
+        const banner = parent.createEl('div', { cls: 'diwa-zen-banner' });
+        banner.createEl('div', { text: 'FOCUS MODE', cls: 'diwa-zen-focus-label' });
         const vision = this.settings.northStarGoals?.[0];
-        if (vision) banner.createEl('div', { text: vision, cls: 'mina-zen-northstar-display' });
-        const exitBtn = banner.createEl('button', { text: 'EXIT ZEN', cls: 'mina-zen-exit-btn' });
+        if (vision) banner.createEl('div', { text: vision, cls: 'diwa-zen-northstar-display' });
+        const exitBtn = banner.createEl('button', { text: 'EXIT ZEN', cls: 'diwa-zen-exit-btn' });
         exitBtn.addEventListener('click', () => { this.view.isZenMode = false; this.render(this.parentContainer); });
     }
 
     // ── 1. Capture bar ──────────────────────────────────────────────────────
     private renderCaptureBar(parent: HTMLElement) {
-        const zone = parent.createEl('div', { cls: 'mina-dual-capture-zone' });
+        const zone = parent.createEl('div', { cls: 'diwa-dual-capture-zone' });
 
         // ── Thought Box ──────────────────────────────────────────────────────
-        const thoughtBox = zone.createEl('div', { cls: 'mina-capture-box mina-capture-box--thought' });
-        const thoughtLabel = thoughtBox.createEl('div', { cls: 'mina-capture-box-label' });
-        thoughtLabel.createEl('span', { text: '✦', cls: 'mina-capture-box-icon' });
-        thoughtLabel.createEl('span', { text: 'THOUGHT', cls: 'mina-capture-box-title' });
+        const thoughtBox = zone.createEl('div', { cls: 'diwa-capture-box diwa-capture-box--thought' });
+        const thoughtLabel = thoughtBox.createEl('div', { cls: 'diwa-capture-box-label' });
+        thoughtLabel.createEl('span', { text: '✦', cls: 'diwa-capture-box-icon' });
+        thoughtLabel.createEl('span', { text: 'THOUGHT', cls: 'diwa-capture-box-title' });
         const expandBtn = thoughtLabel.createEl('button', {
-            cls: 'mina-capture-expand-btn',
+            cls: 'diwa-capture-expand-btn',
             attr: { title: 'Open Zen Capture' }
         });
         setIcon(expandBtn, 'lucide-maximize-2');
@@ -133,13 +133,13 @@ export class CommandCenterTab extends BaseTab {
         });
 
         // Context chips row (populated when user types #tag)
-        const thoughtChipRow = thoughtBox.createEl('div', { cls: 'mina-capture-chip-row' });
+        const thoughtChipRow = thoughtBox.createEl('div', { cls: 'diwa-capture-chip-row' });
         let thoughtContexts: string[] = [];
 
         const addThoughtChip = (tag: string) => {
             if (thoughtContexts.includes(tag)) return;
             thoughtContexts.push(tag);
-            const chip = thoughtChipRow.createEl('span', { cls: 'mina-capture-chip', text: `#${tag}` });
+            const chip = thoughtChipRow.createEl('span', { cls: 'diwa-capture-chip', text: `#${tag}` });
             chip.addEventListener('click', () => {
                 thoughtContexts = thoughtContexts.filter(c => c !== tag);
                 chip.remove();
@@ -147,7 +147,7 @@ export class CommandCenterTab extends BaseTab {
         };
 
         const thoughtArea = thoughtBox.createEl('textarea', {
-            cls: 'mina-capture-box-input mina-capture-box-textarea',
+            cls: 'diwa-capture-box-input diwa-capture-box-textarea',
             attr: { placeholder: "What's on your mind… (Enter to save, Shift+Enter for new line)", rows: '1' }
         }) as HTMLTextAreaElement;
 
@@ -204,13 +204,13 @@ export class CommandCenterTab extends BaseTab {
         });
 
         // ── Task Box ─────────────────────────────────────────────────────────
-        const taskBox = zone.createEl('div', { cls: 'mina-capture-box mina-capture-box--task' });
-        const taskLabel = taskBox.createEl('div', { cls: 'mina-capture-box-label' });
-        taskLabel.createEl('span', { text: '✓', cls: 'mina-capture-box-icon mina-capture-box-icon--task' });
-        taskLabel.createEl('span', { text: 'TASK', cls: 'mina-capture-box-title' });
+        const taskBox = zone.createEl('div', { cls: 'diwa-capture-box diwa-capture-box--task' });
+        const taskLabel = taskBox.createEl('div', { cls: 'diwa-capture-box-label' });
+        taskLabel.createEl('span', { text: '✓', cls: 'diwa-capture-box-icon diwa-capture-box-icon--task' });
+        taskLabel.createEl('span', { text: 'TASK', cls: 'diwa-capture-box-title' });
 
         const taskInput = taskBox.createEl('input', {
-            cls: 'mina-capture-box-input',
+            cls: 'diwa-capture-box-input',
             attr: { placeholder: 'Add a task… use @tomorrow to set due date', type: 'text' }
         }) as HTMLInputElement;
         attachMediaPasteHandler(this.app, taskInput, () => this.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments');
@@ -303,21 +303,21 @@ export class CommandCenterTab extends BaseTab {
         });
 
         // ── ⌘K hint ──────────────────────────────────────────────────────────
-        const hint = zone.createEl('div', { cls: 'mina-dual-capture-hint' });
-        hint.createEl('span', { text: '⌘K', cls: 'mina-capture-kbd' });
-        hint.createEl('span', { text: ' full capture with contexts & projects', cls: 'mina-dual-capture-hint-text' });
+        const hint = zone.createEl('div', { cls: 'diwa-dual-capture-hint' });
+        hint.createEl('span', { text: '⌘K', cls: 'diwa-capture-kbd' });
+        hint.createEl('span', { text: ' full capture with contexts & projects', cls: 'diwa-dual-capture-hint-text' });
     }
 
     // ── 2. Habit quick-bar ──────────────────────────────────────────────────
     private renderHabitQuickBar(parent: HTMLElement) {
         const allHabits = this.settings.habits || [];
         const habits = allHabits.filter(h => !h.archived);
-        const section = parent.createEl('div', { cls: 'mina-habit-section' });
-        const labelRow = section.createEl('div', { cls: 'mina-section-label-row' });
-        labelRow.createEl('span', { text: 'HABITS', cls: 'mina-section-label' });
+        const section = parent.createEl('div', { cls: 'diwa-habit-section' });
+        const labelRow = section.createEl('div', { cls: 'diwa-section-label-row' });
+        labelRow.createEl('span', { text: 'HABITS', cls: 'diwa-section-label' });
 
         // ⚙ config button (QW-02)
-        const gearBtn = labelRow.createEl('button', { cls: 'mina-habit-config-btn', attr: { 'aria-label': 'Configure habits' } });
+        const gearBtn = labelRow.createEl('button', { cls: 'diwa-habit-config-btn', attr: { 'aria-label': 'Configure habits' } });
         gearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
         gearBtn.addEventListener('click', () => { new HabitConfigModal(this.plugin.app, this.plugin).open(); });
 
@@ -329,13 +329,13 @@ export class CommandCenterTab extends BaseTab {
         const completedToday = new Set<string>(this.index.habitStatusIndex);
         const today = moment().format('YYYY-MM-DD');
         let doneCount = habits.filter(h => completedToday.has(h.id)).length;
-        const countEl = labelRow.createEl('span', { cls: 'mina-section-label-count', text: `${doneCount}/${habits.length}` });
+        const countEl = labelRow.createEl('span', { cls: 'diwa-section-label-count', text: `${doneCount}/${habits.length}` });
 
-        const barCls = (Platform.isMobile && !isTablet()) ? 'mina-habit-grid' : 'mina-habit-quick-bar';
+        const barCls = (Platform.isMobile && !isTablet()) ? 'diwa-habit-grid' : 'diwa-habit-quick-bar';
         const bar = section.createEl('div', { cls: barCls });
 
-        const progressBarWrap = section.createEl('div', { cls: 'mina-habit-progress-bar' });
-        const progressBarFill = progressBarWrap.createEl('div', { cls: 'mina-habit-progress-fill' });
+        const progressBarWrap = section.createEl('div', { cls: 'diwa-habit-progress-bar' });
+        const progressBarFill = progressBarWrap.createEl('div', { cls: 'diwa-habit-progress-fill' });
 
         const updateProgress = (count: number) => {
             progressBarFill.style.width = `${habits.length > 0 ? (count / habits.length) * 100 : 0}%`;
@@ -353,11 +353,11 @@ export class CommandCenterTab extends BaseTab {
         const maxNameLen = (Platform.isMobile && !isTablet()) ? 11 : 13; // QW-03: extended from 9
         for (const habit of habits) {
             const done = completedToday.has(habit.id);
-            const btn = bar.createEl('button', { cls: `mina-habit-quick-btn${done ? ' is-done' : ''}`, attr: { title: habit.name } });
-            btn.insertAdjacentHTML('afterbegin', '<svg class="mina-habit-ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="mina-habit-ring-track" cx="18" cy="18" r="15.9"/><circle class="mina-habit-ring-fill" cx="18" cy="18" r="15.9"/></svg>');
-            btn.createEl('span', { text: habit.icon || '●', cls: 'mina-habit-quick-icon' });
-            btn.createEl('span', { text: habit.name.substring(0, maxNameLen), cls: 'mina-habit-quick-label' });
-            if (!Platform.isMobile || isTablet()) btn.createEl('div', { cls: 'mina-habit-tooltip', text: habit.name });
+            const btn = bar.createEl('button', { cls: `diwa-habit-quick-btn${done ? ' is-done' : ''}`, attr: { title: habit.name } });
+            btn.insertAdjacentHTML('afterbegin', '<svg class="diwa-habit-ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="diwa-habit-ring-track" cx="18" cy="18" r="15.9"/><circle class="diwa-habit-ring-fill" cx="18" cy="18" r="15.9"/></svg>');
+            btn.createEl('span', { text: habit.icon || '●', cls: 'diwa-habit-quick-icon' });
+            btn.createEl('span', { text: habit.name.substring(0, maxNameLen), cls: 'diwa-habit-quick-label' });
+            if (!Platform.isMobile || isTablet()) btn.createEl('div', { cls: 'diwa-habit-tooltip', text: habit.name });
 
             btn.addEventListener('click', async () => {
                 const nowDone = btn.hasClass('is-done');
@@ -377,10 +377,10 @@ export class CommandCenterTab extends BaseTab {
     // ── 4. Weekly Goals ───────────────────────────────────────────────────────
     private renderWeeklyGoals(parent: HTMLElement) {
         const goals = (this.settings.weeklyGoals || []).filter(g => g && g.trim());
-        const card = parent.createEl('div', { cls: 'mina-goal-card' });
-        const header = card.createEl('div', { cls: 'mina-goal-card-header' });
-        header.createEl('span', { text: 'WEEKLY', cls: 'mina-goal-card-title' });
-        const editBtn = header.createEl('button', { text: 'Edit', cls: 'mina-goal-edit-btn',
+        const card = parent.createEl('div', { cls: 'diwa-goal-card' });
+        const header = card.createEl('div', { cls: 'diwa-goal-card-header' });
+        header.createEl('span', { text: 'WEEKLY', cls: 'diwa-goal-card-title' });
+        const editBtn = header.createEl('button', { text: 'Edit', cls: 'diwa-goal-edit-btn',
             attr: { style: `padding: ${Platform.isMobile && !isTablet() ? '10px 12px' : '2px 4px'}; min-height: ${Platform.isMobile && !isTablet() ? '44px' : 'auto'};` }
         });
         editBtn.addEventListener('click', () => { this.view.activeTab = 'review'; this.view.renderView(); });
@@ -390,18 +390,18 @@ export class CommandCenterTab extends BaseTab {
             return;
         }
         goals.slice(0, 3).forEach((goal, i) => {
-            const item = card.createEl('div', { cls: 'mina-goal-item' });
-            item.createEl('span', { text: String(i + 1), cls: 'mina-goal-num mina-goal-num--weekly' });
-            item.createEl('span', { text: goal, cls: 'mina-goal-text' });
+            const item = card.createEl('div', { cls: 'diwa-goal-item' });
+            item.createEl('span', { text: String(i + 1), cls: 'diwa-goal-num diwa-goal-num--weekly' });
+            item.createEl('span', { text: goal, cls: 'diwa-goal-text' });
         });
         if (goals.length > 3) {
-            const more = card.createEl('button', { text: `+ ${goals.length - 3} more`, cls: 'mina-goal-more-link' });
+            const more = card.createEl('button', { text: `+ ${goals.length - 3} more`, cls: 'diwa-goal-more-link' });
             more.addEventListener('click', () => {
                 more.remove();
                 goals.slice(3).forEach((goal, i) => {
-                    const item = card.createEl('div', { cls: 'mina-goal-item' });
-                    item.createEl('span', { text: String(i + 4), cls: 'mina-goal-num mina-goal-num--weekly' });
-                    item.createEl('span', { text: goal, cls: 'mina-goal-text' });
+                    const item = card.createEl('div', { cls: 'diwa-goal-item' });
+                    item.createEl('span', { text: String(i + 4), cls: 'diwa-goal-num diwa-goal-num--weekly' });
+                    item.createEl('span', { text: goal, cls: 'diwa-goal-text' });
                 });
             });
         }
@@ -410,9 +410,9 @@ export class CommandCenterTab extends BaseTab {
     // ── 5. Monthly Goals ──────────────────────────────────────────────────────
     private renderMonthlyGoals(parent: HTMLElement) {
         const goals = (this.settings.monthlyGoals || []).filter(g => g && g.trim());
-        const card = parent.createEl('div', { cls: 'mina-goal-card' });
-        const header = card.createEl('div', { cls: 'mina-goal-card-header' });
-        header.createEl('span', { text: 'MONTHLY', cls: 'mina-goal-card-title' });
+        const card = parent.createEl('div', { cls: 'diwa-goal-card' });
+        const header = card.createEl('div', { cls: 'diwa-goal-card-header' });
+        header.createEl('span', { text: 'MONTHLY', cls: 'diwa-goal-card-title' });
 
         let isExpanded = !Platform.isMobile || isTablet();
         const listEl = card.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 4px;' } });
@@ -430,7 +430,7 @@ export class CommandCenterTab extends BaseTab {
                 setIcon(chevron, isExpanded ? 'chevron-down' : 'chevron-right');
             });
         } else {
-            const editBtn = header.createEl('button', { text: 'Edit', cls: 'mina-goal-edit-btn' });
+            const editBtn = header.createEl('button', { text: 'Edit', cls: 'diwa-goal-edit-btn' });
             editBtn.addEventListener('click', () => { this.view.activeTab = 'monthly-review'; this.view.renderView(); });
         }
 
@@ -440,18 +440,18 @@ export class CommandCenterTab extends BaseTab {
             return;
         }
         goals.slice(0, 3).forEach((goal, i) => {
-            const item = listEl.createEl('div', { cls: 'mina-goal-item' });
-            item.createEl('span', { text: String(i + 1), cls: 'mina-goal-num mina-goal-num--monthly' });
-            item.createEl('span', { text: goal, cls: 'mina-goal-text' });
+            const item = listEl.createEl('div', { cls: 'diwa-goal-item' });
+            item.createEl('span', { text: String(i + 1), cls: 'diwa-goal-num diwa-goal-num--monthly' });
+            item.createEl('span', { text: goal, cls: 'diwa-goal-text' });
         });
         if (goals.length > 3) {
-            const more = listEl.createEl('button', { text: `+ ${goals.length - 3} more`, cls: 'mina-goal-more-link' });
+            const more = listEl.createEl('button', { text: `+ ${goals.length - 3} more`, cls: 'diwa-goal-more-link' });
             more.addEventListener('click', () => {
                 more.remove();
                 goals.slice(3).forEach((goal, i) => {
-                    const item = listEl.createEl('div', { cls: 'mina-goal-item' });
-                    item.createEl('span', { text: String(i + 4), cls: 'mina-goal-num mina-goal-num--monthly' });
-                    item.createEl('span', { text: goal, cls: 'mina-goal-text' });
+                    const item = listEl.createEl('div', { cls: 'diwa-goal-item' });
+                    item.createEl('span', { text: String(i + 4), cls: 'diwa-goal-num diwa-goal-num--monthly' });
+                    item.createEl('span', { text: goal, cls: 'diwa-goal-text' });
                 });
             });
         }
@@ -460,8 +460,8 @@ export class CommandCenterTab extends BaseTab {
     private renderDailyRoutine(parent: HTMLElement) {
         if (this.index.checklistIndex.length === 0) return;
 
-        const section = parent.createEl('div', { cls: 'mina-section--hideable', attr: { style: 'display: flex; flex-direction: column; gap: 6px;' } });
-        section.createEl('span', { text: 'DAILY ROUTINE', cls: 'mina-section-label' });
+        const section = parent.createEl('div', { cls: 'diwa-section--hideable', attr: { style: 'display: flex; flex-direction: column; gap: 6px;' } });
+        section.createEl('span', { text: 'DAILY ROUTINE', cls: 'diwa-section-label' });
         const list = section.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 4px;' } });
 
         this.index.checklistIndex.forEach(item => {
@@ -480,13 +480,13 @@ export class CommandCenterTab extends BaseTab {
 
     // ── 7. Intelligence ──────────────────────────────────────────────────────
     private renderIntelligence(parent: HTMLElement) {
-        const intel = parent.createEl('div', { cls: 'mina-intel-card mina-section--hideable' });
+        const intel = parent.createEl('div', { cls: 'diwa-intel-card diwa-section--hideable' });
 
-        const intelHeader = intel.createEl('div', { cls: 'mina-intel-header' });
-        const titleRow = intelHeader.createEl('div', { cls: 'mina-intel-title-row' });
-        const iIcon = titleRow.createDiv({ cls: 'mina-intel-icon' }); setIcon(iIcon, 'lucide-sparkles');
-        titleRow.createSpan({ text: 'INTELLIGENCE', cls: 'mina-intel-label' });
-        const tsEl = intelHeader.createSpan({ cls: 'mina-intel-timestamp', text: '' });
+        const intelHeader = intel.createEl('div', { cls: 'diwa-intel-header' });
+        const titleRow = intelHeader.createEl('div', { cls: 'diwa-intel-title-row' });
+        const iIcon = titleRow.createDiv({ cls: 'diwa-intel-icon' }); setIcon(iIcon, 'lucide-sparkles');
+        titleRow.createSpan({ text: 'INTELLIGENCE', cls: 'diwa-intel-label' });
+        const tsEl = intelHeader.createSpan({ cls: 'diwa-intel-timestamp', text: '' });
 
         const idx = this.index;
         const todayM = moment().startOf('day');
@@ -497,20 +497,20 @@ export class CommandCenterTab extends BaseTab {
         const unsynth = Array.from(idx.thoughtIndex.values()).filter(t => !t.synthesized).length;
         const dues = idx.totalDues || 0;
 
-        const strip = intel.createEl('div', { cls: 'mina-intel-status-strip' });
+        const strip = intel.createEl('div', { cls: 'diwa-intel-status-strip' });
         const addStat = (value: string, label: string, danger = false, success = false) => {
-            const stat = strip.createEl('div', { cls: 'mina-intel-stat' });
-            stat.createEl('div', { text: value, cls: `mina-intel-stat-value${danger ? ' is-danger' : success ? ' is-success' : ''}` });
-            stat.createEl('div', { text: label, cls: 'mina-intel-stat-label' });
+            const stat = strip.createEl('div', { cls: 'diwa-intel-stat' });
+            stat.createEl('div', { text: value, cls: `diwa-intel-stat-value${danger ? ' is-danger' : success ? ' is-success' : ''}` });
+            stat.createEl('div', { text: label, cls: 'diwa-intel-stat-label' });
         };
         addStat(String(openTasks.length), 'OPEN TASKS', overdueTasks.length > 0);
         addStat(`${completedHabits}/${totalHabits}`, 'HABITS', false, completedHabits === totalHabits && totalHabits > 0);
         addStat(String(unsynth), 'THOUGHTS');
         addStat(`$${dues.toFixed(0)}`, 'DUES', dues > 0);
 
-        const body = intel.createEl('div', { text: 'Strategic briefing pending analysis.', cls: 'mina-intel-body' });
+        const body = intel.createEl('div', { text: 'Strategic briefing pending analysis.', cls: 'diwa-intel-body' });
 
-        const analyzeBtn = intel.createEl('button', { cls: 'mina-intel-analyze-btn' });
+        const analyzeBtn = intel.createEl('button', { cls: 'diwa-intel-analyze-btn' });
         const btnIcon = analyzeBtn.createDiv(); setIcon(btnIcon, 'lucide-sparkles');
         analyzeBtn.createSpan({ text: 'SYNTHESIZE BRIEFING' });
 
@@ -546,28 +546,28 @@ export class CommandCenterTab extends BaseTab {
     }
 
     private renderTacticalRow(parent: HTMLElement, text: string, done: boolean, onToggle: () => void) {
-        const row = parent.createEl('div', { cls: `mina-tactical-row${done ? ' is-done' : ''}`, attr: { style: 'cursor: default;' } });
+        const row = parent.createEl('div', { cls: `diwa-tactical-row${done ? ' is-done' : ''}`, attr: { style: 'cursor: default;' } });
         const isPhone = Platform.isMobile && !isTablet();
         const cbWrap = row.createDiv({ attr: { style: `padding: ${isPhone ? '12px' : '4px'}; cursor: pointer;` } });
         if (isPhone) (row as HTMLElement).style.minHeight = '48px';
-        const cb = cbWrap.createDiv({ cls: 'mina-tactical-checkbox' });
+        const cb = cbWrap.createDiv({ cls: 'diwa-tactical-checkbox' });
         if (done) setIcon(cb, 'lucide-check');
         cbWrap.addEventListener('click', (e) => { e.stopPropagation(); onToggle(); });
-        row.createEl('span', { text, cls: 'mina-tactical-text', attr: { style: done ? 'text-decoration: line-through; opacity: 0.45;' : '' } });
+        row.createEl('span', { text, cls: 'diwa-tactical-text', attr: { style: done ? 'text-decoration: line-through; opacity: 0.45;' : '' } });
     }
 
     private renderNavigationFooter(parent: HTMLElement) {
-        const nav = parent.createEl('div', { cls: 'mina-nav-grid mina-section--hideable' });
+        const nav = parent.createEl('div', { cls: 'diwa-nav-grid diwa-section--hideable' });
 
         const renderCluster = (title: string, items: {label: string, icon: string, tab: string}[], modifierCls: string) => {
-            const wrap = nav.createEl('div', { cls: 'mina-nav-cluster-wrap' });
-            const isCollapsibleOnMobile = Platform.isMobile && !isTablet() && modifierCls !== 'mina-pillar-cluster--action';
+            const wrap = nav.createEl('div', { cls: 'diwa-nav-cluster-wrap' });
+            const isCollapsibleOnMobile = Platform.isMobile && !isTablet() && modifierCls !== 'diwa-pillar-cluster--action';
             let isExpanded = !isCollapsibleOnMobile;
 
             const headerRow = wrap.createEl('div', { attr: { style: `display: flex; align-items: center; justify-content: space-between;${isCollapsibleOnMobile ? ' cursor: pointer; min-height: 44px;' : ''}` } });
-            headerRow.createEl('h3', { text: title, cls: 'mina-cluster-label' });
+            headerRow.createEl('h3', { text: title, cls: 'diwa-cluster-label' });
 
-            const cluster = wrap.createEl('div', { cls: `mina-pillar-cluster ${modifierCls}` });
+            const cluster = wrap.createEl('div', { cls: `diwa-pillar-cluster ${modifierCls}` });
             if (!isExpanded) cluster.style.display = 'none';
 
             if (isCollapsibleOnMobile) {
@@ -581,9 +581,9 @@ export class CommandCenterTab extends BaseTab {
             }
 
             items.forEach(i => {
-                const item = cluster.createEl('div', { cls: 'mina-pillar-item', attr: { tabindex: '0' } });
-                const iconWrap = item.createDiv({ cls: 'mina-pillar-icon' }); setIcon(iconWrap, i.icon);
-                item.createSpan({ text: i.label, cls: 'mina-pillar-label' });
+                const item = cluster.createEl('div', { cls: 'diwa-pillar-item', attr: { tabindex: '0' } });
+                const iconWrap = item.createDiv({ cls: 'diwa-pillar-icon' }); setIcon(iconWrap, i.icon);
+                item.createSpan({ text: i.label, cls: 'diwa-pillar-label' });
                 item.addEventListener('click', () => { this.plugin.activateView(i.tab, false); });
                 item.addEventListener('keydown', (e: KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); item.click(); } });
             });
@@ -596,7 +596,7 @@ export class CommandCenterTab extends BaseTab {
             { label: 'Journal', icon: JOURNAL_ICON_ID, tab: 'journal' },
             { label: 'Synthesis', icon: SYNTHESIS_ICON_ID, tab: 'synthesis' },
             { label: 'Timeline', icon: TIMELINE_ICON_ID, tab: 'timeline' }
-        ], 'mina-pillar-cluster--action');
+        ], 'diwa-pillar-cluster--action');
 
         // MANAGEMENT row — displayed like action row but with blocked background
         renderCluster('MANAGEMENT', [
@@ -607,22 +607,22 @@ export class CommandCenterTab extends BaseTab {
             { label: 'Weekly', icon: REVIEW_ICON_ID, tab: 'review' },
             { label: 'Monthly', icon: 'lucide-calendar-range', tab: 'monthly-review' },
             { label: 'Compass', icon: COMPASS_ICON_ID, tab: 'compass' }
-        ], 'mina-pillar-cluster--mgmt mina-pillar-cluster--blocked');
+        ], 'diwa-pillar-cluster--mgmt diwa-pillar-cluster--blocked');
 
         // FEATURES row
         renderCluster('FEATURES', [
-            { label: 'AI Chat', icon: AI_CHAT_ICON_ID, tab: 'mina-ai' },
+            { label: 'AI Chat', icon: AI_CHAT_ICON_ID, tab: 'diwa-ai' },
             { label: 'Voice', icon: 'lucide-mic', tab: 'voice-note' },
             { label: 'Compasee', icon: COMPASS_ICON_ID, tab: 'compass' },
             { label: 'Memento', icon: MEMENTO_ICON_ID, tab: 'memento-mori' }
-        ], 'mina-pillar-cluster--features');
+        ], 'diwa-pillar-cluster--features');
 
         // SYSTEM row
         renderCluster('SYSTEM', [
             { label: 'Settings', icon: SETTINGS_ICON_ID, tab: 'settings' },
             { label: 'Manual', icon: 'lucide-book-open', tab: 'manual' },
             { label: 'Export', icon: 'lucide-download', tab: 'export' }
-        ], 'mina-pillar-cluster--system');
+        ], 'diwa-pillar-cluster--system');
     }
 
     /** Attach # autocomplete suggestions to a capture textarea.
@@ -633,8 +633,8 @@ export class CommandCenterTab extends BaseTab {
         container: HTMLElement,
         onDateChange: (d: string | null) => void
     ): { setDueDate: (d: string) => void } {
-        const strip = container.createDiv({ cls: 'mina-date-strip' });
-        const display = container.createDiv({ cls: 'mina-date-display' });
+        const strip = container.createDiv({ cls: 'diwa-date-strip' });
+        const display = container.createDiv({ cls: 'diwa-date-display' });
         display.style.display = 'none';
         const btnEls: HTMLButtonElement[] = [];
 
@@ -642,9 +642,9 @@ export class CommandCenterTab extends BaseTab {
             display.empty();
             if (!dateStr) { display.style.display = 'none'; return; }
             display.style.display = 'flex';
-            display.createSpan({ text: '📅', cls: 'mina-date-display-icon' });
-            const lbl = display.createSpan({ text: moment(dateStr).format('dddd, MMM D'), cls: 'mina-date-display-label' });
-            const clr = display.createSpan({ text: '×', cls: 'mina-date-display-clear' });
+            display.createSpan({ text: '📅', cls: 'diwa-date-display-icon' });
+            const lbl = display.createSpan({ text: moment(dateStr).format('dddd, MMM D'), cls: 'diwa-date-display-label' });
+            const clr = display.createSpan({ text: '×', cls: 'diwa-date-display-clear' });
             lbl.addEventListener('click', () => showNLPInput());
             clr.addEventListener('click', () => { onDateChange(null); updateDisplay(null); btnEls.forEach(b => b.removeClass('is-selected')); });
         };
@@ -664,7 +664,7 @@ export class CommandCenterTab extends BaseTab {
         const shortcuts = rawShortcuts.filter((s, i, a) => a.findIndex(x => x.days === s.days) === i);
 
         shortcuts.forEach(s => {
-            const btn = strip.createEl('button', { text: s.label, cls: 'mina-date-shortcut-btn' }) as HTMLButtonElement;
+            const btn = strip.createEl('button', { text: s.label, cls: 'diwa-date-shortcut-btn' }) as HTMLButtonElement;
             btnEls.push(btn);
             btn.addEventListener('click', () => {
                 const d = moment().add(s.days, 'days').format('YYYY-MM-DD');
@@ -674,14 +674,14 @@ export class CommandCenterTab extends BaseTab {
             });
         });
 
-        const pickBtn = strip.createEl('button', { text: 'PICK ▾', cls: 'mina-date-shortcut-btn mina-date-pick-btn' });
+        const pickBtn = strip.createEl('button', { text: 'PICK ▾', cls: 'diwa-date-shortcut-btn diwa-date-pick-btn' });
         pickBtn.addEventListener('click', () => showNLPInput());
 
         const showNLPInput = () => {
-            container.querySelector('.mina-date-nlp-wrap')?.remove();
-            const wrap = container.createDiv({ cls: 'mina-date-nlp-wrap' });
+            container.querySelector('.diwa-date-nlp-wrap')?.remove();
+            const wrap = container.createDiv({ cls: 'diwa-date-nlp-wrap' });
             const input = wrap.createEl('input', {
-                type: 'text', cls: 'mina-date-nlp-input',
+                type: 'text', cls: 'diwa-date-nlp-input',
                 attr: { placeholder: 'next tuesday, in 3 weeks…' }
             }) as HTMLInputElement;
             input.focus();
@@ -698,3 +698,4 @@ export class CommandCenterTab extends BaseTab {
         return { setDueDate };
     }
 }
+

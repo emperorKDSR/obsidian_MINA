@@ -14,7 +14,7 @@ export class CalendarTab extends BaseTab {
     render(container: HTMLElement) {
         container.empty();
         const habitMap = this._buildHabitMap();
-        const wrap = container.createEl('div', { cls: 'mina-cal-wrap' });
+        const wrap = container.createEl('div', { cls: 'diwa-cal-wrap' });
         this._renderHeader(wrap, () => this.render(container));
         this._renderGrid(wrap, habitMap, () => this.render(container));
         this._renderDetail(wrap, habitMap, container);
@@ -58,22 +58,22 @@ export class CalendarTab extends BaseTab {
     }
 
     private _renderHeader(parent: HTMLElement, onRefresh: () => void) {
-        const header = parent.createEl('div', { cls: 'mina-cal-header' });
-        const titleRow = header.createEl('div', { cls: 'mina-cal-title-row' });
+        const header = parent.createEl('div', { cls: 'diwa-cal-header' });
+        const titleRow = header.createEl('div', { cls: 'diwa-cal-title-row' });
         this.renderHomeIcon(titleRow);
-        titleRow.createEl('h2', { cls: 'mina-cal-title', text: 'Calendar' });
+        titleRow.createEl('h2', { cls: 'diwa-cal-title', text: 'Calendar' });
 
-        const toggle = titleRow.createEl('div', { cls: 'mina-cal-view-toggle' });
+        const toggle = titleRow.createEl('div', { cls: 'diwa-cal-view-toggle' });
         (['month', 'week'] as const).forEach(mode => {
             const btn = toggle.createEl('button', {
-                cls: `mina-cal-toggle-btn${this.view.calendarViewMode === mode ? ' is-active' : ''}`,
+                cls: `diwa-cal-toggle-btn${this.view.calendarViewMode === mode ? ' is-active' : ''}`,
                 text: mode.charAt(0).toUpperCase() + mode.slice(1),
             });
             btn.addEventListener('click', () => { this.view.calendarViewMode = mode; onRefresh(); });
         });
 
-        const navRow = header.createEl('div', { cls: 'mina-cal-nav-row' });
-        const prevBtn = navRow.createEl('button', { cls: 'mina-cal-nav-btn' });
+        const navRow = header.createEl('div', { cls: 'diwa-cal-nav-row' });
+        const prevBtn = navRow.createEl('button', { cls: 'diwa-cal-nav-btn' });
         setIcon(prevBtn, 'chevron-left');
 
         const vm = moment(this.view.calendarViewMonth + '-01');
@@ -86,12 +86,12 @@ export class CalendarTab extends BaseTab {
         } else {
             labelText = vm.format('MMMM YYYY');
         }
-        navRow.createEl('span', { cls: 'mina-cal-nav-label', text: labelText });
+        navRow.createEl('span', { cls: 'diwa-cal-nav-label', text: labelText });
 
-        const nextBtn = navRow.createEl('button', { cls: 'mina-cal-nav-btn' });
+        const nextBtn = navRow.createEl('button', { cls: 'diwa-cal-nav-btn' });
         setIcon(nextBtn, 'chevron-right');
 
-        const todayBtn = navRow.createEl('button', { cls: 'mina-cal-today-btn', text: 'Today' });
+        const todayBtn = navRow.createEl('button', { cls: 'diwa-cal-today-btn', text: 'Today' });
 
         prevBtn.addEventListener('click', () => {
             if (isWeek) {
@@ -119,11 +119,11 @@ export class CalendarTab extends BaseTab {
     }
 
     private _renderGrid(parent: HTMLElement, habitMap: Map<string, Set<string>>, onRefresh: () => void) {
-        const gridWrap = parent.createEl('div', { cls: 'mina-cal-grid-wrap' });
+        const gridWrap = parent.createEl('div', { cls: 'diwa-cal-grid-wrap' });
 
-        const dayLabels = gridWrap.createEl('div', { cls: 'mina-cal-weekdays' });
+        const dayLabels = gridWrap.createEl('div', { cls: 'diwa-cal-weekdays' });
         ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(d =>
-            dayLabels.createEl('div', { cls: 'mina-cal-weekday-label', text: d })
+            dayLabels.createEl('div', { cls: 'diwa-cal-weekday-label', text: d })
         );
 
         // Pre-index tasks and dues for O(1) cell lookup
@@ -144,7 +144,7 @@ export class CalendarTab extends BaseTab {
         // Use cached day plan intentions for week view
         const calDayPlans: Record<string, string> = (isWeek && (this.view as any).calendarDayPlans) || {};
 
-        const grid = gridWrap.createEl('div', { cls: `mina-cal-grid${isWeek ? ' mina-cal-grid--week' : ''}` });
+        const grid = gridWrap.createEl('div', { cls: `diwa-cal-grid${isWeek ? ' diwa-cal-grid--week' : ''}` });
 
         const today = moment().format('YYYY-MM-DD');
         const { start, end } = this._getDisplayRange();
@@ -158,34 +158,34 @@ export class CalendarTab extends BaseTab {
             const isSelected = dateStr === this.view.calendarSelectedDate;
             const isOutside = !isWeek && cur.format('YYYY-MM') !== viewMonth;
 
-            const cellCls = ['mina-cal-cell',
-                isWeek ? 'mina-cal-cell--week' : '',
+            const cellCls = ['diwa-cal-cell',
+                isWeek ? 'diwa-cal-cell--week' : '',
                 isToday ? 'is-today' : '',
                 isSelected ? 'is-selected' : '',
                 isOutside ? 'is-outside' : '',
             ].filter(Boolean).join(' ');
             const cell = grid.createEl('div', { cls: cellCls });
 
-            cell.createEl('span', { cls: 'mina-cal-cell-num', text: cur.format('D') });
+            cell.createEl('span', { cls: 'diwa-cal-cell-num', text: cur.format('D') });
 
-            const dots = cell.createEl('div', { cls: 'mina-cal-cell-dots' });
+            const dots = cell.createEl('div', { cls: 'diwa-cal-cell-dots' });
             const dayTasks = tasksByDate.get(dateStr) || [];
             const openTasks = dayTasks.filter(t => t.status !== 'done');
             const dueCount = dueCountByDate.get(dateStr) || 0;
             const habitCount = habitMap.get(dateStr)?.size || 0;
 
             if (openTasks.length > 0) {
-                const dot = dots.createEl('span', { cls: 'mina-cal-dot mina-cal-dot--task' });
+                const dot = dots.createEl('span', { cls: 'diwa-cal-dot diwa-cal-dot--task' });
                 if (openTasks.length > 1) dot.createEl('sup', { text: String(openTasks.length) });
             }
             if (dueCount > 0) {
-                const dot = dots.createEl('span', { cls: 'mina-cal-dot mina-cal-dot--due' });
+                const dot = dots.createEl('span', { cls: 'diwa-cal-dot diwa-cal-dot--due' });
                 if (dueCount > 1) dot.createEl('sup', { text: String(dueCount) });
             }
             if (habitCount > 0 && habits.length > 0) {
                 const pct = Math.round((habitCount / habits.length) * 100);
                 const dot = dots.createEl('span', {
-                    cls: `mina-cal-dot mina-cal-dot--habit${pct === 100 ? ' is-full' : ''}`,
+                    cls: `diwa-cal-dot diwa-cal-dot--habit${pct === 100 ? ' is-full' : ''}`,
                     attr: { title: `${habitCount}/${habits.length} habits` }
                 });
                 if (pct < 100) dot.createEl('sup', { text: `${habitCount}` });
@@ -193,16 +193,16 @@ export class CalendarTab extends BaseTab {
 
             // Intention chip from week planner (week view only)
             if (isWeek && calDayPlans[dateStr]) {
-                cell.createEl('div', { cls: 'mina-cal-intention-chip', text: `✦ ${calDayPlans[dateStr]}` });
+                cell.createEl('div', { cls: 'diwa-cal-intention-chip', text: `✦ ${calDayPlans[dateStr]}` });
             }
 
             if (isWeek && openTasks.length > 0) {
-                const miniList = cell.createEl('div', { cls: 'mina-cal-cell-mini-list' });
+                const miniList = cell.createEl('div', { cls: 'diwa-cal-cell-mini-list' });
                 openTasks.slice(0, 4).forEach(t =>
-                    miniList.createEl('div', { cls: 'mina-cal-mini-task', text: t.title })
+                    miniList.createEl('div', { cls: 'diwa-cal-mini-task', text: t.title })
                 );
                 if (openTasks.length > 4)
-                    miniList.createEl('div', { cls: 'mina-cal-mini-more', text: `+${openTasks.length - 4} more` });
+                    miniList.createEl('div', { cls: 'diwa-cal-mini-more', text: `+${openTasks.length - 4} more` });
             }
 
             cell.addEventListener('click', () => {
@@ -217,27 +217,27 @@ export class CalendarTab extends BaseTab {
 
     private _renderDetail(parent: HTMLElement, habitMap: Map<string, Set<string>>, renderContainer: HTMLElement) {
         const dateStr = this.view.calendarSelectedDate;
-        const detail = parent.createEl('div', { cls: 'mina-cal-detail' });
+        const detail = parent.createEl('div', { cls: 'diwa-cal-detail' });
 
-        detail.createEl('div', { cls: 'mina-cal-detail-date', text: moment(dateStr).format('dddd, MMMM D, YYYY') });
+        detail.createEl('div', { cls: 'diwa-cal-detail-date', text: moment(dateStr).format('dddd, MMMM D, YYYY') });
 
         const tasks: TaskEntry[] = [];
         this.index.taskIndex.forEach(t => { if (t.due === dateStr) tasks.push(t); });
 
         // Tasks section — always render (with + button)
-        const taskHeader = detail.createEl('div', { cls: 'mina-cal-detail-section-title mina-cal-detail-section-title--action' });
+        const taskHeader = detail.createEl('div', { cls: 'diwa-cal-detail-section-title diwa-cal-detail-section-title--action' });
         taskHeader.createEl('span', { text: `Tasks · ${tasks.length}` });
-        const addBtn = taskHeader.createEl('button', { cls: 'mina-cal-detail-add-btn', attr: { title: 'Add task for this day' } });
+        const addBtn = taskHeader.createEl('button', { cls: 'diwa-cal-detail-add-btn', attr: { title: 'Add task for this day' } });
         setIcon(addBtn, 'plus');
 
-        const taskSection = detail.createEl('div', { cls: 'mina-cal-detail-task-section' });
+        const taskSection = detail.createEl('div', { cls: 'diwa-cal-detail-task-section' });
 
         if (tasks.length > 0) {
-            const list = taskSection.createEl('div', { cls: 'mina-cal-detail-list' });
+            const list = taskSection.createEl('div', { cls: 'diwa-cal-detail-list' });
             tasks.sort((a, b) => (a.status === 'done' ? 1 : 0) - (b.status === 'done' ? 1 : 0))
                 .forEach(t => {
-                    const item = list.createEl('div', { cls: `mina-cal-detail-item mina-cal-detail-item--task${t.status === 'done' ? ' is-done' : ''}` });
-                    const icon = item.createEl('span', { cls: 'mina-cal-detail-item-icon mina-cal-detail-item-icon--toggle' });
+                    const item = list.createEl('div', { cls: `diwa-cal-detail-item diwa-cal-detail-item--task${t.status === 'done' ? ' is-done' : ''}` });
+                    const icon = item.createEl('span', { cls: 'diwa-cal-detail-item-icon diwa-cal-detail-item-icon--toggle' });
                     setIcon(icon, t.status === 'done' ? 'check-circle-2' : 'circle');
                     icon.addEventListener('click', async (e) => {
                         e.stopPropagation();
@@ -245,23 +245,23 @@ export class CalendarTab extends BaseTab {
                         await this.vault.editTask(t.filePath, t.body, t.context, t.due, { status: newStatus });
                         setTimeout(() => this.render(renderContainer), 300);
                     });
-                    item.createEl('span', { cls: 'mina-cal-detail-item-title', text: t.title });
-                    if (t.priority) item.createEl('span', { cls: `mina-cal-detail-badge mina-cal-badge--${t.priority}`, text: t.priority });
+                    item.createEl('span', { cls: 'diwa-cal-detail-item-title', text: t.title });
+                    if (t.priority) item.createEl('span', { cls: `diwa-cal-detail-badge diwa-cal-badge--${t.priority}`, text: t.priority });
                 });
         }
 
         // Quick-add toggle
         const isPast = dateStr < moment().format('YYYY-MM-DD');
         addBtn.addEventListener('click', () => {
-            const existing = taskSection.querySelector('.mina-cal-quickadd');
+            const existing = taskSection.querySelector('.diwa-cal-quickadd');
             if (existing) { existing.remove(); return; }
 
-            const quickAdd = taskSection.createEl('div', { cls: 'mina-cal-quickadd' });
+            const quickAdd = taskSection.createEl('div', { cls: 'diwa-cal-quickadd' });
             const quickInput = quickAdd.createEl('input', {
-                cls: `mina-cal-quickadd__input${isPast ? ' mina-cal-quickadd__input--past' : ''}`,
+                cls: `diwa-cal-quickadd__input${isPast ? ' diwa-cal-quickadd__input--past' : ''}`,
                 attr: { type: 'text', placeholder: isPast ? 'Add task (past date)…' : 'Task for this day…' }
             }) as HTMLInputElement;
-            const submitBtn = quickAdd.createEl('button', { cls: 'mina-cal-quickadd__submit', text: '↵' });
+            const submitBtn = quickAdd.createEl('button', { cls: 'diwa-cal-quickadd__submit', text: '↵' });
 
             const doCreate = async () => {
                 const title = quickInput.value.trim();
@@ -291,28 +291,28 @@ export class CalendarTab extends BaseTab {
         this.index.dueIndex.forEach(d => { if (d.dueDate === dateStr) dues.push(d); });
 
         if (dues.length > 0) {
-            detail.createEl('div', { cls: 'mina-cal-detail-section-title', text: `Financial · ${dues.length}` });
-            const list = detail.createEl('div', { cls: 'mina-cal-detail-list' });
+            detail.createEl('div', { cls: 'diwa-cal-detail-section-title', text: `Financial · ${dues.length}` });
+            const list = detail.createEl('div', { cls: 'diwa-cal-detail-list' });
             dues.forEach(d => {
-                const item = list.createEl('div', { cls: 'mina-cal-detail-item mina-cal-detail-item--due' });
-                const icon = item.createEl('span', { cls: 'mina-cal-detail-item-icon' });
+                const item = list.createEl('div', { cls: 'diwa-cal-detail-item diwa-cal-detail-item--due' });
+                const icon = item.createEl('span', { cls: 'diwa-cal-detail-item-icon' });
                 setIcon(icon, 'credit-card');
-                item.createEl('span', { cls: 'mina-cal-detail-item-title', text: d.title });
-                if (d.amount) item.createEl('span', { cls: 'mina-cal-detail-badge', text: `€${Number(d.amount).toFixed(2)}` });
+                item.createEl('span', { cls: 'diwa-cal-detail-item-title', text: d.title });
+                if (d.amount) item.createEl('span', { cls: 'diwa-cal-detail-badge', text: `€${Number(d.amount).toFixed(2)}` });
             });
         }
 
         const habits = (this.settings.habits || []).filter(h => !h.archived);
         if (habits.length > 0) {
             const completed = habitMap.get(dateStr) || new Set<string>();
-            detail.createEl('div', { cls: 'mina-cal-detail-section-title', text: `Habits · ${completed.size}/${habits.length}` });
-            const list = detail.createEl('div', { cls: 'mina-cal-detail-list mina-cal-detail-list--habits' });
+            detail.createEl('div', { cls: 'diwa-cal-detail-section-title', text: `Habits · ${completed.size}/${habits.length}` });
+            const list = detail.createEl('div', { cls: 'diwa-cal-detail-list diwa-cal-detail-list--habits' });
             habits.forEach(h => {
                 const done = completed.has(h.id);
-                const item = list.createEl('div', { cls: `mina-cal-detail-item mina-cal-detail-item--habit${done ? ' is-done' : ''}` });
-                item.createEl('span', { cls: 'mina-cal-detail-habit-icon', text: h.icon });
-                item.createEl('span', { cls: 'mina-cal-detail-item-title', text: h.name });
-                const icon = item.createEl('span', { cls: 'mina-cal-detail-item-icon mina-cal-detail-item-icon--right' });
+                const item = list.createEl('div', { cls: `diwa-cal-detail-item diwa-cal-detail-item--habit${done ? ' is-done' : ''}` });
+                item.createEl('span', { cls: 'diwa-cal-detail-habit-icon', text: h.icon });
+                item.createEl('span', { cls: 'diwa-cal-detail-item-title', text: h.name });
+                const icon = item.createEl('span', { cls: 'diwa-cal-detail-item-icon diwa-cal-detail-item-icon--right' });
                 setIcon(icon, done ? 'check-circle-2' : 'circle');
             });
         }
@@ -345,3 +345,4 @@ export class CalendarTab extends BaseTab {
         } catch { /* no review for this week */ }
     }
 }
+

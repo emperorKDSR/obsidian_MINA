@@ -66,27 +66,27 @@ export class AiTab extends BaseTab {
             await this.loadMostRecentChat();
         }
 
-        const wrap = container.createEl('div', { cls: 'mina-ai-shell' });
+        const wrap = container.createEl('div', { cls: 'diwa-ai-shell' });
 
         // ─── Header ───
-        const header = wrap.createEl('div', { cls: 'mina-ai-header' });
-        const headerLeft = header.createEl('div', { cls: 'mina-ai-header-left' });
+        const header = wrap.createEl('div', { cls: 'diwa-ai-header' });
+        const headerLeft = header.createEl('div', { cls: 'diwa-ai-header-left' });
         this.renderHomeIcon(headerLeft);
-        const titleGroup = headerLeft.createEl('div', { cls: 'mina-ai-title-group' });
-        titleGroup.createEl('h2', { text: 'AI Chat', cls: 'mina-ai-title' });
+        const titleGroup = headerLeft.createEl('div', { cls: 'diwa-ai-title-group' });
+        titleGroup.createEl('h2', { text: 'AI Chat', cls: 'diwa-ai-title' });
         const modelBadge = titleGroup.createEl('span', {
             text: this.settings.geminiModel || 'gemini-2.5-pro',
-            cls: 'mina-ai-model-badge'
+            cls: 'diwa-ai-model-badge'
         });
 
-        const headerRight = header.createEl('div', { cls: 'mina-ai-header-right' });
+        const headerRight = header.createEl('div', { cls: 'diwa-ai-header-right' });
 
         // Web Search toggle
         const webToggle = headerRight.createEl('button', {
-            cls: `mina-ai-toggle-btn${this.view.webSearchEnabled ? ' is-active' : ''}`,
+            cls: `diwa-ai-toggle-btn${this.view.webSearchEnabled ? ' is-active' : ''}`,
             attr: { 'aria-label': 'Web Search' }
         });
-        const webIcon = webToggle.createEl('span', { cls: 'mina-ai-toggle-icon' });
+        const webIcon = webToggle.createEl('span', { cls: 'diwa-ai-toggle-icon' });
         setIcon(webIcon, 'lucide-globe');
         webToggle.addEventListener('click', () => {
             this.view.webSearchEnabled = !this.view.webSearchEnabled;
@@ -96,17 +96,17 @@ export class AiTab extends BaseTab {
 
         // Settings gear
         const settingsBtn = headerRight.createEl('button', {
-            cls: 'mina-ai-toggle-btn',
+            cls: 'diwa-ai-toggle-btn',
             attr: { 'aria-label': 'AI Settings' }
         });
-        const settingsIcon = settingsBtn.createEl('span', { cls: 'mina-ai-toggle-icon' });
+        const settingsIcon = settingsBtn.createEl('span', { cls: 'diwa-ai-toggle-icon' });
         setIcon(settingsIcon, 'lucide-settings');
         settingsBtn.addEventListener('click', () => {
             new AiSettingsModal(this.app, this.plugin).open();
         });
 
         // New Chat
-        const newChatBtn = headerRight.createEl('button', { text: '+ New', cls: 'mina-ai-new-btn' });
+        const newChatBtn = headerRight.createEl('button', { text: '+ New', cls: 'diwa-ai-new-btn' });
         newChatBtn.addEventListener('click', () => {
             this.view.chatHistory = [];
             this.view.currentChatFile = null;
@@ -115,7 +115,7 @@ export class AiTab extends BaseTab {
         });
 
         // ─── Chat Messages ───
-        const chatArea = wrap.createEl('div', { cls: 'mina-ai-messages' });
+        const chatArea = wrap.createEl('div', { cls: 'diwa-ai-messages' });
         this.view.chatContainer = chatArea;
 
         const renderHistory = () => {
@@ -126,12 +126,12 @@ export class AiTab extends BaseTab {
             }
             this.view.chatHistory.forEach(msg => {
                 const isUser = msg.role === 'user';
-                const row = chatArea.createEl('div', { cls: `mina-ai-msg-row ${isUser ? 'is-user' : 'is-bot'}` });
+                const row = chatArea.createEl('div', { cls: `diwa-ai-msg-row ${isUser ? 'is-user' : 'is-bot'}` });
                 if (!isUser) {
-                    const avatar = row.createEl('div', { cls: 'mina-ai-avatar' });
+                    const avatar = row.createEl('div', { cls: 'diwa-ai-avatar' });
                     setIcon(avatar, 'lucide-sparkles');
                 }
-                const bubble = row.createEl('div', { cls: isUser ? 'mina-ai-user-bubble' : 'mina-ai-bot-bubble' });
+                const bubble = row.createEl('div', { cls: isUser ? 'diwa-ai-user-bubble' : 'diwa-ai-bot-bubble' });
                 MarkdownRenderer.render(this.app, msg.text, bubble, '', this.view);
                 this.hookInternalLinks(bubble, '');
             });
@@ -140,12 +140,12 @@ export class AiTab extends BaseTab {
         renderHistory();
 
         // ─── Grounded Files Chips ───
-        const contextBar = wrap.createEl('div', { cls: `mina-ai-context-bar${this.view.groundedFiles.length > 0 ? '' : ' is-empty'}` });
+        const contextBar = wrap.createEl('div', { cls: `diwa-ai-context-bar${this.view.groundedFiles.length > 0 ? '' : ' is-empty'}` });
         if (this.view.groundedFiles.length > 0) {
             this.view.groundedFiles.forEach((file, idx) => {
-                const chip = contextBar.createEl('span', { cls: 'mina-ai-file-chip' });
-                chip.createEl('span', { text: file.basename, cls: 'mina-ai-chip-name' });
-                const removeBtn = chip.createEl('span', { text: '×', cls: 'mina-ai-chip-remove' });
+                const chip = contextBar.createEl('span', { cls: 'diwa-ai-file-chip' });
+                chip.createEl('span', { text: file.basename, cls: 'diwa-ai-chip-name' });
+                const removeBtn = chip.createEl('span', { text: '×', cls: 'diwa-ai-chip-remove' });
                 removeBtn.addEventListener('click', () => {
                     this.view.groundedFiles.splice(idx, 1);
                     this.renderAiMode(container);
@@ -154,10 +154,10 @@ export class AiTab extends BaseTab {
         }
 
         // ─── Input Area ───
-        const inputArea = wrap.createEl('div', { cls: 'mina-ai-input-area' });
+        const inputArea = wrap.createEl('div', { cls: 'diwa-ai-input-area' });
 
         // Attach file button
-        const attachBtn = inputArea.createEl('button', { cls: 'mina-ai-attach-btn', attr: { 'aria-label': 'Attach vault file' } });
+        const attachBtn = inputArea.createEl('button', { cls: 'diwa-ai-attach-btn', attr: { 'aria-label': 'Attach vault file' } });
         const attachIcon = attachBtn.createEl('span');
         setIcon(attachIcon, 'lucide-paperclip');
         attachBtn.addEventListener('click', () => {
@@ -170,7 +170,7 @@ export class AiTab extends BaseTab {
         });
 
         const textArea = inputArea.createEl('textarea', {
-            cls: 'mina-ai-textarea',
+            cls: 'diwa-ai-textarea',
             attr: { placeholder: 'Ask MINA anything…', rows: '1' }
         });
 
@@ -188,7 +188,7 @@ export class AiTab extends BaseTab {
             }
         });
 
-        const sendBtn = inputArea.createEl('button', { cls: 'mina-ai-send-btn', attr: { 'aria-label': 'Send' } });
+        const sendBtn = inputArea.createEl('button', { cls: 'diwa-ai-send-btn', attr: { 'aria-label': 'Send' } });
         const sendIcon = sendBtn.createEl('span');
         setIcon(sendIcon, 'lucide-arrow-up');
 
@@ -205,13 +205,13 @@ export class AiTab extends BaseTab {
             sendBtn.addClass('is-loading');
 
             // Show typing indicator
-            const typingRow = chatArea.createEl('div', { cls: 'mina-ai-msg-row is-bot' });
-            const typingAvatar = typingRow.createEl('div', { cls: 'mina-ai-avatar' });
+            const typingRow = chatArea.createEl('div', { cls: 'diwa-ai-msg-row is-bot' });
+            const typingAvatar = typingRow.createEl('div', { cls: 'diwa-ai-avatar' });
             setIcon(typingAvatar, 'lucide-sparkles');
-            const typingBubble = typingRow.createEl('div', { cls: 'mina-ai-bot-bubble mina-ai-typing' });
-            typingBubble.createEl('span', { cls: 'mina-ai-dot' });
-            typingBubble.createEl('span', { cls: 'mina-ai-dot' });
-            typingBubble.createEl('span', { cls: 'mina-ai-dot' });
+            const typingBubble = typingRow.createEl('div', { cls: 'diwa-ai-bot-bubble diwa-ai-typing' });
+            typingBubble.createEl('span', { cls: 'diwa-ai-dot' });
+            typingBubble.createEl('span', { cls: 'diwa-ai-dot' });
+            typingBubble.createEl('span', { cls: 'diwa-ai-dot' });
             chatArea.scrollTop = chatArea.scrollHeight;
 
             try {
@@ -222,8 +222,8 @@ export class AiTab extends BaseTab {
                 this.saveChatHistory().catch(e => console.error('[MINA AiTab] save failed', e));
             } catch (e: any) {
                 typingRow.remove();
-                const errRow = chatArea.createEl('div', { cls: 'mina-ai-msg-row is-bot' });
-                errRow.createEl('div', { cls: 'mina-ai-error', text: `⚠ ${e.message}` });
+                const errRow = chatArea.createEl('div', { cls: 'diwa-ai-msg-row is-bot' });
+                errRow.createEl('div', { cls: 'diwa-ai-error', text: `⚠ ${e.message}` });
                 chatArea.scrollTop = chatArea.scrollHeight;
                 setTimeout(() => errRow.remove(), 10000);
             } finally {
@@ -236,13 +236,13 @@ export class AiTab extends BaseTab {
     }
 
     private renderWelcomeState(container: HTMLElement) {
-        const welcome = container.createEl('div', { cls: 'mina-ai-welcome' });
-        const icon = welcome.createEl('div', { cls: 'mina-ai-welcome-icon' });
+        const welcome = container.createEl('div', { cls: 'diwa-ai-welcome' });
+        const icon = welcome.createEl('div', { cls: 'diwa-ai-welcome-icon' });
         setIcon(icon, 'lucide-sparkles');
-        welcome.createEl('h3', { text: 'MINA Intelligence', cls: 'mina-ai-welcome-title' });
-        welcome.createEl('p', { text: 'Your personal AI grounded in your vault knowledge. Ask questions, get insights, or brainstorm ideas.', cls: 'mina-ai-welcome-desc' });
+        welcome.createEl('h3', { text: 'MINA Intelligence', cls: 'diwa-ai-welcome-title' });
+        welcome.createEl('p', { text: 'Your personal AI grounded in your vault knowledge. Ask questions, get insights, or brainstorm ideas.', cls: 'diwa-ai-welcome-desc' });
 
-        const suggestions = welcome.createEl('div', { cls: 'mina-ai-suggestions' });
+        const suggestions = welcome.createEl('div', { cls: 'diwa-ai-suggestions' });
         const prompts = [
             'What are my open tasks this week?',
             'Summarize my recent thoughts',
@@ -250,9 +250,9 @@ export class AiTab extends BaseTab {
             'Help me plan my next project'
         ];
         prompts.forEach(prompt => {
-            const chip = suggestions.createEl('button', { text: prompt, cls: 'mina-ai-suggestion-chip' });
+            const chip = suggestions.createEl('button', { text: prompt, cls: 'diwa-ai-suggestion-chip' });
             chip.addEventListener('click', () => {
-                const textarea = container.closest('.mina-ai-shell')?.querySelector('.mina-ai-textarea') as HTMLTextAreaElement;
+                const textarea = container.closest('.diwa-ai-shell')?.querySelector('.diwa-ai-textarea') as HTMLTextAreaElement;
                 if (textarea) {
                     textarea.value = prompt;
                     textarea.dispatchEvent(new Event('input'));
@@ -262,3 +262,4 @@ export class AiTab extends BaseTab {
         });
     }
 }
+

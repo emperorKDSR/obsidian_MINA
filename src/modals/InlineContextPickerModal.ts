@@ -24,33 +24,33 @@ export class InlineContextPickerModal extends Modal {
     onOpen(): void {
         const { contentEl } = this;
         contentEl.empty();
-        contentEl.addClass('mina-modal-standard');
+        contentEl.addClass('diwa-modal-standard');
 
         // Header
-        const hdr = contentEl.createEl('div', { cls: 'mina-modal-header' });
+        const hdr = contentEl.createEl('div', { cls: 'diwa-modal-header' });
         hdr.createEl('h2', {
             text: this.title,
             attr: { style: 'margin:0; font-size:1.05em; font-weight:700; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;' },
         });
         const closeBtn = hdr.createEl('button', {
-            cls: 'mina-modal-close-btn',
+            cls: 'diwa-modal-close-btn',
             attr: { title: 'Close', style: 'background:none;border:none;cursor:pointer;color:var(--text-muted);display:flex;align-items:center;padding:4px;border-radius:6px;flex-shrink:0;' },
         });
         setIcon(closeBtn, 'x');
         closeBtn.addEventListener('click', () => this.close());
 
         // Body
-        const body = contentEl.createEl('div', { cls: 'mina-ctx-picker-body' });
+        const body = contentEl.createEl('div', { cls: 'diwa-ctx-picker-body' });
 
         // Search
         const searchInput = body.createEl('input', {
-            cls: 'mina-ctx-picker-search',
+            cls: 'diwa-ctx-picker-search',
             type: 'text',
             attr: { placeholder: 'Search contexts…', spellcheck: 'false' },
         });
 
         // Pill grid
-        const pillGrid = body.createEl('div', { cls: 'mina-ctx-picker-grid' });
+        const pillGrid = body.createEl('div', { cls: 'diwa-ctx-picker-grid' });
 
         // Track selected in local mutable state
         let selected: string[] = [...this.currentContexts];
@@ -62,7 +62,7 @@ export class InlineContextPickerModal extends Modal {
                 if (query && !ctx.toLowerCase().includes(query)) continue;
                 const isActive = selected.includes(ctx);
                 const pill = pillGrid.createEl('button', {
-                    cls: `mina-chip mina-chip--ctx${isActive ? ' is-active' : ''}`,
+                    cls: `diwa-chip diwa-chip--ctx${isActive ? ' is-active' : ''}`,
                     text: `#${ctx}`,
                     attr: { 'data-ctx': ctx },
                 });
@@ -88,14 +88,14 @@ export class InlineContextPickerModal extends Modal {
         searchInput.addEventListener('input', () => buildGrid(searchInput.value.toLowerCase().trim()));
 
         // Create new context row
-        const newRow = body.createEl('div', { cls: 'mina-ctx-picker-new' });
+        const newRow = body.createEl('div', { cls: 'diwa-ctx-picker-new' });
         const newInput = newRow.createEl('input', {
-            cls: 'mina-ctx-picker-new-input',
+            cls: 'diwa-ctx-picker-new-input',
             type: 'text',
             attr: { placeholder: 'New context name…' },
         });
         const newBtn = newRow.createEl('button', {
-            cls: 'mina-ctx-picker-new-btn',
+            cls: 'diwa-ctx-picker-new-btn',
             text: 'Create',
         });
 
@@ -115,9 +115,9 @@ export class InlineContextPickerModal extends Modal {
         newInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doCreate(); });
 
         // Footer
-        const footer = contentEl.createEl('div', { cls: 'mina-modal-footer' });
-        const cancelBtn = footer.createEl('button', { text: 'Cancel', cls: 'mina-btn-secondary' });
-        const applyBtn = footer.createEl('button', { text: 'Apply', cls: 'mina-btn-primary' });
+        const footer = contentEl.createEl('div', { cls: 'diwa-modal-footer' });
+        const cancelBtn = footer.createEl('button', { text: 'Cancel', cls: 'diwa-btn-secondary' });
+        const applyBtn = footer.createEl('button', { text: 'Apply', cls: 'diwa-btn-primary' });
 
         cancelBtn.addEventListener('click', () => this.close());
         applyBtn.addEventListener('click', async () => {
@@ -130,3 +130,4 @@ export class InlineContextPickerModal extends Modal {
 
     onClose(): void { this.contentEl.empty(); }
 }
+

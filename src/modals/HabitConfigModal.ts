@@ -13,7 +13,7 @@ export class HabitConfigModal extends Modal {
     onOpen() {
         const { contentEl, modalEl } = this;
         contentEl.empty();
-        modalEl.addClass('mina-modern-modal');
+        modalEl.addClass('diwa-modern-modal');
 
         modalEl.style.padding = '0';
         modalEl.style.borderRadius = '16px';
@@ -99,3 +99,4 @@ export class HabitConfigModal extends Modal {
         doneBtn.addEventListener('click', () => this.close());
     }
 }
+

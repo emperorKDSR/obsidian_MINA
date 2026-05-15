@@ -85,8 +85,8 @@ export class EditEntryModal extends Modal {
 
     /** ── MOBILE FLOATING CARD ────────────────────────── */
     private _renderMobileFloat(contentEl: HTMLElement, modalEl: HTMLElement) {
-        modalEl.addClass('mina-mobile-float');
-        document.body.addClass('mina-mobile-active');
+        modalEl.addClass('diwa-mobile-float');
+        document.body.addClass('diwa-mobile-active');
 
         // Force sharp corners — override Obsidian's inline/theme border-radius at highest priority
         modalEl.style.setProperty('border-radius', '0', 'important');
@@ -95,44 +95,44 @@ export class EditEntryModal extends Modal {
         contentEl.style.setProperty('overflow', 'visible', 'important');
 
         // Canvas — scrollable textarea (flex: 1)
-        const canvas = contentEl.createDiv({ cls: 'mina-float-canvas' });
+        const canvas = contentEl.createDiv({ cls: 'diwa-float-canvas' });
         canvas.style.setProperty('border-radius', '0', 'important');
         const textArea = canvas.createEl('textarea', {
             text: this.initialText,
-            cls: 'mina-float-textarea',
+            cls: 'diwa-float-textarea',
             attr: { placeholder: this.currentMode === 'task' ? 'Execute intent…' : 'Capture thought…' }
         });
 
         // Dock — compact bottom strip
-        const dock = contentEl.createDiv({ cls: 'mina-float-dock' });
+        const dock = contentEl.createDiv({ cls: 'diwa-float-dock' });
 
         // 1. Mode toggle
-        const toggleBar = dock.createDiv({ cls: 'mina-seg-bar mina-float-toggle' });
+        const toggleBar = dock.createDiv({ cls: 'diwa-seg-bar diwa-float-toggle' });
         const thoughtBtn = toggleBar.createEl('button', {
             text: '✦ THOUGHT',
-            cls: `mina-seg-btn${this.currentMode === 'thought' ? ' is-active' : ''}`
+            cls: `diwa-seg-btn${this.currentMode === 'thought' ? ' is-active' : ''}`
         });
         const taskBtn = toggleBar.createEl('button', {
             text: '✓ TASK',
-            cls: `mina-seg-btn${this.currentMode === 'task' ? ' is-active' : ''}`
+            cls: `diwa-seg-btn${this.currentMode === 'task' ? ' is-active' : ''}`
         });
 
         // 2. Date zone (collapsible)
-        const dateZone = dock.createDiv({ cls: `mina-mobile-date-zone${this.currentMode === 'task' ? ' is-visible' : ''}` });
+        const dateZone = dock.createDiv({ cls: `diwa-mobile-date-zone${this.currentMode === 'task' ? ' is-visible' : ''}` });
         const { setDueDate } = this._buildDateStrip(dateZone);
         if (this.currentDueDate) setDueDate(this.currentDueDate);
         const { setRecurrence: setRecurrenceMobile } = this._buildRecurStrip(dateZone);
         if (this.currentRecurrence) setRecurrenceMobile(this.currentRecurrence);
 
         // 3. Chip strip
-        const chipStrip = dock.createDiv({ cls: 'mina-mobile-chip-strip' });
+        const chipStrip = dock.createDiv({ cls: 'diwa-mobile-chip-strip' });
 
         const renderChips = () => {
             chipStrip.empty();
             this.initialContexts.forEach(ctx => {
-                const chip = chipStrip.createEl('span', { cls: 'mina-mobile-chip' });
+                const chip = chipStrip.createEl('span', { cls: 'diwa-mobile-chip' });
                 chip.createSpan({ text: `#${ctx}` });
-                const x = chip.createSpan({ text: '×', cls: 'mina-mobile-chip-x' });
+                const x = chip.createSpan({ text: '×', cls: 'diwa-mobile-chip-x' });
                 x.addEventListener('click', (e) => {
                     e.stopPropagation();
                     this.initialContexts = this.initialContexts.filter(c => c !== ctx);
@@ -140,7 +140,7 @@ export class EditEntryModal extends Modal {
                 });
             });
             if (this.initialContexts.length === 0) {
-                chipStrip.createSpan({ text: '# to tag', cls: 'mina-chip-hint' });
+                chipStrip.createSpan({ text: '# to tag', cls: 'diwa-chip-hint' });
             }
             // Project pill
             const allProjects = Array.from(this.plugin.index.projectIndex.values())
@@ -155,30 +155,30 @@ export class EditEntryModal extends Modal {
                 if (this.currentProject) {
                     const proj = allProjects.find(p => p.name === this.currentProject || p.id === this.currentProject);
                     const projPill = chipStrip.createEl('span', {
-                        cls: 'mina-mobile-chip mina-project-pill mina-project-pill--active'
+                        cls: 'diwa-mobile-chip diwa-project-pill diwa-project-pill--active'
                     });
                     if (proj?.color) {
                         projPill.style.setProperty('--project-color', proj.color);
                     }
-                    const dot = projPill.createEl('span', { cls: 'mina-project-pill-dot' });
-                    projPill.createEl('span', { text: this.currentProject, cls: 'mina-project-pill-name' });
-                    const xBtn = projPill.createEl('button', { text: '×', cls: 'mina-project-pill-x' });
+                    const dot = projPill.createEl('span', { cls: 'diwa-project-pill-dot' });
+                    projPill.createEl('span', { text: this.currentProject, cls: 'diwa-project-pill-name' });
+                    const xBtn = projPill.createEl('button', { text: '×', cls: 'diwa-project-pill-x' });
                     xBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         this.currentProject = null;
                         renderChips();
                     });
                     projPill.addEventListener('click', (e) => {
-                        if ((e.target as HTMLElement).classList.contains('mina-project-pill-x')) return;
+                        if ((e.target as HTMLElement).classList.contains('diwa-project-pill-x')) return;
                         openProjectPicker();
                     });
                 } else {
                     const projPill = chipStrip.createEl('button', {
-                        cls: 'mina-mobile-chip mina-project-pill mina-project-pill--empty',
+                        cls: 'diwa-mobile-chip diwa-project-pill diwa-project-pill--empty',
                         attr: { 'aria-label': 'Assign project' }
                     });
-                    projPill.createEl('span', { text: '◈', cls: 'mina-project-pill-icon' });
-                    projPill.createEl('span', { text: 'Project', cls: 'mina-project-pill-label' });
+                    projPill.createEl('span', { text: '◈', cls: 'diwa-project-pill-icon' });
+                    projPill.createEl('span', { text: 'Project', cls: 'diwa-project-pill-label' });
                     projPill.addEventListener('click', openProjectPicker);
                 }
             }
@@ -186,18 +186,18 @@ export class EditEntryModal extends Modal {
         renderChips();
 
         // 3b. Meta bar (priority / energy / status) — task-only, collapsible
-        const metaBar = dock.createDiv({ cls: `mina-task-meta-bar${this.currentMode === 'task' ? ' is-visible' : ''}` });
+        const metaBar = dock.createDiv({ cls: `diwa-task-meta-bar${this.currentMode === 'task' ? ' is-visible' : ''}` });
         const { setPriority, setEnergy, setStatus } = this._buildMetaStrip(metaBar, false);
         if (this.currentPriority) setPriority(this.currentPriority);
         if (this.currentEnergy) setEnergy(this.currentEnergy);
         if (this.currentStatus !== 'open') setStatus(this.currentStatus);
 
         // 4. Action row
-        const actionRow = dock.createDiv({ cls: 'mina-float-action-row' });
-        const cancelBtn = actionRow.createEl('button', { text: 'Cancel', cls: 'mina-float-cancel-btn' });
+        const actionRow = dock.createDiv({ cls: 'diwa-float-action-row' });
+        const cancelBtn = actionRow.createEl('button', { text: 'Cancel', cls: 'diwa-float-cancel-btn' });
         cancelBtn.addEventListener('click', () => this.close());
         const saveLabel = () => this.stayOpen ? 'ADD' : (this.currentMode === 'task' ? 'ADD TASK' : 'CAPTURE');
-        const saveBtn = actionRow.createEl('button', { text: saveLabel(), cls: 'mina-float-save-btn' }) as HTMLButtonElement;
+        const saveBtn = actionRow.createEl('button', { text: saveLabel(), cls: 'diwa-float-save-btn' }) as HTMLButtonElement;
 
         // Mode switch
         const switchMode = (mode: CaptureMode) => {
@@ -254,17 +254,17 @@ export class EditEntryModal extends Modal {
 
     /** ── DATE SHORTCUT STRIP ─────────────────────────── */
     private _buildDateStrip(container: HTMLElement): { setDueDate: (d: string) => void } {
-        const strip = container.createDiv({ cls: 'mina-date-strip' });
-        const display = container.createDiv({ cls: 'mina-date-display' });
+        const strip = container.createDiv({ cls: 'diwa-date-strip' });
+        const display = container.createDiv({ cls: 'diwa-date-display' });
         display.style.display = 'none';
 
         const updateDisplay = (dateStr: string | null) => {
             display.empty();
             if (!dateStr) { display.style.display = 'none'; return; }
             display.style.display = 'flex';
-            display.createSpan({ text: '📅', cls: 'mina-date-display-icon' });
-            const lbl = display.createSpan({ text: moment(dateStr).format('dddd, MMM D'), cls: 'mina-date-display-label' });
-            const clr = display.createSpan({ text: '×', cls: 'mina-date-display-clear' });
+            display.createSpan({ text: '📅', cls: 'diwa-date-display-icon' });
+            const lbl = display.createSpan({ text: moment(dateStr).format('dddd, MMM D'), cls: 'diwa-date-display-label' });
+            const clr = display.createSpan({ text: '×', cls: 'diwa-date-display-clear' });
             lbl.addEventListener('click', () => showNLPInput());
             clr.addEventListener('click', () => {
                 this.currentDueDate = null;
@@ -291,7 +291,7 @@ export class EditEntryModal extends Modal {
 
         const btnEls: HTMLButtonElement[] = [];
         shortcuts.forEach(s => {
-            const btn = strip.createEl('button', { text: s.label, cls: 'mina-date-shortcut-btn' }) as HTMLButtonElement;
+            const btn = strip.createEl('button', { text: s.label, cls: 'diwa-date-shortcut-btn' }) as HTMLButtonElement;
             btnEls.push(btn);
             btn.addEventListener('click', () => {
                 const d = moment().add(s.days, 'days').format('YYYY-MM-DD');
@@ -302,15 +302,15 @@ export class EditEntryModal extends Modal {
         });
 
         // PICK ▾ → inline NLP input
-        const pickBtn = strip.createEl('button', { text: 'PICK ▾', cls: 'mina-date-shortcut-btn mina-date-pick-btn' });
+        const pickBtn = strip.createEl('button', { text: 'PICK ▾', cls: 'diwa-date-shortcut-btn diwa-date-pick-btn' });
         pickBtn.addEventListener('click', () => showNLPInput());
 
         const showNLPInput = () => {
-            container.querySelector('.mina-date-nlp-wrap')?.remove();
-            const wrap = container.createDiv({ cls: 'mina-date-nlp-wrap' });
+            container.querySelector('.diwa-date-nlp-wrap')?.remove();
+            const wrap = container.createDiv({ cls: 'diwa-date-nlp-wrap' });
             const input = wrap.createEl('input', {
                 type: 'text',
-                cls: 'mina-date-nlp-input',
+                cls: 'diwa-date-nlp-input',
                 attr: { placeholder: 'next tuesday, in 3 weeks…' }
             }) as HTMLInputElement;
             input.focus();
@@ -328,8 +328,8 @@ export class EditEntryModal extends Modal {
     }
 
     private _buildRecurStrip(container: HTMLElement, compact = false): { setRecurrence: (r: RecurrenceRule | null) => void } {
-        const strip = container.createDiv({ cls: `mina-recur-strip${compact ? ' mina-recur-strip--compact' : ''}` });
-        const iconWrap = strip.createDiv({ cls: 'mina-recur-icon' });
+        const strip = container.createDiv({ cls: `diwa-recur-strip${compact ? ' diwa-recur-strip--compact' : ''}` });
+        const iconWrap = strip.createDiv({ cls: 'diwa-recur-icon' });
         setIcon(iconWrap, 'repeat-2');
 
         type ROption = { value: RecurrenceRule | null; label: string };
@@ -344,7 +344,7 @@ export class EditEntryModal extends Modal {
         OPTIONS.forEach(({ value, label }) => {
             const btn = strip.createEl('button', {
                 text: label,
-                cls: `mina-recur-btn${this.currentRecurrence === value ? ' is-active' : ''}`,
+                cls: `diwa-recur-btn${this.currentRecurrence === value ? ' is-active' : ''}`,
                 attr: { 'aria-pressed': String(this.currentRecurrence === value) }
             }) as HTMLButtonElement;
             btnEls.push(btn);
@@ -380,7 +380,7 @@ export class EditEntryModal extends Modal {
         setEnergy:   (v: 'high' | 'medium' | 'low' | null) => void;
         setStatus:   (v: 'open' | 'waiting' | 'someday')   => void;
     } {
-        const strip = container.createDiv({ cls: 'mina-meta-strip' });
+        const strip = container.createDiv({ cls: 'diwa-meta-strip' });
 
         const priValues:    Array<'low' | 'medium' | 'high'> = ['low', 'medium', 'high'];
         const priLabels:    Record<string, string>            = { low: '!', medium: '!!', high: '!!!' };
@@ -419,13 +419,13 @@ export class EditEntryModal extends Modal {
             // ── Desktop: 3 labelled rows ──────────────────────
 
             // Priority row
-            const priRow = strip.createDiv({ cls: 'mina-meta-row', attr: { 'data-row': 'priority' } });
-            const priIcon = priRow.createDiv({ cls: 'mina-meta-icon' });
+            const priRow = strip.createDiv({ cls: 'diwa-meta-row', attr: { 'data-row': 'priority' } });
+            const priIcon = priRow.createDiv({ cls: 'diwa-meta-icon' });
             setIcon(priIcon, 'flag');
             priValues.forEach(val => {
                 const btn = priRow.createEl('button', {
                     text: priLabels[val],
-                    cls: 'mina-meta-btn mina-meta-btn--pri',
+                    cls: 'diwa-meta-btn diwa-meta-btn--pri',
                     attr: { 'data-priority': val, 'aria-pressed': 'false', 'aria-label': `Priority: ${val}` }
                 }) as HTMLButtonElement;
                 priBtns.push(btn);
@@ -441,13 +441,13 @@ export class EditEntryModal extends Modal {
             });
 
             // Energy row
-            const energyRow = strip.createDiv({ cls: 'mina-meta-row', attr: { 'data-row': 'energy' } });
-            const energyIcon = energyRow.createDiv({ cls: 'mina-meta-icon' });
+            const energyRow = strip.createDiv({ cls: 'diwa-meta-row', attr: { 'data-row': 'energy' } });
+            const energyIcon = energyRow.createDiv({ cls: 'diwa-meta-icon' });
             setIcon(energyIcon, 'zap');
             energyValues.forEach(val => {
                 const btn = energyRow.createEl('button', {
                     text: energyLabels[val],
-                    cls: 'mina-meta-btn mina-meta-btn--energy',
+                    cls: 'diwa-meta-btn diwa-meta-btn--energy',
                     attr: { 'data-energy': val, 'aria-pressed': 'false', 'aria-label': `Energy: ${val}` }
                 }) as HTMLButtonElement;
                 energyBtns.push(btn);
@@ -463,14 +463,14 @@ export class EditEntryModal extends Modal {
             });
 
             // Status row
-            const statusRow = strip.createDiv({ cls: 'mina-meta-row', attr: { 'data-row': 'status' } });
-            const statusIcon = statusRow.createDiv({ cls: 'mina-meta-icon' });
+            const statusRow = strip.createDiv({ cls: 'diwa-meta-row', attr: { 'data-row': 'status' } });
+            const statusIcon = statusRow.createDiv({ cls: 'diwa-meta-icon' });
             setIcon(statusIcon, 'circle-dot');
             const statusLabelsCompact: Record<string, string> = { waiting: 'WAITING', someday: 'SOMEDAY' };
             statusValues.forEach(val => {
                 const btn = statusRow.createEl('button', {
                     text: statusLabelsCompact[val],
-                    cls: 'mina-meta-btn mina-meta-btn--status',
+                    cls: 'diwa-meta-btn diwa-meta-btn--status',
                     attr: { 'data-status': val, 'aria-pressed': 'false', 'aria-label': `Status: ${val}` }
                 }) as HTMLButtonElement;
                 statusBtns.push(btn);
@@ -489,11 +489,11 @@ export class EditEntryModal extends Modal {
             // ── Mobile: flat horizontal scrollable ───────────
 
             // Priority section
-            strip.createEl('span', { text: 'PRI', cls: 'mina-meta-label' });
+            strip.createEl('span', { text: 'PRI', cls: 'diwa-meta-label' });
             priValues.forEach(val => {
                 const btn = strip.createEl('button', {
                     text: priLabels[val],
-                    cls: 'mina-meta-btn mina-meta-btn--pri',
+                    cls: 'diwa-meta-btn diwa-meta-btn--pri',
                     attr: { 'data-priority': val, 'aria-pressed': 'false', 'aria-label': `Priority: ${val}` }
                 }) as HTMLButtonElement;
                 priBtns.push(btn);
@@ -504,14 +504,14 @@ export class EditEntryModal extends Modal {
                 });
             });
 
-            strip.createEl('span', { cls: 'mina-meta-divider' });
+            strip.createEl('span', { cls: 'diwa-meta-divider' });
 
             // Energy section
-            strip.createEl('span', { text: 'NRG', cls: 'mina-meta-label' });
+            strip.createEl('span', { text: 'NRG', cls: 'diwa-meta-label' });
             energyValues.forEach(val => {
                 const btn = strip.createEl('button', {
                     text: energyLabels[val],
-                    cls: 'mina-meta-btn mina-meta-btn--energy',
+                    cls: 'diwa-meta-btn diwa-meta-btn--energy',
                     attr: { 'data-energy': val, 'aria-pressed': 'false', 'aria-label': `Energy: ${val}` }
                 }) as HTMLButtonElement;
                 energyBtns.push(btn);
@@ -522,15 +522,15 @@ export class EditEntryModal extends Modal {
                 });
             });
 
-            strip.createEl('span', { cls: 'mina-meta-divider' });
+            strip.createEl('span', { cls: 'diwa-meta-divider' });
 
             // Status section
-            strip.createEl('span', { text: 'STATUS', cls: 'mina-meta-label' });
+            strip.createEl('span', { text: 'STATUS', cls: 'diwa-meta-label' });
             const statusLabelsMobile: Record<string, string> = { waiting: '⏳ WAIT', someday: '☁ SMDY' };
             statusValues.forEach(val => {
                 const btn = strip.createEl('button', {
                     text: statusLabelsMobile[val],
-                    cls: 'mina-meta-btn mina-meta-btn--status',
+                    cls: 'diwa-meta-btn diwa-meta-btn--status',
                     attr: { 'data-status': val, 'aria-pressed': 'false', 'aria-label': `Status: ${val}` }
                 }) as HTMLButtonElement;
                 statusBtns.push(btn);
@@ -638,74 +638,74 @@ export class EditEntryModal extends Modal {
 
     /** ── DESKTOP / TABLET PATH ───────────────────────── */
     private _renderDesktop(contentEl: HTMLElement, modalEl: HTMLElement) {
-        modalEl.addClass('mina-clean-modal');
-        modalEl.addClass('mina-edit-modal');
+        modalEl.addClass('diwa-clean-modal');
+        modalEl.addClass('diwa-edit-modal');
         if (Platform.isMobile && isTablet()) modalEl.addClass('is-tablet');
 
         // ── Mode toggle (TOP — primary entry point) ───────────────────────
-        const header = contentEl.createEl('div', { cls: 'mina-edit-modal-header' });
-        const toggleBar = header.createDiv({ cls: 'mina-seg-bar mina-capture-inline-toggle' });
+        const header = contentEl.createEl('div', { cls: 'diwa-edit-modal-header' });
+        const toggleBar = header.createDiv({ cls: 'diwa-seg-bar diwa-capture-inline-toggle' });
         const thoughtBtn = toggleBar.createEl('button', {
             text: '✦ THOUGHT',
-            cls: `mina-seg-btn${this.currentMode === 'thought' ? ' is-active' : ''}`
+            cls: `diwa-seg-btn${this.currentMode === 'thought' ? ' is-active' : ''}`
         });
         const taskBtn = toggleBar.createEl('button', {
             text: '✓ TASK',
-            cls: `mina-seg-btn${this.currentMode === 'task' ? ' is-active' : ''}`
+            cls: `diwa-seg-btn${this.currentMode === 'task' ? ' is-active' : ''}`
         });
-        const hint = header.createEl('span', { cls: 'mina-edit-modal-hint', text: '⌘↵ to save' });
+        const hint = header.createEl('span', { cls: 'diwa-edit-modal-hint', text: '⌘↵ to save' });
 
         // ── Body: 2-column wrapper (single col in thought mode / narrow) ──
         const body = contentEl.createEl('div', {
-            cls: `mina-edit-modal-body${this.currentMode === 'task' ? ' is-task-mode' : ''}`
+            cls: `diwa-edit-modal-body${this.currentMode === 'task' ? ' is-task-mode' : ''}`
         });
 
         // Left col: textarea
-        const leftCol = body.createEl('div', { cls: 'mina-edit-modal-left' });
+        const leftCol = body.createEl('div', { cls: 'diwa-edit-modal-left' });
         const textArea = leftCol.createEl('textarea', {
             text: this.initialText,
-            cls: 'mina-edit-modal-textarea',
+            cls: 'diwa-edit-modal-textarea',
             attr: { placeholder: this.currentMode === 'task' ? 'Execute intent…' : 'Capture thought…' }
         }) as HTMLTextAreaElement;
 
         // Right col: task metadata (hidden in thought mode)
-        const rightCol = body.createEl('div', { cls: 'mina-edit-modal-right' });
-        rightCol.createEl('div', { cls: 'mina-edit-modal-right-label', text: 'DUE DATE' });
-        const dateZone = rightCol.createDiv({ cls: 'mina-mobile-date-zone is-visible' });
+        const rightCol = body.createEl('div', { cls: 'diwa-edit-modal-right' });
+        rightCol.createEl('div', { cls: 'diwa-edit-modal-right-label', text: 'DUE DATE' });
+        const dateZone = rightCol.createDiv({ cls: 'diwa-mobile-date-zone is-visible' });
         const { setDueDate } = this._buildDateStrip(dateZone);
         if (this.currentDueDate) setDueDate(this.currentDueDate);
 
-        rightCol.createEl('div', { cls: 'mina-edit-modal-right-label', text: 'REPEAT' });
-        const recurZone = rightCol.createDiv({ cls: 'mina-recur-zone is-visible' });
+        rightCol.createEl('div', { cls: 'diwa-edit-modal-right-label', text: 'REPEAT' });
+        const recurZone = rightCol.createDiv({ cls: 'diwa-recur-zone is-visible' });
         const { setRecurrence: setRecurrenceDesktop } = this._buildRecurStrip(recurZone, true);
         if (this.currentRecurrence) setRecurrenceDesktop(this.currentRecurrence);
 
-        rightCol.createEl('div', { cls: 'mina-edit-modal-right-label', text: 'PROPERTIES' });
-        const metaZone = rightCol.createDiv({ cls: 'mina-meta-zone is-visible' });
+        rightCol.createEl('div', { cls: 'diwa-edit-modal-right-label', text: 'PROPERTIES' });
+        const metaZone = rightCol.createDiv({ cls: 'diwa-meta-zone is-visible' });
         const { setPriority, setEnergy, setStatus } = this._buildMetaStrip(metaZone, true);
         if (this.currentPriority) setPriority(this.currentPriority);
         if (this.currentEnergy) setEnergy(this.currentEnergy);
         if (this.currentStatus !== 'open') setStatus(this.currentStatus);
 
         // ── Dock: context chips + project + actions ───────────────────────
-        const dock = contentEl.createEl('div', { cls: 'mina-edit-modal-dock' });
+        const dock = contentEl.createEl('div', { cls: 'diwa-edit-modal-dock' });
 
-        const chipArea = dock.createDiv({ cls: 'mina-capture-desktop-chip-area' });
-        const chipStrip = chipArea.createDiv({ cls: 'mina-mobile-chip-strip' });
+        const chipArea = dock.createDiv({ cls: 'diwa-capture-desktop-chip-area' });
+        const chipStrip = chipArea.createDiv({ cls: 'diwa-mobile-chip-strip' });
 
         const renderChips = () => {
             chipStrip.empty();
             this.initialContexts.forEach(ctx => {
-                const chip = chipStrip.createEl('span', { cls: 'mina-mobile-chip' });
+                const chip = chipStrip.createEl('span', { cls: 'diwa-mobile-chip' });
                 chip.createSpan({ text: `#${ctx}` });
-                const x = chip.createSpan({ text: '×', cls: 'mina-mobile-chip-x' });
+                const x = chip.createSpan({ text: '×', cls: 'diwa-mobile-chip-x' });
                 x.addEventListener('click', (e) => {
                     e.stopPropagation();
                     this.initialContexts = this.initialContexts.filter(c => c !== ctx);
                     renderChips();
                 });
             });
-            const addBtn = chipStrip.createEl('button', { text: '+', cls: 'mina-mobile-chip-add' });
+            const addBtn = chipStrip.createEl('button', { text: '+', cls: 'diwa-mobile-chip-add' });
             addBtn.addEventListener('click', () => {
                 new ContextSuggestModal(this.app, this.plugin.settings.contexts ?? [], async (ctx) => {
                     if (!this.initialContexts.includes(ctx)) { this.initialContexts.push(ctx); renderChips(); }
@@ -714,7 +714,7 @@ export class EditEntryModal extends Modal {
         };
         renderChips();
 
-        const projectArea = chipArea.createDiv('mina-proj-zone');
+        const projectArea = chipArea.createDiv('diwa-proj-zone');
         const allProjects = Array.from(this.plugin.index.projectIndex.values())
             .filter(p => p.status !== 'archived');
         const updateProjectChip = (project: string | null) => {
@@ -729,20 +729,20 @@ export class EditEntryModal extends Modal {
             if (project) {
                 const proj = allProjects.find(p => p.name === project || p.id === project);
                 const pChip = projectArea.createEl('span', {
-                    cls: 'mina-edit-modal-project-chip mina-proj-chip--active'
+                    cls: 'diwa-edit-modal-project-chip diwa-proj-chip--active'
                 });
                 if (proj?.color) pChip.style.setProperty('--project-color', proj.color);
-                projectArea.createEl('span', { cls: 'mina-project-pill-dot' });
-                pChip.createEl('span', { text: project, cls: 'mina-proj-chip-name' });
-                const x = pChip.createEl('span', { text: '×', cls: 'mina-mobile-chip-x' });
+                projectArea.createEl('span', { cls: 'diwa-project-pill-dot' });
+                pChip.createEl('span', { text: project, cls: 'diwa-proj-chip-name' });
+                const x = pChip.createEl('span', { text: '×', cls: 'diwa-mobile-chip-x' });
                 x.addEventListener('click', (e) => { e.stopPropagation(); this.currentProject = null; updateProjectChip(null); });
                 pChip.addEventListener('click', (e) => {
-                    if ((e.target as HTMLElement).classList.contains('mina-mobile-chip-x')) return;
+                    if ((e.target as HTMLElement).classList.contains('diwa-mobile-chip-x')) return;
                     openProjPicker();
                 });
             } else {
                 const pickBtn = projectArea.createEl('button', {
-                    cls: 'mina-recur-btn mina-proj-pick-btn',
+                    cls: 'diwa-recur-btn diwa-proj-pick-btn',
                     attr: { 'aria-label': 'Assign project', title: 'Assign project' }
                 });
                 const icon = pickBtn.createEl('span');
@@ -753,10 +753,10 @@ export class EditEntryModal extends Modal {
         };
         updateProjectChip(this.currentProject);
 
-        const actions = dock.createDiv({ cls: 'mina-capture-desktop-actions' });
+        const actions = dock.createDiv({ cls: 'diwa-capture-desktop-actions' });
         const saveLabel = () => this.stayOpen ? 'ADD' : (this.currentMode === 'task' ? 'ADD TASK' : 'SAVE');
-        const cancelBtn = actions.createEl('button', { text: 'CANCEL', cls: 'mina-capture-inline-cancel' });
-        const saveBtn = actions.createEl('button', { text: saveLabel(), cls: 'mina-capture-inline-save' }) as HTMLButtonElement;
+        const cancelBtn = actions.createEl('button', { text: 'CANCEL', cls: 'diwa-capture-inline-cancel' });
+        const saveBtn = actions.createEl('button', { text: saveLabel(), cls: 'diwa-capture-inline-save' }) as HTMLButtonElement;
 
         // ── Mode switch ───────────────────────────────────────────────────
         const switchMode = (mode: CaptureMode) => {
@@ -835,9 +835,10 @@ export class EditEntryModal extends Modal {
     onClose() {
         if (this.classificationTimeout) clearTimeout(this.classificationTimeout);
         if (this._isMobileSheet) {
-            document.body.removeClass('mina-mobile-active');
+            document.body.removeClass('diwa-mobile-active');
             if (this._viewportCleanup) { this._viewportCleanup(); this._viewportCleanup = null; }
         }
         this.contentEl.empty();
     }
 }
+

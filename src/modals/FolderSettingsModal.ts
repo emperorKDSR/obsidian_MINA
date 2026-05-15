@@ -12,7 +12,7 @@ export class FolderSettingsModal extends Modal {
     onOpen() {
         const { contentEl, modalEl } = this;
         contentEl.empty();
-        modalEl.addClass('mina-modern-modal');
+        modalEl.addClass('diwa-modern-modal');
 
         // Style the modal wrapper
         modalEl.style.padding = '0';
@@ -141,3 +141,4 @@ export class FolderSettingsModal extends Modal {
         this.contentEl.empty();
     }
 }
+

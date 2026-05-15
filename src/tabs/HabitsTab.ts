@@ -107,22 +107,22 @@ export class HabitsTab extends BaseTab {
         const completedToday = new Set<string>(this.index.habitStatusIndex);
         const today = moment().format('YYYY-MM-DD');
 
-        const wrap = container.createEl('div', { cls: 'mina-habits-wrap' });
+        const wrap = container.createEl('div', { cls: 'diwa-habits-wrap' });
 
         // ── Header ────────────────────────────────────────────────
         const doneCount = habits.filter(h => completedToday.has(h.id)).length;
-        const header = wrap.createEl('div', { cls: 'mina-habits-header' });
-        const navRow = header.createEl('div', { cls: 'mina-review-nav-row', attr: { style: 'display: flex; align-items: center; gap: 12px; min-height: 44px;' } });
+        const header = wrap.createEl('div', { cls: 'diwa-habits-header' });
+        const navRow = header.createEl('div', { cls: 'diwa-review-nav-row', attr: { style: 'display: flex; align-items: center; gap: 12px; min-height: 44px;' } });
         this.renderHomeIcon(navRow);
-        const gearNavBtn = navRow.createEl('button', { cls: 'mina-habit-config-btn', attr: { 'aria-label': 'Configure habits', style: 'margin-left: auto;' } });
+        const gearNavBtn = navRow.createEl('button', { cls: 'diwa-habit-config-btn', attr: { 'aria-label': 'Configure habits', style: 'margin-left: auto;' } });
         gearNavBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
         gearNavBtn.addEventListener('click', () => new HabitConfigModal(this.app, this.plugin).open());
 
-        header.createEl('h2', { text: 'Habits', cls: 'mina-tab-title' });
+        header.createEl('h2', { text: 'Habits', cls: 'diwa-tab-title' });
         const subtitleText = habits.length > 0
             ? `${moment().format('dddd, MMM D')}  ·  ${doneCount}/${habits.length} done today`
             : moment().format('dddd, MMM D');
-        header.createEl('span', { cls: 'mina-tab-subtitle', text: subtitleText });
+        header.createEl('span', { cls: 'diwa-tab-subtitle', text: subtitleText });
 
         if (habits.length === 0) {
             this.renderEmptyHabits(wrap);
@@ -143,26 +143,26 @@ export class HabitsTab extends BaseTab {
     }
 
     private renderEmptyHabits(parent: HTMLElement) {
-        const empty = parent.createEl('div', { cls: 'mina-habits-empty' });
-        empty.createEl('span', { text: '🌿', cls: 'mina-habits-empty-icon' });
-        empty.createEl('div', { text: 'Build Your Habit System', cls: 'mina-habits-empty-title' });
+        const empty = parent.createEl('div', { cls: 'diwa-habits-empty' });
+        empty.createEl('span', { text: '🌿', cls: 'diwa-habits-empty-icon' });
+        empty.createEl('div', { text: 'Build Your Habit System', cls: 'diwa-habits-empty-title' });
         empty.createEl('div', {
             text: 'Track daily rituals, build streaks, and see your consistency mapped over time.',
-            cls: 'mina-habits-empty-body'
+            cls: 'diwa-habits-empty-body'
         });
-        const btn = empty.createEl('button', { text: '+ Add First Habit', cls: 'mina-btn-primary mina-habits-empty-btn' });
+        const btn = empty.createEl('button', { text: '+ Add First Habit', cls: 'diwa-btn-primary diwa-habits-empty-btn' });
         btn.addEventListener('click', () => new HabitConfigModal(this.app, this.plugin).open());
     }
 
     private renderTodaySection(parent: HTMLElement, habits: Habit[], completedToday: Set<string>, today: string) {
-        const section = parent.createEl('div', { cls: 'mina-habits-section mina-habits-today-section' });
-        const labelRow = section.createEl('div', { cls: 'mina-section-label-row' });
-        labelRow.createEl('span', { text: 'TODAY', cls: 'mina-section-label' });
+        const section = parent.createEl('div', { cls: 'diwa-habits-section diwa-habits-today-section' });
+        const labelRow = section.createEl('div', { cls: 'diwa-section-label-row' });
+        labelRow.createEl('span', { text: 'TODAY', cls: 'diwa-section-label' });
         const doneCount = habits.filter(h => completedToday.has(h.id)).length;
-        const countEl = labelRow.createEl('span', { cls: 'mina-section-label-count', text: `${doneCount}/${habits.length}` });
+        const countEl = labelRow.createEl('span', { cls: 'diwa-section-label-count', text: `${doneCount}/${habits.length}` });
 
-        const progressWrap = section.createEl('div', { cls: 'mina-habit-progress-bar' });
-        const progressFill = progressWrap.createEl('div', { cls: 'mina-habit-progress-fill' });
+        const progressWrap = section.createEl('div', { cls: 'diwa-habit-progress-bar' });
+        const progressFill = progressWrap.createEl('div', { cls: 'diwa-habit-progress-fill' });
         let currentCount = doneCount;
         const updateProgress = (n: number) => {
             progressFill.style.width = `${habits.length > 0 ? (n / habits.length) * 100 : 0}%`;
@@ -171,14 +171,14 @@ export class HabitsTab extends BaseTab {
         };
         updateProgress(currentCount);
 
-        const bar = section.createEl('div', { cls: 'mina-habits-today-grid' });
+        const bar = section.createEl('div', { cls: 'diwa-habits-today-grid' });
 
         for (const habit of habits) {
             const done = completedToday.has(habit.id);
-            const btn = bar.createEl('button', { cls: `mina-habit-quick-btn mina-habits-today-btn${done ? ' is-done' : ''}`, attr: { title: habit.name } });
-            btn.insertAdjacentHTML('afterbegin', '<svg class="mina-habit-ring" viewBox="0 0 36 36" aria-hidden="true"><rect class="mina-habit-ring-track" x="2" y="2" width="32" height="32" rx="8" ry="8" pathLength="100"/><rect class="mina-habit-ring-fill" x="2" y="2" width="32" height="32" rx="8" ry="8" pathLength="100"/></svg>');
-            btn.createEl('span', { text: habit.icon || '●', cls: 'mina-habit-quick-icon' });
-            btn.createEl('span', { text: habit.name, cls: 'mina-habit-quick-label mina-habits-today-label' });
+            const btn = bar.createEl('button', { cls: `diwa-habit-quick-btn diwa-habits-today-btn${done ? ' is-done' : ''}`, attr: { title: habit.name } });
+            btn.insertAdjacentHTML('afterbegin', '<svg class="diwa-habit-ring" viewBox="0 0 36 36" aria-hidden="true"><rect class="diwa-habit-ring-track" x="2" y="2" width="32" height="32" rx="8" ry="8" pathLength="100"/><rect class="diwa-habit-ring-fill" x="2" y="2" width="32" height="32" rx="8" ry="8" pathLength="100"/></svg>');
+            btn.createEl('span', { text: habit.icon || '●', cls: 'diwa-habit-quick-icon' });
+            btn.createEl('span', { text: habit.name, cls: 'diwa-habit-quick-label diwa-habits-today-label' });
 
             btn.addEventListener('click', async () => {
                 const nowDone = btn.classList.contains('is-done');
@@ -196,18 +196,18 @@ export class HabitsTab extends BaseTab {
     }
 
     private renderStreakLeaderboard(parent: HTMLElement, habits: Habit[]) {
-        const section = parent.createEl('div', { cls: 'mina-habits-leaderboard' });
-        const labelRow = section.createEl('div', { cls: 'mina-section-label-row', attr: { style: 'padding: 12px 14px 0 14px;' } });
+        const section = parent.createEl('div', { cls: 'diwa-habits-leaderboard' });
+        const labelRow = section.createEl('div', { cls: 'diwa-section-label-row', attr: { style: 'padding: 12px 14px 0 14px;' } });
         const labelLeft = labelRow.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 6px;' } });
         labelLeft.createEl('span', { text: '🔥', attr: { style: 'font-size: 1em;' } });
-        labelLeft.createEl('span', { text: 'STREAK LEADERBOARD', cls: 'mina-section-label' });
+        labelLeft.createEl('span', { text: 'STREAK LEADERBOARD', cls: 'diwa-section-label' });
 
         const streaks = habits.map(h => ({ habit: h, data: this.computeStreaks(h.id) }));
         streaks.sort((a, b) => b.data.current - a.data.current);
 
-        const table = section.createEl('table', { cls: 'mina-streak-table' });
+        const table = section.createEl('table', { cls: 'diwa-streak-table' });
         const thead = table.createEl('thead');
-        const headRow = thead.createEl('tr', { cls: 'mina-streak-table__head-row' });
+        const headRow = thead.createEl('tr', { cls: 'diwa-streak-table__head-row' });
         ['', 'Habit', '🔥', 'Best', 'Month'].forEach((text, i) => {
             const th = headRow.createEl('th', { text });
             if (i >= 2) th.style.textAlign = 'center';
@@ -215,30 +215,30 @@ export class HabitsTab extends BaseTab {
 
         const tbody = table.createEl('tbody');
         for (const { habit, data } of streaks) {
-            const row = tbody.createEl('tr', { cls: 'mina-streak-table__row' });
-            row.createEl('td', { text: habit.icon, cls: 'mina-streak-cell--icon' });
-            const nameCell = row.createEl('td', { cls: 'mina-streak-cell--name' });
-            nameCell.createEl('span', { text: habit.name, cls: 'mina-streak-name' });
+            const row = tbody.createEl('tr', { cls: 'diwa-streak-table__row' });
+            row.createEl('td', { text: habit.icon, cls: 'diwa-streak-cell--icon' });
+            const nameCell = row.createEl('td', { cls: 'diwa-streak-cell--name' });
+            nameCell.createEl('span', { text: habit.name, cls: 'diwa-streak-name' });
 
-            const currentCell = row.createEl('td', { cls: 'mina-streak-cell--current' });
+            const currentCell = row.createEl('td', { cls: 'diwa-streak-cell--current' });
             const streakLabel = data.current > 0
                 ? (data.current >= 7 ? `🔥 ${data.current}` : String(data.current))
                 : '—';
-            const streakEl = currentCell.createEl('span', { text: streakLabel, cls: 'mina-streak-value' });
+            const streakEl = currentCell.createEl('span', { text: streakLabel, cls: 'diwa-streak-value' });
             if (data.current === 0) streakEl.style.color = 'var(--text-faint)';
             else if (data.current >= 30) { streakEl.style.color = '#ef4444'; streakEl.style.fontWeight = '900'; }
             else if (data.current >= 14) { streakEl.style.color = '#f59e0b'; }
             else if (data.current >= 7) { streakEl.style.color = 'var(--interactive-accent)'; }
             else streakEl.style.color = 'var(--text-muted)';
 
-            const bestCell = row.createEl('td', { cls: 'mina-streak-cell--longest' });
-            bestCell.createEl('span', { text: data.best > 0 ? String(data.best) : '—', cls: 'mina-streak-value' });
+            const bestCell = row.createEl('td', { cls: 'diwa-streak-cell--longest' });
+            bestCell.createEl('span', { text: data.best > 0 ? String(data.best) : '—', cls: 'diwa-streak-value' });
 
             const monthPct = data.thisMonth > 0
                 ? Math.round((data.thisMonth / moment().date()) * 100)
                 : 0;
-            const pctCell = row.createEl('td', { cls: 'mina-streak-cell--month-pct' });
-            const pctEl = pctCell.createEl('span', { text: `${monthPct}%`, cls: 'mina-streak-pct' });
+            const pctCell = row.createEl('td', { cls: 'diwa-streak-cell--month-pct' });
+            const pctEl = pctCell.createEl('span', { text: `${monthPct}%`, cls: 'diwa-streak-pct' });
             if (monthPct < 40) pctEl.style.color = 'var(--text-error)';
             else if (monthPct < 75) pctEl.style.color = '#f59e0b';
             else pctEl.style.color = 'var(--color-green, #4caf50)';
@@ -246,16 +246,16 @@ export class HabitsTab extends BaseTab {
     }
 
     private renderHeatmap(parent: HTMLElement, habits: Habit[]) {
-        const section = parent.createEl('div', { cls: 'mina-habits-heatmap-section' });
+        const section = parent.createEl('div', { cls: 'diwa-habits-heatmap-section' });
 
         // Habit filter pills
-        const filterRow = section.createEl('div', { cls: 'mina-habits-heatmap-filter' });
+        const filterRow = section.createEl('div', { cls: 'diwa-habits-heatmap-filter' });
         const filterPills = [{ id: 'all', label: 'All Habits' }, ...habits.map(h => ({ id: h.id, label: `${h.icon} ${h.name}` }))];
         const pillBtns: HTMLButtonElement[] = [];
         for (const fp of filterPills) {
             const pill = filterRow.createEl('button', {
                 text: fp.label,
-                cls: `mina-habits-filter-pill${fp.id === this.selectedHabitId ? ' is-active' : ''}`
+                cls: `diwa-habits-filter-pill${fp.id === this.selectedHabitId ? ' is-active' : ''}`
             }) as HTMLButtonElement;
             pill.addEventListener('click', () => {
                 this.selectedHabitId = fp.id;
@@ -266,11 +266,11 @@ export class HabitsTab extends BaseTab {
         }
 
         // Month navigation
-        const navRow = section.createEl('div', { cls: 'mina-habits-heatmap-header' });
-        const prevBtn = navRow.createEl('button', { cls: 'mina-habits-heatmap-nav' });
+        const navRow = section.createEl('div', { cls: 'diwa-habits-heatmap-header' });
+        const prevBtn = navRow.createEl('button', { cls: 'diwa-habits-heatmap-nav' });
         setIcon(prevBtn, 'chevron-left');
-        const monthLabel = navRow.createEl('span', { cls: 'mina-habits-heatmap-month' });
-        const nextBtn = navRow.createEl('button', { cls: 'mina-habits-heatmap-nav' });
+        const monthLabel = navRow.createEl('span', { cls: 'diwa-habits-heatmap-month' });
+        const nextBtn = navRow.createEl('button', { cls: 'diwa-habits-heatmap-nav' });
         setIcon(nextBtn, 'chevron-right');
 
         const isCurrentMonth = () => this.currentHeatmapMonth.isSame(moment(), 'month');
@@ -295,9 +295,9 @@ export class HabitsTab extends BaseTab {
         });
 
         // Day-of-week headers
-        const dowRow = section.createEl('div', { cls: 'mina-habits-heatmap-dow' });
+        const dowRow = section.createEl('div', { cls: 'diwa-habits-heatmap-dow' });
         ['M', 'T', 'W', 'T', 'F', 'S', 'S'].forEach(d => {
-            dowRow.createEl('div', { text: d, cls: 'mina-habits-heatmap-dow-label' });
+            dowRow.createEl('div', { text: d, cls: 'diwa-habits-heatmap-dow-label' });
         });
 
         const gridWrap = section.createEl('div');
@@ -306,7 +306,7 @@ export class HabitsTab extends BaseTab {
 
     private renderHeatmapGrid(container: HTMLElement, habits: Habit[]) {
         container.empty();
-        const grid = container.createEl('div', { cls: 'mina-habits-heatmap-grid' });
+        const grid = container.createEl('div', { cls: 'diwa-habits-heatmap-grid' });
         const month = this.currentHeatmapMonth;
         const today = moment();
         const daysInMonth = month.daysInMonth();
@@ -314,7 +314,7 @@ export class HabitsTab extends BaseTab {
 
         // Spacer cells for days before month starts
         for (let i = 1; i < firstDayOfWeek; i++) {
-            grid.createEl('div', { cls: 'mina-habits-heatmap-cell is-spacer' });
+            grid.createEl('div', { cls: 'diwa-habits-heatmap-cell is-spacer' });
         }
 
         for (let day = 1; day <= daysInMonth; day++) {
@@ -341,7 +341,7 @@ export class HabitsTab extends BaseTab {
                 }
             }
 
-            const cls = ['mina-habits-heatmap-cell',
+            const cls = ['diwa-habits-heatmap-cell',
                 isToday ? 'is-today' : '',
                 isDone ? 'is-done' : '',
                 isMissed ? 'is-missed' : '',
@@ -355,16 +355,16 @@ export class HabitsTab extends BaseTab {
     }
 
     private renderManagement(parent: HTMLElement) {
-        const section = parent.createEl('div', { cls: 'mina-habits-mgmt-section' });
-        const row = section.createEl('div', { cls: 'mina-habits-mgmt-row' });
+        const section = parent.createEl('div', { cls: 'diwa-habits-mgmt-section' });
+        const row = section.createEl('div', { cls: 'diwa-habits-mgmt-row' });
 
-        const manageBtn = row.createEl('button', { cls: 'mina-habits-mgmt-btn mina-btn-secondary' });
+        const manageBtn = row.createEl('button', { cls: 'diwa-habits-mgmt-btn diwa-btn-secondary' });
         const manageIcon = manageBtn.createEl('span');
         setIcon(manageIcon, 'settings');
         manageBtn.createEl('span', { text: 'Manage Habits' });
         manageBtn.addEventListener('click', () => new HabitConfigModal(this.app, this.plugin).open());
 
-        const resetBtn = row.createEl('button', { cls: 'mina-habits-reset-btn mina-btn-secondary' });
+        const resetBtn = row.createEl('button', { cls: 'diwa-habits-reset-btn diwa-btn-secondary' });
         const resetIcon = resetBtn.createEl('span');
         setIcon(resetIcon, 'rotate-ccw');
         resetBtn.createEl('span', { text: 'Reset Today' });
@@ -382,3 +382,4 @@ export class HabitsTab extends BaseTab {
         });
     }
 }
+

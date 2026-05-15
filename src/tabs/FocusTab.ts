@@ -8,13 +8,13 @@ export class FocusTab extends BaseTab {
 
     render(container: HTMLElement) {
         container.empty();
-        const wrap = container.createEl('div', { cls: 'mina-focus-wrap' });
+        const wrap = container.createEl('div', { cls: 'diwa-focus-wrap' });
 
         // ── Header ────────────────────────────────────────────────────────
-        const headerRow = wrap.createEl('div', { cls: 'mina-focus-header' });
+        const headerRow = wrap.createEl('div', { cls: 'diwa-focus-header' });
         this.renderHomeIcon(headerRow);
         const titleStack = headerRow.createEl('div', { attr: { style: 'display: flex; flex-direction: column;' } });
-        titleStack.createEl('h2', { text: "Today's Mission", cls: 'mina-focus-title' });
+        titleStack.createEl('h2', { text: "Today's Mission", cls: 'diwa-focus-title' });
         titleStack.createEl('span', { text: moment().format('dddd, MMMM D'), attr: { style: 'font-size: 0.82em; color: var(--text-muted);' } });
 
         const today = moment().format('YYYY-MM-DD');
@@ -43,7 +43,7 @@ export class FocusTab extends BaseTab {
         if (missionTasks.length === 0) {
             this.renderEmptyState(wrap, 'All clear! No tasks due today. 🎯');
         } else {
-            const list = wrap.createEl('div', { cls: 'mina-focus-task-list' });
+            const list = wrap.createEl('div', { cls: 'diwa-focus-task-list' });
             for (const task of missionTasks) {
                 this._renderTaskCard(list, task, today, container);
             }
@@ -58,11 +58,11 @@ export class FocusTab extends BaseTab {
     private _renderTaskCard(parent: HTMLElement, task: TaskEntry, today: string, container: HTMLElement) {
         const isOverdue = !!task.due && task.due < today;
         const isDueToday = task.due === today;
-        const card = parent.createEl('div', { cls: `mina-focus-task-card${isOverdue ? ' is-overdue' : ''}` });
+        const card = parent.createEl('div', { cls: `diwa-focus-task-card${isOverdue ? ' is-overdue' : ''}` });
 
         // Checkbox
-        const cbWrap = card.createEl('div', { cls: 'mina-focus-cb-wrap' });
-        const cb = cbWrap.createEl('div', { cls: 'mina-focus-cb' });
+        const cbWrap = card.createEl('div', { cls: 'diwa-focus-cb-wrap' });
+        const cb = cbWrap.createEl('div', { cls: 'diwa-focus-cb' });
         cbWrap.addEventListener('click', async () => {
             await this.vault.toggleTask(task.filePath, true);
             this.view.focusedTaskIds.delete(task.filePath);
@@ -71,24 +71,24 @@ export class FocusTab extends BaseTab {
         });
 
         // Body
-        const body = card.createEl('div', { cls: 'mina-focus-task-body' });
-        body.createEl('div', { text: task.title || task.body, cls: 'mina-focus-task-title' });
+        const body = card.createEl('div', { cls: 'diwa-focus-task-body' });
+        body.createEl('div', { text: task.title || task.body, cls: 'diwa-focus-task-title' });
 
         // Badges
         const badges = body.createEl('div', { attr: { style: 'display: flex; gap: 4px; flex-wrap: wrap; align-items: center;' } });
         if (isOverdue) {
-            badges.createEl('span', { text: `Overdue · ${task.due}`, cls: 'mina-focus-badge mina-focus-badge--overdue' });
+            badges.createEl('span', { text: `Overdue · ${task.due}`, cls: 'diwa-focus-badge diwa-focus-badge--overdue' });
         } else if (isDueToday) {
-            badges.createEl('span', { text: 'Due Today', cls: 'mina-focus-badge mina-focus-badge--today' });
+            badges.createEl('span', { text: 'Due Today', cls: 'diwa-focus-badge diwa-focus-badge--today' });
         }
         if (task.priority === 'high') {
-            badges.createEl('span', { text: '↑ High', cls: 'mina-focus-badge mina-focus-badge--high' });
+            badges.createEl('span', { text: '↑ High', cls: 'diwa-focus-badge diwa-focus-badge--high' });
         }
 
         // + Focus button for non-focused, non-overdue tasks (only tasks due today that weren't added)
         const isFocused = this.view.focusedTaskIds.has(task.filePath);
         if (!isOverdue && !isDueToday && !isFocused) {
-            const addBtn = badges.createEl('button', { text: '+ Focus', cls: 'mina-focus-add-btn' });
+            const addBtn = badges.createEl('button', { text: '+ Focus', cls: 'diwa-focus-add-btn' });
             addBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.view.focusedTaskIds.add(task.filePath);
@@ -98,20 +98,20 @@ export class FocusTab extends BaseTab {
     }
 
     private _renderAiSection(parent: HTMLElement, tasks: TaskEntry[], container: HTMLElement) {
-        const section = parent.createEl('div', { cls: 'mina-focus-ai-section' });
+        const section = parent.createEl('div', { cls: 'diwa-focus-ai-section' });
 
         if (this.view.focusAiPlan) {
-            const resultEl = section.createEl('div', { cls: 'mina-focus-ai-result' });
+            const resultEl = section.createEl('div', { cls: 'diwa-focus-ai-result' });
             resultEl.textContent = this.view.focusAiPlan;
 
-            const regenBtn = section.createEl('button', { text: '↺ Regenerate', cls: 'mina-focus-ai-btn' });
+            const regenBtn = section.createEl('button', { text: '↺ Regenerate', cls: 'diwa-focus-ai-btn' });
             regenBtn.style.marginTop = '8px';
             regenBtn.addEventListener('click', () => {
                 this.view.focusAiPlan = null;
                 this._runAiTimeBlock(tasks, section, container);
             });
         } else {
-            const aiBtn = section.createEl('button', { cls: 'mina-focus-ai-btn' });
+            const aiBtn = section.createEl('button', { cls: 'diwa-focus-ai-btn' });
             const iconEl = aiBtn.createEl('span');
             setIcon(iconEl, 'sparkles');
             aiBtn.createEl('span', { text: 'AI Time-Block Schedule' });
@@ -136,3 +136,4 @@ export class FocusTab extends BaseTab {
         this.render(container);
     }
 }
+

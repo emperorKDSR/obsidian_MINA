@@ -8,7 +8,7 @@ export class FinanceAnalyticsTab extends BaseTab {
 
     render(container: HTMLElement) {
         container.empty();
-        const wrap = container.createEl('div', { cls: 'mina-fanalytics-wrap' });
+        const wrap = container.createEl('div', { cls: 'diwa-fanalytics-wrap' });
 
         // ── Header (full-width on desktop grid) ───────────────────────────
         const headerRow = wrap.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px;' } });
@@ -27,10 +27,10 @@ export class FinanceAnalyticsTab extends BaseTab {
         const cashflow = monthlyIncome - totalObligations;
 
         // ── Cashflow Overview card ────────────────────────────────────────
-        const cashCard = wrap.createEl('div', { cls: 'mina-fanalytics-card' });
-        cashCard.createEl('div', { text: 'Cashflow Overview', cls: 'mina-fanalytics-card-title' });
+        const cashCard = wrap.createEl('div', { cls: 'diwa-fanalytics-card' });
+        cashCard.createEl('div', { text: 'Cashflow Overview', cls: 'diwa-fanalytics-card-title' });
 
-        const cfRow = cashCard.createEl('div', { cls: 'mina-fanalytics-cashflow-row' });
+        const cfRow = cashCard.createEl('div', { cls: 'diwa-fanalytics-cashflow-row' });
         this._cfStat(cfRow, monthlyIncome > 0 ? `€${monthlyIncome.toLocaleString()}` : '—', 'Monthly Income', '');
         this._cfStat(cfRow, totalObligations > 0 ? `€${totalObligations.toFixed(0)}` : '€0', 'Obligations', '');
         this._cfStat(cfRow,
@@ -41,16 +41,16 @@ export class FinanceAnalyticsTab extends BaseTab {
 
         if (monthlyIncome > 0) {
             const pct = Math.min(100, Math.round((totalObligations / monthlyIncome) * 100));
-            const barWrap = cashCard.createEl('div', { cls: 'mina-fanalytics-obligations-bar' });
-            const fill = barWrap.createEl('div', { cls: 'mina-fanalytics-obligations-fill' });
+            const barWrap = cashCard.createEl('div', { cls: 'diwa-fanalytics-obligations-bar' });
+            const fill = barWrap.createEl('div', { cls: 'diwa-fanalytics-obligations-fill' });
             fill.style.width = `${pct}%`;
             fill.style.background = pct > 80 ? 'var(--color-red, #ef4444)' : pct > 60 ? 'var(--color-orange, #f97316)' : 'var(--interactive-accent)';
             cashCard.createEl('div', { text: `Obligations = ${pct}% of income`, attr: { style: 'font-size: 0.75em; color: var(--text-muted); margin-top: 6px;' } });
         }
 
         // ── Obligations by Category card ──────────────────────────────────
-        const catCard = wrap.createEl('div', { cls: 'mina-fanalytics-card' });
-        catCard.createEl('div', { text: 'Obligations by Category', cls: 'mina-fanalytics-card-title' });
+        const catCard = wrap.createEl('div', { cls: 'diwa-fanalytics-card' });
+        catCard.createEl('div', { text: 'Obligations by Category', cls: 'diwa-fanalytics-card-title' });
 
         const categoryMap = this._buildCategoryMap(activeDues);
 
@@ -60,18 +60,18 @@ export class FinanceAnalyticsTab extends BaseTab {
             const sorted = Array.from(categoryMap.entries()).sort((a, b) => b[1] - a[1]);
             const maxAmt = sorted[0]?.[1] || 1;
             for (const [cat, amt] of sorted) {
-                const row = catCard.createEl('div', { cls: 'mina-fanalytics-bar-row' });
-                row.createEl('div', { text: cat, cls: 'mina-fanalytics-bar-label', attr: { title: cat } });
-                const track = row.createEl('div', { cls: 'mina-fanalytics-bar-track' });
-                const fill = track.createEl('div', { cls: 'mina-fanalytics-bar-fill' });
+                const row = catCard.createEl('div', { cls: 'diwa-fanalytics-bar-row' });
+                row.createEl('div', { text: cat, cls: 'diwa-fanalytics-bar-label', attr: { title: cat } });
+                const track = row.createEl('div', { cls: 'diwa-fanalytics-bar-track' });
+                const fill = track.createEl('div', { cls: 'diwa-fanalytics-bar-fill' });
                 fill.style.width = `${Math.round((amt / maxAmt) * 100)}%`;
-                row.createEl('div', { text: `€${amt.toFixed(0)}`, cls: 'mina-fanalytics-bar-amount' });
+                row.createEl('div', { text: `€${amt.toFixed(0)}`, cls: 'diwa-fanalytics-bar-amount' });
             }
         }
 
         // ── Quick Stats card ──────────────────────────────────────────────
-        const statsCard = wrap.createEl('div', { cls: 'mina-fanalytics-card' });
-        statsCard.createEl('div', { text: 'Quick Stats', cls: 'mina-fanalytics-card-title' });
+        const statsCard = wrap.createEl('div', { cls: 'diwa-fanalytics-card' });
+        statsCard.createEl('div', { text: 'Quick Stats', cls: 'diwa-fanalytics-card-title' });
 
         const overdueCount = activeDues.filter(d => d.dueMoment?.isValid() && d.dueMoment.isBefore(today)).length;
         const dueThisWeekCount = activeDues.filter(d => d.dueMoment?.isValid() && d.dueMoment.isSameOrAfter(today) && d.dueMoment.isSameOrBefore(weekEnd)).length;
@@ -97,15 +97,15 @@ export class FinanceAnalyticsTab extends BaseTab {
     }
 
     private _cfStat(parent: HTMLElement, value: string, label: string, valueCls: string) {
-        const s = parent.createEl('div', { cls: 'mina-fanalytics-cf-stat' });
-        s.createEl('div', { text: value, cls: `mina-fanalytics-cf-value${valueCls ? ' ' + valueCls : ''}` });
-        s.createEl('div', { text: label, cls: 'mina-fanalytics-cf-label' });
+        const s = parent.createEl('div', { cls: 'diwa-fanalytics-cf-stat' });
+        s.createEl('div', { text: value, cls: `diwa-fanalytics-cf-value${valueCls ? ' ' + valueCls : ''}` });
+        s.createEl('div', { text: label, cls: 'diwa-fanalytics-cf-label' });
     }
 
     private _quickStat(parent: HTMLElement, value: string, label: string, valueCls: string) {
         const s = parent.createEl('div', { attr: { style: 'background: var(--background-primary); border-radius: 10px; padding: 10px; text-align: center;' } });
-        s.createEl('div', { text: value, cls: `mina-fanalytics-cf-value${valueCls ? ' ' + valueCls : ''}` });
-        s.createEl('div', { text: label, cls: 'mina-fanalytics-cf-label' });
+        s.createEl('div', { text: value, cls: `diwa-fanalytics-cf-value${valueCls ? ' ' + valueCls : ''}` });
+        s.createEl('div', { text: label, cls: 'diwa-fanalytics-cf-label' });
     }
 
     private _buildCategoryMap(dues: DueEntry[]): Map<string, number> {
@@ -127,3 +127,4 @@ export class FinanceAnalyticsTab extends BaseTab {
         return map;
     }
 }
+

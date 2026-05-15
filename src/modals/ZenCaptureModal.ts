@@ -19,34 +19,34 @@ export class ZenCaptureModal extends Modal {
     }
 
     onOpen() {
-        this.modalEl.addClass('mina-zen-capture');
+        this.modalEl.addClass('diwa-zen-capture');
         if (Platform.isMobile) document.body.addClass('is-mobile');
 
         const { contentEl } = this;
         contentEl.empty();
 
         // ── Header ──
-        const header = contentEl.createEl('div', { cls: 'mina-zen-header' });
-        header.createEl('span', { text: '✦ ZEN CAPTURE', cls: 'mina-zen-header-title' });
-        const closeBtn = header.createEl('button', { cls: 'mina-zen-close-btn' });
+        const header = contentEl.createEl('div', { cls: 'diwa-zen-header' });
+        header.createEl('span', { text: '✦ ZEN CAPTURE', cls: 'diwa-zen-header-title' });
+        const closeBtn = header.createEl('button', { cls: 'diwa-zen-close-btn' });
         setIcon(closeBtn, 'lucide-x');
         closeBtn.addEventListener('click', () => this.tryClose());
 
         // ── Context chip row ──
-        this.chipRow = contentEl.createEl('div', { cls: 'mina-zen-chip-row' });
+        this.chipRow = contentEl.createEl('div', { cls: 'diwa-zen-chip-row' });
         this.renderAddContextBtn();
 
         // ── Textarea ──
         this.textarea = contentEl.createEl('textarea', {
-            cls: 'mina-zen-textarea',
+            cls: 'diwa-zen-textarea',
             attr: { placeholder: 'Let your thoughts flow\u2026' }
         });
 
         // ── Footer ──
-        const footer = contentEl.createEl('div', { cls: 'mina-zen-footer' });
-        this.wordCountEl = footer.createEl('span', { cls: 'mina-zen-word-count', text: '0 words' });
-        footer.createEl('span', { cls: 'mina-zen-hint', text: 'Shift+Enter new line \u00B7 Esc to close' });
-        this.saveBtn = footer.createEl('button', { cls: 'mina-zen-save-btn', text: 'SAVE' }) as HTMLButtonElement;
+        const footer = contentEl.createEl('div', { cls: 'diwa-zen-footer' });
+        this.wordCountEl = footer.createEl('span', { cls: 'diwa-zen-word-count', text: '0 words' });
+        footer.createEl('span', { cls: 'diwa-zen-hint', text: 'Shift+Enter new line \u00B7 Esc to close' });
+        this.saveBtn = footer.createEl('button', { cls: 'diwa-zen-save-btn', text: 'SAVE' }) as HTMLButtonElement;
         this.saveBtn.disabled = true;
         this.saveBtn.addEventListener('click', () => this.save());
 
@@ -115,18 +115,18 @@ export class ZenCaptureModal extends Modal {
     private addChip(tag: string) {
         if (this.contexts.includes(tag)) return;
         this.contexts.push(tag);
-        const chip = this.chipRow.createEl('span', { cls: 'mina-zen-chip', text: `#${tag}` });
+        const chip = this.chipRow.createEl('span', { cls: 'diwa-zen-chip', text: `#${tag}` });
         chip.addEventListener('click', () => {
             this.contexts = this.contexts.filter(c => c !== tag);
             chip.remove();
         });
         // Keep add-button at end
-        const addBtn = this.chipRow.querySelector('.mina-zen-add-ctx-btn');
+        const addBtn = this.chipRow.querySelector('.diwa-zen-add-ctx-btn');
         if (addBtn) this.chipRow.appendChild(addBtn);
     }
 
     private renderAddContextBtn() {
-        const btn = this.chipRow.createEl('button', { cls: 'mina-zen-add-ctx-btn', text: '+' });
+        const btn = this.chipRow.createEl('button', { cls: 'diwa-zen-add-ctx-btn', text: '+' });
         btn.addEventListener('click', () => {
             new ContextSuggestModal(this.app, this.contexts, (tag: string) => {
                 this.addChip(tag);
@@ -160,3 +160,4 @@ export class ZenCaptureModal extends Modal {
         }
     }
 }
+

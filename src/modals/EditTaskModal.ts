@@ -72,7 +72,7 @@ export class EditTaskModal extends Modal {
         this._viewportCleanup?.();
         this._viewportCleanup = null;
         if (this._isMobileSheet) {
-            document.body.removeClass('mina-task-edit-active');
+            document.body.removeClass('diwa-task-edit-active');
         }
         this.contentEl.empty();
     }
@@ -104,28 +104,28 @@ export class EditTaskModal extends Modal {
     private _renderMobile(): void {
         const { contentEl, modalEl } = this;
 
-        modalEl.addClass('mina-edit-task-sheet');
+        modalEl.addClass('diwa-edit-task-sheet');
         modalEl.style.setProperty('border-radius', '16px', 'important');
         modalEl.style.setProperty('overflow', 'visible', 'important');
         contentEl.style.setProperty('border-radius', '16px', 'important');
         contentEl.style.setProperty('overflow', 'hidden', 'important');
-        document.body.addClass('mina-task-edit-active');
+        document.body.addClass('diwa-task-edit-active');
 
-        const root = contentEl.createDiv({ cls: 'mina-ets-root' });
+        const root = contentEl.createDiv({ cls: 'diwa-ets-root' });
 
         // Handle bar — drag pill + inline close button (no separate header)
-        const handleBar = root.createDiv({ cls: 'mina-ets-handle-bar' });
-        handleBar.createDiv({ cls: 'mina-ets-handle-pill' });
+        const handleBar = root.createDiv({ cls: 'diwa-ets-handle-bar' });
+        handleBar.createDiv({ cls: 'diwa-ets-handle-pill' });
         const closeBtn = handleBar.createEl('button', {
-            cls: 'mina-ets-close-btn', attr: { 'aria-label': 'Close' }
+            cls: 'diwa-ets-close-btn', attr: { 'aria-label': 'Close' }
         });
         setIcon(closeBtn, 'x');
         closeBtn.addEventListener('click', () => this.close());
 
         // Title — borderless, full-focus textarea
-        const titleWrap = root.createDiv({ cls: 'mina-ets-title-wrap' });
+        const titleWrap = root.createDiv({ cls: 'diwa-ets-title-wrap' });
         const titleTA = titleWrap.createEl('textarea', {
-            cls: 'mina-ets-title-textarea',
+            cls: 'diwa-ets-title-textarea',
             attr: { placeholder: 'What needs to be done?' }
         }) as HTMLTextAreaElement;
         titleTA.value = this._title;
@@ -147,20 +147,20 @@ export class EditTaskModal extends Modal {
 
         // Unified metadata dock — single horizontal scrollable row
         // dockWrap is position:relative so popovers open upward from it
-        const dockWrap = root.createDiv({ cls: 'mina-ets-dock-wrap' });
-        const dock     = dockWrap.createDiv({ cls: 'mina-ets-dock' });
+        const dockWrap = root.createDiv({ cls: 'diwa-ets-dock-wrap' });
+        const dock     = dockWrap.createDiv({ cls: 'diwa-ets-dock' });
 
-        this._buildToolbarChips(dock, dockWrap, 'mina-ets-tool-chip', 'mina-ets-toolbar-dot');
-        dock.createEl('span', { cls: 'mina-ets-toolbar-dot', text: '·' });
-        this._buildChipsRow(dock, 'mina-ets-inline-chips',
-            'mina-ets-tag-chip', 'mina-ets-tag-add-btn', 'mina-ets-project-pill')();
+        this._buildToolbarChips(dock, dockWrap, 'diwa-ets-tool-chip', 'diwa-ets-toolbar-dot');
+        dock.createEl('span', { cls: 'diwa-ets-toolbar-dot', text: '·' });
+        this._buildChipsRow(dock, 'diwa-ets-inline-chips',
+            'diwa-ets-tag-chip', 'diwa-ets-tag-add-btn', 'diwa-ets-project-pill')();
 
         // Footer
-        const footer = root.createDiv({ cls: 'mina-ets-footer' });
-        footer.createEl('button', { text: 'Cancel', cls: 'mina-ets-cancel-btn' })
+        const footer = root.createDiv({ cls: 'diwa-ets-footer' });
+        footer.createEl('button', { text: 'Cancel', cls: 'diwa-ets-cancel-btn' })
             .addEventListener('click', () => this.close());
         saveBtn = footer.createEl('button', {
-            text: 'Save', cls: 'mina-ets-save-btn'
+            text: 'Save', cls: 'diwa-ets-save-btn'
         }) as HTMLButtonElement;
         saveBtn.addEventListener('click', () => this._save());
         refreshSave();
@@ -188,22 +188,22 @@ export class EditTaskModal extends Modal {
     private _renderTablet(): void {
         const { contentEl, modalEl } = this;
 
-        modalEl.addClass('mina-task-edit-modal');
+        modalEl.addClass('diwa-task-edit-modal');
         const isLandscape = window.matchMedia('(orientation: landscape)').matches;
         if (isLandscape) modalEl.addClass('is-landscape');
 
         // Header
-        const header = contentEl.createDiv({ cls: 'mina-tem-header' });
-        header.createDiv({ cls: 'mina-tem-drag-handle' });
-        const headerRow = header.createDiv({ cls: 'mina-tem-header-row' });
+        const header = contentEl.createDiv({ cls: 'diwa-tem-header' });
+        header.createDiv({ cls: 'diwa-tem-drag-handle' });
+        const headerRow = header.createDiv({ cls: 'diwa-tem-header-row' });
         const closeBtn = headerRow.createEl('button', {
-            text: '✕', cls: 'mina-tem-close-btn', attr: { 'aria-label': 'Close' }
+            text: '✕', cls: 'diwa-tem-close-btn', attr: { 'aria-label': 'Close' }
         });
         closeBtn.addEventListener('click', () => this.close());
 
         // Body
         const body = contentEl.createDiv({
-            cls: `mina-tem-body${isLandscape ? ' is-split' : ''}`
+            cls: `diwa-tem-body${isLandscape ? ' is-split' : ''}`
         });
 
         let saveBtn!: HTMLButtonElement;
@@ -215,9 +215,9 @@ export class EditTaskModal extends Modal {
         };
 
         const buildTitleTA = (parent: HTMLElement, maxH: number): HTMLTextAreaElement => {
-            const sec = parent.createDiv({ cls: 'mina-tem-section mina-tem-title-zone' });
+            const sec = parent.createDiv({ cls: 'diwa-tem-section diwa-tem-title-zone' });
             const ta = sec.createEl('textarea', {
-                cls: 'mina-tem-title-input', attr: { placeholder: 'What needs to be done?' }
+                cls: 'diwa-tem-title-input', attr: { placeholder: 'What needs to be done?' }
             }) as HTMLTextAreaElement;
             ta.value = this._title;
             ta.addEventListener('input', () => {
@@ -232,39 +232,39 @@ export class EditTaskModal extends Modal {
         let titleInput: HTMLTextAreaElement;
 
         if (isLandscape) {
-            const leftPane  = body.createDiv({ cls: 'mina-tem-left' });
-            const rightPane = body.createDiv({ cls: 'mina-tem-right' });
+            const leftPane  = body.createDiv({ cls: 'diwa-tem-left' });
+            const rightPane = body.createDiv({ cls: 'diwa-tem-right' });
 
             titleInput = buildTitleTA(leftPane, 148);
-            leftPane.createDiv({ cls: 'mina-tem-spacer' });
+            leftPane.createDiv({ cls: 'diwa-tem-spacer' });
 
-            const chipZone = leftPane.createDiv({ cls: 'mina-tem-section mina-tem-chip-zone' });
-            this._buildChipsRow(chipZone, 'mina-tem-chips-row', 'mina-tem-tag-chip', 'mina-tem-tag-add-btn', 'mina-tem-project-pill')();
+            const chipZone = leftPane.createDiv({ cls: 'diwa-tem-section diwa-tem-chip-zone' });
+            this._buildChipsRow(chipZone, 'diwa-tem-chips-row', 'diwa-tem-tag-chip', 'diwa-tem-tag-add-btn', 'diwa-tem-project-pill')();
 
             // Toolbar in right pane (landscape)
-            const twWrap  = rightPane.createDiv({ cls: 'mina-tem-toolbar-wrap' });
-            const twInner = twWrap.createDiv({ cls: 'mina-tem-toolbar' });
+            const twWrap  = rightPane.createDiv({ cls: 'diwa-tem-toolbar-wrap' });
+            const twInner = twWrap.createDiv({ cls: 'diwa-tem-toolbar' });
             this._buildToolbarChips(twInner, twWrap,
-                'mina-tem-tool-chip', 'mina-tem-toolbar-dot');
+                'diwa-tem-tool-chip', 'diwa-tem-toolbar-dot');
         } else {
             titleInput = buildTitleTA(body, 148);
 
             // Toolbar (portrait)
-            const tpWrap  = body.createDiv({ cls: 'mina-tem-toolbar-wrap' });
-            const tpInner = tpWrap.createDiv({ cls: 'mina-tem-toolbar' });
+            const tpWrap  = body.createDiv({ cls: 'diwa-tem-toolbar-wrap' });
+            const tpInner = tpWrap.createDiv({ cls: 'diwa-tem-toolbar' });
             this._buildToolbarChips(tpInner, tpWrap,
-                'mina-tem-tool-chip', 'mina-tem-toolbar-dot');
+                'diwa-tem-tool-chip', 'diwa-tem-toolbar-dot');
 
-            const chipSec = body.createDiv({ cls: 'mina-tem-section mina-tem-chip-zone' });
-            this._buildChipsRow(chipSec, 'mina-tem-chips-row', 'mina-tem-tag-chip', 'mina-tem-tag-add-btn', 'mina-tem-project-pill')();
+            const chipSec = body.createDiv({ cls: 'diwa-tem-section diwa-tem-chip-zone' });
+            this._buildChipsRow(chipSec, 'diwa-tem-chips-row', 'diwa-tem-tag-chip', 'diwa-tem-tag-add-btn', 'diwa-tem-project-pill')();
         }
 
         // Footer
-        const footer = contentEl.createDiv({ cls: 'mina-tem-footer' });
-        footer.createEl('button', { text: 'Cancel', cls: 'mina-tem-cancel-btn' })
+        const footer = contentEl.createDiv({ cls: 'diwa-tem-footer' });
+        footer.createEl('button', { text: 'Cancel', cls: 'diwa-tem-cancel-btn' })
             .addEventListener('click', () => this.close());
         saveBtn = footer.createEl('button', {
-            text: 'Save', cls: 'mina-tem-save-btn'
+            text: 'Save', cls: 'diwa-tem-save-btn'
         }) as HTMLButtonElement;
         saveBtn.addEventListener('click', () => this._save());
         refreshSave();
@@ -281,7 +281,7 @@ export class EditTaskModal extends Modal {
             titleInput.style.height = Math.min(titleInput.scrollHeight, 148) + 'px';
         }, 80);
 
-        const dragHandle = header.querySelector('.mina-tem-drag-handle') as HTMLElement;
+        const dragHandle = header.querySelector('.diwa-tem-drag-handle') as HTMLElement;
         this._initTabletSwipeDismiss(modalEl, dragHandle, header);
     }
 
@@ -291,33 +291,33 @@ export class EditTaskModal extends Modal {
 
     private _renderDesktop(): void {
         const { contentEl, modalEl } = this;
-        modalEl.addClass('mina-edit-task-modal');
+        modalEl.addClass('diwa-edit-task-modal');
 
         // Body — single column
-        const body = contentEl.createDiv({ cls: 'mina-etm-body' });
+        const body = contentEl.createDiv({ cls: 'diwa-etm-body' });
 
-        const titleWrap = body.createDiv({ cls: 'mina-etm-title-wrap' });
+        const titleWrap = body.createDiv({ cls: 'diwa-etm-title-wrap' });
         const textarea  = titleWrap.createEl('textarea', {
-            cls:  'mina-etm-textarea',
+            cls:  'diwa-etm-textarea',
             attr: { placeholder: 'What needs to be done?', rows: '1' }
         }) as HTMLTextAreaElement;
         textarea.value = this._title;
 
         // Metadata toolbar — row 1: scheduling | row 2: priority · energy · status
-        const toolbarWrap = body.createDiv({ cls: 'mina-etm-toolbar-wrap' });
-        const toolbar     = toolbarWrap.createDiv({ cls: 'mina-etm-toolbar' });
+        const toolbarWrap = body.createDiv({ cls: 'diwa-etm-toolbar-wrap' });
+        const toolbar     = toolbarWrap.createDiv({ cls: 'diwa-etm-toolbar' });
         this._buildToolbarChips(toolbar, toolbarWrap,
-            'mina-etm-tool-chip', 'mina-etm-toolbar-dot', true);
+            'diwa-etm-tool-chip', 'diwa-etm-toolbar-dot', true);
 
         // Tags + project
-        const chipsRow = body.createDiv({ cls: 'mina-etm-chips-row' });
+        const chipsRow = body.createDiv({ cls: 'diwa-etm-chips-row' });
         this._buildChipsRow(
-            chipsRow, 'mina-etm-chips-inner',
-            'mina-etm-chip', 'mina-etm-chip-add-btn', 'mina-etm-proj-pill'
+            chipsRow, 'diwa-etm-chips-inner',
+            'diwa-etm-chip', 'diwa-etm-chip-add-btn', 'diwa-etm-proj-pill'
         )();
 
         // Footer
-        const footer = contentEl.createDiv({ cls: 'mina-etm-footer' });
+        const footer = contentEl.createDiv({ cls: 'diwa-etm-footer' });
 
         let saveBtn!: HTMLButtonElement;
         const refreshSave = () => {
@@ -334,13 +334,13 @@ export class EditTaskModal extends Modal {
             refreshSave();
         });
 
-        footer.createEl('button', { text: 'Cancel', cls: 'mina-etm-cancel-btn' })
+        footer.createEl('button', { text: 'Cancel', cls: 'diwa-etm-cancel-btn' })
             .addEventListener('click', () => {
                 modalEl.addClass('is-closing');
                 setTimeout(() => this.close(), 140);
             });
         saveBtn = footer.createEl('button', {
-            text: 'Save', cls: 'mina-etm-save-btn'
+            text: 'Save', cls: 'diwa-etm-save-btn'
         }) as HTMLButtonElement;
         saveBtn.addEventListener('click', () => {
             modalEl.addClass('is-closing');
@@ -374,7 +374,7 @@ export class EditTaskModal extends Modal {
 
     private _buildDateStrip(container: HTMLElement, stripCls: string): void {
         const strip   = container.createDiv({ cls: stripCls });
-        const display = container.createDiv({ cls: 'mina-date-display' });
+        const display = container.createDiv({ cls: 'diwa-date-display' });
         display.style.display = 'none';
         const btnEls: HTMLButtonElement[] = [];
 
@@ -382,13 +382,13 @@ export class EditTaskModal extends Modal {
             display.empty();
             if (!dateStr) { display.style.display = 'none'; return; }
             display.style.display = 'flex';
-            display.createSpan({ text: '📅', cls: 'mina-date-display-icon' });
+            display.createSpan({ text: '📅', cls: 'diwa-date-display-icon' });
             const lbl = display.createSpan({
                 text: window.moment(dateStr).format('ddd, MMM D'),
-                cls: 'mina-date-display-label'
+                cls: 'diwa-date-display-label'
             });
             lbl.addEventListener('click', () => showNLPInput());
-            const clr = display.createEl('button', { text: '×', cls: 'mina-date-display-clear' });
+            const clr = display.createEl('button', { text: '×', cls: 'diwa-date-display-clear' });
             clr.addEventListener('click', () => {
                 this._dueDate = null;
                 updateDisplay(null);
@@ -417,7 +417,7 @@ export class EditTaskModal extends Modal {
 
         shortcuts.forEach(s => {
             const btn = strip.createEl('button', {
-                text: s.label, cls: 'mina-date-shortcut-btn'
+                text: s.label, cls: 'diwa-date-shortcut-btn'
             }) as HTMLButtonElement;
             btnEls.push(btn);
             if (this._dueDate) {
@@ -433,20 +433,20 @@ export class EditTaskModal extends Modal {
         });
 
         const pickBtn = strip.createEl('button', {
-            text: 'PICK ▾', cls: 'mina-date-shortcut-btn mina-date-pick-btn'
+            text: 'PICK ▾', cls: 'diwa-date-shortcut-btn diwa-date-pick-btn'
         }) as HTMLButtonElement;
         pickBtn.addEventListener('click', () => showNLPInput());
 
         const showNLPInput = () => {
-            container.querySelector('.mina-date-nlp-wrap')?.remove();
-            const wrap = container.createDiv({ cls: 'mina-date-nlp-wrap' });
+            container.querySelector('.diwa-date-nlp-wrap')?.remove();
+            const wrap = container.createDiv({ cls: 'diwa-date-nlp-wrap' });
             const input = wrap.createEl('input', {
-                type: 'text', cls: 'mina-date-nlp-input',
+                type: 'text', cls: 'diwa-date-nlp-input',
                 attr: { placeholder: 'next tuesday, in 3 weeks…' }
             }) as HTMLInputElement;
             input.style.setProperty('font-size', 'max(16px, 0.875rem)');
             const confirmBtn = wrap.createEl('button', {
-                text: '↵', cls: 'mina-date-nlp-confirm',
+                text: '↵', cls: 'diwa-date-nlp-confirm',
                 attr: { 'aria-label': 'Confirm date' }
             });
             const tryConfirm = () => {
@@ -478,7 +478,7 @@ export class EditTaskModal extends Modal {
         const strip = container.createDiv({ cls: stripCls });
 
         if (!compact) {
-            const iconWrap = strip.createDiv({ cls: 'mina-recur-icon' });
+            const iconWrap = strip.createDiv({ cls: 'diwa-recur-icon' });
             setIcon(iconWrap, 'repeat-2');
         }
 
@@ -502,7 +502,7 @@ export class EditTaskModal extends Modal {
 
         OPTIONS.forEach(({ value, label }) => {
             const btn = strip.createEl('button', {
-                text: label, cls: 'mina-recur-btn',
+                text: label, cls: 'diwa-recur-btn',
                 attr: { 'aria-pressed': 'false', 'data-recurrence': value ?? 'none' }
             }) as HTMLButtonElement;
             btnEls.push(btn);
@@ -545,8 +545,8 @@ export class EditTaskModal extends Modal {
         if (compact) {
             // Desktop / tablet landscape: icon + row layout
             const makeRow = (iconName: string, rowAttr: string): HTMLElement => {
-                const row = strip.createDiv({ cls: 'mina-meta-row', attr: { 'data-row': rowAttr } });
-                const ico = row.createDiv({ cls: 'mina-meta-icon' });
+                const row = strip.createDiv({ cls: 'diwa-meta-row', attr: { 'data-row': rowAttr } });
+                const ico = row.createDiv({ cls: 'diwa-meta-icon' });
                 setIcon(ico, iconName);
                 return row;
             };
@@ -554,7 +554,7 @@ export class EditTaskModal extends Modal {
             const priRow = makeRow('flag', 'priority');
             priValues.forEach(val => {
                 const btn = priRow.createEl('button', {
-                    text: priLabels[val], cls: 'mina-meta-btn mina-meta-btn--pri',
+                    text: priLabels[val], cls: 'diwa-meta-btn diwa-meta-btn--pri',
                     attr: { 'data-priority': val, 'aria-pressed': 'false' }
                 }) as HTMLButtonElement;
                 priBtns.push(btn);
@@ -573,7 +573,7 @@ export class EditTaskModal extends Modal {
             const energyRow = makeRow('zap', 'energy');
             energyValues.forEach(val => {
                 const btn = energyRow.createEl('button', {
-                    text: energyLabels[val], cls: 'mina-meta-btn mina-meta-btn--energy',
+                    text: energyLabels[val], cls: 'diwa-meta-btn diwa-meta-btn--energy',
                     attr: { 'data-energy': val, 'aria-pressed': 'false' }
                 }) as HTMLButtonElement;
                 energyBtns.push(btn);
@@ -595,7 +595,7 @@ export class EditTaskModal extends Modal {
                 : [{ value: 'waiting' as const, label: 'WAITING' }, { value: 'someday' as const, label: 'SOMEDAY' }];
             statusOptions.forEach(({ value, label }) => {
                 const btn = statusRow.createEl('button', {
-                    text: label, cls: 'mina-meta-btn mina-meta-btn--status',
+                    text: label, cls: 'diwa-meta-btn diwa-meta-btn--status',
                     attr: { 'data-status': value, 'aria-pressed': 'false' }
                 }) as HTMLButtonElement;
                 statusBtns.push(btn);
@@ -612,10 +612,10 @@ export class EditTaskModal extends Modal {
             });
         } else {
             // Mobile / tablet portrait: flat horizontal scroll with inline labels
-            strip.createEl('span', { text: 'PRI', cls: 'mina-meta-label' });
+            strip.createEl('span', { text: 'PRI', cls: 'diwa-meta-label' });
             priValues.forEach(val => {
                 const btn = strip.createEl('button', {
-                    text: priLabels[val], cls: 'mina-meta-btn mina-meta-btn--pri',
+                    text: priLabels[val], cls: 'diwa-meta-btn diwa-meta-btn--pri',
                     attr: { 'data-priority': val, 'aria-pressed': 'false' }
                 }) as HTMLButtonElement;
                 priBtns.push(btn);
@@ -625,11 +625,11 @@ export class EditTaskModal extends Modal {
                     if ('vibrate' in navigator) navigator.vibrate(8);
                 });
             });
-            strip.createEl('span', { cls: 'mina-meta-divider' });
-            strip.createEl('span', { text: 'NRG', cls: 'mina-meta-label' });
+            strip.createEl('span', { cls: 'diwa-meta-divider' });
+            strip.createEl('span', { text: 'NRG', cls: 'diwa-meta-label' });
             energyValues.forEach(val => {
                 const btn = strip.createEl('button', {
-                    text: energyLabels[val], cls: 'mina-meta-btn mina-meta-btn--energy',
+                    text: energyLabels[val], cls: 'diwa-meta-btn diwa-meta-btn--energy',
                     attr: { 'data-energy': val, 'aria-pressed': 'false' }
                 }) as HTMLButtonElement;
                 energyBtns.push(btn);
@@ -639,11 +639,11 @@ export class EditTaskModal extends Modal {
                     if ('vibrate' in navigator) navigator.vibrate(8);
                 });
             });
-            strip.createEl('span', { cls: 'mina-meta-divider' });
-            strip.createEl('span', { text: 'STATUS', cls: 'mina-meta-label' });
+            strip.createEl('span', { cls: 'diwa-meta-divider' });
+            strip.createEl('span', { text: 'STATUS', cls: 'diwa-meta-label' });
             ([{ value: 'waiting' as const, label: '⏳ WAIT' }, { value: 'someday' as const, label: '☁ SMDY' }]).forEach(({ value, label }) => {
                 const btn = strip.createEl('button', {
-                    text: label, cls: 'mina-meta-btn mina-meta-btn--status',
+                    text: label, cls: 'diwa-meta-btn diwa-meta-btn--status',
                     attr: { 'data-status': value, 'aria-pressed': 'false' }
                 }) as HTMLButtonElement;
                 statusBtns.push(btn);
@@ -683,7 +683,7 @@ export class EditTaskModal extends Modal {
             chip.toggleClass('is-active', !!this._dueDate);
             if (this._dueDate) {
                 const clr = chip.createSpan({
-                    text: ' ×', cls: 'mina-etm-chip-clear',
+                    text: ' ×', cls: 'diwa-etm-chip-clear',
                     attr: { role: 'button', 'aria-label': 'Clear date', tabindex: '0' }
                 });
                 clr.addEventListener('click', (e: MouseEvent) => {
@@ -697,17 +697,17 @@ export class EditTaskModal extends Modal {
         updateLabel();
 
         chip.addEventListener('click', (e: MouseEvent) => {
-            if ((e.target as HTMLElement).classList.contains('mina-etm-chip-clear')) return;
+            if ((e.target as HTMLElement).classList.contains('diwa-etm-chip-clear')) return;
             const existing = popoverAnchor.querySelector('[data-etm-popover="date"]');
             if (existing) { existing.remove(); return; }
-            popoverAnchor.querySelector('.mina-etm-popover')?.remove();
+            popoverAnchor.querySelector('.diwa-etm-popover')?.remove();
 
             const popover = popoverAnchor.createDiv({
-                cls:  'mina-etm-popover',
+                cls:  'diwa-etm-popover',
                 attr: { 'data-etm-popover': 'date' }
             });
 
-            const shortcutsRow = popover.createDiv({ cls: 'mina-etm-popover-shortcuts' });
+            const shortcutsRow = popover.createDiv({ cls: 'diwa-etm-popover-shortcuts' });
             const today     = window.moment();
             const dow       = today.day();
             const daysToFri = dow <= 4 ? (5 - dow) : (12 - dow);
@@ -726,7 +726,7 @@ export class EditTaskModal extends Modal {
             shortcuts.forEach(s => {
                 const d   = window.moment().add(s.days, 'days').format('YYYY-MM-DD');
                 const btn = shortcutsRow.createEl('button', {
-                    text: s.label, cls: 'mina-date-shortcut-btn', attr: { type: 'button' }
+                    text: s.label, cls: 'diwa-date-shortcut-btn', attr: { type: 'button' }
                 }) as HTMLButtonElement;
                 scBtns.push(btn);
                 if (d === this._dueDate) btn.addClass('is-selected');
@@ -739,14 +739,14 @@ export class EditTaskModal extends Modal {
                 });
             });
 
-            const nlpWrap    = popover.createDiv({ cls: 'mina-date-nlp-wrap' });
+            const nlpWrap    = popover.createDiv({ cls: 'diwa-date-nlp-wrap' });
             const nlpInput   = nlpWrap.createEl('input', {
-                type: 'text', cls: 'mina-date-nlp-input',
+                type: 'text', cls: 'diwa-date-nlp-input',
                 attr: { placeholder: 'next tuesday, in 3 weeks…' }
             }) as HTMLInputElement;
             nlpInput.style.setProperty('font-size', 'max(16px, 0.82rem)');
             const confirmBtn = nlpWrap.createEl('button', {
-                text: '↵', cls: 'mina-date-nlp-confirm',
+                text: '↵', cls: 'diwa-date-nlp-confirm',
                 attr: { 'aria-label': 'Confirm date', type: 'button' }
             });
             const tryConfirm = () => {
@@ -811,18 +811,18 @@ export class EditTaskModal extends Modal {
         chip.addEventListener('click', () => {
             const existing = popoverAnchor.querySelector('[data-etm-popover="recur"]');
             if (existing) { existing.remove(); return; }
-            popoverAnchor.querySelector('.mina-etm-popover')?.remove();
+            popoverAnchor.querySelector('.diwa-etm-popover')?.remove();
 
             const popover = popoverAnchor.createDiv({
-                cls:  'mina-etm-popover',
+                cls:  'diwa-etm-popover',
                 attr: { 'data-etm-popover': 'recur' }
             });
-            const optsRow = popover.createDiv({ cls: 'mina-etm-recur-opts' });
+            const optsRow = popover.createDiv({ cls: 'diwa-etm-recur-opts' });
 
             const recurBtns: HTMLButtonElement[] = [];
             OPTIONS.forEach(({ value, label }) => {
                 const btn = optsRow.createEl('button', {
-                    text: label, cls: 'mina-recur-btn',
+                    text: label, cls: 'diwa-recur-btn',
                     attr: {
                         type: 'button',
                         'aria-pressed': String(this._recurrence === value),
@@ -871,7 +871,7 @@ export class EditTaskModal extends Modal {
 
         if (twoRow) {
             // Force properties row to start on a new line
-            toolbar.createDiv({ cls: 'mina-etm-toolbar-row-break' });
+            toolbar.createDiv({ cls: 'diwa-etm-toolbar-row-break' });
         } else {
             toolbar.createSpan({ cls: dotCls, text: '·' });
         }
@@ -972,14 +972,14 @@ export class EditTaskModal extends Modal {
             row.empty();
 
             if (this._contexts.length === 0) {
-                row.createEl('span', { text: '# to tag', cls: 'mina-chip-hint' });
+                row.createEl('span', { text: '# to tag', cls: 'diwa-chip-hint' });
             }
 
             this._contexts.forEach(ctx => {
                 const chip = row.createEl('span', { cls: chipCls });
                 chip.createEl('span', { text: `#${ctx}` });
                 const xBtn = chip.createEl('button', {
-                    text: '×', cls: 'mina-chip-x',
+                    text: '×', cls: 'diwa-chip-x',
                     attr: { 'aria-label': `Remove ${ctx}` }
                 });
                 xBtn.addEventListener('click', (e: MouseEvent) => {
@@ -1012,14 +1012,14 @@ export class EditTaskModal extends Modal {
 
             if (this._project) {
                 const pill = row.createEl('span', {
-                    cls: `${projectPillCls} mina-project-pill--active`,
+                    cls: `${projectPillCls} diwa-project-pill--active`,
                     attr: { role: 'button', tabindex: '0' }
                 });
                 if (this._project.color) pill.style.setProperty('--project-color', this._project.color);
-                pill.createEl('span', { cls: 'mina-project-pill-dot' });
-                pill.createEl('span', { text: this._project.name, cls: 'mina-project-pill-name' });
+                pill.createEl('span', { cls: 'diwa-project-pill-dot' });
+                pill.createEl('span', { text: this._project.name, cls: 'diwa-project-pill-name' });
                 const xBtn = pill.createEl('button', {
-                    text: '×', cls: 'mina-project-pill-x',
+                    text: '×', cls: 'diwa-project-pill-x',
                     attr: { 'aria-label': 'Remove project' }
                 });
                 xBtn.addEventListener('click', (e: MouseEvent) => {
@@ -1028,15 +1028,15 @@ export class EditTaskModal extends Modal {
                     renderChips();
                 });
                 pill.addEventListener('click', (e: MouseEvent) => {
-                    if ((e.target as HTMLElement).classList.contains('mina-project-pill-x')) return;
+                    if ((e.target as HTMLElement).classList.contains('diwa-project-pill-x')) return;
                     openProjectPicker();
                 });
             } else if (allProjects.length > 0) {
                 const emptyPill = row.createEl('button', {
-                    cls: `${projectPillCls} mina-project-pill--empty`,
+                    cls: `${projectPillCls} diwa-project-pill--empty`,
                     attr: { 'aria-label': 'Assign project' }
                 });
-                emptyPill.createEl('span', { text: '◈', cls: 'mina-project-pill-icon' });
+                emptyPill.createEl('span', { text: '◈', cls: 'diwa-project-pill-icon' });
                 emptyPill.createEl('span', { text: 'Project' });
                 emptyPill.addEventListener('click', openProjectPicker);
             }
@@ -1053,9 +1053,9 @@ export class EditTaskModal extends Modal {
     // This stub cleans up any stale CSS variables set by previous plugin builds.
 
     private _initKeyboardAvoidance(_modalEl: HTMLElement): void {
-        document.documentElement.style.removeProperty('--mina-kb-h');
+        document.documentElement.style.removeProperty('--diwa-kb-h');
         this._viewportCleanup = () => {
-            document.documentElement.style.removeProperty('--mina-kb-h');
+            document.documentElement.style.removeProperty('--diwa-kb-h');
         };
     }
 
@@ -1155,3 +1155,4 @@ export class EditTaskModal extends Modal {
         }, { passive: true });
     }
 }
+

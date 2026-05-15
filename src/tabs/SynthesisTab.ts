@@ -18,9 +18,9 @@ class AddContextModal extends Modal {
     onOpen(): void {
         const { contentEl } = this;
         contentEl.empty();
-        contentEl.addClass('mina-modal-standard');
+        contentEl.addClass('diwa-modal-standard');
 
-        const hdr = contentEl.createEl('div', { cls: 'mina-modal-header' });
+        const hdr = contentEl.createEl('div', { cls: 'diwa-modal-header' });
         hdr.createEl('h2', {
             text: 'New Context',
             attr: { style: 'margin:0; font-size:1.1em; font-weight:700;' },
@@ -47,14 +47,14 @@ class AddContextModal extends Modal {
             },
         });
 
-        const footer = contentEl.createEl('div', { cls: 'mina-modal-footer' });
+        const footer = contentEl.createEl('div', { cls: 'diwa-modal-footer' });
         const cancelBtn = footer.createEl('button', {
             text: 'Cancel',
-            cls: 'mina-btn-secondary',
+            cls: 'diwa-btn-secondary',
         });
         const confirmBtn = footer.createEl('button', {
             text: 'Add',
-            cls: 'mina-btn-primary',
+            cls: 'diwa-btn-primary',
         });
 
         const doConfirm = () => {
@@ -90,9 +90,9 @@ class MergeModal extends Modal {
     onOpen(): void {
         const { contentEl } = this;
         contentEl.empty();
-        contentEl.addClass('mina-modal-standard');
+        contentEl.addClass('diwa-modal-standard');
 
-        const hdr = contentEl.createEl('div', { cls: 'mina-modal-header' });
+        const hdr = contentEl.createEl('div', { cls: 'diwa-modal-header' });
         hdr.createEl('h2', {
             text: `Merge ${this.thoughts.length} Notes`,
             attr: { style: 'margin:0; font-size:1.1em; font-weight:700;' },
@@ -103,12 +103,12 @@ class MergeModal extends Modal {
         });
 
         // Source previews
-        const preview = body.createEl('div', { cls: 'mina-merge-preview' });
+        const preview = body.createEl('div', { cls: 'diwa-merge-preview' });
         this.thoughts.forEach((t, i) => {
-            if (i > 0) preview.createEl('hr', { cls: 'mina-merge-preview-divider' });
+            if (i > 0) preview.createEl('hr', { cls: 'diwa-merge-preview-divider' });
             preview.createEl('p', {
                 text: (t.body || '').substring(0, 140) + ((t.body || '').length > 140 ? '…' : ''),
-                cls: 'mina-merge-preview-item',
+                cls: 'diwa-merge-preview-item',
             });
         });
 
@@ -122,7 +122,7 @@ class MergeModal extends Modal {
             attr: { style: 'font-size:0.78rem; font-weight:600; color:var(--text-muted);' },
         });
         const textarea = body.createEl('textarea', {
-            cls: 'mina-merge-textarea',
+            cls: 'diwa-merge-textarea',
         }) as HTMLTextAreaElement;
         textarea.value = mergedBodies;
 
@@ -131,20 +131,20 @@ class MergeModal extends Modal {
             text: 'Contexts for merged note',
             attr: { style: 'font-size:0.78rem; font-weight:600; color:var(--text-muted);' },
         });
-        const ctxRow = body.createEl('div', { cls: 'mina-merge-ctx-row' });
+        const ctxRow = body.createEl('div', { cls: 'diwa-merge-ctx-row' });
 
         const renderMergeCtxChips = () => {
             ctxRow.empty();
             for (const ctx of editableContexts) {
-                const chip = ctxRow.createEl('span', { cls: 'mina-chip mina-chip--ctx mina-chip--removable' });
+                const chip = ctxRow.createEl('span', { cls: 'diwa-chip diwa-chip--ctx diwa-chip--removable' });
                 chip.createSpan({ text: `#${ctx}` });
-                const x = chip.createEl('button', { cls: 'mina-chip-remove', text: '×' });
+                const x = chip.createEl('button', { cls: 'diwa-chip-remove', text: '×' });
                 x.addEventListener('click', () => {
                     editableContexts = editableContexts.filter(c => c !== ctx);
                     renderMergeCtxChips();
                 });
             }
-            const addBtn = ctxRow.createEl('button', { cls: 'mina-chip mina-chip--add', text: '+ Add' });
+            const addBtn = ctxRow.createEl('button', { cls: 'diwa-chip diwa-chip--add', text: '+ Add' });
             addBtn.addEventListener('click', () => {
                 const inp = document.createElement('input');
                 inp.placeholder = 'context name';
@@ -164,15 +164,15 @@ class MergeModal extends Modal {
         };
         renderMergeCtxChips();
 
-        const footer = contentEl.createEl('div', { cls: 'mina-modal-footer' });
+        const footer = contentEl.createEl('div', { cls: 'diwa-modal-footer' });
         footer.createEl('span', {
             text: '⌘↵ to merge',
             attr: { style: 'font-size:0.72rem; color:var(--text-faint); flex:1;' },
         });
-        const cancelBtn = footer.createEl('button', { text: 'Cancel', cls: 'mina-btn-secondary' });
+        const cancelBtn = footer.createEl('button', { text: 'Cancel', cls: 'diwa-btn-secondary' });
         const mergeBtn = footer.createEl('button', {
             text: `Merge ${this.thoughts.length} Notes`,
-            cls: 'mina-btn-primary',
+            cls: 'diwa-btn-primary',
         });
 
         const doMerge = () => {
@@ -243,14 +243,14 @@ export class SynthesisTab extends BaseTab {
 
         const shell = container.createEl('div', {
             cls: [
-                'mina-syn-shell',
+                'diwa-syn-shell',
                 isPhone ? 'is-phone' : '',
                 isTabletDevice ? 'is-tablet' : '',
             ].filter(Boolean).join(' '),
         });
 
         // ── Single-pane feed (full width on all devices) ──────────────────────
-        const feed = shell.createEl('div', { cls: 'mina-syn-feed mina-syn-feed--full' });
+        const feed = shell.createEl('div', { cls: 'diwa-syn-feed diwa-syn-feed--full' });
         this.renderFeedPane(feed, shell, isPhone);
 
         // Context sheet (phone manage flow via strip's + button)
@@ -267,22 +267,22 @@ export class SynthesisTab extends BaseTab {
 
     private renderContextPanel(panel: HTMLElement, shell: HTMLElement): void {
         // ── Header ────────────────────────────────────────────────────────────
-        const hdr = panel.createEl('div', { cls: 'mina-syn-ctx-hdr' });
+        const hdr = panel.createEl('div', { cls: 'diwa-syn-ctx-hdr' });
 
         const iconEl = hdr.createEl('span', {
             attr: { style: 'font-size:0.85em; opacity:0.55; flex-shrink:0; line-height:1;' },
         });
         iconEl.textContent = '◎';
 
-        hdr.createEl('span', { text: 'CONTEXTS', cls: 'mina-syn-ctx-hdr-label' });
+        hdr.createEl('span', { text: 'CONTEXTS', cls: 'diwa-syn-ctx-hdr-label' });
 
         hdr.createEl('span', {
             text: String((this.settings.contexts || []).length),
-            cls: 'mina-syn-ctx-hdr-count',
+            cls: 'diwa-syn-ctx-hdr-count',
         });
 
         const hdrAddBtn = hdr.createEl('button', {
-            cls: 'mina-syn-ctx-hdr-add',
+            cls: 'diwa-syn-ctx-hdr-add',
             attr: { title: 'Add context' },
         });
         setIcon(hdrAddBtn, 'plus');
@@ -290,26 +290,26 @@ export class SynthesisTab extends BaseTab {
 
         // ── Primer strip ──────────────────────────────────────────────────────
         const primer = panel.createEl('div', {
-            cls: `mina-syn-ctx-primer${this.primedContexts.length > 0 ? ' is-primed' : ''}`,
+            cls: `diwa-syn-ctx-primer${this.primedContexts.length > 0 ? ' is-primed' : ''}`,
         });
         this.buildPrimer(primer, shell);
 
         // ── Search input ──────────────────────────────────────────────────────
-        const searchWrap = panel.createEl('div', { cls: 'mina-syn-ctx-search' });
+        const searchWrap = panel.createEl('div', { cls: 'diwa-syn-ctx-search' });
         const searchInput = searchWrap.createEl('input', {
             type: 'text',
-            cls: 'mina-syn-ctx-search-input',
+            cls: 'diwa-syn-ctx-search-input',
             attr: { placeholder: 'Search…', spellcheck: 'false' },
         });
 
         // ── Context list ──────────────────────────────────────────────────────
-        const list = panel.createEl('div', { cls: 'mina-syn-ctx-list' });
+        const list = panel.createEl('div', { cls: 'diwa-syn-ctx-list' });
         this.buildContextList(list, shell);
 
         // Live filter
         searchInput.addEventListener('input', () => {
             const q = searchInput.value.toLowerCase().trim();
-            list.querySelectorAll<HTMLElement>('.mina-syn-ctx-row').forEach((row) => {
+            list.querySelectorAll<HTMLElement>('.diwa-syn-ctx-row').forEach((row) => {
                 const name = (row.dataset.ctx || '').toLowerCase();
                 row.style.display = !q || name.includes(q) ? '' : 'none';
             });
@@ -323,18 +323,18 @@ export class SynthesisTab extends BaseTab {
     private buildPrimer(primer: HTMLElement, shell: HTMLElement): void {
         primer.empty();
         const hasAny = this.primedContexts.length > 0;
-        primer.className = `mina-syn-ctx-primer${hasAny ? ' is-primed' : ''}`;
+        primer.className = `diwa-syn-ctx-primer${hasAny ? ' is-primed' : ''}`;
 
-        primer.createEl('span', { text: 'PRIME:', cls: 'mina-syn-ctx-primer-label' });
+        primer.createEl('span', { text: 'PRIME:', cls: 'diwa-syn-ctx-primer-label' });
 
         if (hasAny) {
-            const pillsWrap = primer.createEl('div', { cls: 'mina-syn-ctx-primer-pills' });
+            const pillsWrap = primer.createEl('div', { cls: 'diwa-syn-ctx-primer-pills' });
             for (const ctx of this.primedContexts) {
-                const pill = pillsWrap.createEl('div', { cls: 'mina-syn-ctx-primer-pill' });
-                pill.createEl('div', { cls: 'mina-syn-ctx-primer-pill-dot' });
+                const pill = pillsWrap.createEl('div', { cls: 'diwa-syn-ctx-primer-pill' });
+                pill.createEl('div', { cls: 'diwa-syn-ctx-primer-pill-dot' });
                 pill.createEl('span', { text: ctx });
                 const dismiss = pill.createEl('button', {
-                    cls: 'mina-syn-ctx-primer-pill-dismiss',
+                    cls: 'diwa-syn-ctx-primer-pill-dismiss',
                     attr: { title: `Deselect ${ctx}`, 'aria-label': `Deselect ${ctx}` },
                 });
                 dismiss.textContent = '×';
@@ -347,7 +347,7 @@ export class SynthesisTab extends BaseTab {
         } else {
             primer.createEl('span', {
                 text: 'None selected',
-                cls: 'mina-syn-ctx-primer-placeholder',
+                cls: 'diwa-syn-ctx-primer-placeholder',
             });
         }
     }
@@ -361,12 +361,12 @@ export class SynthesisTab extends BaseTab {
         const hidden = new Set<string>(this.settings.hiddenContexts || []);
 
         if (contexts.length === 0) {
-            const empty = list.createEl('div', { cls: 'mina-syn-ctx-empty' });
-            empty.createEl('div', { text: '◎', cls: 'mina-syn-ctx-empty-icon' });
-            empty.createEl('div', { text: 'No Contexts Yet', cls: 'mina-syn-ctx-empty-title' });
+            const empty = list.createEl('div', { cls: 'diwa-syn-ctx-empty' });
+            empty.createEl('div', { text: '◎', cls: 'diwa-syn-ctx-empty-icon' });
+            empty.createEl('div', { text: 'No Contexts Yet', cls: 'diwa-syn-ctx-empty-title' });
             empty.createEl('div', {
                 text: 'Add a context to start organising your thoughts.',
-                cls: 'mina-syn-ctx-empty-sub',
+                cls: 'diwa-syn-ctx-empty-sub',
             });
         } else {
             const counts = this.getContextCounts();
@@ -381,7 +381,7 @@ export class SynthesisTab extends BaseTab {
 
             // Show-hidden toggle footer (only if there are hidden contexts)
             if (hiddenItems.length > 0) {
-                const toggleBtn = list.createEl('button', { cls: 'mina-syn-ctx-hidden-toggle' });
+                const toggleBtn = list.createEl('button', { cls: 'diwa-syn-ctx-hidden-toggle' });
                 setIcon(toggleBtn, this.showHidden ? 'eye-off' : 'eye');
                 toggleBtn.createEl('span', {
                     text: this.showHidden
@@ -403,9 +403,9 @@ export class SynthesisTab extends BaseTab {
         }
 
         // ── Sticky add-context button at list bottom ───────────────────────
-        const addBtn = list.createEl('button', { cls: 'mina-syn-ctx-add-btn' });
+        const addBtn = list.createEl('button', { cls: 'diwa-syn-ctx-add-btn' });
         setIcon(addBtn, 'plus-circle');
-        addBtn.createEl('span', { text: 'Add context', cls: 'mina-syn-ctx-add-label' });
+        addBtn.createEl('span', { text: 'Add context', cls: 'diwa-syn-ctx-add-label' });
         addBtn.addEventListener('click', () => this.openAddContextModal(shell));
     }
 
@@ -418,18 +418,18 @@ export class SynthesisTab extends BaseTab {
     ): void {
         const row = list.createEl('div', {
             cls: [
-                'mina-syn-ctx-row',
+                'diwa-syn-ctx-row',
                 isHidden ? 'is-ctx-hidden' : '',
             ].filter(Boolean).join(' '),
             attr: { 'data-ctx': ctx, tabindex: '0' },
         });
-        row.createEl('div', { cls: 'mina-syn-ctx-row-dot' });
-        row.createEl('span', { text: ctx, cls: 'mina-syn-ctx-row-name' });
-        row.createEl('span', { text: String(count), cls: 'mina-syn-ctx-row-count' });
+        row.createEl('div', { cls: 'diwa-syn-ctx-row-dot' });
+        row.createEl('span', { text: ctx, cls: 'diwa-syn-ctx-row-name' });
+        row.createEl('span', { text: String(count), cls: 'diwa-syn-ctx-row-count' });
 
         // Eye/eye-off toggle (hover-revealed)
         const eyeBtn = row.createEl('button', {
-            cls: 'mina-syn-ctx-row-eye',
+            cls: 'diwa-syn-ctx-row-eye',
             attr: {
                 title: isHidden ? `Unhide "${ctx}"` : `Hide "${ctx}"`,
                 'aria-label': isHidden ? `Unhide ${ctx}` : `Hide ${ctx}`,
@@ -443,7 +443,7 @@ export class SynthesisTab extends BaseTab {
 
         // Delete button (hover-revealed)
         const delBtn = row.createEl('button', {
-            cls: 'mina-syn-ctx-row-del',
+            cls: 'diwa-syn-ctx-row-del',
             attr: { title: `Remove context "${ctx}"`, 'aria-label': `Remove ${ctx}` },
         });
         setIcon(delBtn, 'trash-2');
@@ -498,22 +498,22 @@ export class SynthesisTab extends BaseTab {
 
     private renderContextStrip(parent: HTMLElement, shell: HTMLElement): void {
         const collapsed = this.view.synthesisCtxStripCollapsed;
-        const strip = parent.createDiv({ cls: `mina-syn-ctx-strip${collapsed ? ' is-collapsed' : ''}` });
+        const strip = parent.createDiv({ cls: `diwa-syn-ctx-strip${collapsed ? ' is-collapsed' : ''}` });
 
         // Header row: label + count + add button + collapse button
-        const stripHdr = strip.createDiv({ cls: 'mina-syn-ctx-strip-hdr' });
-        stripHdr.createEl('span', { text: 'CONTEXTS', cls: 'mina-syn-ctx-strip-label' });
+        const stripHdr = strip.createDiv({ cls: 'diwa-syn-ctx-strip-hdr' });
+        stripHdr.createEl('span', { text: 'CONTEXTS', cls: 'diwa-syn-ctx-strip-label' });
         stripHdr.createEl('span', {
             text: String((this.settings.contexts || []).length),
-            cls: 'mina-syn-ctx-strip-count',
+            cls: 'diwa-syn-ctx-strip-count',
         });
 
-        const addCtxBtn = stripHdr.createEl('button', { cls: 'mina-syn-ctx-strip-add', attr: { title: 'Add context' } });
+        const addCtxBtn = stripHdr.createEl('button', { cls: 'diwa-syn-ctx-strip-add', attr: { title: 'Add context' } });
         setIcon(addCtxBtn, 'plus');
         addCtxBtn.addEventListener('click', () => this.openAddContextModal(shell));
 
         const collapseBtn = stripHdr.createEl('button', {
-            cls: 'mina-syn-ctx-strip-collapse',
+            cls: 'diwa-syn-ctx-strip-collapse',
             attr: { title: collapsed ? 'Show contexts' : 'Hide contexts' },
         });
         setIcon(collapseBtn, collapsed ? 'chevron-down' : 'chevron-up');
@@ -523,7 +523,7 @@ export class SynthesisTab extends BaseTab {
         });
 
         if (!collapsed) {
-            const chipRow = strip.createDiv({ cls: 'mina-syn-ctx-strip-chips' });
+            const chipRow = strip.createDiv({ cls: 'diwa-syn-ctx-strip-chips' });
             const contexts = [...(this.settings.contexts || [])].sort((a, b) => a.localeCompare(b));
             const hidden = new Set<string>(this.settings.hiddenContexts || []);
             const counts = this.getContextCounts();
@@ -532,12 +532,12 @@ export class SynthesisTab extends BaseTab {
                 if (hidden.has(ctx)) continue;
                 const isActive = this.activeCtxFilter === ctx;
                 const chip = chipRow.createEl('button', {
-                    cls: `mina-syn-ctx-chip${isActive ? ' is-active-filter' : ''}`,
+                    cls: `diwa-syn-ctx-chip${isActive ? ' is-active-filter' : ''}`,
                     attr: { 'data-ctx': ctx, title: `${counts[ctx] || 0} notes — click to filter` },
                 });
-                chip.createSpan({ cls: 'mina-syn-ctx-chip-dot' });
-                chip.createSpan({ text: ctx, cls: 'mina-syn-ctx-chip-name' });
-                chip.createSpan({ text: String(counts[ctx] || 0), cls: 'mina-syn-ctx-chip-count' });
+                chip.createSpan({ cls: 'diwa-syn-ctx-chip-dot' });
+                chip.createSpan({ text: ctx, cls: 'diwa-syn-ctx-chip-name' });
+                chip.createSpan({ text: String(counts[ctx] || 0), cls: 'diwa-syn-ctx-chip-count' });
                 chip.addEventListener('click', () => {
                     this.activeCtxFilter = isActive ? null : ctx;
                     this.view.renderView();
@@ -548,7 +548,7 @@ export class SynthesisTab extends BaseTab {
             if (visibleCount === 0) {
                 chipRow.createEl('span', {
                     text: 'No contexts yet — click + to add one',
-                    cls: 'mina-syn-ctx-strip-empty',
+                    cls: 'diwa-syn-ctx-strip-empty',
                 });
             }
         }
@@ -573,23 +573,23 @@ export class SynthesisTab extends BaseTab {
 
     private openInlineTagger(thought: ThoughtEntry, card: HTMLElement): void {
         // Guard: if tagger already open on this card, just re-focus
-        const existingTagger = card.querySelector<HTMLElement>('.mina-ctx-tagger.is-open');
+        const existingTagger = card.querySelector<HTMLElement>('.diwa-ctx-tagger.is-open');
         if (existingTagger) {
-            existingTagger.querySelector<HTMLInputElement>('.mina-ctx-tagger-input')?.focus();
+            existingTagger.querySelector<HTMLInputElement>('.diwa-ctx-tagger-input')?.focus();
             return;
         }
 
         // Close any OTHER open taggers (commit them first)
-        document.querySelectorAll<HTMLElement>('.mina-ctx-tagger.is-open').forEach(t => {
+        document.querySelectorAll<HTMLElement>('.diwa-ctx-tagger.is-open').forEach(t => {
             (t as any)._commit?.();
         });
 
-        const cardHdr = card.querySelector<HTMLElement>('.mina-syn-card-hdr');
+        const cardHdr = card.querySelector<HTMLElement>('.diwa-syn-card-hdr');
         if (!cardHdr) return;
 
         // Remove existing chips/prompt area
-        cardHdr.querySelector('.mina-syn-card-ctx-chips')?.remove();
-        cardHdr.querySelector('.mina-syn-card-assign-prompt')?.remove();
+        cardHdr.querySelector('.diwa-syn-card-ctx-chips')?.remove();
+        cardHdr.querySelector('.diwa-syn-card-assign-prompt')?.remove();
 
         // Local state
         const original = [...(thought.context || [])];
@@ -600,15 +600,15 @@ export class SynthesisTab extends BaseTab {
 
         // Build DOM
         const tagger = cardHdr.createEl('div', {
-            cls: 'mina-ctx-tagger is-open',
+            cls: 'diwa-ctx-tagger is-open',
             attr: { 'data-thought-path': thought.filePath },
         });
 
-        const field = tagger.createEl('div', { cls: 'mina-ctx-tagger-field' });
-        const chipsRow = field.createEl('div', { cls: 'mina-ctx-tagger-chips' });
-        const inputWrap = chipsRow.createEl('span', { cls: 'mina-ctx-tagger-input-wrap' });
+        const field = tagger.createEl('div', { cls: 'diwa-ctx-tagger-field' });
+        const chipsRow = field.createEl('div', { cls: 'diwa-ctx-tagger-chips' });
+        const inputWrap = chipsRow.createEl('span', { cls: 'diwa-ctx-tagger-input-wrap' });
         const input = inputWrap.createEl('input', {
-            cls: 'mina-ctx-tagger-input',
+            cls: 'diwa-ctx-tagger-input',
             attr: {
                 type: 'text', spellcheck: 'false',
                 autocomplete: 'off', autocorrect: 'off', autocapitalize: 'none',
@@ -616,21 +616,21 @@ export class SynthesisTab extends BaseTab {
             },
         }) as HTMLInputElement;
 
-        const dropdown = tagger.createEl('div', { cls: 'mina-ctx-tagger-dropdown' });
+        const dropdown = tagger.createEl('div', { cls: 'diwa-ctx-tagger-dropdown' });
 
         // Chip renderer
         const renderChips = () => {
-            chipsRow.querySelectorAll('.mina-chip--tagger').forEach(c => c.remove());
+            chipsRow.querySelectorAll('.diwa-chip--tagger').forEach(c => c.remove());
             for (const ctx of staged) {
                 const chip = document.createElement('span');
-                chip.className = 'mina-chip mina-chip--ctx mina-chip--tagger';
+                chip.className = 'diwa-chip diwa-chip--ctx diwa-chip--tagger';
                 chip.dataset.ctx = ctx;
                 const label = document.createElement('span');
-                label.className = 'mina-chip-label';
+                label.className = 'diwa-chip-label';
                 label.textContent = `#${ctx}`;
                 chip.appendChild(label);
                 const rmBtn = document.createElement('button');
-                rmBtn.className = 'mina-chip-remove';
+                rmBtn.className = 'diwa-chip-remove';
                 rmBtn.setAttribute('aria-label', `Remove ${ctx}`);
                 rmBtn.setAttribute('tabindex', '-1');
                 rmBtn.textContent = '×';
@@ -673,11 +673,11 @@ export class SynthesisTab extends BaseTab {
 
             for (const ctx of matches) {
                 const item = dropdown.createEl('div', {
-                    cls: 'mina-ctx-tagger-item',
+                    cls: 'diwa-ctx-tagger-item',
                     attr: { 'data-ctx': ctx, role: 'option' },
                 });
-                item.createEl('span', { cls: 'mina-ctx-tagger-item-dot' });
-                item.createEl('span', { text: `#${ctx}`, cls: 'mina-ctx-tagger-item-label' });
+                item.createEl('span', { cls: 'diwa-ctx-tagger-item-dot' });
+                item.createEl('span', { text: `#${ctx}`, cls: 'diwa-ctx-tagger-item-label' });
                 item.addEventListener('mousedown', (e) => {
                     e.preventDefault();
                     selectCtx(ctx);
@@ -686,11 +686,11 @@ export class SynthesisTab extends BaseTab {
 
             if (sanitized && !exactExists && !staged.includes(sanitized)) {
                 const createItem = dropdown.createEl('div', {
-                    cls: 'mina-ctx-tagger-item is-create',
+                    cls: 'diwa-ctx-tagger-item is-create',
                     attr: { 'data-ctx': sanitized, role: 'option' },
                 });
-                createItem.createEl('span', { cls: 'mina-ctx-tagger-item-create-icon', text: '+' });
-                createItem.createEl('span', { text: `Create "#${sanitized}"`, cls: 'mina-ctx-tagger-item-label' });
+                createItem.createEl('span', { cls: 'diwa-ctx-tagger-item-create-icon', text: '+' });
+                createItem.createEl('span', { text: `Create "#${sanitized}"`, cls: 'diwa-ctx-tagger-item-label' });
                 createItem.addEventListener('mousedown', (e) => {
                     e.preventDefault();
                     createAndSelect(sanitized);
@@ -752,7 +752,7 @@ export class SynthesisTab extends BaseTab {
                 await this.vault.assignContext(thought.filePath, staged, true);
                 if (this.feedFilter === 'no-context' && staged.length > 0) {
                     this.exitCard(card, () => this.refreshCountsInDOM(
-                        card.closest<HTMLElement>('.mina-syn-shell')!
+                        card.closest<HTMLElement>('.diwa-syn-shell')!
                     ));
                 }
             }
@@ -774,7 +774,7 @@ export class SynthesisTab extends BaseTab {
         });
 
         input.addEventListener('keydown', (e: KeyboardEvent) => {
-            const items = Array.from(dropdown.querySelectorAll<HTMLElement>('.mina-ctx-tagger-item'));
+            const items = Array.from(dropdown.querySelectorAll<HTMLElement>('.diwa-ctx-tagger-item'));
             switch (e.key) {
                 case 'Enter': {
                     e.preventDefault();
@@ -858,11 +858,11 @@ export class SynthesisTab extends BaseTab {
         thought.context = contexts;
 
         if (contexts.length > 0) {
-            const chipsEl = cardHdr.createEl('div', { cls: 'mina-syn-card-ctx-chips' });
+            const chipsEl = cardHdr.createEl('div', { cls: 'diwa-syn-card-ctx-chips' });
             for (const ctx of contexts) {
                 const chip = chipsEl.createEl('span', {
                     text: `#${ctx}`,
-                    cls: 'mina-chip mina-chip--ctx',
+                    cls: 'diwa-chip diwa-chip--ctx',
                     attr: { style: 'cursor:pointer;', title: 'Edit contexts' },
                 });
                 chip.addEventListener('click', (e) => {
@@ -872,7 +872,7 @@ export class SynthesisTab extends BaseTab {
             }
             if (!thought.synthesized) {
                 const addChipBtn = chipsEl.createEl('button', {
-                    cls: 'mina-syn-card-add-ctx',
+                    cls: 'diwa-syn-card-add-ctx',
                     attr: { title: 'Add context' },
                 });
                 setIcon(addChipBtn, 'tag');
@@ -883,7 +883,7 @@ export class SynthesisTab extends BaseTab {
             }
         } else if (!thought.synthesized) {
             const assignPrompt = cardHdr.createEl('button', {
-                cls: 'mina-syn-card-assign-prompt',
+                cls: 'diwa-syn-card-assign-prompt',
                 attr: { title: 'Assign context to this thought' },
             });
             setIcon(assignPrompt, 'tag');
@@ -902,18 +902,18 @@ export class SynthesisTab extends BaseTab {
     private renderFloatingActionBar(shell: HTMLElement): void {
         if (!this.synthesisSelectMode) return;
 
-        const bar = shell.createEl('div', { cls: 'mina-syn-float-bar' });
+        const bar = shell.createEl('div', { cls: 'diwa-syn-float-bar' });
 
         bar.createEl('span', {
-            cls: 'mina-syn-float-bar-count',
+            cls: 'diwa-syn-float-bar-count',
             text: `${this.selectedPaths.size} selected`,
         });
 
-        const btnRow = bar.createEl('div', { cls: 'mina-syn-float-bar-btns' });
+        const btnRow = bar.createEl('div', { cls: 'diwa-syn-float-bar-btns' });
 
         // Exit select mode button
         const selectToggle = btnRow.createEl('button', {
-            cls: 'mina-syn-float-bar-btn mina-syn-float-bar-btn--select is-active',
+            cls: 'diwa-syn-float-bar-btn diwa-syn-float-bar-btn--select is-active',
             attr: { title: 'Exit select mode' },
         });
         setIcon(selectToggle, 'check-square');
@@ -926,7 +926,7 @@ export class SynthesisTab extends BaseTab {
         // Assign context (1+ selected)
         if (this.selectedPaths.size >= 1) {
             const assignAllBtn = btnRow.createEl('button', {
-                cls: 'mina-syn-float-bar-btn',
+                cls: 'diwa-syn-float-bar-btn',
                 attr: { title: 'Assign context to selected' },
             });
             setIcon(assignAllBtn, 'tag');
@@ -957,7 +957,7 @@ export class SynthesisTab extends BaseTab {
         // Merge (2+ selected)
         if (this.selectedPaths.size >= 2) {
             const mergeBtn = btnRow.createEl('button', {
-                cls: 'mina-syn-float-bar-btn mina-syn-float-bar-btn--merge',
+                cls: 'diwa-syn-float-bar-btn diwa-syn-float-bar-btn--merge',
                 attr: { title: 'Merge selected notes' },
             });
             setIcon(mergeBtn, 'git-merge');
@@ -968,7 +968,7 @@ export class SynthesisTab extends BaseTab {
         // Done All for selected (1+)
         if (this.selectedPaths.size >= 1) {
             const doneAllBtn = btnRow.createEl('button', {
-                cls: 'mina-syn-float-bar-btn mina-syn-float-bar-btn--done',
+                cls: 'diwa-syn-float-bar-btn diwa-syn-float-bar-btn--done',
                 attr: { title: 'Mark selected as Done' },
             });
             setIcon(doneAllBtn, 'check-check');
@@ -987,7 +987,7 @@ export class SynthesisTab extends BaseTab {
 
         // Close
         const closeBtn = btnRow.createEl('button', {
-            cls: 'mina-syn-float-bar-btn mina-syn-float-bar-btn--close',
+            cls: 'diwa-syn-float-bar-btn diwa-syn-float-bar-btn--close',
             attr: { title: 'Close' },
         });
         setIcon(closeBtn, 'x');
@@ -1004,7 +1004,7 @@ export class SynthesisTab extends BaseTab {
 
     private showContextMenu(e: MouseEvent, thought: ThoughtEntry, card: HTMLElement, shell: HTMLElement): void {
         const menu = document.createElement('div');
-        menu.className = 'mina-ctx-menu';
+        menu.className = 'diwa-ctx-menu';
         menu.style.cssText = `position:fixed;top:${e.clientY}px;left:${e.clientX}px;z-index:9999;`;
 
         const items: Array<{ label: string; icon: string; action: () => void }> = [
@@ -1045,7 +1045,7 @@ export class SynthesisTab extends BaseTab {
         });
 
         for (const item of items) {
-            const el = menu.createEl('button', { cls: 'mina-ctx-menu-item', text: item.label });
+            const el = menu.createEl('button', { cls: 'diwa-ctx-menu-item', text: item.label });
             el.addEventListener('click', () => {
                 item.action();
                 menu.remove();
@@ -1068,18 +1068,18 @@ export class SynthesisTab extends BaseTab {
     // ═══════════════════════════════════════════════════════════════════════════
 
     private renderFeedPane(feed: HTMLElement, shell: HTMLElement, isPhone: boolean): void {
-        const hdr = feed.createEl('div', { cls: 'mina-syn-feed-hdr' });
+        const hdr = feed.createEl('div', { cls: 'diwa-syn-feed-hdr' });
 
         // ── Top row: home icon + segmented filter + Select + Done All ─────────
-        const hdrTop = hdr.createEl('div', { cls: 'mina-syn-feed-hdr-top' });
+        const hdrTop = hdr.createEl('div', { cls: 'diwa-syn-feed-hdr-top' });
         this.renderHomeIcon(hdrTop);
 
-        const segBar = hdrTop.createEl('div', { cls: 'mina-seg-bar mina-syn-toggle-bar' });
-        const feedScroll = feed.createEl('div', { cls: 'mina-syn-feed-scroll' });
+        const segBar = hdrTop.createEl('div', { cls: 'diwa-seg-bar diwa-syn-toggle-bar' });
+        const feedScroll = feed.createEl('div', { cls: 'diwa-syn-feed-scroll' });
 
         // Select mode toggle
         const selectToggle = hdrTop.createEl('button', {
-            cls: `mina-syn-select-toggle${this.synthesisSelectMode ? ' is-active' : ''}`,
+            cls: `diwa-syn-select-toggle${this.synthesisSelectMode ? ' is-active' : ''}`,
             attr: { title: this.synthesisSelectMode ? 'Exit select mode' : 'Select notes' },
         });
         setIcon(selectToggle, 'check-square');
@@ -1091,7 +1091,7 @@ export class SynthesisTab extends BaseTab {
 
         // "Done All" — marks every Mapped note as synthesized
         const doneAllBtn = hdrTop.createEl('button', {
-            cls: `mina-syn-feed-done-all${this.feedFilter === 'with-context' ? '' : ' is-hidden'}`,
+            cls: `diwa-syn-feed-done-all${this.feedFilter === 'with-context' ? '' : ' is-hidden'}`,
             attr: { title: 'Mark all mapped notes as Done' },
         });
         setIcon(doneAllBtn, 'check-check');
@@ -1115,13 +1115,13 @@ export class SynthesisTab extends BaseTab {
 
         for (const f of FILTERS) {
             const btn = segBar.createEl('button', {
-                cls: `mina-seg-btn${this.feedFilter === f.key ? ' is-active' : ''}`,
+                cls: `diwa-seg-btn${this.feedFilter === f.key ? ' is-active' : ''}`,
                 attr: { 'data-filter': f.key },
             });
             btn.createEl('span', { text: f.label });
             btn.createEl('span', {
                 text: String(this.getCountForFilter(f.key)),
-                cls: 'mina-seg-count',
+                cls: 'diwa-seg-count',
             });
             btn.addEventListener('click', () => {
                 if (this.feedFilter === f.key) return;
@@ -1138,12 +1138,12 @@ export class SynthesisTab extends BaseTab {
                 setTimeout(() => {
                     this.buildThoughtList(feedScroll, shell, isPhone);
                     feedScroll.removeClass('is-switching');
-                    segBar.querySelectorAll('.mina-seg-btn').forEach((b) => {
+                    segBar.querySelectorAll('.diwa-seg-btn').forEach((b) => {
                         const el = b as HTMLElement;
                         const key = el.dataset.filter as
                             'no-context' | 'with-context' | 'processed';
                         el.classList.toggle('is-active', key === this.feedFilter);
-                        const countEl = el.querySelector('.mina-seg-count');
+                        const countEl = el.querySelector('.diwa-seg-count');
                         if (countEl) countEl.textContent = String(this.getCountForFilter(key));
                     });
                 }, 80);
@@ -1168,11 +1168,11 @@ export class SynthesisTab extends BaseTab {
     private buildCtxEcho(echo: HTMLElement): void {
         echo.empty();
         const hasAny = this.primedContexts.length > 0;
-        echo.className = `mina-syn-feed-ctx-echo${hasAny ? ' is-primed' : ''}`;
+        echo.className = `diwa-syn-feed-ctx-echo${hasAny ? ' is-primed' : ''}`;
 
         if (hasAny) {
-            echo.createEl('span', { text: '←', cls: 'mina-syn-feed-echo-label' });
-            const pill = echo.createEl('span', { cls: 'mina-syn-feed-echo-pill' });
+            echo.createEl('span', { text: '←', cls: 'diwa-syn-feed-echo-label' });
+            const pill = echo.createEl('span', { cls: 'diwa-syn-feed-echo-pill' });
             const label =
                 this.primedContexts.length === 1
                     ? this.primedContexts[0]
@@ -1180,12 +1180,12 @@ export class SynthesisTab extends BaseTab {
             pill.appendText(` ${label}`);
             echo.createEl('span', {
                 text: '✓ ready to assign',
-                cls: 'mina-syn-feed-echo-ready',
+                cls: 'diwa-syn-feed-echo-ready',
             });
         } else {
             echo.createEl('span', {
                 text: '← Select contexts to prime assignment',
-                cls: 'mina-syn-feed-echo-label',
+                cls: 'diwa-syn-feed-echo-label',
             });
         }
     }
@@ -1203,18 +1203,18 @@ export class SynthesisTab extends BaseTab {
         const thoughts = this.getFilteredThoughts();
 
         if (thoughts.length === 0) {
-            const empty = container.createEl('div', { cls: 'mina-syn-feed-empty' });
+            const empty = container.createEl('div', { cls: 'diwa-syn-feed-empty' });
             empty.createEl('span', {
                 text: this.getEmptyIcon(),
-                cls: 'mina-syn-feed-empty-icon',
+                cls: 'diwa-syn-feed-empty-icon',
             });
             empty.createEl('span', {
                 text: this.getEmptyTitle(),
-                cls: 'mina-syn-feed-empty-title',
+                cls: 'diwa-syn-feed-empty-title',
             });
             empty.createEl('span', {
                 text: this.getEmptySubtext(),
-                cls: 'mina-syn-feed-empty-sub',
+                cls: 'diwa-syn-feed-empty-sub',
             });
             return;
         }
@@ -1231,7 +1231,7 @@ export class SynthesisTab extends BaseTab {
         isPhone: boolean,
     ): void {
         const card = container.createEl('div', {
-            cls: `mina-syn-card${thought.synthesized ? ' is-processed' : ''}`,
+            cls: `diwa-syn-card${thought.synthesized ? ' is-processed' : ''}`,
         });
 
         // Desktop: right-click context menu
@@ -1263,16 +1263,16 @@ export class SynthesisTab extends BaseTab {
 
         // Select-mode checkbox (inbox/mapped: unsynthesized only; Done: all)
         if (this.synthesisSelectMode && (!thought.synthesized || this.feedFilter === 'processed')) {
-            const cbWrap = card.createEl('label', { cls: 'mina-syn-card-cb-wrap' });
+            const cbWrap = card.createEl('label', { cls: 'diwa-syn-card-cb-wrap' });
             const cb = cbWrap.createEl('input', { attr: { type: 'checkbox' } }) as HTMLInputElement;
             cb.checked = this.selectedPaths.has(thought.filePath);
-            cbWrap.createEl('span', { cls: 'mina-syn-card-cb-label' });
+            cbWrap.createEl('span', { cls: 'diwa-syn-card-cb-label' });
             cb.addEventListener('change', () => {
                 if (cb.checked) this.selectedPaths.add(thought.filePath);
                 else this.selectedPaths.delete(thought.filePath);
                 card.classList.toggle('is-selected', cb.checked);
                 // Update merge button in-place
-                const mergeBtn = card.closest('.mina-syn-shell')?.querySelector<HTMLElement>('.mina-syn-merge-btn');
+                const mergeBtn = card.closest('.diwa-syn-shell')?.querySelector<HTMLElement>('.diwa-syn-merge-btn');
                 if (mergeBtn) {
                     const count = this.selectedPaths.size;
                     mergeBtn.classList.toggle('is-hidden', count < 2);
@@ -1283,18 +1283,18 @@ export class SynthesisTab extends BaseTab {
         }
 
         // ── Card header: timestamp + context chips ────────────────────────────
-        const cardHdr = card.createEl('div', { cls: 'mina-syn-card-hdr' });
+        const cardHdr = card.createEl('div', { cls: 'diwa-syn-card-hdr' });
         cardHdr.createEl('span', {
             text: moment(thought.lastThreadUpdate).fromNow(),
-            cls: 'mina-syn-card-time',
+            cls: 'diwa-syn-card-time',
         });
 
         if (thought.context && thought.context.length > 0) {
-            const chipsEl = cardHdr.createEl('div', { cls: 'mina-syn-card-ctx-chips' });
+            const chipsEl = cardHdr.createEl('div', { cls: 'diwa-syn-card-ctx-chips' });
             thought.context.forEach((ctx) => {
                 const chip = chipsEl.createEl('span', {
                     text: `#${ctx}`,
-                    cls: 'mina-chip mina-chip--ctx',
+                    cls: 'diwa-chip diwa-chip--ctx',
                 });
                 if (!thought.synthesized) {
                     chip.style.cursor = 'pointer';
@@ -1307,7 +1307,7 @@ export class SynthesisTab extends BaseTab {
             });
             if (!thought.synthesized) {
                 const addChipBtn = chipsEl.createEl('button', {
-                    cls: 'mina-syn-card-add-ctx',
+                    cls: 'diwa-syn-card-add-ctx',
                     attr: { title: 'Add context' },
                 });
                 setIcon(addChipBtn, 'tag');
@@ -1318,7 +1318,7 @@ export class SynthesisTab extends BaseTab {
             }
         } else if (!thought.synthesized) {
             const assignPrompt = cardHdr.createEl('button', {
-                cls: 'mina-syn-card-assign-prompt',
+                cls: 'diwa-syn-card-assign-prompt',
                 attr: { title: 'Assign context to this thought' },
             });
             setIcon(assignPrompt, 'tag');
@@ -1330,8 +1330,8 @@ export class SynthesisTab extends BaseTab {
         }
 
         // ── Body (MarkdownRenderer with expand/collapse) ──────────────────────
-        const bodyWrap = card.createEl('div', { cls: 'mina-syn-card-body-wrap' });
-        const bodyEl = bodyWrap.createEl('div', { cls: 'mina-syn-card-body' });
+        const bodyWrap = card.createEl('div', { cls: 'diwa-syn-card-body-wrap' });
+        const bodyEl = bodyWrap.createEl('div', { cls: 'diwa-syn-card-body' });
 
         MarkdownRenderer.render(
             this.app,
@@ -1345,7 +1345,7 @@ export class SynthesisTab extends BaseTab {
                     bodyWrap.dataset.long = 'true';
                     bodyWrap.dataset.expanded = 'false';
                     const expandBtn = bodyWrap.createEl('button', {
-                        cls: 'mina-syn-card-expand-btn',
+                        cls: 'diwa-syn-card-expand-btn',
                         text: 'Read more ↓',
                     });
                     expandBtn.addEventListener('click', (e) => {
@@ -1360,9 +1360,9 @@ export class SynthesisTab extends BaseTab {
 
         // ── Actions (only for non-synthesized thoughts) ───────────────────────
         if (!thought.synthesized) {
-            const actions = card.createEl('div', { cls: 'mina-syn-card-actions' });
+            const actions = card.createEl('div', { cls: 'diwa-syn-card-actions' });
 
-            const assignBtn = actions.createEl('button', { cls: 'mina-syn-card-btn mina-syn-card-btn--assign' });
+            const assignBtn = actions.createEl('button', { cls: 'diwa-syn-card-btn diwa-syn-card-btn--assign' });
             setIcon(assignBtn, 'tag');
             assignBtn.createEl('span', { text: 'Assign…' });
             assignBtn.dataset.thoughtPath = thought.filePath;
@@ -1374,7 +1374,7 @@ export class SynthesisTab extends BaseTab {
 
             // ── Mark Done button ──────────────────────────────────────────────
             const processBtn = actions.createEl('button', {
-                cls: 'mina-syn-card-btn mina-syn-card-btn--process',
+                cls: 'diwa-syn-card-btn diwa-syn-card-btn--process',
             });
             setIcon(processBtn, 'check');
             processBtn.createEl('span', { text: 'Done' });
@@ -1387,7 +1387,7 @@ export class SynthesisTab extends BaseTab {
             });
 
             // ── Edit button ───────────────────────────────────────────────────
-            const editBtn = actions.createEl('button', { cls: 'mina-syn-card-btn mina-syn-card-btn--edit' });
+            const editBtn = actions.createEl('button', { cls: 'diwa-syn-card-btn diwa-syn-card-btn--edit' });
             setIcon(editBtn, 'pencil-line');
             editBtn.createEl('span', { text: 'Edit' });
             editBtn.addEventListener('click', (e) => {
@@ -1408,7 +1408,7 @@ export class SynthesisTab extends BaseTab {
             });
 
             // ── Delete button (two-stage confirm) ─────────────────────────────
-            const deleteBtn = actions.createEl('button', { cls: 'mina-syn-card-btn mina-syn-card-btn--delete' });
+            const deleteBtn = actions.createEl('button', { cls: 'diwa-syn-card-btn diwa-syn-card-btn--delete' });
             setIcon(deleteBtn, 'trash-2');
             const deleteSpan = deleteBtn.createEl('span', { text: 'Delete' });
             let deleteConfirmTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1432,9 +1432,9 @@ export class SynthesisTab extends BaseTab {
             });
         } else {
             // ── Done card actions: Open in new window + Unmark ────────────────
-            const doneActions = card.createEl('div', { cls: 'mina-syn-card-actions mina-syn-card-actions--done' });
+            const doneActions = card.createEl('div', { cls: 'diwa-syn-card-actions diwa-syn-card-actions--done' });
 
-            const openBtn = doneActions.createEl('button', { cls: 'mina-syn-card-btn mina-syn-card-btn--open' });
+            const openBtn = doneActions.createEl('button', { cls: 'diwa-syn-card-btn diwa-syn-card-btn--open' });
             setIcon(openBtn, 'external-link');
             openBtn.createEl('span', { text: 'Open' });
             openBtn.addEventListener('click', async (e) => {
@@ -1446,7 +1446,7 @@ export class SynthesisTab extends BaseTab {
                 }
             });
 
-            const unmarkBtn = doneActions.createEl('button', { cls: 'mina-syn-card-btn mina-syn-card-btn--unmark' });
+            const unmarkBtn = doneActions.createEl('button', { cls: 'diwa-syn-card-btn diwa-syn-card-btn--unmark' });
             setIcon(unmarkBtn, 'rotate-ccw');
             unmarkBtn.createEl('span', { text: 'Unmark' });
             unmarkBtn.addEventListener('click', async (e) => {
@@ -1535,7 +1535,7 @@ export class SynthesisTab extends BaseTab {
      */
     private syncAllPrimingStates(shell: HTMLElement): void {
         // 1. Context rows
-        shell.querySelectorAll<HTMLElement>('.mina-syn-ctx-row').forEach((row) => {
+        shell.querySelectorAll<HTMLElement>('.diwa-syn-ctx-row').forEach((row) => {
             row.classList.toggle(
                 'is-selected',
                 this.primedContexts.includes(row.dataset.ctx || ''),
@@ -1543,15 +1543,15 @@ export class SynthesisTab extends BaseTab {
         });
 
         // 2. Primer strip
-        const primer = shell.querySelector<HTMLElement>('.mina-syn-ctx-primer');
+        const primer = shell.querySelector<HTMLElement>('.diwa-syn-ctx-primer');
         if (primer) this.buildPrimer(primer, shell);
 
         // 3. Context echo
-        const echo = shell.querySelector<HTMLElement>('.mina-syn-feed-ctx-echo');
+        const echo = shell.querySelector<HTMLElement>('.diwa-syn-feed-ctx-echo');
         if (echo) this.buildCtxEcho(echo);
 
         // 4. All assign buttons
-        shell.querySelectorAll<HTMLElement>('.mina-syn-card-btn--assign').forEach((btn) => {
+        shell.querySelectorAll<HTMLElement>('.diwa-syn-card-btn--assign').forEach((btn) => {
             const filePath = btn.dataset.thoughtPath;
             if (!filePath) return;
             const thought = Array.from(this.index.thoughtIndex.values()).find(
@@ -1587,21 +1587,21 @@ export class SynthesisTab extends BaseTab {
     private refreshCountsInDOM(shell: HTMLElement): void {
         const counts = this.getContextCounts();
 
-        shell.querySelectorAll<HTMLElement>('.mina-syn-ctx-row').forEach((row) => {
+        shell.querySelectorAll<HTMLElement>('.diwa-syn-ctx-row').forEach((row) => {
             const ctx = row.dataset.ctx;
             if (!ctx) return;
-            const countEl = row.querySelector<HTMLElement>('.mina-syn-ctx-row-count');
+            const countEl = row.querySelector<HTMLElement>('.diwa-syn-ctx-row-count');
             if (countEl) countEl.textContent = String(counts[ctx] || 0);
         });
 
-        const hdrCount = shell.querySelector<HTMLElement>('.mina-syn-ctx-hdr-count');
+        const hdrCount = shell.querySelector<HTMLElement>('.diwa-syn-ctx-hdr-count');
         if (hdrCount) hdrCount.textContent = String((this.settings.contexts || []).length);
 
         // Also refresh filter tab counts
-        shell.querySelectorAll<HTMLElement>('.mina-seg-btn[data-filter]').forEach((btn) => {
+        shell.querySelectorAll<HTMLElement>('.diwa-seg-btn[data-filter]').forEach((btn) => {
             const key = btn.dataset.filter as 'no-context' | 'with-context' | 'processed';
             if (!key) return;
-            const countEl = btn.querySelector('.mina-seg-count');
+            const countEl = btn.querySelector('.diwa-seg-count');
             if (countEl) countEl.textContent = String(this.getCountForFilter(key));
         });
     }
@@ -1611,16 +1611,16 @@ export class SynthesisTab extends BaseTab {
     // ═══════════════════════════════════════════════════════════════════════════
 
     private renderInlineCaptureBar(feedScroll: HTMLElement, shell: HTMLElement): void {
-        const bar = feedScroll.createEl('div', { cls: 'mina-syn-inline-bar' });
+        const bar = feedScroll.createEl('div', { cls: 'diwa-syn-inline-bar' });
         const expanded = this.view.synthesisCaptureExpanded;
 
         if (!expanded) {
             // Collapsed state — single-line trigger
-            const trigger = bar.createEl('div', { cls: 'mina-syn-inline-trigger' });
-            const icon = trigger.createEl('span', { cls: 'mina-syn-inline-icon' });
+            const trigger = bar.createEl('div', { cls: 'diwa-syn-inline-trigger' });
+            const icon = trigger.createEl('span', { cls: 'diwa-syn-inline-icon' });
             setIcon(icon, 'edit-3');
             trigger.createEl('span', {
-                cls: 'mina-syn-inline-placeholder',
+                cls: 'diwa-syn-inline-placeholder',
                 text: 'Quick capture thought…',
             });
             trigger.addEventListener('click', () => {
@@ -1633,7 +1633,7 @@ export class SynthesisTab extends BaseTab {
         // Expanded state
         bar.addClass('is-expanded');
         const textarea = bar.createEl('textarea', {
-            cls: 'mina-syn-inline-textarea',
+            cls: 'diwa-syn-inline-textarea',
             attr: { placeholder: 'Capture thought…', rows: '3' },
         }) as HTMLTextAreaElement;
         textarea.value = this.view.synthesisCaptureDraft;
@@ -1646,16 +1646,16 @@ export class SynthesisTab extends BaseTab {
 
         // Context chips (read-only echo of primed contexts)
         if (this.primedContexts.length > 0) {
-            const chips = bar.createEl('div', { cls: 'mina-syn-inline-chips' });
+            const chips = bar.createEl('div', { cls: 'diwa-syn-inline-chips' });
             this.primedContexts.forEach(ctx => {
-                chips.createEl('span', { cls: 'mina-syn-inline-chip', text: `#${ctx}` });
+                chips.createEl('span', { cls: 'diwa-syn-inline-chip', text: `#${ctx}` });
             });
         }
 
         // Actions
-        const actions = bar.createEl('div', { cls: 'mina-syn-inline-actions' });
-        const cancelBtn = actions.createEl('button', { text: 'CANCEL', cls: 'mina-capture-inline-cancel' });
-        const saveBtn = actions.createEl('button', { text: 'SAVE', cls: 'mina-capture-inline-save' }) as HTMLButtonElement;
+        const actions = bar.createEl('div', { cls: 'diwa-syn-inline-actions' });
+        const cancelBtn = actions.createEl('button', { text: 'CANCEL', cls: 'diwa-capture-inline-cancel' });
+        const saveBtn = actions.createEl('button', { text: 'SAVE', cls: 'diwa-capture-inline-save' }) as HTMLButtonElement;
 
         const refreshSave = () => {
             const empty = !textarea.value.trim();
@@ -1718,10 +1718,10 @@ export class SynthesisTab extends BaseTab {
     // ═══════════════════════════════════════════════════════════════════════════
 
     private renderPhoneNav(shell: HTMLElement): void {
-        const nav = shell.createEl('div', { cls: 'mina-syn-phone-nav' });
+        const nav = shell.createEl('div', { cls: 'diwa-syn-phone-nav' });
 
         const feedBtn = nav.createEl('button', {
-            cls: 'mina-syn-phone-nav-btn is-active',
+            cls: 'diwa-syn-phone-nav-btn is-active',
         });
         setIcon(feedBtn, 'inbox');
         feedBtn.createEl('span', { text: 'Feed' });
@@ -1729,17 +1729,17 @@ export class SynthesisTab extends BaseTab {
         if (inboxCount > 0) {
             feedBtn.createEl('span', {
                 text: String(inboxCount),
-                cls: 'mina-syn-phone-nav-count',
+                cls: 'diwa-syn-phone-nav-count',
                 attr: { style: 'font-size:0.65em; font-weight:700; color:var(--text-error);' },
             });
         }
 
-        const ctxBtn = nav.createEl('button', { cls: 'mina-syn-phone-nav-btn' });
+        const ctxBtn = nav.createEl('button', { cls: 'diwa-syn-phone-nav-btn' });
         setIcon(ctxBtn, 'tag');
         ctxBtn.createEl('span', { text: 'Contexts' });
         ctxBtn.addEventListener('click', () => {
             this.pendingAssignThought = null;
-            const sheet = shell.querySelector<HTMLElement>('.mina-syn-ctx-sheet');
+            const sheet = shell.querySelector<HTMLElement>('.diwa-syn-ctx-sheet');
             if (sheet) {
                 this.renderManageSheetContent(sheet, shell);
                 sheet.classList.add('is-open');
@@ -1748,18 +1748,18 @@ export class SynthesisTab extends BaseTab {
     }
 
     private renderContextSheet(shell: HTMLElement): void {
-        const sheet = shell.createEl('div', { cls: 'mina-syn-ctx-sheet' });
-        sheet.createEl('div', { cls: 'mina-syn-ctx-sheet-handle' });
+        const sheet = shell.createEl('div', { cls: 'diwa-syn-ctx-sheet' });
+        sheet.createEl('div', { cls: 'diwa-syn-ctx-sheet-handle' });
 
-        const sheetHdr = sheet.createEl('div', { cls: 'mina-syn-ctx-sheet-hdr' });
+        const sheetHdr = sheet.createEl('div', { cls: 'diwa-syn-ctx-sheet-hdr' });
         const sheetTitle = sheetHdr.createEl('span', {
-            cls: 'mina-syn-ctx-sheet-title',
+            cls: 'diwa-syn-ctx-sheet-title',
             text: 'Contexts',
         });
-        const closeBtn = sheetHdr.createEl('button', { cls: 'mina-syn-ctx-sheet-close' });
+        const closeBtn = sheetHdr.createEl('button', { cls: 'diwa-syn-ctx-sheet-close' });
         setIcon(closeBtn, 'x');
 
-        const contentArea = sheet.createEl('div', { cls: 'mina-syn-ctx-sheet-content' });
+        const contentArea = sheet.createEl('div', { cls: 'diwa-syn-ctx-sheet-content' });
 
         const closeSheet = () => {
             sheet.classList.remove('is-open', 'is-manage');
@@ -1775,7 +1775,7 @@ export class SynthesisTab extends BaseTab {
 
     private openContextSheet(shell: HTMLElement, thought: ThoughtEntry): void {
         this.pendingAssignThought = thought;
-        const sheet = shell.querySelector<HTMLElement>('.mina-syn-ctx-sheet');
+        const sheet = shell.querySelector<HTMLElement>('.diwa-syn-ctx-sheet');
         if (!sheet) return;
         sheet.classList.remove('is-manage');
         this.renderAssignSheetContent(sheet, thought);
@@ -1794,16 +1794,16 @@ export class SynthesisTab extends BaseTab {
         // ── Search ───────────────────────────────────────────────────────────
         const searchInput = contentArea.createEl('input', {
             type: 'text',
-            cls: 'mina-syn-ctx-search-input mina-syn-sheet-search',
+            cls: 'diwa-syn-ctx-search-input diwa-syn-sheet-search',
             attr: { placeholder: 'Search contexts…', spellcheck: 'false' },
         });
 
         // ── Pills grid ───────────────────────────────────────────────────────
-        const pillsGrid = contentArea.createEl('div', { cls: 'mina-syn-sheet-pills' });
+        const pillsGrid = contentArea.createEl('div', { cls: 'diwa-syn-sheet-pills' });
 
         // ── Also-process checkbox ────────────────────────────────────────────
         const alsoProcessLabel = contentArea.createEl('label', {
-            cls: 'mina-syn-sheet-also-process',
+            cls: 'diwa-syn-sheet-also-process',
         });
         const alsoProcessCheck = alsoProcessLabel.createEl('input', { type: 'checkbox' });
         alsoProcessCheck.checked = true;
@@ -1812,7 +1812,7 @@ export class SynthesisTab extends BaseTab {
         // ── Apply button ─────────────────────────────────────────────────────
         const confirmBtn = contentArea.createEl('button', {
             text: 'Apply',
-            cls: 'mina-btn-primary mina-syn-sheet-apply',
+            cls: 'diwa-btn-primary diwa-syn-sheet-apply',
         });
 
         // Build sorted, hidden-filtered pills
@@ -1829,7 +1829,7 @@ export class SynthesisTab extends BaseTab {
                 if (query && !ctx.toLowerCase().includes(query)) continue;
                 const isActive = (thought.context || []).includes(ctx);
                 const pill = pillsGrid.createEl('button', {
-                    cls: `mina-chip mina-chip--ctx${isActive ? ' is-active' : ''}`,
+                    cls: `diwa-chip diwa-chip--ctx${isActive ? ' is-active' : ''}`,
                     text: `#${ctx}`,
                     attr: { 'data-ctx': ctx },
                 });
@@ -1838,7 +1838,7 @@ export class SynthesisTab extends BaseTab {
             if (hiddenCount > 0 && !query) {
                 pillsGrid.createEl('span', {
                     text: `${hiddenCount} hidden`,
-                    cls: 'mina-syn-sheet-hidden-note',
+                    cls: 'diwa-syn-sheet-hidden-note',
                 });
             }
         };
@@ -1881,22 +1881,22 @@ export class SynthesisTab extends BaseTab {
         contentArea.empty();
 
         // ── Search ───────────────────────────────────────────────────────────
-        const searchWrap = contentArea.createEl('div', { cls: 'mina-syn-ctx-search' });
+        const searchWrap = contentArea.createEl('div', { cls: 'diwa-syn-ctx-search' });
         const searchInput = searchWrap.createEl('input', {
             type: 'text',
-            cls: 'mina-syn-ctx-search-input',
+            cls: 'diwa-syn-ctx-search-input',
             attr: { placeholder: 'Search…', spellcheck: 'false' },
         });
 
         // ── Context list (same structure as desktop left panel) ───────────────
         const list = contentArea.createEl('div', {
-            cls: 'mina-syn-ctx-list mina-syn-sheet-ctx-list',
+            cls: 'diwa-syn-ctx-list diwa-syn-sheet-ctx-list',
         });
         this.buildContextList(list, shell);
 
         searchInput.addEventListener('input', () => {
             const q = searchInput.value.toLowerCase().trim();
-            list.querySelectorAll<HTMLElement>('.mina-syn-ctx-row').forEach((row) => {
+            list.querySelectorAll<HTMLElement>('.diwa-syn-ctx-row').forEach((row) => {
                 const name = (row.dataset.ctx || '').toLowerCase();
                 row.style.display = !q || name.includes(q) ? '' : 'none';
             });

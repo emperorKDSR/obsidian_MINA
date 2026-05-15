@@ -57,15 +57,15 @@ export class JournalEntryModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
         if (this._isMobileSheet) {
-            document.body.removeClass('mina-journal-sheet-active');
+            document.body.removeClass('diwa-journal-sheet-active');
         }
     }
 
     // ── MOBILE — M365-STYLE TOP SHEET ─────────────────────────────────────
     private _renderMobileSheet(contentEl: HTMLElement, modalEl: HTMLElement) {
-        modalEl.addClass('mina-journal-modal');
-        modalEl.addClass('mina-jm-sheet');
-        document.body.addClass('mina-journal-sheet-active');
+        modalEl.addClass('diwa-journal-modal');
+        modalEl.addClass('diwa-jm-sheet');
+        document.body.addClass('diwa-journal-sheet-active');
 
         modalEl.style.setProperty('border-radius', '0 0 20px 20px', 'important');
         modalEl.style.setProperty('overflow', 'hidden', 'important');
@@ -74,22 +74,22 @@ export class JournalEntryModal extends Modal {
         const now = moment();
 
         // ── M365 nav header: [Cancel]  title/date  [Done] ─────────────────
-        const navHeader = contentEl.createDiv({ cls: 'mina-jm-m365-header' });
-        const cancelBtn = navHeader.createEl('button', { cls: 'mina-jm-m365-cancel', text: 'Cancel' });
+        const navHeader = contentEl.createDiv({ cls: 'diwa-jm-m365-header' });
+        const cancelBtn = navHeader.createEl('button', { cls: 'diwa-jm-m365-cancel', text: 'Cancel' });
         cancelBtn.addEventListener('click', () => this.close());
 
-        const headerCenter = navHeader.createDiv({ cls: 'mina-jm-m365-center' });
-        headerCenter.createSpan({ cls: 'mina-jm-m365-title', text: '✍️ Journal' });
-        headerCenter.createSpan({ cls: 'mina-jm-m365-date', text: now.format('ddd, MMM D · HH:mm') });
+        const headerCenter = navHeader.createDiv({ cls: 'diwa-jm-m365-center' });
+        headerCenter.createSpan({ cls: 'diwa-jm-m365-title', text: '✍️ Journal' });
+        headerCenter.createSpan({ cls: 'diwa-jm-m365-date', text: now.format('ddd, MMM D · HH:mm') });
 
         const saveBtn = navHeader.createEl('button', {
-            cls: 'mina-jm-m365-done',
+            cls: 'diwa-jm-m365-done',
             text: this.mode === 'new' ? 'Done' : 'Update'
         }) as HTMLButtonElement;
 
         // ── Document textarea ──────────────────────────────────────────────
         const textArea = contentEl.createEl('textarea', {
-            cls: 'mina-jm-textarea mina-jm-textarea--mobile',
+            cls: 'diwa-jm-textarea diwa-jm-textarea--mobile',
             attr: { placeholder: 'Start writing…' }
         }) as HTMLTextAreaElement;
         textArea.value = this.initialText;
@@ -104,26 +104,26 @@ export class JournalEntryModal extends Modal {
         fileInput.addEventListener('change', () => this._handleFileInput(fileInput, textArea, null));
 
         // ── Bottom action bar: [📎] [divider] [chips…] ────────────────────
-        const actionBar = contentEl.createDiv({ cls: 'mina-jm-m365-bar' });
-        const barLeft = actionBar.createDiv({ cls: 'mina-jm-m365-bar-left' });
+        const actionBar = contentEl.createDiv({ cls: 'diwa-jm-m365-bar' });
+        const barLeft = actionBar.createDiv({ cls: 'diwa-jm-m365-bar-left' });
 
         const attachIcon = barLeft.createEl('button', {
-            cls: 'mina-jm-m365-icon-btn',
+            cls: 'diwa-jm-m365-icon-btn',
             attr: { title: 'Attach image' }
         });
         setIcon(attachIcon, 'lucide-image');
         attachIcon.addEventListener('click', () => fileInput.click());
 
-        barLeft.createSpan({ cls: 'mina-jm-m365-bar-divider' });
+        barLeft.createSpan({ cls: 'diwa-jm-m365-bar-divider' });
 
-        const chipScroll = actionBar.createDiv({ cls: 'mina-jm-m365-chips' });
+        const chipScroll = actionBar.createDiv({ cls: 'diwa-jm-m365-chips' });
         const renderChips = () => {
             chipScroll.empty();
             const visible = this.contexts.filter(c => c !== 'journal' && !TYPE_TAGS.has(c));
             for (const ctx of visible) {
-                const chip = chipScroll.createEl('span', { cls: 'mina-jm-chip' });
+                const chip = chipScroll.createEl('span', { cls: 'diwa-jm-chip' });
                 chip.createSpan({ text: `#${ctx}` });
-                const x = chip.createSpan({ text: '×', cls: 'mina-jm-chip-x' });
+                const x = chip.createSpan({ text: '×', cls: 'diwa-jm-chip-x' });
                 x.addEventListener('click', (e) => {
                     e.stopPropagation();
                     this.contexts = this.contexts.filter(c => c !== ctx);
@@ -131,7 +131,7 @@ export class JournalEntryModal extends Modal {
                 });
             }
             if (visible.length === 0) {
-                chipScroll.createSpan({ text: 'Use # to tag', cls: 'mina-jm-chip-hint' });
+                chipScroll.createSpan({ text: 'Use # to tag', cls: 'diwa-jm-chip-hint' });
             }
         };
         renderChips();
@@ -178,33 +178,33 @@ export class JournalEntryModal extends Modal {
 
     // ── TABLET / DESKTOP CARD ─────────────────────────────────────────────
     private _renderCard(contentEl: HTMLElement, modalEl: HTMLElement, variant: 'tablet' | 'desktop') {
-        modalEl.addClass('mina-journal-modal');
-        modalEl.addClass('mina-jm-card');
-        modalEl.addClass(variant === 'tablet' ? 'mina-jm-card--tablet' : 'mina-jm-card--desktop');
+        modalEl.addClass('diwa-journal-modal');
+        modalEl.addClass('diwa-jm-card');
+        modalEl.addClass(variant === 'tablet' ? 'diwa-jm-card--tablet' : 'diwa-jm-card--desktop');
 
         modalEl.style.setProperty('padding', '0', 'important');
         contentEl.style.setProperty('padding', '0', 'important');
 
         // ── Header
-        const header = contentEl.createDiv({ cls: 'mina-jm-card-header' });
-        const headerLeft = header.createDiv({ cls: 'mina-jm-header-left' });
+        const header = contentEl.createDiv({ cls: 'diwa-jm-card-header' });
+        const headerLeft = header.createDiv({ cls: 'diwa-jm-header-left' });
         headerLeft.createSpan({
-            cls: 'mina-jm-header-title',
+            cls: 'diwa-jm-header-title',
             text: this.mode === 'new' ? '✍️ New Entry' : '✍️ Edit Entry'
         });
         headerLeft.createSpan({
-            cls: 'mina-jm-header-date',
+            cls: 'diwa-jm-header-date',
             text: moment().format(variant === 'desktop' ? 'dddd, MMMM D' : 'ddd, MMM D')
         });
         // ── Body
         const body = contentEl.createDiv({
-            cls: 'mina-jm-card-body' + (variant === 'desktop' ? ' mina-jm-card-body--desktop' : '')
+            cls: 'diwa-jm-card-body' + (variant === 'desktop' ? ' diwa-jm-card-body--desktop' : '')
         });
 
         // Main writing zone
-        const writeZone = body.createDiv({ cls: 'mina-jm-write-zone' });
+        const writeZone = body.createDiv({ cls: 'diwa-jm-write-zone' });
         const textArea = writeZone.createEl('textarea', {
-            cls: `mina-jm-textarea mina-jm-textarea--${variant}`,
+            cls: `diwa-jm-textarea diwa-jm-textarea--${variant}`,
             attr: { placeholder: 'Write your entry…' }
         }) as HTMLTextAreaElement;
         textArea.value = this.initialText;
@@ -218,19 +218,19 @@ export class JournalEntryModal extends Modal {
         // Desktop: image preview strip (right column, hidden until image added)
         let previewStrip: HTMLElement | null = null;
         if (variant === 'desktop') {
-            previewStrip = body.createDiv({ cls: 'mina-jm-preview-strip' });
+            previewStrip = body.createDiv({ cls: 'diwa-jm-preview-strip' });
             previewStrip.style.display = 'none';
         }
 
         // ── Chip row (below textarea, above toolbar)
-        const chipRow = contentEl.createDiv({ cls: 'mina-jm-chip-row mina-jm-chip-row--card' });
+        const chipRow = contentEl.createDiv({ cls: 'diwa-jm-chip-row diwa-jm-chip-row--card' });
         const renderChips = () => {
             chipRow.empty();
             const visible = this.contexts.filter(c => c !== 'journal' && !TYPE_TAGS.has(c));
             for (const ctx of visible) {
-                const chip = chipRow.createEl('span', { cls: 'mina-jm-chip' });
+                const chip = chipRow.createEl('span', { cls: 'diwa-jm-chip' });
                 chip.createSpan({ text: `#${ctx}` });
-                const x = chip.createSpan({ text: '×', cls: 'mina-jm-chip-x' });
+                const x = chip.createSpan({ text: '×', cls: 'diwa-jm-chip-x' });
                 x.addEventListener('click', (e) => {
                     e.stopPropagation();
                     this.contexts = this.contexts.filter(c => c !== ctx);
@@ -238,7 +238,7 @@ export class JournalEntryModal extends Modal {
                 });
             }
             if (visible.length === 0) {
-                chipRow.createSpan({ text: '# inline to add tags', cls: 'mina-jm-chip-hint' });
+                chipRow.createSpan({ text: '# inline to add tags', cls: 'diwa-jm-chip-hint' });
             }
         };
         renderChips();
@@ -250,23 +250,23 @@ export class JournalEntryModal extends Modal {
         fileInput.addEventListener('change', () => this._handleFileInput(fileInput, textArea, previewStrip));
 
         // ── Footer toolbar
-        const toolbar = contentEl.createDiv({ cls: 'mina-jm-toolbar mina-jm-toolbar--card' });
-        const toolbarLeft = toolbar.createDiv({ cls: 'mina-jm-toolbar-left' });
+        const toolbar = contentEl.createDiv({ cls: 'diwa-jm-toolbar diwa-jm-toolbar--card' });
+        const toolbarLeft = toolbar.createDiv({ cls: 'diwa-jm-toolbar-left' });
         const attachBtn = toolbarLeft.createEl('button', {
-            cls: 'mina-jm-attach-btn',
+            cls: 'diwa-jm-attach-btn',
             text: '📎',
             attr: { 'aria-label': 'Attach image' }
         });
         if (variant === 'desktop') {
-            toolbarLeft.createSpan({ cls: 'mina-jm-attach-hint', text: 'Paste or drag images' });
+            toolbarLeft.createSpan({ cls: 'diwa-jm-attach-hint', text: 'Paste or drag images' });
         }
         attachBtn.addEventListener('click', () => fileInput.click());
 
-        const toolbarRight = toolbar.createDiv({ cls: 'mina-jm-toolbar-right' });
-        const cancelBtn = toolbarRight.createEl('button', { cls: 'mina-jm-cancel-btn', text: 'Cancel' });
+        const toolbarRight = toolbar.createDiv({ cls: 'diwa-jm-toolbar-right' });
+        const cancelBtn = toolbarRight.createEl('button', { cls: 'diwa-jm-cancel-btn', text: 'Cancel' });
         cancelBtn.addEventListener('click', () => this.close());
         const saveBtn = toolbarRight.createEl('button', {
-            cls: 'mina-jm-save-btn',
+            cls: 'diwa-jm-save-btn',
             text: this.mode === 'new' ? 'Save Entry' : 'Update Entry'
         }) as HTMLButtonElement;
         if (variant === 'desktop') {
@@ -320,7 +320,7 @@ export class JournalEntryModal extends Modal {
     // ── TYPE PICKER BAR ──────────────────────────────────────────────────
     private _renderTypeBar(parent: HTMLElement, textArea: HTMLTextAreaElement, isMobile: boolean) {
         const bar = parent.createDiv({
-            cls: `mina-jm-type-bar${isMobile ? ' mina-jm-type-bar--mobile' : ' mina-jm-type-bar--card'}`
+            cls: `diwa-jm-type-bar${isMobile ? ' diwa-jm-type-bar--mobile' : ' diwa-jm-type-bar--card'}`
         });
 
         // Determine initial active type from existing contexts
@@ -339,10 +339,10 @@ export class JournalEntryModal extends Modal {
 
         for (const type of JOURNAL_TYPES) {
             const pill = bar.createEl('button', {
-                cls: `mina-jm-type-pill${type.id === activeId ? ' is-active' : ''}`
+                cls: `diwa-jm-type-pill${type.id === activeId ? ' is-active' : ''}`
             });
-            pill.createSpan({ cls: 'mina-jm-type-pill__icon', text: type.icon });
-            pill.createSpan({ cls: 'mina-jm-type-pill__label', text: type.label });
+            pill.createSpan({ cls: 'diwa-jm-type-pill__icon', text: type.icon });
+            pill.createSpan({ cls: 'diwa-jm-type-pill__label', text: type.label });
             pillEls.set(type.id, pill);
 
             pill.addEventListener('click', () => {
@@ -402,7 +402,7 @@ export class JournalEntryModal extends Modal {
             // Desktop image preview
             if (previewStrip && file.type.startsWith('image/')) {
                 previewStrip.style.display = 'flex';
-                const img = previewStrip.createEl('img', { cls: 'mina-jm-preview-img' });
+                const img = previewStrip.createEl('img', { cls: 'diwa-jm-preview-img' });
                 const objUrl = URL.createObjectURL(file);
                 img.src = objUrl;
                 img.onload = () => URL.revokeObjectURL(objUrl);
@@ -459,3 +459,4 @@ export class JournalEntryModal extends Modal {
         modalEl.addEventListener('touchend', onTouchEnd, { passive: true });
     }
 }
+

@@ -31,12 +31,12 @@ export class ProjectsTab extends BaseTab {
 
     render(container: HTMLElement) {
         container.empty();
-        const wrap = container.createDiv('mina-projects-wrap');
+        const wrap = container.createDiv('diwa-projects-wrap');
 
         // Header
-        const header = wrap.createDiv('mina-projects-header');
-        header.createEl('h2', { text: 'Projects', cls: 'mina-projects-title' });
-        const newBtn = header.createEl('button', { text: '+ New', cls: 'mina-btn mina-btn--primary mina-btn--sm' });
+        const header = wrap.createDiv('diwa-projects-header');
+        header.createEl('h2', { text: 'Projects', cls: 'diwa-projects-title' });
+        const newBtn = header.createEl('button', { text: '+ New', cls: 'diwa-btn diwa-btn--primary diwa-btn--sm' });
         newBtn.addEventListener('click', () => {
             new NewProjectModal(this.app, this.vault, (entry) => {
                 this.index.projectIndex.set(entry.id, entry);
@@ -45,9 +45,9 @@ export class ProjectsTab extends BaseTab {
         });
 
         // Filter pills
-        const filterRow = wrap.createDiv('mina-filter-pills');
+        const filterRow = wrap.createDiv('diwa-filter-pills');
         FILTER_LABELS.forEach(f => {
-            const pill = filterRow.createEl('button', { text: f.label, cls: 'mina-filter-pill' });
+            const pill = filterRow.createEl('button', { text: f.label, cls: 'diwa-filter-pill' });
             if (f.val === this.filter) pill.addClass('is-active');
             pill.addEventListener('click', () => {
                 this.filter = f.val;
@@ -68,17 +68,17 @@ export class ProjectsTab extends BaseTab {
             });
 
         if (visible.length === 0) {
-            const empty = wrap.createDiv('mina-empty-state');
-            empty.createEl('p', { text: 'No projects yet. Tap "+ New" to create one.', cls: 'mina-empty-msg' });
+            const empty = wrap.createDiv('diwa-empty-state');
+            empty.createEl('p', { text: 'No projects yet. Tap "+ New" to create one.', cls: 'diwa-empty-msg' });
             return;
         }
 
-        const list = wrap.createDiv('mina-projects-list');
+        const list = wrap.createDiv('diwa-projects-list');
         visible.forEach(p => this.renderCard(list, p, container));
     }
 
     private renderCard(list: HTMLElement, project: ProjectEntry, rootContainer: HTMLElement) {
-        const card = list.createDiv({ cls: `mina-project-card mina-project-card--${project.status}` });
+        const card = list.createDiv({ cls: `diwa-project-card diwa-project-card--${project.status}` });
         if (project.color) card.style.setProperty('--project-color', project.color);
 
         // Task counts from index
@@ -89,14 +89,14 @@ export class ProjectsTab extends BaseTab {
         const totalCount = tasks.length;
 
         // Card header row
-        const cardHeader = card.createDiv('mina-project-card__header');
-        const nameLine = cardHeader.createDiv('mina-project-card__name-line');
-        nameLine.createEl('span', { text: project.name, cls: 'mina-project-card__name' });
+        const cardHeader = card.createDiv('diwa-project-card__header');
+        const nameLine = cardHeader.createDiv('diwa-project-card__name-line');
+        nameLine.createEl('span', { text: project.name, cls: 'diwa-project-card__name' });
 
         // Status badge (clickable)
         const badge = nameLine.createEl('span', {
             text: STATUS_LABELS[project.status],
-            cls: `mina-status-badge mina-status--${project.status}`
+            cls: `diwa-status-badge diwa-status--${project.status}`
         });
         badge.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -104,9 +104,9 @@ export class ProjectsTab extends BaseTab {
         });
 
         // Header actions cluster (edit button)
-        const headerActions = nameLine.createDiv('mina-project-card__header-actions');
+        const headerActions = nameLine.createDiv('diwa-project-card__header-actions');
         const editBtn = headerActions.createEl('button', {
-            cls: 'mina-project-card__edit-btn',
+            cls: 'diwa-project-card__edit-btn',
             attr: { 'aria-label': `Edit ${project.name}`, title: 'Edit project' }
         });
         const editIcon = editBtn.createEl('span');
@@ -121,20 +121,20 @@ export class ProjectsTab extends BaseTab {
 
         // Goal text
         if (project.goal) {
-            card.createEl('p', { text: project.goal, cls: 'mina-project-card__goal' });
+            card.createEl('p', { text: project.goal, cls: 'diwa-project-card__goal' });
         }
 
         // Meta row
-        const meta = card.createDiv('mina-project-card__meta');
+        const meta = card.createDiv('diwa-project-card__meta');
         if (totalCount > 0) {
-            meta.createEl('span', { text: `${openCount} open · ${doneCount} done`, cls: 'mina-project-card__task-count' });
+            meta.createEl('span', { text: `${openCount} open · ${doneCount} done`, cls: 'diwa-project-card__task-count' });
         }
         if (project.due) {
             const dueM = moment(project.due);
             const isOverdue = dueM.isBefore(moment(), 'day');
             meta.createEl('span', {
                 text: `📅 ${dueM.format('MMM D')}`,
-                cls: `mina-chip mina-chip--date${isOverdue ? ' is-overdue' : ''}`
+                cls: `diwa-chip diwa-chip--date${isOverdue ? ' is-overdue' : ''}`
             });
         }
 
@@ -146,18 +146,18 @@ export class ProjectsTab extends BaseTab {
             return 0;
         })[0];
         if (nextTask) {
-            const nextRow = card.createDiv('mina-project-card__next');
-            nextRow.createEl('span', { text: 'NEXT', cls: 'mina-project-card__next-label' });
-            nextRow.createEl('span', { text: nextTask.title, cls: 'mina-project-card__next-title' });
+            const nextRow = card.createDiv('diwa-project-card__next');
+            nextRow.createEl('span', { text: 'NEXT', cls: 'diwa-project-card__next-label' });
+            nextRow.createEl('span', { text: nextTask.title, cls: 'diwa-project-card__next-title' });
         }
 
         // Expand toggle
         const isExpanded = this.expandedIds.has(project.id);
-        const expandPanel = card.createDiv({ cls: `mina-project-card__expand${isExpanded ? ' is-open' : ''}` });
+        const expandPanel = card.createDiv({ cls: `diwa-project-card__expand${isExpanded ? ' is-open' : ''}` });
 
         // Expand toggle button
-        const toggleRow = card.createDiv('mina-project-card__toggle-row');
-        const toggleBtn = toggleRow.createEl('button', { cls: 'mina-project-card__toggle-btn' });
+        const toggleRow = card.createDiv('diwa-project-card__toggle-row');
+        const toggleBtn = toggleRow.createEl('button', { cls: 'diwa-project-card__toggle-btn' });
         const toggleIcon = toggleBtn.createEl('span');
         setIcon(toggleIcon, isExpanded ? 'chevron-up' : 'chevron-down');
         toggleBtn.addEventListener('click', () => {
@@ -184,28 +184,28 @@ export class ProjectsTab extends BaseTab {
             .slice(0, 5);
 
         if (tasks.length > 0) {
-            const taskList = panel.createDiv('mina-project-expand__tasks');
+            const taskList = panel.createDiv('diwa-project-expand__tasks');
             tasks.forEach(task => {
-                const row = taskList.createDiv('mina-project-expand__task-row');
-                const dot = row.createEl('span', { cls: 'mina-project-expand__dot' });
+                const row = taskList.createDiv('diwa-project-expand__task-row');
+                const dot = row.createEl('span', { cls: 'diwa-project-expand__dot' });
                 setIcon(dot, 'circle');
-                row.createEl('span', { text: task.title, cls: 'mina-project-expand__task-title' });
+                row.createEl('span', { text: task.title, cls: 'diwa-project-expand__task-title' });
                 if (task.due) {
-                    row.createEl('span', { text: moment(task.due).format('MMM D'), cls: 'mina-chip mina-chip--date mina-chip--sm' });
+                    row.createEl('span', { text: moment(task.due).format('MMM D'), cls: 'diwa-chip diwa-chip--date diwa-chip--sm' });
                 }
             });
         }
 
         // Actions
-        const actions = panel.createDiv('mina-project-expand__actions');
+        const actions = panel.createDiv('diwa-project-expand__actions');
 
-        const viewBtn = actions.createEl('button', { text: 'View', cls: 'mina-btn mina-btn--ghost mina-btn--sm' });
+        const viewBtn = actions.createEl('button', { text: 'View', cls: 'diwa-btn diwa-btn--ghost diwa-btn--sm' });
         viewBtn.addEventListener('click', () => {
             const file = this.app.vault.getAbstractFileByPath(project.filePath);
             if (file instanceof TFile) this.app.workspace.getLeaf().openFile(file);
         });
 
-        const archiveBtn = actions.createEl('button', { text: 'Archive', cls: 'mina-btn mina-btn--danger mina-btn--sm' });
+        const archiveBtn = actions.createEl('button', { text: 'Archive', cls: 'diwa-btn diwa-btn--danger diwa-btn--sm' });
         archiveBtn.addEventListener('click', async () => {
             const file = this.app.vault.getAbstractFileByPath(project.filePath);
             if (file instanceof TFile) {
@@ -221,11 +221,11 @@ export class ProjectsTab extends BaseTab {
     }
 
     private renderMilestonesSection(panel: HTMLElement, project: ProjectEntry, rootContainer: HTMLElement) {
-        const wrap = panel.createDiv('mina-milestones-wrap');
+        const wrap = panel.createDiv('diwa-milestones-wrap');
 
         // Collapsible toggle header
-        const toggle = wrap.createEl('button', { text: '▸ Milestones', cls: 'mina-milestones-toggle' });
-        const body = wrap.createDiv('mina-milestones-body');
+        const toggle = wrap.createEl('button', { text: '▸ Milestones', cls: 'diwa-milestones-toggle' });
+        const body = wrap.createDiv('diwa-milestones-body');
         body.style.display = 'none';
 
         let isOpen = false;
@@ -240,7 +240,7 @@ export class ProjectsTab extends BaseTab {
 
     private loadAndRenderMilestones(container: HTMLElement, project: ProjectEntry, rootContainer: HTMLElement) {
         container.empty();
-        const loading = container.createEl('span', { text: 'Loading…', cls: 'mina-milestones-loading' });
+        const loading = container.createEl('span', { text: 'Loading…', cls: 'diwa-milestones-loading' });
 
         this.vault.readMilestones(project.filePath).then(milestones => {
             loading.remove();
@@ -256,16 +256,16 @@ export class ProjectsTab extends BaseTab {
 
         // Progress bar
         if (total > 0) {
-            const progressWrap = container.createDiv('mina-milestone-progress-wrap');
-            progressWrap.createEl('span', { text: `${done}/${total} complete`, cls: 'mina-milestone-progress-label' });
-            const track = progressWrap.createDiv('mina-milestone-progress-track');
-            const bar = track.createDiv('mina-milestone-progress');
+            const progressWrap = container.createDiv('diwa-milestone-progress-wrap');
+            progressWrap.createEl('span', { text: `${done}/${total} complete`, cls: 'diwa-milestone-progress-label' });
+            const track = progressWrap.createDiv('diwa-milestone-progress-track');
+            const bar = track.createDiv('diwa-milestone-progress');
             bar.style.width = `${Math.round((done / total) * 100)}%`;
         }
 
         // Milestone list
         milestones.forEach((m, idx) => {
-            const row = container.createDiv('mina-milestone-row');
+            const row = container.createDiv('diwa-milestone-row');
             const cb = row.createEl('input', { attr: { type: 'checkbox' } }) as HTMLInputElement;
             cb.checked = m.done;
             cb.addEventListener('change', async () => {
@@ -273,23 +273,23 @@ export class ProjectsTab extends BaseTab {
                 await this.vault.writeMilestones(project.filePath, milestones);
                 this.renderMilestonesBody(container, milestones, project, rootContainer);
             });
-            row.createEl('span', { text: m.title, cls: `mina-milestone-title${m.done ? ' is-done' : ''}` });
+            row.createEl('span', { text: m.title, cls: `diwa-milestone-title${m.done ? ' is-done' : ''}` });
             if (m.dueDate) {
-                row.createEl('span', { text: m.dueDate, cls: 'mina-chip mina-chip--date mina-chip--sm' });
+                row.createEl('span', { text: m.dueDate, cls: 'diwa-chip diwa-chip--date diwa-chip--sm' });
             }
         });
 
         // Add milestone form
-        const addRow = container.createDiv('mina-milestone-add-row');
+        const addRow = container.createDiv('diwa-milestone-add-row');
         const titleInput = addRow.createEl('input', {
-            cls: 'mina-milestone-add-input',
+            cls: 'diwa-milestone-add-input',
             attr: { type: 'text', placeholder: 'New milestone…' }
         }) as HTMLInputElement;
         const dateInput = addRow.createEl('input', {
-            cls: 'mina-milestone-add-date',
+            cls: 'diwa-milestone-add-date',
             attr: { type: 'date' }
         }) as HTMLInputElement;
-        const addBtn = addRow.createEl('button', { text: '+ Add', cls: 'mina-btn mina-btn--ghost mina-btn--sm' });
+        const addBtn = addRow.createEl('button', { text: '+ Add', cls: 'diwa-btn diwa-btn--ghost diwa-btn--sm' });
         addBtn.addEventListener('click', async () => {
             const title = titleInput.value.trim();
             if (!title) return;
@@ -311,17 +311,17 @@ export class ProjectsTab extends BaseTab {
     }
 
     private openStatusPicker(anchor: HTMLElement, project: ProjectEntry, rootContainer: HTMLElement) {
-        const existing = document.querySelector('.mina-status-picker');
+        const existing = document.querySelector('.diwa-status-picker');
         if (existing) existing.remove();
 
         const picker = document.createElement('div');
-        picker.className = 'mina-status-picker';
+        picker.className = 'diwa-status-picker';
 
         const statuses: ProjectEntry['status'][] = ['active', 'on-hold', 'completed'];
         statuses.forEach(s => {
             const opt = picker.createEl('button', {
                 text: STATUS_LABELS[s],
-                cls: `mina-status-picker__opt mina-status--${s}${s === project.status ? ' is-current' : ''}`
+                cls: `diwa-status-picker__opt diwa-status--${s}${s === project.status ? ' is-current' : ''}`
             });
             opt.addEventListener('click', async (e) => {
                 e.stopPropagation();
@@ -353,3 +353,4 @@ export class ProjectsTab extends BaseTab {
         setTimeout(() => document.addEventListener('click', close, true), 10);
     }
 }
+

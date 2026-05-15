@@ -73,7 +73,7 @@ export class SearchView extends ItemView {
         this._closed = false;
         const root = this.containerEl.children[1] as HTMLElement;
         root.empty();
-        root.addClass('mina-sv-root');
+        root.addClass('diwa-sv-root');
 
         // Hide Obsidian leaf header
         const header = this.containerEl.children[0] as HTMLElement;
@@ -89,16 +89,16 @@ export class SearchView extends ItemView {
 
     private renderView(root: HTMLElement) {
         // ── Top bar: input + scope ───────────────────────────────
-        const topBar = root.createEl('div', { cls: 'mina-sv-top-bar' });
-        const topBarInner = topBar.createEl('div', { cls: 'mina-sv-top-bar-inner' });
+        const topBar = root.createEl('div', { cls: 'diwa-sv-top-bar' });
+        const topBarInner = topBar.createEl('div', { cls: 'diwa-sv-top-bar-inner' });
 
         // Input row
-        const inputRow = topBarInner.createEl('div', { cls: 'mina-sv-input-row' });
-        const searchIconEl = inputRow.createEl('span', { cls: 'mina-sv-search-icon' });
+        const inputRow = topBarInner.createEl('div', { cls: 'diwa-sv-input-row' });
+        const searchIconEl = inputRow.createEl('span', { cls: 'diwa-sv-search-icon' });
         setIcon(searchIconEl, 'lucide-search');
 
         this.inputEl = inputRow.createEl('input', {
-            cls: 'mina-sv-input',
+            cls: 'diwa-sv-input',
             attr: {
                 type: 'text',
                 placeholder: 'Search across MINA…',
@@ -107,24 +107,24 @@ export class SearchView extends ItemView {
             }
         });
 
-        const kbdHint = inputRow.createEl('span', { cls: 'mina-sv-kbd-hint' });
-        kbdHint.createEl('kbd', { text: 'ESC', cls: 'mina-sv-kbd' });
+        const kbdHint = inputRow.createEl('span', { cls: 'diwa-sv-kbd-hint' });
+        kbdHint.createEl('kbd', { text: 'ESC', cls: 'diwa-sv-kbd' });
 
         // Scope bar
-        this.scopeBar = topBarInner.createEl('div', { cls: 'mina-sv-scope-bar', attr: { role: 'tablist' } });
+        this.scopeBar = topBarInner.createEl('div', { cls: 'diwa-sv-scope-bar', attr: { role: 'tablist' } });
         for (const scope of SCOPES) {
             const btn = this.scopeBar.createEl('button', {
-                cls: `mina-sv-scope-btn${scope.id === this.activeScope ? ' is-active' : ''}`,
+                cls: `diwa-sv-scope-btn${scope.id === this.activeScope ? ' is-active' : ''}`,
                 attr: { 'data-scope': scope.id, role: 'tab' }
             });
             btn.createEl('span', { text: scope.label });
-            btn.createEl('span', { cls: 'mina-sv-scope-count', text: '' });
+            btn.createEl('span', { cls: 'diwa-sv-scope-count', text: '' });
             btn.addEventListener('click', () => this.setScope(scope.id));
         }
 
         // ── Results area ─────────────────────────────────────────
         this.resultsEl = root.createEl('div', {
-            cls: 'mina-sv-results',
+            cls: 'diwa-sv-results',
             attr: { role: 'listbox', 'aria-live': 'polite' }
         });
 
@@ -138,7 +138,7 @@ export class SearchView extends ItemView {
 
     private setScope(scopeId: string) {
         this.activeScope = scopeId;
-        this.scopeBar.querySelectorAll<HTMLElement>('.mina-sv-scope-btn').forEach(btn => {
+        this.scopeBar.querySelectorAll<HTMLElement>('.diwa-sv-scope-btn').forEach(btn => {
             btn.classList.toggle('is-active', btn.dataset.scope === scopeId);
         });
         this.onQueryChange(true);
@@ -283,9 +283,9 @@ export class SearchView extends ItemView {
     }
 
     private updateCounts(counts: Record<string, number>) {
-        this.scopeBar.querySelectorAll<HTMLElement>('.mina-sv-scope-btn').forEach(btn => {
+        this.scopeBar.querySelectorAll<HTMLElement>('.diwa-sv-scope-btn').forEach(btn => {
             const scope = btn.dataset.scope ?? 'all';
-            const countEl = btn.querySelector<HTMLElement>('.mina-sv-scope-count');
+            const countEl = btn.querySelector<HTMLElement>('.diwa-sv-scope-count');
             if (countEl) {
                 const n = counts[scope] ?? 0;
                 countEl.textContent = n > 0 ? String(n) : '';
@@ -312,29 +312,29 @@ export class SearchView extends ItemView {
 
         for (const [type, items] of Object.entries(grouped)) {
             if (!items) continue;
-            const section = this.resultsEl.createEl('div', { cls: 'mina-sv-section', attr: { 'data-type': type } });
-            const secHdr = section.createEl('div', { cls: 'mina-sv-section-header' });
-            const secIcon = secHdr.createEl('span', { cls: 'mina-sv-section-icon' });
+            const section = this.resultsEl.createEl('div', { cls: 'diwa-sv-section', attr: { 'data-type': type } });
+            const secHdr = section.createEl('div', { cls: 'diwa-sv-section-header' });
+            const secIcon = secHdr.createEl('span', { cls: 'diwa-sv-section-icon' });
             setIcon(secIcon, TYPE_ICONS[type] ?? 'lucide-file');
             secHdr.createEl('span', {
                 text: (type.charAt(0).toUpperCase() + type.slice(1)) + 's',
-                cls: 'mina-sv-section-label',
+                cls: 'diwa-sv-section-label',
             });
-            secHdr.createEl('span', { text: String(items.length), cls: 'mina-sv-section-count' });
+            secHdr.createEl('span', { text: String(items.length), cls: 'diwa-sv-section-count' });
 
             for (const item of items) {
                 const row = section.createEl('div', {
-                    cls: 'mina-sv-result-row',
+                    cls: 'diwa-sv-result-row',
                     attr: { role: 'option', 'aria-selected': 'false' },
                 });
 
-                const rowIcon = row.createEl('div', { cls: `mina-sv-result-icon mina-sv-result-icon--${item.type}` });
+                const rowIcon = row.createEl('div', { cls: `diwa-sv-result-icon diwa-sv-result-icon--${item.type}` });
                 setIcon(rowIcon, TYPE_ICONS[item.type] ?? 'lucide-file');
 
-                const body = row.createEl('div', { cls: 'mina-sv-result-body' });
+                const body = row.createEl('div', { cls: 'diwa-sv-result-body' });
 
                 // Title with match highlights
-                const titleEl = body.createEl('span', { cls: 'mina-sv-result-title' });
+                const titleEl = body.createEl('span', { cls: 'diwa-sv-result-title' });
                 renderMatches(titleEl, item.title, item.titleMatches);
 
                 // Body snippet with match highlights
@@ -342,14 +342,14 @@ export class SearchView extends ItemView {
                     const [matchStart] = item.bodyMatches[0];
                     const snippetStart = Math.max(0, matchStart - 40);
                     const snippet = item.body.slice(snippetStart, snippetStart + 120);
-                    const snippetEl = body.createEl('span', { cls: 'mina-sv-result-snippet' });
+                    const snippetEl = body.createEl('span', { cls: 'diwa-sv-result-snippet' });
                     renderMatches(snippetEl, snippet, item.bodyMatches, snippetStart);
                 } else if (item.body) {
-                    body.createEl('span', { text: item.body.slice(0, 80), cls: 'mina-sv-result-snippet' });
+                    body.createEl('span', { text: item.body.slice(0, 80), cls: 'diwa-sv-result-snippet' });
                 }
 
                 if (item.meta) {
-                    row.createEl('span', { text: item.meta, cls: 'mina-sv-result-meta' });
+                    row.createEl('span', { text: item.meta, cls: 'diwa-sv-result-meta' });
                 }
 
                 row.addEventListener('click', () => this.activateResult(item));
@@ -386,28 +386,28 @@ export class SearchView extends ItemView {
         this.allResults = [];
 
         // Reset count badges
-        this.scopeBar.querySelectorAll<HTMLElement>('.mina-sv-scope-count').forEach(el => { el.textContent = ''; });
+        this.scopeBar.querySelectorAll<HTMLElement>('.diwa-sv-scope-count').forEach(el => { el.textContent = ''; });
 
-        const initial = this.resultsEl.createEl('div', { cls: 'mina-sv-initial' });
-        initial.createEl('span', { text: 'Quick Jump', cls: 'mina-sv-quickjump-label' });
+        const initial = this.resultsEl.createEl('div', { cls: 'diwa-sv-initial' });
+        initial.createEl('span', { text: 'Quick Jump', cls: 'diwa-sv-quickjump-label' });
 
-        const grid = initial.createEl('div', { cls: 'mina-sv-quickjump-grid' });
+        const grid = initial.createEl('div', { cls: 'diwa-sv-quickjump-grid' });
         for (const tab of QUICKJUMP_TABS) {
-            const btn = grid.createEl('button', { cls: 'mina-sv-quickjump-btn', attr: { 'data-tab': tab.id } });
-            const ic = btn.createEl('span', { cls: 'mina-sv-quickjump-icon' });
+            const btn = grid.createEl('button', { cls: 'diwa-sv-quickjump-btn', attr: { 'data-tab': tab.id } });
+            const ic = btn.createEl('span', { cls: 'diwa-sv-quickjump-icon' });
             setIcon(ic, tab.icon);
-            btn.createEl('span', { text: tab.label, cls: 'mina-sv-quickjump-label-text' });
+            btn.createEl('span', { text: tab.label, cls: 'diwa-sv-quickjump-label-text' });
             btn.addEventListener('click', () => this.plugin.activateView(tab.id, false));
         }
     }
 
     private renderEmptyState() {
-        const empty = this.resultsEl.createEl('div', { cls: 'mina-sv-empty' });
-        const ic = empty.createEl('span', { cls: 'mina-sv-empty-icon' });
+        const empty = this.resultsEl.createEl('div', { cls: 'diwa-sv-empty' });
+        const ic = empty.createEl('span', { cls: 'diwa-sv-empty-icon' });
         setIcon(ic, 'lucide-search-x');
         const query = this.inputEl?.value ?? '';
-        empty.createEl('span', { text: `No results for "${query}"`, cls: 'mina-sv-empty-text' });
-        empty.createEl('span', { text: 'Try a different term or switch scope to All.', cls: 'mina-sv-empty-sub' });
+        empty.createEl('span', { text: `No results for "${query}"`, cls: 'diwa-sv-empty-text' });
+        empty.createEl('span', { text: 'Try a different term or switch scope to All.', cls: 'diwa-sv-empty-sub' });
     }
 
     private relativeDate(dateStr: string): string {
@@ -424,3 +424,4 @@ export class SearchView extends ItemView {
         return dateStr.slice(0, 10);
     }
 }
+

@@ -18,23 +18,23 @@ export class DuesTab extends BaseTab {
         container.empty();
 
         // ── Outer scroll wrapper ──────────────────────────────────────────
-        const wrap = container.createEl('div', { cls: 'mina-bills-wrap' });
+        const wrap = container.createEl('div', { cls: 'diwa-bills-wrap' });
 
         // ── 1. Header ────────────────────────────────────────────────────
-        const header = wrap.createEl('div', { cls: 'mina-bills-header' });
+        const header = wrap.createEl('div', { cls: 'diwa-bills-header' });
 
         const navRow = header.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 12px;' } });
         this.renderHomeIcon(navRow);
 
-        const titleRow = header.createEl('div', { cls: 'mina-bills-title-row' });
-        const titleStack = titleRow.createEl('div', { cls: 'mina-bills-title-stack' });
-        titleStack.createEl('h2', { text: 'Bill Overview', cls: 'mina-bills-title' });
-        titleStack.createEl('span', { text: moment().format('MMMM YYYY'), cls: 'mina-bills-subtitle' });
+        const titleRow = header.createEl('div', { cls: 'diwa-bills-title-row' });
+        const titleStack = titleRow.createEl('div', { cls: 'diwa-bills-title-stack' });
+        titleStack.createEl('h2', { text: 'Bill Overview', cls: 'diwa-bills-title' });
+        titleStack.createEl('span', { text: moment().format('MMMM YYYY'), cls: 'diwa-bills-subtitle' });
 
         // Inline "+" — visible on desktop; FAB replaces it on mobile
         const addBtnInline = titleRow.createEl('button', {
             text: '+ New Bill',
-            cls: 'mina-bills-inline-add-btn'
+            cls: 'diwa-bills-inline-add-btn'
         });
         addBtnInline.addEventListener('click', () => {
             new NewDueModal(this.app, this.settings.pfFolder, async () => { await this.index.buildDueIndex(); this.renderDuesMode(container); }).open();
@@ -42,7 +42,7 @@ export class DuesTab extends BaseTab {
 
         const analyticsBtn = titleRow.createEl('button', {
             text: 'Analytics →',
-            cls: 'mina-bills-inline-add-btn'
+            cls: 'diwa-bills-inline-add-btn'
         });
         analyticsBtn.addEventListener('click', () => { this.view.activeTab = 'finance-analytics'; this.view.renderView(); });
 
@@ -56,12 +56,12 @@ export class DuesTab extends BaseTab {
         const upcomingEntries = activeEntries.filter(e => e.dueMoment?.isValid() && e.dueMoment.isAfter(today));
         const totalMonthly    = activeEntries.reduce((sum, e) => sum + (e.amount ?? 0), 0);
 
-        const summary = wrap.createEl('div', { cls: 'mina-bills-summary' });
+        const summary = wrap.createEl('div', { cls: 'diwa-bills-summary' });
 
         const renderMetric = (value: string, label: string, mod = '') => {
-            const chip = summary.createEl('div', { cls: `mina-bills-metric-chip${mod ? ' ' + mod : ''}` });
-            chip.createEl('div', { text: value, cls: 'mina-bills-metric-value' });
-            chip.createEl('div', { text: label, cls: 'mina-bills-metric-label' });
+            const chip = summary.createEl('div', { cls: `diwa-bills-metric-chip${mod ? ' ' + mod : ''}` });
+            chip.createEl('div', { text: value, cls: 'diwa-bills-metric-value' });
+            chip.createEl('div', { text: label, cls: 'diwa-bills-metric-label' });
         };
         renderMetric(
             overdueEntries.length.toString(), 'Overdue',
@@ -80,12 +80,12 @@ export class DuesTab extends BaseTab {
         );
 
         // ── 3. Full-Width Filter Toggle ──────────────────────────────────
-        const toggleBar = wrap.createEl('div', { cls: 'mina-bills-toggle' });
+        const toggleBar = wrap.createEl('div', { cls: 'diwa-bills-toggle' });
 
         const mkToggleBtn = (label: string, isActive: boolean, onClick: () => void) => {
             const btn = toggleBar.createEl('button', {
                 text: label,
-                cls: `mina-bills-toggle-btn${isActive ? ' is-active' : ''}`
+                cls: `diwa-bills-toggle-btn${isActive ? ' is-active' : ''}`
             });
             btn.addEventListener('click', onClick);
         };
@@ -94,7 +94,7 @@ export class DuesTab extends BaseTab {
 
         // ── 4. Bill Cards ────────────────────────────────────────────────
         const entries       = allEntries.filter(e => this.showAll || e.isActive);
-        const listContainer = wrap.createEl('div', { cls: 'mina-bills-list' });
+        const listContainer = wrap.createEl('div', { cls: 'diwa-bills-list' });
 
         if (entries.length === 0) {
             this.renderBillsEmptyState(listContainer, () => this.renderDuesMode(container));
@@ -115,14 +115,14 @@ export class DuesTab extends BaseTab {
 
                 // ── Card shell ───────────────────────────────────────────
                 const card = listContainer.createEl('div', {
-                    cls: `mina-bills-card ${statusClass}${isPaid ? ' is-inactive' : ''}`
+                    cls: `diwa-bills-card ${statusClass}${isPaid ? ' is-inactive' : ''}`
                 });
 
                 // Left accent stripe
-                card.createEl('div', { cls: 'mina-bills-card-stripe' });
+                card.createEl('div', { cls: 'diwa-bills-card-stripe' });
 
                 // Body — tap area → open vault file
-                const body = card.createEl('div', { cls: 'mina-bills-card-body' });
+                const body = card.createEl('div', { cls: 'diwa-bills-card-body' });
                 body.addEventListener('click', () => {
                     this.plugin.app.workspace.openLinkText(
                         entry.title, entry.path,
@@ -131,47 +131,47 @@ export class DuesTab extends BaseTab {
                 });
 
                 // Top row: name + amount
-                const topRow = body.createEl('div', { cls: 'mina-bills-card-top' });
-                topRow.createEl('span', { text: entry.title, cls: 'mina-bills-card-name' });
+                const topRow = body.createEl('div', { cls: 'diwa-bills-card-top' });
+                topRow.createEl('span', { text: entry.title, cls: 'diwa-bills-card-name' });
 
                 // Amount: prefer explicit field, fall back to regex extraction from title
                 const displayAmount = entry.amount != null
                     ? entry.amount.toLocaleString()
                     : (entry.title.match(/[\d,.]+/) ?? [])[0];
                 if (displayAmount) {
-                    topRow.createEl('span', { text: displayAmount, cls: 'mina-bills-card-amount' });
+                    topRow.createEl('span', { text: displayAmount, cls: 'diwa-bills-card-amount' });
                 }
 
                 // Meta row: status badge + recurring tag + last payment
-                const meta = body.createEl('div', { cls: 'mina-bills-card-meta' });
+                const meta = body.createEl('div', { cls: 'diwa-bills-card-meta' });
 
                 if (isOverdue) {
-                    meta.createEl('span', { text: 'Overdue', cls: 'mina-bills-badge mina-bills-badge--overdue' });
+                    meta.createEl('span', { text: 'Overdue', cls: 'diwa-bills-badge diwa-bills-badge--overdue' });
                 } else if (isToday) {
-                    meta.createEl('span', { text: 'Due Today', cls: 'mina-bills-badge mina-bills-badge--today' });
+                    meta.createEl('span', { text: 'Due Today', cls: 'diwa-bills-badge diwa-bills-badge--today' });
                 } else if (isPaid) {
-                    meta.createEl('span', { text: 'Paid', cls: 'mina-bills-badge mina-bills-badge--paid' });
+                    meta.createEl('span', { text: 'Paid', cls: 'diwa-bills-badge diwa-bills-badge--paid' });
                 } else if (entry.dueMoment?.isValid()) {
                     const label = daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil}d`;
-                    meta.createEl('span', { text: label, cls: 'mina-bills-badge mina-bills-badge--upcoming' });
+                    meta.createEl('span', { text: label, cls: 'diwa-bills-badge diwa-bills-badge--upcoming' });
                 }
 
                 if (entry.hasRecurring) {
-                    meta.createEl('span', { text: '↻ Recurring', cls: 'mina-bills-badge mina-bills-badge--recurring' });
+                    meta.createEl('span', { text: '↻ Recurring', cls: 'diwa-bills-badge diwa-bills-badge--recurring' });
                 }
 
                 if (entry.lastPayment) {
                     meta.createEl('span', {
                         text: `Paid ${moment(entry.lastPayment).fromNow()}`,
-                        cls: 'mina-bills-last-payment'
+                        cls: 'diwa-bills-last-payment'
                     });
                 }
 
                 // Pay button — active recurring bills only
                 if (entry.hasRecurring && entry.isActive) {
-                    const actions = card.createEl('div', { cls: 'mina-bills-card-actions' });
+                    const actions = card.createEl('div', { cls: 'diwa-bills-card-actions' });
                     const payBtn  = actions.createEl('button', {
-                        cls: 'mina-bills-pay-btn',
+                        cls: 'diwa-bills-pay-btn',
                         attr: { 'aria-label': `Pay ${entry.title}`, title: 'Record payment' }
                     });
                     setIcon(payBtn, 'lucide-credit-card');
@@ -194,7 +194,7 @@ export class DuesTab extends BaseTab {
         // ── 5. FAB — mobile sticky bottom-right ─────────────────────────
         // Rendered after the list so it stacks correctly in the flex column
         const fab = wrap.createEl('button', {
-            cls: 'mina-bills-fab',
+            cls: 'diwa-bills-fab',
             attr: { 'aria-label': 'Add new bill', title: 'New Bill' }
         });
         setIcon(fab, 'lucide-plus');
@@ -205,17 +205,17 @@ export class DuesTab extends BaseTab {
 
     // ── Mobile Empty State ───────────────────────────────────────────────
     private renderBillsEmptyState(parent: HTMLElement, onCta: () => void) {
-        const empty = parent.createEl('div', { cls: 'mina-bills-empty' });
-        empty.createEl('div', { cls: 'mina-bills-empty-icon', text: '📄' });
+        const empty = parent.createEl('div', { cls: 'diwa-bills-empty' });
+        empty.createEl('div', { cls: 'diwa-bills-empty-icon', text: '📄' });
         empty.createEl('p', {
             text: this.showAll ? 'No bill history yet.' : 'No active bills.',
-            cls: 'mina-bills-empty-title'
+            cls: 'diwa-bills-empty-title'
         });
         empty.createEl('p', {
             text: 'Track recurring payments, subscriptions, and dues — all in one place.',
-            cls: 'mina-bills-empty-body'
+            cls: 'diwa-bills-empty-body'
         });
-        const cta = empty.createEl('button', { text: '+ Add your first bill', cls: 'mina-bills-empty-cta' });
+        const cta = empty.createEl('button', { text: '+ Add your first bill', cls: 'diwa-bills-empty-cta' });
         cta.addEventListener('click', onCta);
     }
 
@@ -225,3 +225,4 @@ export class DuesTab extends BaseTab {
             .sort((a, b) => (a.dueMoment?.valueOf() || 0) - (b.dueMoment?.valueOf() || 0));
     }
 }
+

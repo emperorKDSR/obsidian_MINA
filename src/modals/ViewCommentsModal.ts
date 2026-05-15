@@ -24,7 +24,7 @@ export class ViewCommentsModal extends Modal {
     async render() {
         const { contentEl } = this;
         contentEl.empty();
-        contentEl.addClass('mina-view-comments-modal');
+        contentEl.addClass('diwa-view-comments-modal');
 
         const header = contentEl.createEl('div', { attr: { style: 'margin-bottom: 20px; border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 10px;' } });
         header.createEl('h2', { text: 'Comments', attr: { style: 'margin: 0; font-size: 1.2em;' } });
@@ -105,3 +105,4 @@ export class ViewCommentsModal extends Modal {
         this.contentEl.empty();
     }
 }
+

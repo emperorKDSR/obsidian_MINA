@@ -153,8 +153,8 @@ export class DiwaView extends ItemView {
     renderView() {
         const container = this.containerEl.children[1] as HTMLElement;
         container.empty();
-        container.addClass('mina-view-root');
-        const contentArea = container.createEl('div', { cls: 'mina-view-content', attr: { style: 'flex-grow: 1; overflow: hidden; display: flex; flex-direction: column;' } });
+        container.addClass('diwa-view-root');
+        const contentArea = container.createEl('div', { cls: 'diwa-view-content', attr: { style: 'flex-grow: 1; overflow: hidden; display: flex; flex-direction: column;' } });
         this.renderTab(contentArea);
     }
 
@@ -213,3 +213,4 @@ export class DiwaView extends ItemView {
         return tokens.every(token => combined.includes(token));
     }
 }
+

@@ -14,16 +14,16 @@ export class MementoMoriTab extends BaseTab {
 
     render(container: HTMLElement) {
         container.empty();
-        const wrap = container.createEl('div', { cls: 'mina-memento-wrap' });
+        const wrap = container.createEl('div', { cls: 'diwa-memento-wrap' });
 
         // ── Header ────────────────────────────────────────────────────────
-        const headerRow = wrap.createEl('div', { cls: 'mina-memento-header' });
+        const headerRow = wrap.createEl('div', { cls: 'diwa-memento-header' });
         this.renderHomeIcon(headerRow);
         const titleStack = headerRow.createEl('div', { attr: { style: 'display: flex; flex-direction: column; gap: 2px;' } });
-        titleStack.createEl('h2', { text: 'Memento Mori', cls: 'mina-memento-title' });
+        titleStack.createEl('h2', { text: 'Memento Mori', cls: 'diwa-memento-title' });
 
         if (!this.settings.birthDate) {
-            titleStack.createEl('span', { text: 'Your life in weeks', cls: 'mina-memento-subtitle' });
+            titleStack.createEl('span', { text: 'Your life in weeks', cls: 'diwa-memento-subtitle' });
             this.renderEmptyState(wrap, 'Set your birth date in Settings → Memento Mori to activate');
             return;
         }
@@ -42,10 +42,10 @@ export class MementoMoriTab extends BaseTab {
         const weeksRemaining = Math.max(0, totalWeeks - livedWeeks);
         const yearsRemaining = Math.max(0, (this.settings.lifeExpectancy || 90) - ageYears);
 
-        titleStack.createEl('span', { text: `${ageYears} years · Week ${livedWeeks} of ${totalWeeks}`, cls: 'mina-memento-subtitle' });
+        titleStack.createEl('span', { text: `${ageYears} years · Week ${livedWeeks} of ${totalWeeks}`, cls: 'diwa-memento-subtitle' });
 
         // ── Stats row ─────────────────────────────────────────────────────
-        const stats = wrap.createEl('div', { cls: 'mina-memento-stats' });
+        const stats = wrap.createEl('div', { cls: 'diwa-memento-stats' });
         this._stat(stats, ageYears.toString(), 'Age');
         this._stat(stats, livedWeeks.toLocaleString(), 'Weeks Lived');
         this._stat(stats, weeksRemaining.toLocaleString(), 'Weeks Left');
@@ -54,20 +54,20 @@ export class MementoMoriTab extends BaseTab {
         // ── Quote ─────────────────────────────────────────────────────────
         const dayOfYear = now.dayOfYear();
         const quote = QUOTES[dayOfYear % QUOTES.length];
-        wrap.createEl('div', { text: quote, cls: 'mina-memento-quote' });
+        wrap.createEl('div', { text: quote, cls: 'diwa-memento-quote' });
 
         // ── Grid ──────────────────────────────────────────────────────────
-        const gridSection = wrap.createEl('div', { cls: 'mina-memento-grid-section' });
+        const gridSection = wrap.createEl('div', { cls: 'diwa-memento-grid-section' });
         const lifeExpectancy = this.settings.lifeExpectancy || 90;
 
         for (let year = 0; year < lifeExpectancy; year++) {
-            const yearRow = gridSection.createEl('div', { cls: 'mina-memento-year-row' });
-            yearRow.createEl('span', { text: String(year + 1), cls: 'mina-memento-year-label' });
-            const weeksRow = yearRow.createEl('div', { cls: 'mina-memento-weeks' });
+            const yearRow = gridSection.createEl('div', { cls: 'diwa-memento-year-row' });
+            yearRow.createEl('span', { text: String(year + 1), cls: 'diwa-memento-year-label' });
+            const weeksRow = yearRow.createEl('div', { cls: 'diwa-memento-weeks' });
 
             for (let w = 0; w < 52; w++) {
                 const weekNum = year * 52 + w;
-                let cls = 'mina-memento-week';
+                let cls = 'diwa-memento-week';
                 if (weekNum < currentWeek) cls += ' is-lived';
                 else if (weekNum === currentWeek) cls += ' is-current';
                 else cls += ' is-future';
@@ -77,8 +77,9 @@ export class MementoMoriTab extends BaseTab {
     }
 
     private _stat(parent: HTMLElement, value: string, label: string) {
-        const chip = parent.createEl('div', { cls: 'mina-memento-stat' });
-        chip.createEl('div', { text: value, cls: 'mina-memento-stat-value' });
-        chip.createEl('div', { text: label, cls: 'mina-memento-stat-label' });
+        const chip = parent.createEl('div', { cls: 'diwa-memento-stat' });
+        chip.createEl('div', { text: value, cls: 'diwa-memento-stat-value' });
+        chip.createEl('div', { text: label, cls: 'diwa-memento-stat-label' });
     }
 }
+

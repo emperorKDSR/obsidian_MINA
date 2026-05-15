@@ -38,15 +38,15 @@ export class TasksTab extends BaseTab {
 
     async renderTaskOverview(container: HTMLElement) {
         container.empty();
-        const wrap = container.createEl('div', { cls: 'mina-tab-wrap' });
+        const wrap = container.createEl('div', { cls: 'diwa-tab-wrap' });
 
         // ── Header row ──
-        const header = wrap.createEl('div', { cls: 'mina-tasks-header' });
-        const navAndTitle = header.createEl('div', { cls: 'mina-tasks-title-row' });
+        const header = wrap.createEl('div', { cls: 'diwa-tasks-header' });
+        const navAndTitle = header.createEl('div', { cls: 'diwa-tasks-title-row' });
         this.renderHomeIcon(navAndTitle);
-        navAndTitle.createEl('h2', { text: 'Tasks', cls: 'mina-tab-title' });
+        navAndTitle.createEl('h2', { text: 'Tasks', cls: 'diwa-tab-title' });
 
-        const addBtn = header.createEl('button', { cls: 'mina-tasks-add-btn' });
+        const addBtn = header.createEl('button', { cls: 'diwa-tasks-add-btn' });
         const addIcon = addBtn.createEl('span'); setIcon(addIcon, 'plus');
         addBtn.createSpan({ text: 'New' });
         addBtn.addEventListener('click', () => {
@@ -65,7 +65,7 @@ export class TasksTab extends BaseTab {
         // ── Search ──
         const searchInp = wrap.createEl('input', {
             type: 'text',
-            cls: 'mina-tasks-search',
+            cls: 'diwa-tasks-search',
             attr: { placeholder: 'Search tasks…' }
         });
         if (this.view.searchQuery) searchInp.value = this.view.searchQuery;
@@ -81,16 +81,16 @@ export class TasksTab extends BaseTab {
             'recurring': allTasks.filter(t => !!t.recurrence).length,
             'done':      allTasks.filter(t => t.status === 'done').length,
         };
-        const segBar = wrap.createEl('div', { cls: 'mina-seg-bar' });
+        const segBar = wrap.createEl('div', { cls: 'diwa-seg-bar' });
         MODES.forEach(({ mode, label }) => {
-            const btn = segBar.createEl('button', { cls: `mina-seg-btn${this.viewMode === mode ? ' is-active' : ''}`, attr: { 'data-mode': mode } });
+            const btn = segBar.createEl('button', { cls: `diwa-seg-btn${this.viewMode === mode ? ' is-active' : ''}`, attr: { 'data-mode': mode } });
             btn.createSpan({ text: label });
-            if (counts[mode] > 0) btn.createEl('span', { text: String(counts[mode]), cls: 'mina-seg-count' });
+            if (counts[mode] > 0) btn.createEl('span', { text: String(counts[mode]), cls: 'diwa-seg-count' });
             btn.addEventListener('click', () => { this.setMode(mode); this.renderTaskOverview(container); });
         });
 
         // ── List shell ──
-        this.listContainer = wrap.createEl('div', { cls: 'mina-task-list' });
+        this.listContainer = wrap.createEl('div', { cls: 'diwa-task-list' });
         this.renderList();
     }
 
@@ -167,10 +167,10 @@ export class TasksTab extends BaseTab {
 
     private renderGroup(label: string, tasks: TaskEntry[], danger: boolean, modifier?: string) {
         if (!this.listContainer) return;
-        const group = this.listContainer.createEl('div', { cls: `mina-task-group${modifier ? ' mina-task-group--' + modifier : ''}` });
+        const group = this.listContainer.createEl('div', { cls: `diwa-task-group${modifier ? ' diwa-task-group--' + modifier : ''}` });
         group.createEl('div', {
             text: label,
-            cls: `mina-task-group-label${danger ? ' is-danger' : ''}`
+            cls: `diwa-task-group-label${danger ? ' is-danger' : ''}`
         });
         for (const task of tasks) this.renderRow(task, group);
     }
@@ -181,10 +181,10 @@ export class TasksTab extends BaseTab {
         const isOverdue = !isDone && dueM?.isValid() && dueM.isBefore(moment(), 'day');
         const isToday = !isDone && dueM?.isValid() && dueM.isSame(moment(), 'day');
 
-        const row = parent.createEl('div', { cls: `mina-task-row${isDone ? ' is-done' : ''}` });
+        const row = parent.createEl('div', { cls: `diwa-task-row${isDone ? ' is-done' : ''}` });
 
         // ── Circle checkbox ──
-        const cb = row.createEl('div', { cls: `mina-task-cb${isDone ? ' is-done' : ''}` });
+        const cb = row.createEl('div', { cls: `diwa-task-cb${isDone ? ' is-done' : ''}` });
         if (isDone) { const ck = cb.createEl('span'); setIcon(ck, 'check'); }
 
         cb.addEventListener('click', async (e) => {
@@ -233,34 +233,34 @@ export class TasksTab extends BaseTab {
             setTimeout(() => {
                 row.remove();
                 this.view._taskTogglePending = Math.max(0, this.view._taskTogglePending - 1);
-                if (this.listContainer && this.listContainer.querySelectorAll('.mina-task-row').length === 0) {
+                if (this.listContainer && this.listContainer.querySelectorAll('.diwa-task-row').length === 0) {
                     this.renderEmptyState(this.listContainer, 'Queue is clear ✓');
                 }
             }, 340);
         });
 
         // ── Content ──
-        const content = row.createEl('div', { cls: 'mina-task-content' });
+        const content = row.createEl('div', { cls: 'diwa-task-content' });
         const titleEl = content.createEl('span', {
             text: task.title,
-            cls: `mina-task-title${isDone ? ' is-done' : ''}`
+            cls: `diwa-task-title${isDone ? ' is-done' : ''}`
         });
 
         // Meta row
         const hasMeta = (task.due && dueM?.isValid()) || task.priority || task.context.length > 0 || !!task.recurrence;
         if (hasMeta) {
-            const meta = content.createEl('div', { cls: 'mina-task-meta' });
+            const meta = content.createEl('div', { cls: 'diwa-task-meta' });
             if (task.due && dueM?.isValid()) {
                 const dateText = isToday ? 'Today' : isOverdue ? dueM.format('MMM D') : dueM.format('MMM D');
                 meta.createEl('span', {
                     text: dateText,
-                    cls: `mina-chip mina-chip--date${isOverdue ? ' is-overdue' : isToday ? ' is-today' : ''}`
+                    cls: `diwa-chip diwa-chip--date${isOverdue ? ' is-overdue' : isToday ? ' is-today' : ''}`
                 });
             }
             if (task.recurrence) {
                 meta.createEl('span', {
                     text: `↻ ${task.recurrence}`,
-                    cls: 'mina-chip mina-chip--recur',
+                    cls: 'diwa-chip diwa-chip--recur',
                     attr: { 'aria-label': `Repeats ${task.recurrence}`, title: `Repeats ${task.recurrence}` }
                 });
             }
@@ -268,18 +268,18 @@ export class TasksTab extends BaseTab {
                 const pMap: Record<string, string> = { high: 'high', medium: 'med', low: 'low' };
                 meta.createEl('span', {
                     text: pMap[task.priority] || task.priority,
-                    cls: `mina-chip mina-chip--pri-${task.priority}`
+                    cls: `diwa-chip diwa-chip--pri-${task.priority}`
                 });
             }
             task.context.slice(0, 2).forEach(ctx => {
-                meta.createEl('span', { text: `#${ctx}`, cls: 'mina-chip mina-chip--ctx' });
+                meta.createEl('span', { text: `#${ctx}`, cls: 'diwa-chip diwa-chip--ctx' });
             });
         }
 
         // ── Actions (reveal on hover) ──
-        const actions = row.createEl('div', { cls: 'mina-task-actions' });
+        const actions = row.createEl('div', { cls: 'diwa-task-actions' });
         const mkBtn = (icon: string, fn: () => void, danger = false) => {
-            const btn = actions.createEl('button', { cls: `mina-task-action-btn${danger ? ' is-danger' : ''}` });
+            const btn = actions.createEl('button', { cls: `diwa-task-action-btn${danger ? ' is-danger' : ''}` });
             setIcon(btn, icon);
             btn.addEventListener('click', (e) => { e.stopPropagation(); fn(); });
         };
@@ -296,4 +296,5 @@ export class TasksTab extends BaseTab {
         }, true);
     }
 }
+
 

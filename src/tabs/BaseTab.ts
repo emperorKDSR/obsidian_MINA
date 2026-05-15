@@ -25,9 +25,9 @@ export class BaseTab {
 
     renderHomeIcon(parent: HTMLElement) {
         const homeBtn = parent.createEl('button', {
-            attr: { class: 'mina-home-btn', style: 'background: transparent; border: none; padding: 0; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; opacity: 0.6; transition: all 0.2s; width: 28px; height: 28px; border-radius: 8px;' }
+            attr: { class: 'diwa-home-btn', style: 'background: transparent; border: none; padding: 0; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; opacity: 0.6; transition: all 0.2s; width: 28px; height: 28px; border-radius: 8px;' }
         });
-        homeBtn.addEventListener('mouseleave', () => { homeBtn.style.opacity = '0.6'; homeBtn.style.background = 'transparent'; });        setIcon(homeBtn, 'mina-home-icon');
+        homeBtn.addEventListener('mouseleave', () => { homeBtn.style.opacity = '0.6'; homeBtn.style.background = 'transparent'; });        setIcon(homeBtn, 'diwa-home-icon');
         homeBtn.addEventListener('click', () => { this.view.activeTab = 'home'; this.view.renderView(); });
     }
 
@@ -86,7 +86,7 @@ export class BaseTab {
     // sec-013: iconPath is an SVG path string — safe only because all callers use hardcoded constants.
     // Do NOT pass user-supplied strings; migrate callers to setIcon() if extensibility is needed.
     renderActionButton(parent: HTMLElement, iconPath: string, title: string, onClick: () => void, color: string = 'var(--text-muted)') {
-        const btn = parent.createEl('button', { attr: { title, class: 'mina-action-btn', style: `color: ${color};` } });
+        const btn = parent.createEl('button', { attr: { title, class: 'diwa-action-btn', style: `color: ${color};` } });
         btn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${iconPath}</svg>`;
         btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); onClick(); });
     }
@@ -121,7 +121,7 @@ export class BaseTab {
 
     refreshCurrentList() {
         if (typeof (this as any).render === 'function') {
-            const container = (this.view as any).containerEl.querySelector('.mina-view-content');
+            const container = (this.view as any).containerEl.querySelector('.diwa-view-content');
             if (container) (this as any).render(container);
             else this.view.renderView();
         } else {
@@ -131,8 +131,8 @@ export class BaseTab {
 
     async renderTaskRow(entry: TaskEntry, container: HTMLElement, hideMetadata = false) {
         const isDone = entry.status === 'done';
-        const row = container.createEl('div', { cls: 'mina-card-row', attr: { style: 'position:relative; margin-bottom:12px;' } });
-        const card = row.createEl('div', { cls: 'mina-card', attr: { style: `${isDone ? 'opacity:0.6;' : ''}` } });
+        const row = container.createEl('div', { cls: 'diwa-card-row', attr: { style: 'position:relative; margin-bottom:12px;' } });
+        const card = row.createEl('div', { cls: 'diwa-card', attr: { style: `${isDone ? 'opacity:0.6;' : ''}` } });
         const topRow = card.createEl('div', { attr: { style: 'display:flex; gap:12px; align-items:flex-start;' } });
         const cb = topRow.createEl('input', { type: 'checkbox', attr: { style: 'margin-top:4px; cursor:pointer; width: 18px; height: 18px;' } });
         cb.checked = isDone;
@@ -142,11 +142,11 @@ export class BaseTab {
         });
 
         const content = topRow.createEl('div', { attr: { style: 'flex:1; min-width:0;' } });
-        const textEl = content.createEl('div', { cls: 'mina-card-text', attr: { style: `word-break:break-word; font-size:0.95em; line-height:1.6; ${isDone ? 'text-decoration:line-through; opacity:0.7;' : ''}` } });
+        const textEl = content.createEl('div', { cls: 'diwa-card-text', attr: { style: `word-break:break-word; font-size:0.95em; line-height:1.6; ${isDone ? 'text-decoration:line-through; opacity:0.7;' : ''}` } });
         await MarkdownRenderer.render(this.app, entry.body || entry.title, textEl, entry.filePath, this.view);
         this.hookInternalLinks(textEl, entry.filePath); this.hookImageZoom(textEl);
 
-        const actions = row.createEl('div', { cls: 'mina-actions-overlay', attr: { style: 'position:absolute; top:8px; right:8px; display:flex; gap:4px; padding:4px; background:var(--background-primary); border-radius:10px; border:1px solid var(--background-modifier-border-faint); box-shadow: var(--mina-shadow);' } });
+        const actions = row.createEl('div', { cls: 'diwa-actions-overlay', attr: { style: 'position:absolute; top:8px; right:8px; display:flex; gap:4px; padding:4px; background:var(--background-primary); border-radius:10px; border:1px solid var(--background-modifier-border-faint); box-shadow: var(--diwa-shadow);' } });
 
         this.renderActionButton(actions, ICON_EDIT, 'Edit', () => {
             new EditEntryModal(this.app, this.plugin, entry.body, entry.context.map(c => `#${c}`).join(' '), entry.due || null, true, async (newText, newCtxStr, newDue) => {
@@ -190,18 +190,18 @@ export class BaseTab {
 
         const iconSection = itemEl.createEl('div', { attr: { style: 'width: 36px; margin-right: 12px; margin-top: 4px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center;' } });
         if (level === 0 && !hideAvatar) {
-            const iconContainer = iconSection.createEl('div', { attr: { style: 'width: 36px; height: 36px; border-radius: 50%; overflow: hidden; border: 2px solid var(--background-modifier-border-faint); box-shadow: var(--mina-shadow);' } });
+            const iconContainer = iconSection.createEl('div', { attr: { style: 'width: 36px; height: 36px; border-radius: 50%; overflow: hidden; border: 2px solid var(--background-modifier-border-faint); box-shadow: var(--diwa-shadow);' } });
             const img = iconContainer.createEl('img', { attr: { style: 'width: 100%; height: 100%;' } }); img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(NINJA_AVATAR_SVG)}`;
         }
 
-        const contentDiv = itemEl.createEl('div', { cls: 'mina-thought-content', attr: { style: 'flex-grow: 1; min-width: 0; position: relative;' } });
+        const contentDiv = itemEl.createEl('div', { cls: 'diwa-thought-content', attr: { style: 'flex-grow: 1; min-width: 0; position: relative;' } });
         const isBlurred = blur ?? this.settings.blurredNotes.includes(entry.filePath);
         
-        const card = contentDiv.createEl('div', { cls: 'mina-card' + (isBlurred ? ' mina-blurred' : ''), attr: { style: 'cursor: text;' } });
+        const card = contentDiv.createEl('div', { cls: 'diwa-card' + (isBlurred ? ' diwa-blurred' : ''), attr: { style: 'cursor: text;' } });
         await MarkdownRenderer.render(this.app, entry.body, card, filePath, this.view);
         this.hookInternalLinks(card, filePath); this.hookImageZoom(card); this.hookCheckboxes(card, entry);
 
-        const actions = contentDiv.createEl('div', { cls: 'mina-actions-overlay', attr: { style: 'position:absolute; top:4px; right:4px; display:flex; gap:4px; padding:4px; background:var(--background-primary); border-radius:10px; border:1px solid var(--background-modifier-border-faint); z-index:10; box-shadow: var(--mina-shadow);' } });
+        const actions = contentDiv.createEl('div', { cls: 'diwa-actions-overlay', attr: { style: 'position:absolute; top:4px; right:4px; display:flex; gap:4px; padding:4px; background:var(--background-primary); border-radius:10px; border:1px solid var(--background-modifier-border-faint); z-index:10; box-shadow: var(--diwa-shadow);' } });
 
         this.renderActionButton(actions, ICON_EDIT, 'Edit', () => {
             new EditEntryModal(this.app, this.plugin, entry.body, entry.context.map(c => `#${c}`).join(' '), null, false, async (newText, newCtxStr) => {
@@ -235,7 +235,7 @@ export class BaseTab {
     async renderReplyRow(reply: ReplyEntry, parent: ThoughtEntry, container: HTMLElement, blur?: boolean) {
         const itemEl = container.createEl('div', { attr: { style: `margin-bottom: 6px; display: flex; align-items: flex-start; margin-left: 28px; border-left: 2.5px solid var(--background-modifier-border-faint); padding-left: 16px; opacity: 0.9;` } });
         const contentDiv = itemEl.createEl('div', { attr: { style: 'flex-grow: 1; min-width: 0; position: relative;' } });
-        const card = contentDiv.createEl('div', { cls: 'mina-card' + (blur ? ' mina-blurred' : ''), attr: { style: 'background:var(--background-secondary-alt); border-radius:12px; padding:12px; border:1px solid var(--background-modifier-border-faint); box-shadow: none;' } });
+        const card = contentDiv.createEl('div', { cls: 'diwa-card' + (blur ? ' diwa-blurred' : ''), attr: { style: 'background:var(--background-secondary-alt); border-radius:12px; padding:12px; border:1px solid var(--background-modifier-border-faint); box-shadow: none;' } });
         await MarkdownRenderer.render(this.app, reply.text, card, parent.filePath, this.view);
         this.hookInternalLinks(card, parent.filePath); this.hookImageZoom(card);
     }
@@ -245,3 +245,4 @@ export class BaseTab {
 
     render(container: HTMLElement, ...args: any[]): void {}
 }
+

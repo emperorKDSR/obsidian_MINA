@@ -40,24 +40,24 @@ export class VoiceTab extends BaseTab {
         this.stopWaveform();
 
         container.empty();
-        this.shell = container.createEl('div', { cls: 'mina-voice-shell' });
+        this.shell = container.createEl('div', { cls: 'diwa-voice-shell' });
         this.shell.setAttribute('data-voice-state', this.state);
 
         // Header
-        const header = this.shell.createEl('div', { cls: 'mina-voice-header' });
+        const header = this.shell.createEl('div', { cls: 'diwa-voice-header' });
         const navRow = header.createEl('div', { attr: { style: 'display:flex;align-items:center;gap:12px;margin-bottom:2px;' } });
         this.renderHomeIcon(navRow);
         header.createEl('h2', { text: 'Voice', attr: { style: 'margin:0;font-size:1.4em;font-weight:800;color:var(--text-normal);letter-spacing:-0.02em;line-height:1.1;' } });
 
         // Stage
-        this.stage = this.shell.createEl('div', { cls: 'mina-voice-stage' });
+        this.stage = this.shell.createEl('div', { cls: 'diwa-voice-stage' });
 
         // CTA strip (persistent, shown/hidden per state)
-        this.ctaStrip = this.shell.createEl('div', { cls: 'mina-voice-cta' });
+        this.ctaStrip = this.shell.createEl('div', { cls: 'diwa-voice-cta' });
         this.buildCtaStrip(this.ctaStrip);
 
         // Toast
-        this.toastEl = this.shell.createEl('div', { cls: 'mina-voice-toast' });
+        this.toastEl = this.shell.createEl('div', { cls: 'diwa-voice-toast' });
 
         // Keyboard handler
         this.keyboardHandler = (e: KeyboardEvent) => this.handleKeyboard(e);
@@ -98,16 +98,16 @@ export class VoiceTab extends BaseTab {
 
     private renderIdle(stage: HTMLElement) {
         // Waveform placeholder
-        const waveWrap = stage.createEl('div', { cls: 'mina-wave-bars is-idle' });
-        for (let i = 0; i < 7; i++) waveWrap.createEl('div', { cls: 'mina-wave-bar' });
+        const waveWrap = stage.createEl('div', { cls: 'diwa-wave-bars is-idle' });
+        for (let i = 0; i < 7; i++) waveWrap.createEl('div', { cls: 'diwa-wave-bar' });
 
         // Mic button
         const micBtn = stage.createEl('button', {
-            cls: 'mina-mic-btn',
+            cls: 'diwa-mic-btn',
             attr: { 'aria-label': 'Start recording', title: 'Tap to start recording' }
         });
         setIcon(micBtn, 'mic');
-        stage.createEl('div', { text: 'Tap to capture voice', cls: 'mina-voice-status' });
+        stage.createEl('div', { text: 'Tap to capture voice', cls: 'diwa-voice-status' });
 
         micBtn.addEventListener('click', () => this.startRecording());
 
@@ -131,27 +131,27 @@ export class VoiceTab extends BaseTab {
 
     private renderRecording(stage: HTMLElement) {
         // Waveform
-        const waveWrap = stage.createEl('div', { cls: 'mina-waveform-wrap' });
+        const waveWrap = stage.createEl('div', { cls: 'diwa-waveform-wrap' });
         requestAnimationFrame(() => {
             if (this.analyser) {
-                const canvas = waveWrap.createEl('canvas', { cls: 'mina-waveform-canvas' }) as HTMLCanvasElement;
+                const canvas = waveWrap.createEl('canvas', { cls: 'diwa-waveform-canvas' }) as HTMLCanvasElement;
                 canvas.width = (canvas.offsetWidth || 300) * devicePixelRatio;
                 canvas.height = 80 * devicePixelRatio;
                 canvas.style.height = '80px';
                 waveWrap.addClass('is-live');
                 this.startWaveformLoop(canvas);
             } else {
-                const bars = waveWrap.createEl('div', { cls: 'mina-wave-bars' });
-                for (let i = 0; i < 7; i++) bars.createEl('div', { cls: 'mina-wave-bar' });
+                const bars = waveWrap.createEl('div', { cls: 'diwa-wave-bars' });
+                for (let i = 0; i < 7; i++) bars.createEl('div', { cls: 'diwa-wave-bar' });
                 waveWrap.addClass('is-live');
             }
         });
 
         // Timer row
-        const timerRow = stage.createEl('div', { cls: 'mina-voice-timer-row is-visible', attr: { 'aria-live': 'polite' } });
-        timerRow.createEl('div', { cls: 'mina-rec-dot' });
-        timerRow.createEl('span', { cls: 'mina-rec-label', text: 'REC' });
-        const timerEl = timerRow.createEl('span', { cls: 'mina-voice-timer', text: '00:00' });
+        const timerRow = stage.createEl('div', { cls: 'diwa-voice-timer-row is-visible', attr: { 'aria-live': 'polite' } });
+        timerRow.createEl('div', { cls: 'diwa-rec-dot' });
+        timerRow.createEl('span', { cls: 'diwa-rec-label', text: 'REC' });
+        const timerEl = timerRow.createEl('span', { cls: 'diwa-voice-timer', text: '00:00' });
 
         this.timerInterval = window.setInterval(() => {
             const elapsed = Date.now() - this.recordingStartTime;
@@ -163,11 +163,11 @@ export class VoiceTab extends BaseTab {
 
         // Stop button
         const stopBtn = stage.createEl('button', {
-            cls: 'mina-mic-btn is-recording',
+            cls: 'diwa-mic-btn is-recording',
             attr: { 'aria-label': 'Stop recording', title: 'Tap to stop' }
         });
         setIcon(stopBtn, 'square');
-        stage.createEl('div', { text: 'Tap to stop', cls: 'mina-voice-status' });
+        stage.createEl('div', { text: 'Tap to stop', cls: 'diwa-voice-status' });
         stopBtn.addEventListener('click', () => {
             this.haptic('double');
             this.stopRecording();
@@ -179,11 +179,11 @@ export class VoiceTab extends BaseTab {
     private renderProcessing(stage: HTMLElement) {
         const msgs = ['Parsing your audio...', 'Extracting signal...', 'Translating thought to text...'];
         stage.createEl('div', {
-            cls: 'mina-voice-spinner',
+            cls: 'diwa-voice-spinner',
             attr: { role: 'status', 'aria-label': 'Transcribing audio' }
         });
-        stage.createEl('div', { cls: 'mina-processing-label', text: 'Transcribing your note...' });
-        stage.createEl('div', { cls: 'mina-processing-sub', text: msgs[Math.floor(Math.random() * msgs.length)] });
+        stage.createEl('div', { cls: 'diwa-processing-label', text: 'Transcribing your note...' });
+        stage.createEl('div', { cls: 'diwa-processing-sub', text: msgs[Math.floor(Math.random() * msgs.length)] });
     }
 
     // ─── REVIEW ─────────────────────────────────────────────────────────────────
@@ -192,25 +192,25 @@ export class VoiceTab extends BaseTab {
         if (!this.reviewData) return;
         const { transcript, clipFileName } = this.reviewData;
 
-        const reviewSection = stage.createEl('div', { cls: 'mina-vs-reviewing' });
-        reviewSection.createEl('div', { cls: 'mina-transcript-section-label', text: 'Transcript' });
+        const reviewSection = stage.createEl('div', { cls: 'diwa-vs-reviewing' });
+        reviewSection.createEl('div', { cls: 'diwa-transcript-section-label', text: 'Transcript' });
 
         // Source badge
-        const badge = reviewSection.createEl('div', { cls: 'mina-source-badge', title: 'Tap to play audio' });
+        const badge = reviewSection.createEl('div', { cls: 'diwa-source-badge', title: 'Tap to play audio' });
         setIcon(badge.createEl('span'), 'play');
         badge.createEl('span', { text: clipFileName });
         badge.addEventListener('click', () => this.playAudio(clipFileName));
 
         // Transcript card
-        const card = reviewSection.createEl('div', { cls: 'mina-transcript-card' });
+        const card = reviewSection.createEl('div', { cls: 'diwa-transcript-card' });
         const textarea = card.createEl('textarea', {
-            cls: 'mina-transcript-textarea',
+            cls: 'diwa-transcript-textarea',
             attr: { 'aria-label': 'Transcript — edit before saving' }
         }) as HTMLTextAreaElement;
         textarea.value = transcript;
 
         // Edit hint
-        const editHint = reviewSection.createEl('div', { cls: 'mina-edit-hint' });
+        const editHint = reviewSection.createEl('div', { cls: 'diwa-edit-hint' });
         setIcon(editHint.createEl('span'), 'pencil');
         editHint.createEl('span', { text: 'Tap to edit transcript' });
         textarea.addEventListener('focus', () => editHint.addClass('is-hidden'), { once: true });
@@ -243,17 +243,17 @@ export class VoiceTab extends BaseTab {
     // ─── CTA STRIP ──────────────────────────────────────────────────────────────
 
     private buildCtaStrip(strip: HTMLElement) {
-        const thoughtBtn = strip.createEl('button', { cls: 'mina-cta-thought', attr: { title: 'Save as Thought (T)' } });
-        thoughtBtn.createEl('span', { cls: 'mina-cta-thought-icon', text: '💭' });
+        const thoughtBtn = strip.createEl('button', { cls: 'diwa-cta-thought', attr: { title: 'Save as Thought (T)' } });
+        thoughtBtn.createEl('span', { cls: 'diwa-cta-thought-icon', text: '💭' });
         thoughtBtn.createEl('span', { text: 'THOUGHT' });
         thoughtBtn.addEventListener('click', () => this.saveAsThought());
 
-        const taskBtn = strip.createEl('button', { cls: 'mina-cta-task', attr: { title: 'Create Task (K)' } });
-        taskBtn.createEl('span', { cls: 'mina-cta-task-icon', text: '✓' });
+        const taskBtn = strip.createEl('button', { cls: 'diwa-cta-task', attr: { title: 'Create Task (K)' } });
+        taskBtn.createEl('span', { cls: 'diwa-cta-task-icon', text: '✓' });
         taskBtn.createEl('span', { text: 'CREATE TASK' });
         taskBtn.addEventListener('click', () => this.createTask());
 
-        const discardBtn = strip.createEl('button', { cls: 'mina-cta-discard', attr: { title: 'Discard (Esc)' } });
+        const discardBtn = strip.createEl('button', { cls: 'diwa-cta-discard', attr: { title: 'Discard (Esc)' } });
         discardBtn.setText('✕');
         discardBtn.addEventListener('click', () => this.discardTranscript());
     }
@@ -269,18 +269,18 @@ export class VoiceTab extends BaseTab {
 
         if (clips.length === 0) return;
 
-        const section = parent.createEl('div', { cls: 'mina-voice-clips-section' });
-        section.createEl('div', { cls: 'mina-voice-clips-label', text: 'RECENT CLIPS' });
-        const list = section.createEl('div', { cls: 'mina-voice-clips-list' });
+        const section = parent.createEl('div', { cls: 'diwa-voice-clips-section' });
+        section.createEl('div', { cls: 'diwa-voice-clips-label', text: 'RECENT CLIPS' });
+        const list = section.createEl('div', { cls: 'diwa-voice-clips-list' });
 
         clips.forEach(file => {
-            const row = list.createEl('div', { cls: 'mina-clip-row' });
-            row.createEl('span', { cls: 'mina-clip-name', text: file.basename });
+            const row = list.createEl('div', { cls: 'diwa-clip-row' });
+            row.createEl('span', { cls: 'diwa-clip-name', text: file.basename });
 
-            const actions = row.createEl('div', { cls: 'mina-clip-actions' });
+            const actions = row.createEl('div', { cls: 'diwa-clip-actions' });
 
             const transcribeBtn = actions.createEl('button', {
-                cls: 'mina-clip-transcribe-btn',
+                cls: 'diwa-clip-transcribe-btn',
                 text: 'Transcribe',
                 attr: { title: `Transcribe ${file.basename}` }
             });
@@ -298,7 +298,7 @@ export class VoiceTab extends BaseTab {
                 }
             });
 
-            const deleteBtn = actions.createEl('button', { cls: 'mina-clip-delete-btn', attr: { title: 'Delete clip' } });
+            const deleteBtn = actions.createEl('button', { cls: 'diwa-clip-delete-btn', attr: { title: 'Delete clip' } });
             setIcon(deleteBtn, 'lucide-trash-2');
             deleteBtn.addEventListener('click', () => {
                 new ConfirmModal(this.app, `Delete "${file.basename}"? This cannot be undone.`, async () => {
@@ -421,7 +421,7 @@ export class VoiceTab extends BaseTab {
     // ─── SAVE ACTIONS ───────────────────────────────────────────────────────────
 
     private getTranscript(): string {
-        const ta = this.stage?.querySelector('.mina-transcript-textarea') as HTMLTextAreaElement | null;
+        const ta = this.stage?.querySelector('.diwa-transcript-textarea') as HTMLTextAreaElement | null;
         return ta ? ta.value : (this.reviewData?.transcript || '');
     }
 
@@ -615,3 +615,4 @@ export class VoiceTab extends BaseTab {
 
     onunload() { this.cleanup(); }
 }
+

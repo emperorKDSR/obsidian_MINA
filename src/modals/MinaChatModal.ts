@@ -11,7 +11,7 @@ export class MinaChatModal extends Modal {
     onOpen() {
         const { contentEl } = this;
         contentEl.empty();
-        contentEl.addClass('mina-modal-chat');
+        contentEl.addClass('diwa-modal-chat');
         const container = contentEl.createEl('div', { attr: { style: 'padding: 10px; max-height: 80vh; overflow-y: auto;' } });
         MarkdownRenderer.render(this.app, this.content, container, '', this.scope as any);
     }
@@ -20,3 +20,4 @@ export class MinaChatModal extends Modal {
         this.contentEl.empty();
     }
 }
+

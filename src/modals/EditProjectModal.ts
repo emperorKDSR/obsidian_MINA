@@ -54,62 +54,62 @@ export class EditProjectModal extends Modal {
     }
 
     onClose() {
-        document.body.removeClass('mina-mobile-active');
+        document.body.removeClass('diwa-mobile-active');
         this.contentEl.empty();
     }
 
     private _renderMobileSheet(contentEl: HTMLElement, modalEl: HTMLElement) {
-        modalEl.addClass('mina-edit-project-sheet');
-        document.body.addClass('mina-mobile-active');
+        modalEl.addClass('diwa-edit-project-sheet');
+        document.body.addClass('diwa-mobile-active');
         modalEl.style.setProperty('border-radius', '24px 24px 0 0', 'important');
         contentEl.style.setProperty('padding', '0', 'important');
 
         // Handle bar
-        const handleBar = contentEl.createDiv('mina-mobile-handle-bar');
-        handleBar.createDiv('mina-mobile-handle-pill');
+        const handleBar = contentEl.createDiv('diwa-mobile-handle-bar');
+        handleBar.createDiv('diwa-mobile-handle-pill');
 
         // Header
-        const header = contentEl.createDiv('mina-epm-header');
-        const headerLeft = header.createDiv('mina-epm-header-left');
-        const colorRing = headerLeft.createDiv('mina-epm-color-ring');
+        const header = contentEl.createDiv('diwa-epm-header');
+        const headerLeft = header.createDiv('diwa-epm-header-left');
+        const colorRing = headerLeft.createDiv('diwa-epm-color-ring');
         colorRing.style.setProperty('--project-color', this.draftColor);
-        headerLeft.createEl('h3', { text: 'Edit Project', cls: 'mina-epm-title' });
-        const closeBtn = header.createEl('button', { cls: 'mina-epm-header-close', text: '×' });
+        headerLeft.createEl('h3', { text: 'Edit Project', cls: 'diwa-epm-title' });
+        const closeBtn = header.createEl('button', { cls: 'diwa-epm-header-close', text: '×' });
         closeBtn.addEventListener('click', () => this.close());
 
         // Body
-        const body = contentEl.createDiv('mina-epm-body');
+        const body = contentEl.createDiv('diwa-epm-body');
         this._buildForm(body, colorRing);
 
         // Footer
-        const footer = contentEl.createDiv('mina-epm-footer');
-        const cancelBtn = footer.createEl('button', { text: 'Cancel', cls: 'mina-epm-cancel-btn' });
+        const footer = contentEl.createDiv('diwa-epm-footer');
+        const cancelBtn = footer.createEl('button', { text: 'Cancel', cls: 'diwa-epm-cancel-btn' });
         cancelBtn.addEventListener('click', () => this.close());
-        const saveBtn = footer.createEl('button', { text: 'Save Changes', cls: 'mina-epm-save-btn' }) as HTMLButtonElement;
+        const saveBtn = footer.createEl('button', { text: 'Save Changes', cls: 'diwa-epm-save-btn' }) as HTMLButtonElement;
         saveBtn.addEventListener('click', () => this._submit(saveBtn));
 
         this._initSwipeToDismiss(modalEl, handleBar, body);
     }
 
     private _renderDesktopModal(contentEl: HTMLElement, modalEl: HTMLElement) {
-        modalEl.addClass('mina-new-project-modal');
-        modalEl.addClass('mina-edit-project-modal');
-        contentEl.createEl('h2', { text: 'Edit Project', cls: 'mina-modal-title' });
+        modalEl.addClass('diwa-new-project-modal');
+        modalEl.addClass('diwa-edit-project-modal');
+        contentEl.createEl('h2', { text: 'Edit Project', cls: 'diwa-modal-title' });
         this._buildForm(contentEl);
-        const actions = contentEl.createDiv('mina-modal-actions');
-        const cancelBtn = actions.createEl('button', { text: 'Cancel', cls: 'mina-btn mina-btn--ghost' });
+        const actions = contentEl.createDiv('diwa-modal-actions');
+        const cancelBtn = actions.createEl('button', { text: 'Cancel', cls: 'diwa-btn diwa-btn--ghost' });
         cancelBtn.addEventListener('click', () => this.close());
-        const saveBtn = actions.createEl('button', { text: 'Save Changes', cls: 'mina-btn mina-btn--primary' }) as HTMLButtonElement;
+        const saveBtn = actions.createEl('button', { text: 'Save Changes', cls: 'diwa-btn diwa-btn--primary' }) as HTMLButtonElement;
         saveBtn.addEventListener('click', () => this._submit(saveBtn));
     }
 
     private _buildForm(container: HTMLElement, colorRingEl?: HTMLElement) {
         // Name
-        const nameWrap = container.createDiv('mina-field-group');
-        nameWrap.createEl('label', { text: 'Project Name', cls: 'mina-field-label' });
+        const nameWrap = container.createDiv('diwa-field-group');
+        nameWrap.createEl('label', { text: 'Project Name', cls: 'diwa-field-label' });
         const nameInput = nameWrap.createEl('input', {
             type: 'text',
-            cls: 'mina-field-input',
+            cls: 'diwa-field-input',
             attr: { placeholder: 'e.g. Launch MINA Plugin', autocomplete: 'off' }
         }) as HTMLInputElement;
         nameInput.value = this.draftName;
@@ -117,19 +117,19 @@ export class EditProjectModal extends Modal {
         setTimeout(() => nameInput.focus(), 80);
 
         // Goal
-        const goalWrap = container.createDiv('mina-field-group');
-        goalWrap.createEl('label', { text: 'Goal / Outcome', cls: 'mina-field-label' });
+        const goalWrap = container.createDiv('diwa-field-group');
+        goalWrap.createEl('label', { text: 'Goal / Outcome', cls: 'diwa-field-label' });
         const goalTextarea = goalWrap.createEl('textarea', {
-            cls: 'mina-field-textarea',
+            cls: 'diwa-field-textarea',
             attr: { placeholder: 'What does success look like?', rows: '3' }
         }) as HTMLTextAreaElement;
         goalTextarea.value = this.draftGoal;
         goalTextarea.addEventListener('input', () => { this.draftGoal = goalTextarea.value.trim(); });
 
         // Status
-        const statusWrap = container.createDiv('mina-field-group');
-        statusWrap.createEl('label', { text: 'Status', cls: 'mina-field-label' });
-        const segBar = statusWrap.createDiv('mina-seg-bar mina-epm-status-bar');
+        const statusWrap = container.createDiv('diwa-field-group');
+        statusWrap.createEl('label', { text: 'Status', cls: 'diwa-field-label' });
+        const segBar = statusWrap.createDiv('diwa-seg-bar diwa-epm-status-bar');
         const statuses: { val: ProjectEntry['status']; label: string }[] = [
             { val: 'active',    label: 'Active' },
             { val: 'on-hold',   label: 'On Hold' },
@@ -137,7 +137,7 @@ export class EditProjectModal extends Modal {
         ];
         const segBtns: HTMLButtonElement[] = [];
         statuses.forEach(s => {
-            const btn = segBar.createEl('button', { text: s.label, cls: 'mina-seg-btn' }) as HTMLButtonElement;
+            const btn = segBar.createEl('button', { text: s.label, cls: 'diwa-seg-btn' }) as HTMLButtonElement;
             if (s.val === this.draftStatus) btn.addClass('is-active');
             btn.addEventListener('click', () => {
                 this.draftStatus = s.val;
@@ -149,22 +149,22 @@ export class EditProjectModal extends Modal {
         });
 
         // Due Date
-        const dueWrap = container.createDiv('mina-field-group');
-        dueWrap.createEl('label', { text: 'Due Date (optional)', cls: 'mina-field-label' });
+        const dueWrap = container.createDiv('diwa-field-group');
+        dueWrap.createEl('label', { text: 'Due Date (optional)', cls: 'diwa-field-label' });
         const dueInput = dueWrap.createEl('input', {
             type: 'date',
-            cls: 'mina-field-input'
+            cls: 'diwa-field-input'
         }) as HTMLInputElement;
         dueInput.value = this.draftDue;
         dueInput.addEventListener('change', () => { this.draftDue = dueInput.value; });
 
         // Color
-        const colorWrap = container.createDiv('mina-field-group');
-        colorWrap.createEl('label', { text: 'Color', cls: 'mina-field-label' });
-        const colorPicker = colorWrap.createDiv('mina-project-color-picker');
+        const colorWrap = container.createDiv('diwa-field-group');
+        colorWrap.createEl('label', { text: 'Color', cls: 'diwa-field-label' });
+        const colorPicker = colorWrap.createDiv('diwa-project-color-picker');
         const swatches: HTMLElement[] = [];
         PROJECT_COLORS.forEach(c => {
-            const swatch = colorPicker.createDiv('mina-color-swatch');
+            const swatch = colorPicker.createDiv('diwa-color-swatch');
             swatch.style.setProperty('--swatch-color', c.hex);
             swatch.setAttribute('title', c.label);
             if (c.hex === this.draftColor) swatch.addClass('is-selected');
@@ -263,3 +263,4 @@ export class EditProjectModal extends Modal {
         modalEl.addEventListener('touchend', onTouchEnd, { passive: true });
     }
 }
+
