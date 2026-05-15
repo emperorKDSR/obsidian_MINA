@@ -1988,3 +1988,4 @@ export class SynthesisTab extends BaseTab {
         }
     }
 }
+

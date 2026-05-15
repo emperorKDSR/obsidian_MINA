@@ -34,3 +34,4 @@ export class ConfirmModal extends Modal {
         this.contentEl.empty();
     }
 }
+

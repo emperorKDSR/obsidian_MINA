@@ -171,7 +171,7 @@ export class AiTab extends BaseTab {
 
         const textArea = inputArea.createEl('textarea', {
             cls: 'diwa-ai-textarea',
-            attr: { placeholder: 'Ask MINA anything…', rows: '1' }
+            attr: { placeholder: 'Ask DIWA anything…', rows: '1' }
         });
 
         // Auto-resize textarea
@@ -219,7 +219,7 @@ export class AiTab extends BaseTab {
                 typingRow.remove();
                 this.view.chatHistory.push({ role: 'model', text: response });
                 renderHistory();
-                this.saveChatHistory().catch(e => console.error('[MINA AiTab] save failed', e));
+                this.saveChatHistory().catch(e => console.error('[DIWA AiTab] save failed', e));
             } catch (e: any) {
                 typingRow.remove();
                 const errRow = chatArea.createEl('div', { cls: 'diwa-ai-msg-row is-bot' });
@@ -239,7 +239,7 @@ export class AiTab extends BaseTab {
         const welcome = container.createEl('div', { cls: 'diwa-ai-welcome' });
         const icon = welcome.createEl('div', { cls: 'diwa-ai-welcome-icon' });
         setIcon(icon, 'lucide-sparkles');
-        welcome.createEl('h3', { text: 'MINA Intelligence', cls: 'diwa-ai-welcome-title' });
+        welcome.createEl('h3', { text: 'DIWA Intelligence', cls: 'diwa-ai-welcome-title' });
         welcome.createEl('p', { text: 'Your personal AI grounded in your vault knowledge. Ask questions, get insights, or brainstorm ideas.', cls: 'diwa-ai-welcome-desc' });
 
         const suggestions = welcome.createEl('div', { cls: 'diwa-ai-suggestions' });
@@ -262,4 +262,5 @@ export class AiTab extends BaseTab {
         });
     }
 }
+
 

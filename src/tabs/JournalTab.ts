@@ -298,7 +298,7 @@ export class JournalTab extends BaseTab {
             textarea.dispatchEvent(new Event('input'));
             new Notice('📎 Image attached', 1200);
         } catch (e) {
-            console.error('[MINA] Compose attachment failed:', e);
+            console.error('[DIWA] Compose attachment failed:', e);
             new Notice('Failed to attach image.', 2000);
         }
     }
@@ -385,4 +385,5 @@ export class JournalTab extends BaseTab {
         s.createEl('div', { cls: 'diwa-journal-stat-lbl', text: label });
     }
 }
+
 

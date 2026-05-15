@@ -50,7 +50,7 @@ export class VaultService {
         const safeContexts = contexts.map(c => this.sanitizeContext(c));
         const contextYaml = safeContexts.length > 0 ? safeContexts.map(c => `  - ${c}`).join('\n') : '  []';
         const projectLine = project ? `project: "${this.sanitizeYamlString(project)}"\n` : '';
-        return `---\ntitle: "${safeTitle}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA\ncontext:\n${contextYaml}\ntags:\n${contextYaml}\npinned: ${pinned}\n${projectLine}---\n`;
+        return `---\ntitle: "${safeTitle}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: DIWA\ncontext:\n${contextYaml}\ntags:\n${contextYaml}\npinned: ${pinned}\n${projectLine}---\n`;
     }
 
     private buildTaskFrontmatter(title: string, created: string, modified: string, dayStr: string, status: string, due: string, contexts: string[], project?: string, recurrence?: string, recurrenceParentId?: string, priority?: string, energy?: string): string {
@@ -64,7 +64,7 @@ export class VaultService {
         const parentLine = recurrenceParentId ? `recurrenceParentId: "${recurrenceParentId}"\n` : '';
         const priorityLine = priority ? `priority: ${priority}\n` : '';
         const energyLine = energy ? `energy: ${energy}\n` : '';
-        return `---\ntitle: "${safeTitle}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: MINA_TASKS\nstatus: ${status}\ndue: ${dueYaml}\ncontext:\n${contextYaml}\ntags:\n${contextYaml}\n${projectLine}${recurrenceLine}${parentLine}${priorityLine}${energyLine}---\n`;
+        return `---\ntitle: "${safeTitle}"\ncreated: ${created}\nmodified: ${modified}\nday: "[[${dayStr}]]"\narea: DIWA_TASKS\nstatus: ${status}\ndue: ${dueYaml}\ncontext:\n${contextYaml}\ntags:\n${contextYaml}\n${projectLine}${recurrenceLine}${parentLine}${priorityLine}${energyLine}---\n`;
     }
 
     // sec-006: Strip characters that break YAML string values
@@ -127,7 +127,7 @@ export class VaultService {
             const file = await this.app.vault.create(finalPath, content);
             return file;
         } catch (e) {
-            console.error('[MINA VaultService]', e);
+            console.error('[DIWA VaultService]', e);
             new Notice(VaultService.toUserMessage(e));
             throw e;
         }
@@ -192,7 +192,7 @@ export class VaultService {
             const newContent = content.slice(0, fmEnd + 5) + bodyToSave;
             await this.app.vault.modify(file, newContent);
         } catch (e) {
-            console.error('[MINA VaultService]', e);
+            console.error('[DIWA VaultService]', e);
             new Notice(VaultService.toUserMessage(e));
         }
     }
@@ -226,7 +226,7 @@ export class VaultService {
             if (fmEnd === -1) return;
             await this.app.vault.modify(file, content.slice(0, fmEnd + 5) + newText + '\n');
         } catch (e) {
-            console.error('[MINA VaultService]', e);
+            console.error('[DIWA VaultService]', e);
             new Notice(VaultService.toUserMessage(e));
         }
     }
@@ -240,7 +240,7 @@ export class VaultService {
                 fm['modified'] = this.formatDateTime(new Date());
             });
         } catch (e) {
-            console.error('[MINA VaultService]', e);
+            console.error('[DIWA VaultService]', e);
             new Notice(VaultService.toUserMessage(e));
         }
     }
@@ -253,7 +253,7 @@ export class VaultService {
                 fm['due'] = dueDate ? `[[${dueDate}]]` : '';
                 fm['modified'] = this.formatDateTime(new Date());
             });
-        } catch (e) { console.error('[MINA VaultService]', e); new Notice(VaultService.toUserMessage(e)); }
+        } catch (e) { console.error('[DIWA VaultService]', e); new Notice(VaultService.toUserMessage(e)); }
     }
 
     async updateTaskTitle(filePath: string, newTitle: string): Promise<void> {
@@ -264,7 +264,7 @@ export class VaultService {
                 fm['title'] = this.sanitizeYamlString(newTitle);
                 fm['modified'] = this.formatDateTime(new Date());
             });
-        } catch (e) { console.error('[MINA VaultService]', e); new Notice(VaultService.toUserMessage(e)); }
+        } catch (e) { console.error('[DIWA VaultService]', e); new Notice(VaultService.toUserMessage(e)); }
     }
 
     async updateTaskEntry(filePath: string, updates: {
@@ -314,7 +314,7 @@ export class VaultService {
             await this.app.vault.modify(file, content.slice(0, bodyStart) + updates.title + '\n' + replySuffix);
             return true;
         } catch (e) {
-            console.error('[MINA VaultService]', e);
+            console.error('[DIWA VaultService]', e);
             new Notice(VaultService.toUserMessage(e));
             return false;
         }
@@ -333,7 +333,7 @@ export class VaultService {
             await this.app.vault.rename(file, trashPath);
             new Notice('Moved to trash.');
         } catch (e) {
-            console.error('[MINA VaultService]', e);
+            console.error('[DIWA VaultService]', e);
             new Notice(VaultService.toUserMessage(e));
         }
     }
@@ -383,7 +383,7 @@ export class VaultService {
             
             return true;
         } catch (e) {
-            console.error('[MINA VaultService]', e);
+            console.error('[DIWA VaultService]', e);
             new Notice(VaultService.toUserMessage(e));
             return false;
         }
@@ -480,7 +480,7 @@ export class VaultService {
                 await this.app.vault.create(sidecarPath, content);
             }
         } catch (e) {
-            console.error('[MINA VaultService] createVoiceSidecar', e);
+            console.error('[DIWA VaultService] createVoiceSidecar', e);
         }
     }
 
@@ -526,7 +526,7 @@ export class VaultService {
                 await this.app.vault.create(path, content);
             }
         } catch (e) {
-            console.error('[MINA VaultService] saveWeeklyReview', e);
+            console.error('[DIWA VaultService] saveWeeklyReview', e);
             throw e;
         }
     }
@@ -627,7 +627,7 @@ export class VaultService {
                 await this.app.vault.create(path, content);
             }
         } catch (e) {
-            console.error('[MINA VaultService] saveMonthlyGoals', e);
+            console.error('[DIWA VaultService] saveMonthlyGoals', e);
             throw e;
         }
     }
@@ -645,7 +645,7 @@ export class VaultService {
             if (!goalsMatch) return null;
             return goalsMatch[1].trim().split('\n').map(l => l.replace(/^\d+\.\s*/, '').trim()).filter((_, i) => i < 3);
         } catch (e) {
-            console.error('[MINA VaultService] loadMonthlyGoals', e);
+            console.error('[DIWA VaultService] loadMonthlyGoals', e);
             return null;
         }
     }
@@ -667,7 +667,7 @@ export class VaultService {
                 await this.app.vault.create(path, content);
             }
         } catch (e) {
-            console.error('[MINA VaultService] saveCompassData', e);
+            console.error('[DIWA VaultService] saveCompassData', e);
             throw e;
         }
     }
@@ -689,7 +689,7 @@ export class VaultService {
             const lifeMission = missionMatch ? missionMatch[1].trim() : '';
             return { northStarGoals, lifeMission };
         } catch (e) {
-            console.error('[MINA VaultService] loadCompassData', e);
+            console.error('[DIWA VaultService] loadCompassData', e);
             return null;
         }
     }
@@ -736,9 +736,10 @@ export class VaultService {
                 dayPlans
             };
         } catch (e) {
-            console.error('[MINA VaultService] loadWeeklyReview', e);
+            console.error('[DIWA VaultService] loadWeeklyReview', e);
             return null;
         }
     }
 }
+
 

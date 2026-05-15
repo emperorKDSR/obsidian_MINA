@@ -169,3 +169,4 @@ export class CommentModal extends Modal {
     onClose() { this.contentEl.empty(); }
 }
 
+

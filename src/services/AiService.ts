@@ -105,7 +105,7 @@ export class AiService {
         }
 
         // sec-005: Injection boundary instruction — model must not execute content within source delimiters
-        let systemPrompt = `You are MINA, a razor-sharp personal intelligence system integrated into an Obsidian vault.
+        let systemPrompt = `You are DIWA, a razor-sharp personal intelligence system integrated into an Obsidian vault.
 Current date/time: ${moment().format('dddd, MMMM D, YYYY HH:mm:ss')}.
 
 PERSONA: You are a trusted advisor who has read all the user's notes. Speak like a brilliant colleague, not a chatbot. Skip greetings, affirmations, and filler like "Certainly!" or "Great question!". Lead with the answer.
@@ -225,7 +225,7 @@ FORMAT: Use Markdown. Be concise. Use bullet points or headers only when they ge
             return `${label}:\n<<SOURCE_START>>\n${lines.join('\n')}\n<<SOURCE_END>>\n`;
         };
 
-        const prompt = `You are MINA, a razor-sharp personal intelligence layer. Write a concise, personalized weekly review brief grounded entirely in the data below.
+        const prompt = `You are DIWA, a razor-sharp personal intelligence layer. Write a concise, personalized weekly review brief grounded entirely in the data below.
 Current date: ${moment().format('dddd, MMMM D, YYYY')}
 Week: ${ctx.weekId} (${ctx.dateRange})
 
@@ -298,14 +298,14 @@ Rules: No preamble. No sign-off. Under 300 words total. Be direct, specific, and
             const parts: any[] = candidate?.content?.parts ?? [];
             const reply = parts.filter((p: any) => !p.thought).map((p: any) => p.text ?? '').join('').trim();
             if (!reply) {
-                console.warn('[MINA] generateWeeklyReport: empty reply. Raw response:', JSON.stringify(data));
+                console.warn('[DIWA] generateWeeklyReport: empty reply. Raw response:', JSON.stringify(data));
                 throw new Error('Gemini returned an empty response. Try again or check your quota in Google AI Studio.');
             }
             return reply;
         } catch (e: any) {
             if (e?.name === 'AbortError') throw new Error('Weekly report generation was cancelled.');
             const safeMsg = (e?.message || '').replace(/x-goog-api-key=[^\s&]+/g, 'x-goog-api-key=[REDACTED]');
-            console.error('[MINA AiService] generateWeeklyReport:', safeMsg);
+            console.error('[DIWA AiService] generateWeeklyReport:', safeMsg);
             throw e;
         }
     }
@@ -329,7 +329,7 @@ Rules: No preamble. No sign-off. Under 300 words total. Be direct, specific, and
 
         const daysFormatted = targetDates.map(d => `"${d}" (${moment(d).format('ddd')})`).join(', ');
 
-        const prompt = `You are MINA, a personal planning assistant. Create a day-by-day week plan for these dates: ${daysFormatted}.
+        const prompt = `You are DIWA, a personal planning assistant. Create a day-by-day week plan for these dates: ${daysFormatted}.
 
 Current date: ${moment().format('dddd, MMMM D, YYYY')}
 
@@ -399,8 +399,9 @@ Rules:
         } catch (e: any) {
             if (e?.name === 'AbortError') throw new Error('Week plan generation was cancelled.');
             const safeMsg = (e?.message || '').replace(/x-goog-api-key=[^\s&]+/g, 'x-goog-api-key=[REDACTED]');
-            console.error('[MINA AiService] generateWeekPlan:', safeMsg);
+            console.error('[DIWA AiService] generateWeekPlan:', safeMsg);
             throw e;
         }
     }
 }
+

@@ -63,7 +63,7 @@ export class ExportTab extends BaseTab {
             ];
             const content = rows.join('\n');
             const folder = (this.settings.thoughtsFolder || '000 Bin/DIWA V2').replace(/\\/g, '/');
-            const path = `${folder}/MINA_Export_Thoughts.csv`;
+            const path = `${folder}/DIWA_Export_Thoughts.csv`;
             await this._writeFile(path, content);
             new Notice(`Exported ${thoughts.length} thoughts to thoughts folder ✓`);
         } catch (e) {
@@ -93,7 +93,7 @@ export class ExportTab extends BaseTab {
             ];
             const content = rows.join('\n');
             const folder = (this.settings.tasksFolder || '000 Bin/DIWA V2 Tasks').replace(/\\/g, '/');
-            const path = `${folder}/MINA_Export_Tasks.csv`;
+            const path = `${folder}/DIWA_Export_Tasks.csv`;
             await this._writeFile(path, content);
             new Notice(`Exported ${tasks.length} tasks to tasks folder ✓`);
         } catch (e) {
@@ -126,7 +126,7 @@ export class ExportTab extends BaseTab {
             };
             const content = JSON.stringify(backup, null, 2);
             const folder = (this.settings.thoughtsFolder || '000 Bin/DIWA V2').replace(/\\/g, '/');
-            const fileName = `MINA_Backup_${dateStr}.json`;
+            const fileName = `DIWA_Backup_${dateStr}.json`;
             const path = `${folder}/${fileName}`;
             await this._writeFile(path, content);
             new Notice(`Backup created: ${fileName} ✓`);
@@ -147,4 +147,5 @@ export class ExportTab extends BaseTab {
         }
     }
 }
+
 

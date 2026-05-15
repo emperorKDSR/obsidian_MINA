@@ -41,3 +41,4 @@ export class ProjectPickerModal extends SuggestModal<ProjectEntry | null> {
         this.onChoose(item);
     }
 }
+

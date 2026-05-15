@@ -52,3 +52,4 @@ export class InsightTitleModal extends Modal {
 
     onClose() { this.contentEl.empty(); }
 }
+

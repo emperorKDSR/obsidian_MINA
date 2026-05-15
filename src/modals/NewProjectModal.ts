@@ -42,7 +42,7 @@ export class NewProjectModal extends Modal {
         const nameInput = nameWrap.createEl('input', {
             type: 'text',
             cls: 'diwa-field-input',
-            attr: { placeholder: 'e.g. Launch MINA Plugin', autocomplete: 'off' }
+            attr: { placeholder: 'e.g. Launch DIWA Plugin', autocomplete: 'off' }
         });
         nameInput.value = this.name;
         nameInput.addEventListener('input', () => { this.name = nameInput.value.trim(); });
@@ -140,7 +140,7 @@ export class NewProjectModal extends Modal {
             this.onCreated(entry);
             this.close();
         } catch (e) {
-            console.error('[MINA] createProject failed', e);
+            console.error('[DIWA] createProject failed', e);
         }
     }
 
@@ -148,4 +148,5 @@ export class NewProjectModal extends Modal {
         this.contentEl.empty();
     }
 }
+
 

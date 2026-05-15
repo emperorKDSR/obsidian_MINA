@@ -22,3 +22,4 @@ export class NotePickerModal extends FuzzySuggestModal<TFile> {
         this.onChoose(item);
     }
 }
+

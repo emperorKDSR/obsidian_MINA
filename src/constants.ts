@@ -192,3 +192,4 @@ export const DEFAULT_SETTINGS: DiwaSettings = {
     reminderTasksEnabled: true,
     peopleFolder: '000 Bin/DIWA V2 People',
 }
+

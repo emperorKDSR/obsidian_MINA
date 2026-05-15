@@ -113,3 +113,4 @@ export class PaymentModal extends Modal {
 
     onClose() { this.contentEl.empty(); }
 }
+

@@ -14,12 +14,12 @@ const SECTIONS: HelpSection[] = [
             { label: 'Zen Mode 🎯', desc: 'Tap the target icon to collapse all navigation and enter deep focus. Tap again to exit.', tip: 'Best used when you only want to see your intelligence card and capture bar.' },
             { label: 'Intelligence Card', desc: 'Live snapshot: open tasks, habits completed, unprocessed thoughts, and total dues. Hit "SYNTHESIZE BRIEFING" to get an AI strategy summary.', tip: 'Requires a Gemini API key configured in Settings → AI.' },
             { label: 'Navigation Clusters', desc: 'Four grouped rows: ACTION (Focus, Habits, Journal, Synthesis, Timeline), MANAGEMENT (Tasks, Finance, Projects, Calendar, Weekly, Monthly, Compass), FEATURES (AI Chat, Voice, Compasee, Memento), and SYSTEM (Settings, Manual, Export). Each cluster wraps to the next row automatically on narrow screens.', tip: 'Tap any icon to jump directly to that tab.' },
-            { label: 'Tablet Experience', desc: 'On tablets (iPad, etc.), MINA automatically upgrades to a desktop-like layout: inline capture bar, horizontal habit bar, expanded navigation, and hover effects.', tip: 'Tablet is detected when the device short-edge is ≥768px.' },
+            { label: 'Tablet Experience', desc: 'On tablets (iPad, etc.), DIWA automatically upgrades to a desktop-like layout: inline capture bar, horizontal habit bar, expanded navigation, and hover effects.', tip: 'Tablet is detected when the device short-edge is ≥768px.' },
             { label: 'Global Search 🔍', desc: 'Tap the search icon in the header or press Mod+Shift+F to open Global Search. Instantly find anything across Thoughts, Tasks, Dues, Projects, and Habits.', tip: 'Also available via Obsidian command palette: "MINA: Global Search".' },
         ]
     },
     {
-        id: 'search', icon: 'lucide-search', title: 'Global Search', subtitle: 'Find anything across MINA instantly',
+        id: 'search', icon: 'lucide-search', title: 'Global Search', subtitle: 'Find anything across DIWA instantly',
         items: [
             { label: 'Opening Search', desc: 'Tap the 🔍 icon in the Command Center header, or press Mod+Shift+F. On phone, a search pill sits between the greeting and capture bar.', tip: 'Also available via Obsidian command palette: "MINA: Global Search".' },
             { label: 'Search Pill (Phone)', desc: 'On phone, a tappable search pill sits in the Command Center between the greeting and the capture bar. Tapping it opens the full-screen search overlay directly.', tip: 'The pill only appears on phone-sized screens — on tablet/desktop use the header icon.' },
@@ -149,7 +149,7 @@ const SECTIONS: HelpSection[] = [
     {
         id: 'ai', icon: 'lucide-sparkles', title: 'AI Chat', subtitle: 'Gemini 2.5 Pro intelligence',
         items: [
-            { label: 'Chat', desc: 'Ask MINA anything — strategy, writing help, idea development, or note analysis. Powered by Gemini 2.5 Pro.' },
+            { label: 'Chat', desc: 'Ask DIWA anything — strategy, writing help, idea development, or note analysis. Powered by Gemini 2.5 Pro.' },
             { label: 'Keyboard', desc: 'Press Enter to send, Shift+Enter for a new line.', tip: 'The send button also works on mobile.' },
             { label: 'Web Search', desc: 'Toggle the globe icon (🌐) in the header to let AI pull current information from the internet.' },
             { label: 'Ground on Notes', desc: 'Attach vault files via the paperclip icon. File chips appear above the input — tap × to remove.' },
@@ -221,7 +221,7 @@ const SECTIONS: HelpSection[] = [
             { label: 'Access', desc: 'Open from the SYSTEM cluster in Command Center (Export button).', tip: 'Run a backup before major vault reorganisations.' },
             { label: 'Export Thoughts (CSV)', desc: 'Exports all thoughts as a CSV file (title, created date, day, contexts, body). Saved to your Thoughts folder.', tip: 'Open in Excel, Numbers, or any spreadsheet app.' },
             { label: 'Export Tasks (CSV)', desc: 'Exports all tasks as a CSV file (title, status, due date, priority, energy, contexts). Saved to your Tasks folder.' },
-            { label: 'Full JSON Backup', desc: 'Creates a single JSON snapshot of thoughts, tasks, projects, dues, and plugin settings. API keys are intentionally excluded for security.', tip: 'Saved to your vault root as MINA-backup-YYYY-MM-DD.json.' },
+            { label: 'Full JSON Backup', desc: 'Creates a single JSON snapshot of thoughts, tasks, projects, dues, and plugin settings. API keys are intentionally excluded for security.', tip: 'Saved to your vault root as DIWA-backup-YYYY-MM-DD.json.' },
             { label: 'Count Badges', desc: 'Each export card shows a live count of how many items will be exported before you click.' },
         ]
     },
@@ -237,7 +237,7 @@ const SECTIONS: HelpSection[] = [
         ]
     },
     {
-        id: 'settings', icon: 'lucide-settings', title: 'Settings', subtitle: 'Configure MINA to your workflow',
+        id: 'settings', icon: 'lucide-settings', title: 'Settings', subtitle: 'configure DIWA to your workflow',
         items: [
             { label: 'Folders', desc: 'Set where thoughts, tasks, habits, voice memos, and reviews are stored in your vault. Use Folder Config for a quick modal.' },
             { label: 'Reviews Folder', desc: 'Root folder for Weekly, Monthly, and Compass review files. Sub-folders Weekly/, Monthly/, Compass/ are auto-created.', tip: 'Default: 000 Bin/DIWA V2 Reviews. Configurable in Folder Config.' },
@@ -253,8 +253,8 @@ const SECTIONS: HelpSection[] = [
     {
         id: 'reminders', icon: 'lucide-bell', title: 'Reminders ⏰', subtitle: 'Hourly nudges for habits and tasks',
         items: [
-            { label: 'Habit Reminders', desc: 'When enabled, MINA checks every hour if you have pending habits for today and shows a toast notification.' },
-            { label: 'Task Reminders', desc: 'When enabled, MINA checks every hour for tasks due today that are not yet marked done.' },
+            { label: 'Habit Reminders', desc: 'When enabled, DIWA checks every hour if you have pending habits for today and shows a toast notification.' },
+            { label: 'Task Reminders', desc: 'When enabled, DIWA checks every hour for tasks due today that are not yet marked done.' },
             { label: 'Quiet Hours', desc: 'Reminders only fire between 8 AM and 10 PM — never in the middle of the night.', tip: 'Quiet hours are based on your local device time.' },
             { label: 'Mobile-Aware', desc: 'On mobile, reminders also fire when you switch back to Obsidian (app resume via visibilitychange event).' },
             { label: 'Configuration', desc: 'Enable or disable each reminder type independently under Settings → Reminders.' },
@@ -263,7 +263,7 @@ const SECTIONS: HelpSection[] = [
     {
         id: 'roadmap', icon: 'lucide-map', title: 'Roadmap', subtitle: 'Future direction',
         items: [
-            { label: '✅ All Planned Features Shipped', desc: 'MINA V2 is feature-complete. All roadmap items have been implemented. Future updates will focus on polish, performance, and community requests.' },
+            { label: '✅ All Planned Features Shipped', desc: 'DIWA V2 is feature-complete. All roadmap items have been implemented. Future updates will focus on polish, performance, and community requests.' },
         ]
     },
 ];
@@ -295,7 +295,7 @@ export class ManualTab extends BaseTab {
         const titleWrap = header.createEl('div', { cls: 'diwa-help-header-title' });
         const titleIcon = titleWrap.createEl('span', { cls: 'diwa-help-header-icon' });
         setIcon(titleIcon, 'lucide-book-open');
-        titleWrap.createEl('h2', { text: 'MINA Manual', cls: 'diwa-help-title' });
+        titleWrap.createEl('h2', { text: 'DIWA Manual', cls: 'diwa-help-title' });
         titleWrap.createEl('p', { text: 'Your Personal Operating System', cls: 'diwa-help-subtitle' });
 
         const searchWrap = header.createEl('div', { cls: 'diwa-help-search-wrap' });
@@ -357,7 +357,7 @@ export class ManualTab extends BaseTab {
         const titleWrap = header.createEl('div', { cls: 'diwa-help-header-title' });
         const titleIcon = titleWrap.createEl('span', { cls: 'diwa-help-header-icon' });
         setIcon(titleIcon, 'lucide-book-open');
-        titleWrap.createEl('h2', { text: 'MINA Manual', cls: 'diwa-help-title' });
+        titleWrap.createEl('h2', { text: 'DIWA Manual', cls: 'diwa-help-title' });
 
         const searchWrap = header.createEl('div', { cls: 'diwa-help-search-wrap' });
         const searchIcon = searchWrap.createEl('span', { cls: 'diwa-help-search-icon' });
@@ -461,4 +461,5 @@ export class ManualTab extends BaseTab {
         if (!hasResults) container.createEl('div', { cls: 'diwa-help-empty', text: 'No results found. Try a different search term.' });
     }
 }
+
 

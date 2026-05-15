@@ -39,3 +39,4 @@ export class ConvertToTaskModal extends Modal {
 
     onClose() { this.contentEl.empty(); }
 }
+

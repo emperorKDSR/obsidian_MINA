@@ -186,7 +186,7 @@ export function attachMediaPasteHandler(
             await app.vault.createBinary(`${folder}/${filename}`, buffer);
             return filename;
         } catch (e) {
-            console.error('[MINA] Attachment save failed:', e);
+            console.error('[DIWA] Attachment save failed:', e);
             return null;
         }
     };
@@ -248,3 +248,4 @@ export function attachMediaPasteHandler(
         }
     });
 }
+

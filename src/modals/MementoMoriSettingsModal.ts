@@ -74,3 +74,4 @@ export class MementoMoriSettingsModal extends Modal {
 
     onClose() { this.contentEl.empty(); }
 }
+

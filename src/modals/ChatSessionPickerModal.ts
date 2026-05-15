@@ -19,3 +19,4 @@ export class ChatSessionPickerModal extends FuzzySuggestModal<TFile> {
 
     onChooseItem(file: TFile): void { this.onChoose(file); }
 }
+

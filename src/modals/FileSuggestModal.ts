@@ -67,3 +67,4 @@ export class FileSuggestModal extends SuggestModal<FileOrCreate> {
         }
     }
 }
+

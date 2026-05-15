@@ -163,7 +163,7 @@ export default class DiwaPlugin extends Plugin {
         }
         // On desktop: open as a new window pane; on mobile: show notice
         if (!Platform.isDesktop) {
-            new Notice('MINA Desktop Hub is available on desktop only.', 2500);
+            new Notice('DIWA Desktop Hub is available on desktop only.', 2500);
             return;
         }
         const leaf = workspace.getLeaf('window');
@@ -176,7 +176,7 @@ export default class DiwaPlugin extends Plugin {
     async activateSearchView() {
         const { workspace } = this.app;
         if (!Platform.isDesktop) {
-            new Notice('MINA Search is only available on desktop.', 2500);
+            new Notice('DIWA Search is only available on desktop.', 2500);
             return;
         }
         const existing = workspace.getLeavesOfType(VIEW_TYPE_SEARCH);
@@ -325,3 +325,4 @@ export default class DiwaPlugin extends Plugin {
         }
     }
 }
+

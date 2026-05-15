@@ -25,7 +25,7 @@ export class IndexService {
     dueIndex: Map<string, DueEntry> = new Map();
     checklistIndex: ChecklistItem[] = [];
     thoughtChecklistIndex: ThoughtChecklistItem[] = [];
-    // - [x] items from MINA V2 files modified today
+    // - [x] items from DIWA V2 files modified today
     thoughtDoneChecklistIndex: ThoughtChecklistItem[] = [];
     habitStatusIndex: string[] = [];
     projectIndex: Map<string, ProjectEntry> = new Map();
@@ -296,3 +296,4 @@ export class IndexService {
         return Array.from(c);
     }
 }
+

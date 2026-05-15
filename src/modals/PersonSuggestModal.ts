@@ -97,3 +97,4 @@ export class PersonSuggestModal extends SuggestModal<PersonItem> {
         }
     }
 }
+

@@ -410,7 +410,7 @@ export class JournalEntryModal extends Modal {
 
             new Notice('📎 Image attached', 1200);
         } catch (e) {
-            console.error('[MINA] Journal attachment save failed:', e);
+            console.error('[DIWA] Journal attachment save failed:', e);
             new Notice('Failed to attach image.', 2000);
         }
     }
@@ -459,4 +459,5 @@ export class JournalEntryModal extends Modal {
         modalEl.addEventListener('touchend', onTouchEnd, { passive: true });
     }
 }
+
 

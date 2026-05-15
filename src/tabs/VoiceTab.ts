@@ -291,7 +291,7 @@ export class VoiceTab extends BaseTab {
                     const text = await this.ai.transcribeAudio(file);
                     this.setState('reviewing', { transcript: text, clipFile: file, durationMs: 0, clipFileName: file.name });
                 } catch (e: any) {
-                    console.error('[MINA VoiceTab]', e);
+                    console.error('[DIWA VoiceTab]', e);
                     new Notice('Transcription failed. Check the Gemini API key in settings.');
                     transcribeBtn.setText('Transcribe');
                     transcribeBtn.disabled = false;
@@ -363,7 +363,7 @@ export class VoiceTab extends BaseTab {
                 try {
                     await this.processRecording(blob, ext, durationMs);
                 } catch (e: any) {
-                    console.error('[MINA VoiceTab] processRecording', e);
+                    console.error('[DIWA VoiceTab] processRecording', e);
                     new Notice('Recording saved but could not process. Check console.');
                     this.setState('idle');
                 }
@@ -378,7 +378,7 @@ export class VoiceTab extends BaseTab {
             stream?.getTracks().forEach(t => t.stop());
             this.activeStream = null;
             this.stopWaveform();
-            console.error('[MINA VoiceTab] mic access', e);
+            console.error('[DIWA VoiceTab] mic access', e);
             const friendly = (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError')
                 ? 'Microphone access denied — allow permission in your OS settings.'
                 : 'Could not start recording. Ensure a microphone is connected.';
@@ -411,7 +411,7 @@ export class VoiceTab extends BaseTab {
             }
             this.setState('reviewing', { transcript, clipFile, durationMs, clipFileName: filename });
         } catch (e: any) {
-            console.error('[MINA VoiceTab] transcription', e);
+            console.error('[DIWA VoiceTab] transcription', e);
             const clipFile = this.app.vault.getAbstractFileByPath(`${folder}/${filename}`) as TFile | null;
             this.setState('reviewing', { transcript: '', clipFile, durationMs, clipFileName: filename });
             new Notice('Auto-transcription failed — edit transcript manually or retry.');
@@ -615,4 +615,5 @@ export class VoiceTab extends BaseTab {
 
     onunload() { this.cleanup(); }
 }
+
 

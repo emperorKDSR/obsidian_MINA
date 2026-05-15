@@ -70,7 +70,7 @@ export class SearchModal extends Modal {
 
         this.panelEl = modalEl.createEl('div', {
             cls: 'diwa-search-panel',
-            attr: { role: 'dialog', 'aria-modal': 'true', 'aria-label': 'MINA Global Search' }
+            attr: { role: 'dialog', 'aria-modal': 'true', 'aria-label': 'DIWA Global Search' }
         });
 
         // Input row
@@ -89,7 +89,7 @@ export class SearchModal extends Modal {
             cls: 'diwa-search-input',
             attr: {
                 type: 'text',
-                placeholder: isPhone ? 'Search MINA…' : 'Search across all of MINA…',
+                placeholder: isPhone ? 'Search DIWA…' : 'Search across all of DIWA…',
                 autocomplete: 'off',
                 spellcheck: 'false',
                 ...(isPhone ? { style: 'font-size:16px' } : {})
@@ -506,4 +506,5 @@ export class SearchModal extends Modal {
         return dateStr.split(' ')[0];
     }
 }
+
 

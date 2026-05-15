@@ -50,3 +50,4 @@ export class ContextSuggestModal extends SuggestModal<string> {
         }
     }
 }
+

@@ -143,7 +143,7 @@ export class ZenCaptureModal extends Modal {
             this.plugin.zenCaptureDraft = '';
             this.close();
         } catch (e) {
-            console.error('[MINA] Zen Capture save failed:', e);
+            console.error('[DIWA] Zen Capture save failed:', e);
             new Notice('Failed to save thought');
         }
     }
@@ -160,4 +160,5 @@ export class ZenCaptureModal extends Modal {
         }
     }
 }
+
 

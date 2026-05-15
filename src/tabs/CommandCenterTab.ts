@@ -91,11 +91,11 @@ export class CommandCenterTab extends BaseTab {
     private renderSearchPill(parent: HTMLElement) {
         const pill = parent.createEl('div', {
             cls: 'diwa-search-pill',
-            attr: { role: 'button', 'aria-label': 'Search MINA', tabindex: '0' }
+            attr: { role: 'button', 'aria-label': 'Search DIWA', tabindex: '0' }
         });
         const icon = pill.createEl('span', { cls: 'diwa-search-pill-icon' });
         setIcon(icon, 'lucide-search');
-        pill.createEl('span', { cls: 'diwa-search-pill-text', text: 'Search MINA…' });
+        pill.createEl('span', { cls: 'diwa-search-pill-text', text: 'Search DIWA…' });
         pill.addEventListener('click', () => new SearchModal(this.app, this.plugin).open());
         pill.addEventListener('keydown', (e: KeyboardEvent) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -698,4 +698,5 @@ export class CommandCenterTab extends BaseTab {
         return { setDueDate };
     }
 }
+
 

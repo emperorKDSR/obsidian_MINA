@@ -110,7 +110,7 @@ export class EditProjectModal extends Modal {
         const nameInput = nameWrap.createEl('input', {
             type: 'text',
             cls: 'diwa-field-input',
-            attr: { placeholder: 'e.g. Launch MINA Plugin', autocomplete: 'off' }
+            attr: { placeholder: 'e.g. Launch DIWA Plugin', autocomplete: 'off' }
         }) as HTMLInputElement;
         nameInput.value = this.draftName;
         nameInput.addEventListener('input', () => { this.draftName = nameInput.value.trim(); });
@@ -203,7 +203,7 @@ export class EditProjectModal extends Modal {
             this.onSaved({ ...this.project, ...updates });
             this.close();
         } catch (e) {
-            console.error('[MINA] updateProject failed', e);
+            console.error('[DIWA] updateProject failed', e);
             saveBtn.removeClass('is-saving');
             saveBtn.textContent = 'Save Changes';
         }
@@ -263,4 +263,5 @@ export class EditProjectModal extends Modal {
         modalEl.addEventListener('touchend', onTouchEnd, { passive: true });
     }
 }
+
 

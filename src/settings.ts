@@ -64,3 +64,4 @@ export class DiwaSettingTab extends PluginSettingTab {
         new Setting(containerEl).setName('Task Reminders').setDesc('Hourly nudge for tasks due today (quiet hours: 8 AM – 10 PM).').addToggle(toggle => toggle.setValue(this.plugin.settings.reminderTasksEnabled ?? true).onChange(async (value) => { this.plugin.settings.reminderTasksEnabled = value; await this.plugin.saveSettings(); }));
 	}
 }
+

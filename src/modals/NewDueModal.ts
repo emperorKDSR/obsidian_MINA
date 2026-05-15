@@ -99,3 +99,4 @@ ${notesArea.value}
         this.contentEl.empty();
     }
 }
+

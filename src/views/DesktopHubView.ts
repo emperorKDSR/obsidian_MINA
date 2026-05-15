@@ -29,7 +29,7 @@ export class DesktopHubView extends ItemView {
     }
 
     getViewType(): string { return VIEW_TYPE_DESKTOP_HUB; }
-    getDisplayText(): string { return 'MINA Desktop Hub'; }
+    getDisplayText(): string { return 'DIWA Desktop Hub'; }
     getIcon(): string { return 'layout-dashboard'; }
 
     getState(): Record<string, unknown> {
@@ -63,7 +63,7 @@ export class DesktopHubView extends ItemView {
 
         if (!Platform.isDesktop) {
             root.createEl('div', {
-                text: '⊕ MINA Desktop Hub requires a desktop environment.',
+                text: '⊕ DIWA Desktop Hub requires a desktop environment.',
                 attr: { style: 'color: var(--text-muted); font-size: 0.9em; text-align: center; margin-top: 80px; padding: 24px;' }
             });
             return;
@@ -85,7 +85,7 @@ export class DesktopHubView extends ItemView {
         const bar = parent.createEl('div', { cls: 'diwa-dh-topbar' });
 
         const left = bar.createEl('div', { cls: 'diwa-dh-topbar-left' });
-        left.createEl('span', { text: 'MINA', cls: 'diwa-dh-topbar-logo' });
+        left.createEl('span', { text: 'DIWA', cls: 'diwa-dh-topbar-logo' });
         const hour = new Date().getHours();
         const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
         left.createEl('span', { text: `${greeting}, Emperor.`, cls: 'diwa-dh-topbar-greeting' });
@@ -116,7 +116,7 @@ export class DesktopHubView extends ItemView {
 
     // ── LEFT Sidebar ──────────────────────────────────────────────────────────
     private renderSidebar(parent: HTMLElement) {
-        const sidebar = parent.createEl('nav', { cls: 'diwa-dh-sidebar', attr: { 'aria-label': 'MINA Navigation' } });
+        const sidebar = parent.createEl('nav', { cls: 'diwa-dh-sidebar', attr: { 'aria-label': 'DIWA Navigation' } });
 
         const groups: { title: string; items: { label: string; icon: string; tab: string }[] }[] = [
             {
@@ -654,4 +654,5 @@ export class DesktopHubView extends ItemView {
         });
     }
 }
+
 

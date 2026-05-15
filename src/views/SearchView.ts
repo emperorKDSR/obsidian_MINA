@@ -66,7 +66,7 @@ export class SearchView extends ItemView {
     }
 
     getViewType(): string { return VIEW_TYPE_SEARCH; }
-    getDisplayText(): string { return 'MINA Search'; }
+    getDisplayText(): string { return 'DIWA Search'; }
     getIcon(): string { return 'lucide-search'; }
 
     async onOpen() {
@@ -101,7 +101,7 @@ export class SearchView extends ItemView {
             cls: 'diwa-sv-input',
             attr: {
                 type: 'text',
-                placeholder: 'Search across MINA…',
+                placeholder: 'Search across DIWA…',
                 autocomplete: 'off',
                 spellcheck: 'false',
             }
@@ -424,4 +424,5 @@ export class SearchView extends ItemView {
         return dateStr.slice(0, 10);
     }
 }
+
 
