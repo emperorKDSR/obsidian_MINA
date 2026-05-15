@@ -1,9 +1,9 @@
 import { App, Modal, Platform, Notice, moment, TFile } from 'obsidian';
-import MinaPlugin from '../main';
+import DiwaPlugin from '../main';
 import { isTablet } from '../utils';
 
 export class VoiceMemoModal extends Modal {
-    plugin: MinaPlugin;
+    plugin: DiwaPlugin;
     mediaRecorder: MediaRecorder | null = null;
     audioChunks: Blob[] = [];
     isRecording: boolean = false;
@@ -11,7 +11,7 @@ export class VoiceMemoModal extends Modal {
     recordingTimerInterval: any = null;
     onSave?: (file: TFile) => void;
 
-    constructor(app: App, plugin: MinaPlugin, onSave?: (file: TFile) => void) {
+    constructor(app: App, plugin: DiwaPlugin, onSave?: (file: TFile) => void) {
         super(app);
         this.plugin = plugin;
         this.onSave = onSave;

@@ -1,16 +1,16 @@
 import { App, Modal, TFile, Notice, MarkdownRenderer, setIcon, moment } from 'obsidian';
-import MinaPlugin from '../main';
+import DiwaPlugin from '../main';
 import { TaskEntry, ThoughtEntry, ReplyEntry } from '../types';
 import { ICON_EDIT, ICON_TRASH } from '../constants';
 import { EditEntryModal } from './EditEntryModal';
 import { ConfirmModal } from './ConfirmModal';
 
 export class ViewCommentsModal extends Modal {
-    plugin: MinaPlugin;
+    plugin: DiwaPlugin;
     entry: TaskEntry | ThoughtEntry;
     onRefresh: () => void;
 
-    constructor(app: App, plugin: MinaPlugin, entry: TaskEntry | ThoughtEntry, onRefresh: () => void) {
+    constructor(app: App, plugin: DiwaPlugin, entry: TaskEntry | ThoughtEntry, onRefresh: () => void) {
         super(app);
         this.plugin = plugin;
         this.entry = entry;

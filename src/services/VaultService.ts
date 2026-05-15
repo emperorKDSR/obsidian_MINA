@@ -1,16 +1,16 @@
 import { App, TFile, Notice, moment } from 'obsidian';
-import type { MinaSettings, ThoughtEntry, TaskEntry, ReplyEntry, ProjectEntry, Milestone } from '../types';
+import type { DiwaSettings, ThoughtEntry, TaskEntry, ReplyEntry, ProjectEntry, Milestone } from '../types';
 
 export class VaultService {
     app: App;
-    settings: MinaSettings;
+    settings: DiwaSettings;
 
-    constructor(app: App, settings: MinaSettings) {
+    constructor(app: App, settings: DiwaSettings) {
         this.app = app;
         this.settings = settings;
     }
 
-    updateSettings(settings: MinaSettings) {
+    updateSettings(settings: DiwaSettings) {
         this.settings = settings;
     }
 
@@ -136,7 +136,7 @@ export class VaultService {
     async createThoughtFile(text: string, contexts: string[], project?: string): Promise<TFile> {
         // arch-08: Normalize <br> → newline at service boundary
         text = text.replace(/<br>/g, '\n');
-        const folder = this.settings.thoughtsFolder.trim() || '000 Bin/MINA V2';
+        const folder = this.settings.thoughtsFolder.trim() || '000 Bin/DIWA V2';
         const now = new Date();
         const created = this.formatDateTime(now);
         const dayStr = this.formatDate(now);
@@ -149,7 +149,7 @@ export class VaultService {
     async createTaskFile(text: string, contexts: string[], dueDate?: string, project?: string, opts?: { priority?: string; energy?: string; status?: string; recurrence?: string; recurrenceParentId?: string }): Promise<TFile> {
         // arch-08: Normalize <br> → newline at service boundary
         text = text.replace(/<br>/g, '\n');
-        const folder = this.settings.tasksFolder.trim() || '000 Bin/MINA V2 Tasks';
+        const folder = this.settings.tasksFolder.trim() || '000 Bin/DIWA V2 Tasks';
         const now = new Date();
         const created = this.formatDateTime(now);
         const dayStr = this.formatDate(now);
@@ -325,7 +325,7 @@ export class VaultService {
         if (!(file instanceof TFile)) return;
         
         const folder = type === 'thoughts' ? this.settings.thoughtsFolder : this.settings.tasksFolder;
-        const trashFolder = (folder.trim() || '000 Bin/MINA V2') + '/trash';
+        const trashFolder = (folder.trim() || '000 Bin/DIWA V2') + '/trash';
         await this.ensureFolder(trashFolder);
         
         try {
@@ -342,7 +342,7 @@ export class VaultService {
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return;
         const folder = this.settings.thoughtsFolder;
-        const trashFolder = (folder.trim() || '000 Bin/MINA V2') + '/trash';
+        const trashFolder = (folder.trim() || '000 Bin/DIWA V2') + '/trash';
         await this.ensureFolder(trashFolder);
         const trashPath = `${trashFolder}/${file.basename}_${Date.now()}.md`;
         await this.app.vault.rename(file, trashPath);
@@ -390,7 +390,7 @@ export class VaultService {
     }
 
     async getHabitStatus(date: string): Promise<string[]> {
-        const folder = this.settings.habitsFolder.trim() || '000 Bin/MINA V2 Habits';
+        const folder = this.settings.habitsFolder.trim() || '000 Bin/DIWA V2 Habits';
         const path = `${folder}/${date}.md`;
         const file = this.app.vault.getAbstractFileByPath(path);
         if (!(file instanceof TFile)) return [];
@@ -407,7 +407,7 @@ export class VaultService {
     }
 
     async toggleHabit(date: string, habitId: string): Promise<void> {
-        const folder = (this.settings.habitsFolder.trim() || '000 Bin/MINA V2 Habits').replace(/\\/g, '/');
+        const folder = (this.settings.habitsFolder.trim() || '000 Bin/DIWA V2 Habits').replace(/\\/g, '/');
         const path = `${folder}/${date}.md`;
         let file = this.app.vault.getAbstractFileByPath(path) as TFile | null;
         if (!(file instanceof TFile)) {
@@ -502,7 +502,7 @@ export class VaultService {
 
     /** Save a weekly review to {reviewsFolder}/Weekly/YYYY-Www.md */
     async saveWeeklyReview(weekId: string, dateRange: string, wins: string, lessons: string, focus: string[], habitHighlight: string, aiReport?: string, dayPlans?: Record<string, string>): Promise<void> {
-        const root = (this.settings.reviewsFolder || '000 Bin/MINA V2 Reviews').trim();
+        const root = (this.settings.reviewsFolder || '000 Bin/DIWA V2 Reviews').trim();
         const folder = `${root}/Weekly`;
         const path = `${folder}/${weekId}.md`;
         const now = this.formatDateTime(new Date());
@@ -612,7 +612,7 @@ export class VaultService {
 
     /** Save monthly goals to {reviewsFolder}/Monthly/YYYY-MM.md */
     async saveMonthlyGoals(monthId: string, goals: string[]): Promise<void> {
-        const root = (this.settings.reviewsFolder || '000 Bin/MINA V2 Reviews').trim();
+        const root = (this.settings.reviewsFolder || '000 Bin/DIWA V2 Reviews').trim();
         const folder = `${root}/Monthly`;
         const path = `${folder}/${monthId}.md`;
         const now = this.formatDateTime(new Date());
@@ -634,7 +634,7 @@ export class VaultService {
 
     /** Load monthly goals from {reviewsFolder}/Monthly/YYYY-MM.md */
     async loadMonthlyGoals(monthId: string): Promise<string[] | null> {
-        const root = (this.settings.reviewsFolder || '000 Bin/MINA V2 Reviews').trim();
+        const root = (this.settings.reviewsFolder || '000 Bin/DIWA V2 Reviews').trim();
         const path = `${root}/Monthly/${monthId}.md`;
         const file = this.app.vault.getAbstractFileByPath(path);
         if (!(file instanceof TFile)) return null;
@@ -652,7 +652,7 @@ export class VaultService {
 
     /** Save Compass data to {reviewsFolder}/Compass/YYYY-Qx.md */
     async saveCompassData(quarterId: string, northStarGoals: string[], lifeMission: string): Promise<void> {
-        const root = (this.settings.reviewsFolder || '000 Bin/MINA V2 Reviews').trim();
+        const root = (this.settings.reviewsFolder || '000 Bin/DIWA V2 Reviews').trim();
         const folder = `${root}/Compass`;
         const path = `${folder}/${quarterId}.md`;
         const now = this.formatDateTime(new Date());
@@ -674,7 +674,7 @@ export class VaultService {
 
     /** Load Compass data from {reviewsFolder}/Compass/YYYY-Qx.md */
     async loadCompassData(quarterId: string): Promise<{ northStarGoals: string[]; lifeMission: string } | null> {
-        const root = (this.settings.reviewsFolder || '000 Bin/MINA V2 Reviews').trim();
+        const root = (this.settings.reviewsFolder || '000 Bin/DIWA V2 Reviews').trim();
         const path = `${root}/Compass/${quarterId}.md`;
         const file = this.app.vault.getAbstractFileByPath(path);
         if (!(file instanceof TFile)) return null;
@@ -696,7 +696,7 @@ export class VaultService {
 
     /** Load a weekly review file and parse wins/lessons/focus/aiReport sections */
     async loadWeeklyReview(weekId: string): Promise<{ wins: string; lessons: string; focus: string[]; saved: string; aiReport?: string; dayPlans?: Record<string, string> } | null> {
-        const root = (this.settings.reviewsFolder || '000 Bin/MINA V2 Reviews').trim();
+        const root = (this.settings.reviewsFolder || '000 Bin/DIWA V2 Reviews').trim();
         const path = `${root}/Weekly/${weekId}.md`;
         const file = this.app.vault.getAbstractFileByPath(path);
         if (!(file instanceof TFile)) return null;

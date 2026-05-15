@@ -1,11 +1,11 @@
 import { moment, Platform, Notice, TFile } from 'obsidian';
-import type { MinaView } from '../view';
+import type { DiwaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { FolderSettingsModal } from '../modals/FolderSettingsModal';
 import { HabitConfigModal } from '../modals/HabitConfigModal';
 
 export class SettingsTab extends BaseTab {
-    constructor(view: MinaView) { super(view); }
+    constructor(view: DiwaView) { super(view); }
     render(container: HTMLElement) {
         this.renderSettingsMode(container);
     }

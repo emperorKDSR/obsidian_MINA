@@ -1,15 +1,15 @@
 import { App, Modal, Notice, setIcon } from 'obsidian';
-import MinaPlugin from '../main';
+import DiwaPlugin from '../main';
 
 export class InlineContextPickerModal extends Modal {
-    private plugin: MinaPlugin;
+    private plugin: DiwaPlugin;
     private currentContexts: string[];
     private onConfirm: (selected: string[]) => Promise<void>;
     private title: string;
 
     constructor(
         app: App,
-        plugin: MinaPlugin,
+        plugin: DiwaPlugin,
         currentContexts: string[],
         onConfirm: (selected: string[]) => Promise<void>,
         title?: string

@@ -1,11 +1,11 @@
 import { App, Modal, Notice, Setting } from 'obsidian';
-import MinaPlugin from '../main';
+import DiwaPlugin from '../main';
 
 export class MementoMoriSettingsModal extends Modal {
-    plugin: MinaPlugin;
+    plugin: DiwaPlugin;
     onRefresh: () => void;
 
-    constructor(app: App, plugin: MinaPlugin, onRefresh: () => void) {
+    constructor(app: App, plugin: DiwaPlugin, onRefresh: () => void) {
         super(app);
         this.plugin = plugin;
         this.onRefresh = onRefresh;

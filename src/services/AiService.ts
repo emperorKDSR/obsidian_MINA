@@ -1,5 +1,5 @@
 import { App, TFile, moment, Notice } from 'obsidian';
-import type { MinaSettings, ThoughtEntry, WeeklyReportContext } from '../types';
+import type { DiwaSettings, ThoughtEntry, WeeklyReportContext } from '../types';
 
 // ai-04: Curated allowlist of stable/supported Gemini models
 const STABLE_GEMINI_MODELS = new Set([
@@ -19,18 +19,18 @@ export interface SourceItem {
 
 export class AiService {
     app: App;
-    settings: MinaSettings;
+    settings: DiwaSettings;
     // leak-02: Track pending request to abort on new call
     private _abortController: AbortController | null = null;
     // weekly report has its own controller to avoid cancelling chat requests
     private _weeklyAbortController: AbortController | null = null;
 
-    constructor(app: App, settings: MinaSettings) {
+    constructor(app: App, settings: DiwaSettings) {
         this.app = app;
         this.settings = settings;
     }
 
-    updateSettings(settings: MinaSettings) {
+    updateSettings(settings: DiwaSettings) {
         this.settings = settings;
     }
 

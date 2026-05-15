@@ -1,5 +1,5 @@
 import { moment } from 'obsidian';
-import type { MinaView } from '../view';
+import type { DiwaView } from '../view';
 import { BaseTab } from './BaseTab';
 
 const QUOTES = [
@@ -10,7 +10,7 @@ const QUOTES = [
 ];
 
 export class MementoMoriTab extends BaseTab {
-    constructor(view: MinaView) { super(view); }
+    constructor(view: DiwaView) { super(view); }
 
     render(container: HTMLElement) {
         container.empty();

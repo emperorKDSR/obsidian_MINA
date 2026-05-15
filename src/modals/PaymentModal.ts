@@ -1,15 +1,15 @@
 import { App, Modal, TFile, Notice, moment } from 'obsidian';
-import type MinaPlugin from '../main';
+import type DiwaPlugin from '../main';
 
 export class PaymentModal extends Modal {
-    plugin: MinaPlugin;
+    plugin: DiwaPlugin;
     file: TFile;
     currentDueDate: string;
     onPaymentSaved: () => void;
     quickDate: string | null;
 
     // sec-010: Accept plugin via constructor — eliminates (app as any) runtime lookup
-    constructor(app: App, plugin: MinaPlugin, file: TFile, currentDueDate: string, onPaymentSaved: () => void, quickDate: string | null = null) {
+    constructor(app: App, plugin: DiwaPlugin, file: TFile, currentDueDate: string, onPaymentSaved: () => void, quickDate: string | null = null) {
         super(app);
         this.plugin = plugin;
         this.file = file;

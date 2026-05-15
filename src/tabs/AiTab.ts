@@ -1,19 +1,19 @@
 import { moment, Platform, TFile, Notice, MarkdownRenderer, setIcon } from 'obsidian';
-import type { MinaView } from '../view';
+import type { DiwaView } from '../view';
 import { BaseTab } from './BaseTab';
 import { AiSettingsModal } from '../modals/AiSettingsModal';
 import type { ChatMessage } from '../types';
 import { isTablet } from '../utils';
 
 export class AiTab extends BaseTab {
-    constructor(view: MinaView) { super(view); }
+    constructor(view: DiwaView) { super(view); }
 
     render(container: HTMLElement) {
         this.renderAiMode(container);
     }
 
     private chatFolder(): string {
-        return (this.settings.aiChatFolder || '000 Bin/MINA V2 AI Chat').trim();
+        return (this.settings.aiChatFolder || '000 Bin/DIWA V2 AI Chat').trim();
     }
 
     private async ensureChatFolder(): Promise<void> {

@@ -1,11 +1,11 @@
 import { App, Modal, Platform, Notice, setIcon } from 'obsidian';
-import MinaPlugin from '../main';
+import DiwaPlugin from '../main';
 import { attachInlineTriggers, attachMediaPasteHandler } from '../utils';
 import { ContextSuggestModal } from './ContextSuggestModal';
 import { ConfirmModal } from './ConfirmModal';
 
 export class ZenCaptureModal extends Modal {
-    private plugin: MinaPlugin;
+    private plugin: DiwaPlugin;
     private textarea: HTMLTextAreaElement;
     private contexts: string[] = [];
     private chipRow: HTMLElement;
@@ -13,7 +13,7 @@ export class ZenCaptureModal extends Modal {
     private saveBtn: HTMLButtonElement;
     private draftInterval: ReturnType<typeof setInterval> | null = null;
 
-    constructor(app: App, plugin: MinaPlugin) {
+    constructor(app: App, plugin: DiwaPlugin) {
         super(app);
         this.plugin = plugin;
     }
@@ -72,7 +72,7 @@ export class ZenCaptureModal extends Modal {
         attachMediaPasteHandler(
             this.app,
             this.textarea,
-            () => this.plugin.settings.attachmentsFolder || '000 Bin/MINA V2 Attachments'
+            () => this.plugin.settings.attachmentsFolder || '000 Bin/DIWA V2 Attachments'
         );
 
         // Restore draft

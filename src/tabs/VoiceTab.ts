@@ -1,5 +1,5 @@
 import { moment, Notice, TFile, setIcon, Platform } from 'obsidian';
-import type { MinaView } from '../view';
+import type { DiwaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from '../modals/EditEntryModal';
 import { ConfirmModal } from '../modals/ConfirmModal';
@@ -30,7 +30,7 @@ export class VoiceTab extends BaseTab {
     private toastEl: HTMLElement | null = null;
     private keyboardHandler: ((e: KeyboardEvent) => void) | null = null;
 
-    constructor(view: MinaView) { super(view); }
+    constructor(view: DiwaView) { super(view); }
 
     render(container: HTMLElement) {
         if (this.keyboardHandler) {
@@ -261,7 +261,7 @@ export class VoiceTab extends BaseTab {
     // ─── CLIPS ──────────────────────────────────────────────────────────────────
 
     private renderClips(parent: HTMLElement) {
-        const voiceFolder = this.settings.voiceMemoFolder || '000 Bin/MINA V2 Voice';
+        const voiceFolder = this.settings.voiceMemoFolder || '000 Bin/DIWA V2 Voice';
         const clips = this.app.vault.getFiles()
             .filter(f => f.path.startsWith(voiceFolder) && ['m4a', 'mp3', 'webm', 'wav'].includes(f.extension))
             .sort((a, b) => b.stat.ctime - a.stat.ctime)
@@ -393,7 +393,7 @@ export class VoiceTab extends BaseTab {
     }
 
     private async processRecording(blob: Blob, ext: string, durationMs: number) {
-        const folder = this.settings.voiceMemoFolder || '000 Bin/MINA V2 Voice';
+        const folder = this.settings.voiceMemoFolder || '000 Bin/DIWA V2 Voice';
         if (!this.app.vault.getAbstractFileByPath(folder)) {
             await this.app.vault.createFolder(folder);
         }
@@ -475,7 +475,7 @@ export class VoiceTab extends BaseTab {
     }
 
     private playAudio(filename: string) {
-        const folder = this.settings.voiceMemoFolder || '000 Bin/MINA V2 Voice';
+        const folder = this.settings.voiceMemoFolder || '000 Bin/DIWA V2 Voice';
         const file = this.app.vault.getAbstractFileByPath(`${folder}/${filename}`);
         if (file instanceof TFile) {
             const src = this.app.vault.getResourcePath(file);

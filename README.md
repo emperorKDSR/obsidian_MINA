@@ -1,6 +1,6 @@
-# MINA V2 — Personal OS for Obsidian
+# DIWA V2 — Personal OS for Obsidian
 
-**MINA** (My Intelligent Note Assistant) is a professional-grade Personal Operating System plugin for [Obsidian](https://obsidian.md). It transforms your vault into a unified command centre for thoughts, tasks, habits, projects, finance, and AI-powered synthesis.
+**DIWA** is a professional-grade Personal Operating System plugin for [Obsidian](https://obsidian.md). It transforms your vault into a unified command centre for thoughts, tasks, habits, projects, finance, and AI-powered synthesis.
 
 ---
 
@@ -47,7 +47,7 @@ Full AI chat interface powered by Gemini 2.5 Pro. Web search toggle, file ground
 Dictate thoughts directly into the vault with auto-transcription via Gemini.
 
 ### 🔍 Global Search
-Cross-domain Spotlight-style search across all MINA data types (Thoughts, Tasks, Dues, Projects, Habits). Keyboard-navigable, zero-latency (in-memory indices).
+Cross-domain Spotlight-style search across all DIWA data types (Thoughts, Tasks, Dues, Projects, Habits). Keyboard-navigable, zero-latency (in-memory indices).
 
 ### 📅 Daily Workspace
 Configurable daily dashboard with checklist, tasks, dues, thoughts, and AI summary.
@@ -63,11 +63,11 @@ Project tracking with linked thought threads and progress indicators.
 IndexService        → In-memory O(1) indices for all data types
 VaultService        → Sole authority for file I/O + YAML frontmatter
 AiService           → Gemini model routing, transcription, citations
-MinaView (view.ts)  → Reactive container; renders active tab on vault change
+DiwaView (view.ts)  → Reactive container; renders active tab on vault change
 BaseTab             → Shared utilities (app, vault, index, settings, plugin)
 ```
 
-State that must survive `view.renderView()` is stored on `MinaView` fields (e.g. `synthesisFeedFilter`, `activeSynthesisContexts`, `synthesisShowHidden`).
+State that must survive `view.renderView()` is stored on `DiwaView` fields (e.g. `synthesisFeedFilter`, `activeSynthesisContexts`, `synthesisShowHidden`).
 
 ---
 
@@ -80,7 +80,7 @@ npm run build
 Deploy by copying `main.js`, `manifest.json`, and `styles.css` to your vault plugin folder:
 
 ```
-<vault>/.obsidian/plugins/mina_v2/
+<vault>/.obsidian/plugins/diwa_v2/
 ```
 
 ---

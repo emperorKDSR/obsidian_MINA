@@ -1,5 +1,5 @@
 import { MarkdownRenderer, moment, Platform, setIcon, Notice } from 'obsidian';
-import type { MinaView } from '../view';
+import type { DiwaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { JournalEntryModal } from '../modals/JournalEntryModal';
 import { ConfirmModal } from '../modals/ConfirmModal';
@@ -7,7 +7,7 @@ import { isTablet, attachMediaPasteHandler, attachInlineTriggers } from '../util
 import type { ThoughtEntry } from '../types';
 
 export class JournalTab extends BaseTab {
-    constructor(view: MinaView) { super(view); }
+    constructor(view: DiwaView) { super(view); }
 
     render(container: HTMLElement) {
         this._renderJournal(container);
@@ -244,7 +244,7 @@ export class JournalTab extends BaseTab {
         });
 
         attachMediaPasteHandler(this.app, textarea, () =>
-            this.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments'
+            this.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments'
         );
         attachInlineTriggers(
             this.app, textarea,
@@ -277,7 +277,7 @@ export class JournalTab extends BaseTab {
 
     private async _saveComposeAttachment(file: File, textarea: HTMLTextAreaElement): Promise<void> {
         try {
-            const folder = (this.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments').trim();
+            const folder = (this.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments').trim();
             if (!this.app.vault.getAbstractFileByPath(folder)) {
                 await this.app.vault.createFolder(folder);
             }

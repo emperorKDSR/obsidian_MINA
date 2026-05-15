@@ -1,5 +1,5 @@
 import { setIcon, Platform } from 'obsidian';
-import type { MinaView } from '../view';
+import type { DiwaView } from '../view';
 import { BaseTab } from './BaseTab';
 import { isTablet } from '../utils';
 
@@ -240,8 +240,8 @@ const SECTIONS: HelpSection[] = [
         id: 'settings', icon: 'lucide-settings', title: 'Settings', subtitle: 'Configure MINA to your workflow',
         items: [
             { label: 'Folders', desc: 'Set where thoughts, tasks, habits, voice memos, and reviews are stored in your vault. Use Folder Config for a quick modal.' },
-            { label: 'Reviews Folder', desc: 'Root folder for Weekly, Monthly, and Compass review files. Sub-folders Weekly/, Monthly/, Compass/ are auto-created.', tip: 'Default: 000 Bin/MINA V2 Reviews. Configurable in Folder Config.' },
-            { label: 'Attachments Folder', desc: 'Folder where pasted or drag-dropped images and files are saved. Used by the image paste feature in capture inputs.', tip: 'Default: 000 Bin/MINA V2 Attachments. The folder is auto-created on first paste.' },
+            { label: 'Reviews Folder', desc: 'Root folder for Weekly, Monthly, and Compass review files. Sub-folders Weekly/, Monthly/, Compass/ are auto-created.', tip: 'Default: 000 Bin/DIWA V2 Reviews. Configurable in Folder Config.' },
+            { label: 'Attachments Folder', desc: 'Folder where pasted or drag-dropped images and files are saved. Used by the image paste feature in capture inputs.', tip: 'Default: 000 Bin/DIWA V2 Attachments. The folder is auto-created on first paste.' },
             { label: 'Contexts', desc: 'Manage your global context tags (#work, #personal, etc.).' },
             { label: 'AI Key', desc: 'Enter your Gemini API key to enable AI Chat and Intelligence features.' },
             { label: 'Habits', desc: 'Add, edit, and archive habits from the ⚙ icon on the Home screen.' },
@@ -272,7 +272,7 @@ export class ManualTab extends BaseTab {
     private activeSectionId: string = 'home';
     private searchQuery: string = '';
 
-    constructor(view: MinaView) { super(view); }
+    constructor(view: DiwaView) { super(view); }
 
     render(container: HTMLElement) {
         container.empty();

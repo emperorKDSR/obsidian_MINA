@@ -17,7 +17,7 @@ export interface ProjectEntry {
     milestones?: Milestone[];
 }
 
-export interface MinaSettings {
+export interface DiwaSettings {
     captureFolder: string;
 	captureFilePath: string;
     tasksFilePath: string;

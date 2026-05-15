@@ -1,5 +1,5 @@
 import { ItemView, WorkspaceLeaf, Platform, moment, setIcon, Notice, ViewStateResult } from 'obsidian';
-import type MinaPlugin from '../main';
+import type DiwaPlugin from '../main';
 import {
     VIEW_TYPE_DESKTOP_HUB,
     PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID,
@@ -10,7 +10,7 @@ import { attachInlineTriggers, attachMediaPasteHandler } from '../utils';
 import type { ThoughtEntry, TaskEntry } from '../types';
 
 export class DesktopHubView extends ItemView {
-    plugin: MinaPlugin;
+    plugin: DiwaPlugin;
     isFocusMode: boolean = false;
 
     // Suppress re-renders while user is mid-capture (thought or task)
@@ -23,7 +23,7 @@ export class DesktopHubView extends ItemView {
     // Guard against DOM updates after view is closed
     private _closed: boolean = false;
 
-    constructor(leaf: WorkspaceLeaf, plugin: MinaPlugin) {
+    constructor(leaf: WorkspaceLeaf, plugin: DiwaPlugin) {
         super(leaf);
         this.plugin = plugin;
     }
@@ -44,7 +44,7 @@ export class DesktopHubView extends ItemView {
 
     async onOpen() {
         this._closed = false;
-        // Hide Obsidian's leaf header (same pattern as MinaView src/view.ts:128-132)
+        // Hide Obsidian's leaf header (same pattern as DiwaView src/view.ts:128-132)
         const header = this.containerEl.children[0] as HTMLElement;
         if (header) header.style.display = 'none';
         this.renderView();
@@ -239,7 +239,7 @@ export class DesktopHubView extends ItemView {
         attachMediaPasteHandler(
             this.app,
             textarea,
-            () => this.plugin.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments'
+            () => this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments'
         );
 
         const saveThought = async () => {
@@ -435,7 +435,7 @@ export class DesktopHubView extends ItemView {
         attachMediaPasteHandler(
             this.app,
             textarea,
-            () => this.plugin.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments'
+            () => this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments'
         );
 
         const saveTask = async () => {

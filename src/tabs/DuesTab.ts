@@ -1,5 +1,5 @@
 import { moment, Platform, TFile, setIcon } from 'obsidian';
-import type { MinaView } from '../view';
+import type { DiwaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { DueEntry } from "../types";
 import { PaymentModal } from "../modals/PaymentModal";
@@ -8,7 +8,7 @@ import { NewDueModal } from "../modals/NewDueModal";
 export class DuesTab extends BaseTab {
     showAll: boolean = false;
 
-    constructor(view: MinaView) { super(view); }
+    constructor(view: DiwaView) { super(view); }
 
     render(container: HTMLElement) {
         this.renderDuesMode(container);

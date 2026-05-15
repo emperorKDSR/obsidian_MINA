@@ -1,11 +1,11 @@
 import { ItemView, WorkspaceLeaf, moment, TFile, Platform, ViewStateResult } from 'obsidian';
-import { VIEW_TYPE_MINA, KATANA_ICON_ID } from './constants';
-import type MinaPlugin from './main';
+import { VIEW_TYPE_DIWA, KATANA_ICON_ID } from './constants';
+import type DiwaPlugin from './main';
 import { BaseTab } from './tabs/BaseTab';
 import type { ChatMessage } from './types';
 
-export class MinaView extends ItemView {
-    plugin: MinaPlugin;
+export class DiwaView extends ItemView {
+    plugin: DiwaPlugin;
     content: string = '';
     dueDate: string = moment().format('YYYY-MM-DD');
     activeTab: string = 'home';
@@ -82,13 +82,13 @@ export class MinaView extends ItemView {
     // Managed current tab instance for lifecycle cleanup
     private currentTab: BaseTab | null = null;
 
-    constructor(leaf: WorkspaceLeaf, plugin: MinaPlugin) {
+    constructor(leaf: WorkspaceLeaf, plugin: DiwaPlugin) {
         super(leaf);
         this.plugin = plugin;
         this._baseTabDelegate = new (class extends BaseTab { render() {} })(this);
     }
 
-    getViewType(): string { return VIEW_TYPE_MINA; }
+    getViewType(): string { return VIEW_TYPE_DIWA; }
     getDisplayText(): string {
         if (Platform.isMobile) return `M.I.N.A.`;
         return this.getModeTitle();
@@ -97,11 +97,11 @@ export class MinaView extends ItemView {
 
     getModeTitle(): string {
         switch (this.activeTab) {
-            case 'home': return "MINA Hub";
+            case 'home': return "DIWA Hub";
             case 'daily': return "Daily";
             case 'review-thoughts': return "Thoughts";
             case 'review-tasks': return "Tasks";
-            case 'mina-ai': return "AI Chat";
+            case 'diwa-ai': return "AI Chat";
             case 'dues': return "Dues";
             case 'projects': return "Projects";
             case 'synthesis': return "Synthesis";
@@ -121,7 +121,7 @@ export class MinaView extends ItemView {
             case 'focus': return "Today's Mission";
             case 'finance-analytics': return "Finance Analytics";
             case 'milestones': return "Project Milestones";
-            default: return "MINA";
+            default: return "DIWA";
         }
     }
 
@@ -165,7 +165,7 @@ export class MinaView extends ItemView {
             promise.then((mod: any) => {
                 try {
                     if (this.currentTab && typeof (this.currentTab as any).onunload === 'function') (this.currentTab as any).onunload();
-                } catch (e) { console.warn('[MINA View] error during previous tab unload', e); }
+                } catch (e) { console.warn('[DIWA View] error during previous tab unload', e); }
                 const TabClass = mod[name];
                 const instance = new TabClass(this);
                 this.currentTab = instance;
@@ -176,7 +176,7 @@ export class MinaView extends ItemView {
         const tab = this.activeTab;
         if (tab === 'home' || tab === 'daily') instantiate(import('./tabs/CommandCenterTab'), 'CommandCenterTab');
         else if (tab === 'review-tasks') instantiate(import('./tabs/TasksTab'), 'TasksTab');
-        else if (tab === 'mina-ai') instantiate(import('./tabs/AiTab'), 'AiTab');
+        else if (tab === 'diwa-ai') instantiate(import('./tabs/AiTab'), 'AiTab');
         else if (tab === 'dues') instantiate(import('./tabs/DuesTab'), 'DuesTab');
         else if (tab === 'projects') instantiate(import('./tabs/ProjectsTab'), 'ProjectsTab');
         else if (tab === 'synthesis') instantiate(import('./tabs/SynthesisTab'), 'SynthesisTab');
