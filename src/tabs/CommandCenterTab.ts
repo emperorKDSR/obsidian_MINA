@@ -1,5 +1,5 @@
 import { moment, Platform, Notice, TFile, setIcon } from 'obsidian';
-import type { MinaView } from '../view';
+import type { DiwaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, SETTINGS_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID, COMPASS_ICON_ID, FOCUS_ICON_ID, MEMENTO_ICON_ID } from '../constants';
 import { parseNaturalDate, isTablet, attachInlineTriggers, attachMediaPasteHandler } from '../utils';
@@ -14,7 +14,7 @@ import { ZenCaptureModal } from '../modals/ZenCaptureModal';
 export class CommandCenterTab extends BaseTab {
     private parentContainer: HTMLElement;
 
-    constructor(view: MinaView) { super(view); }
+    constructor(view: DiwaView) { super(view); }
 
     render(container: HTMLElement) {
         this.parentContainer = container;
@@ -172,7 +172,7 @@ export class CommandCenterTab extends BaseTab {
             () => thoughtContexts,
             this.settings.peopleFolder,
         );
-        attachMediaPasteHandler(this.app, thoughtArea, () => this.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments');
+        attachMediaPasteHandler(this.app, thoughtArea, () => this.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments');
 
         const saveThought = async () => {
             const raw = thoughtArea.value.trim();
@@ -213,7 +213,7 @@ export class CommandCenterTab extends BaseTab {
             cls: 'mina-capture-box-input',
             attr: { placeholder: 'Add a task… use @tomorrow to set due date', type: 'text' }
         }) as HTMLInputElement;
-        attachMediaPasteHandler(this.app, taskInput, () => this.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments');
+        attachMediaPasteHandler(this.app, taskInput, () => this.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments');
 
         taskInput.addEventListener('focus', () => { this.view._capturePending = 1; });
         taskInput.addEventListener('input', () => {

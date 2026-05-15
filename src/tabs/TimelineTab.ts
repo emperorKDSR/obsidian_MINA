@@ -1,5 +1,5 @@
 import { moment, MarkdownRenderer, setIcon, Platform } from 'obsidian';
-import type { MinaView } from '../view';
+import type { DiwaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from '../modals/EditEntryModal';
 import { ConfirmModal } from '../modals/ConfirmModal';
@@ -21,7 +21,7 @@ export class TimelineTab extends BaseTab {
     private _searchDebounce: ReturnType<typeof setTimeout> | null = null;
     private _renderGen = 0;
 
-    constructor(view: MinaView) { super(view); }
+    constructor(view: DiwaView) { super(view); }
 
     render(container: HTMLElement) {
         this.container = container;

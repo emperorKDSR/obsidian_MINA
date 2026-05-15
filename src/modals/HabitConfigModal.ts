@@ -1,11 +1,11 @@
 import { App, Modal, Setting, Notice } from 'obsidian';
-import MinaPlugin from '../main';
+import DiwaPlugin from '../main';
 import { Habit } from '../types';
 
 export class HabitConfigModal extends Modal {
-    plugin: MinaPlugin;
+    plugin: DiwaPlugin;
 
-    constructor(app: App, plugin: MinaPlugin) {
+    constructor(app: App, plugin: DiwaPlugin) {
         super(app);
         this.plugin = plugin;
     }

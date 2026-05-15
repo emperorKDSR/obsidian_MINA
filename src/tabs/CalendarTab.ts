@@ -1,10 +1,10 @@
 import { moment, setIcon, TFile, Notice } from 'obsidian';
-import type { MinaView } from '../view';
+import type { DiwaView } from '../view';
 import { BaseTab } from './BaseTab';
 import type { TaskEntry } from '../types';
 
 export class CalendarTab extends BaseTab {
-    constructor(view: MinaView) {
+    constructor(view: DiwaView) {
         super(view);
         if (!this.view.calendarViewMonth) this.view.calendarViewMonth = moment().format('YYYY-MM');
         if (!this.view.calendarSelectedDate) this.view.calendarSelectedDate = moment().format('YYYY-MM-DD');
@@ -41,7 +41,7 @@ export class CalendarTab extends BaseTab {
 
     private _buildHabitMap(): Map<string, Set<string>> {
         const map = new Map<string, Set<string>>();
-        const folder = (this.settings.habitsFolder || '000 Bin/MINA V2 Habits').replace(/\\/g, '/');
+        const folder = (this.settings.habitsFolder || '000 Bin/DIWA V2 Habits').replace(/\\/g, '/');
         const { start, end } = this._getDisplayRange();
         const cur = start.clone();
         while (cur.isSameOrBefore(end, 'day')) {

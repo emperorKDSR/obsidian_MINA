@@ -1,10 +1,10 @@
 import { App, Modal, Setting, Notice } from 'obsidian';
-import MinaPlugin from '../main';
+import DiwaPlugin from '../main';
 
 export class FolderSettingsModal extends Modal {
-    plugin: MinaPlugin;
+    plugin: DiwaPlugin;
 
-    constructor(app: App, plugin: MinaPlugin) {
+    constructor(app: App, plugin: DiwaPlugin) {
         super(app);
         this.plugin = plugin;
     }
@@ -38,7 +38,7 @@ export class FolderSettingsModal extends Modal {
             .setName('Tasks Folder')
             .setDesc('Where task files are stored.')
             .addText(text => text
-                .setPlaceholder('000 Bin/MINA V2 Tasks')
+                .setPlaceholder('000 Bin/DIWA V2 Tasks')
                 .setValue(this.plugin.settings.tasksFolder)
                 .onChange(async (value) => {
                     this.plugin.settings.tasksFolder = value;
@@ -49,7 +49,7 @@ export class FolderSettingsModal extends Modal {
             .setName('Thoughts Folder')
             .setDesc('Where thought files are stored.')
             .addText(text => text
-                .setPlaceholder('000 Bin/MINA V2')
+                .setPlaceholder('000 Bin/DIWA V2')
                 .setValue(this.plugin.settings.thoughtsFolder)
                 .onChange(async (value) => {
                     this.plugin.settings.thoughtsFolder = value;
@@ -60,7 +60,7 @@ export class FolderSettingsModal extends Modal {
             .setName('Finance Folder')
             .setDesc('Scanned for recurring payment notes.')
             .addText(text => text
-                .setPlaceholder('000 Bin/MINA V2 PF')
+                .setPlaceholder('000 Bin/DIWA V2 PF')
                 .setValue(this.plugin.settings.pfFolder)
                 .onChange(async (value) => {
                     this.plugin.settings.pfFolder = value;
@@ -82,7 +82,7 @@ export class FolderSettingsModal extends Modal {
             .setName('Voice Memo Folder')
             .setDesc('Where recorded voice notes are stored.')
             .addText(text => text
-                .setPlaceholder('000 Bin/MINA V2 Voice')
+                .setPlaceholder('000 Bin/DIWA V2 Voice')
                 .setValue(this.plugin.settings.voiceMemoFolder)
                 .onChange(async (value) => {
                     this.plugin.settings.voiceMemoFolder = value;
@@ -93,7 +93,7 @@ export class FolderSettingsModal extends Modal {
             .setName('AI Chat Folder')
             .setDesc('Where AI chat sessions are saved.')
             .addText(text => text
-                .setPlaceholder('000 Bin/MINA V2 AI Chat')
+                .setPlaceholder('000 Bin/DIWA V2 AI Chat')
                 .setValue(this.plugin.settings.aiChatFolder)
                 .onChange(async (value) => {
                     this.plugin.settings.aiChatFolder = value;
@@ -104,7 +104,7 @@ export class FolderSettingsModal extends Modal {
             .setName('Habits Folder')
             .setDesc('Where daily habit completion files are stored.')
             .addText(text => text
-                .setPlaceholder('000 Bin/MINA V2 Habits')
+                .setPlaceholder('000 Bin/DIWA V2 Habits')
                 .setValue(this.plugin.settings.habitsFolder)
                 .onChange(async (value) => {
                     this.plugin.settings.habitsFolder = value;
@@ -115,8 +115,8 @@ export class FolderSettingsModal extends Modal {
             .setName('Reviews Folder')
             .setDesc('Root folder for Weekly, Monthly, and Compass review files (sub-folders created automatically).')
             .addText(text => text
-                .setPlaceholder('000 Bin/MINA V2 Reviews')
-                .setValue(this.plugin.settings.reviewsFolder ?? '000 Bin/MINA V2 Reviews')
+                .setPlaceholder('000 Bin/DIWA V2 Reviews')
+                .setValue(this.plugin.settings.reviewsFolder ?? '000 Bin/DIWA V2 Reviews')
                 .onChange(async (value) => {
                     this.plugin.settings.reviewsFolder = value;
                     await this.plugin.saveSettings();

@@ -251,8 +251,8 @@ export default class DiwaPlugin extends Plugin {
 
     /** Re-indexes a single file based on its type. Called by both vault and metadataCache events. */
     private async _reindexFile(file: TFile): Promise<void> {
-        const habitsFolder = (this.settings.habitsFolder || '000 Bin/MINA V2 Habits').replace(/\\/g, '/');
-        const capPath = `${this.settings.captureFolder.trim() || '000 Bin/MINA V2'}/${this.settings.captureFilePath.trim() || 'Daily Capture.md'}`;
+        const habitsFolder = (this.settings.habitsFolder || '000 Bin/DIWA V2 Habits').replace(/\\/g, '/');
+        const capPath = `${this.settings.captureFolder.trim() || '000 Bin/DIWA V2'}/${this.settings.captureFilePath.trim() || 'Daily Capture.md'}`;
 
         if (this.index.isThoughtFile(file.path)) await this.index.indexThoughtFile(file);
         else if (this.index.isTaskFile(file.path)) await this.index.indexTaskFile(file);
@@ -265,7 +265,7 @@ export default class DiwaPlugin extends Plugin {
     notifyRefresh(): void {
         if (this._indexDebounceTimer) clearTimeout(this._indexDebounceTimer);
         this._indexDebounceTimer = setTimeout(() => {
-            const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MINA);
+            const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_DIWA);
             for (const leaf of leaves) {
                 const view = leaf.view as DiwaView;
                 if (view && typeof view.renderView === 'function') {

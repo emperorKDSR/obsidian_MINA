@@ -1,16 +1,16 @@
 import { App, Modal, Platform, Notice, moment, MarkdownRenderer } from 'obsidian';
-import MinaPlugin from '../main';
+import DiwaPlugin from '../main';
 import { parseNaturalDate, isTablet } from '../utils';
 import { FileSuggestModal } from './FileSuggestModal';
 import { ContextSuggestModal } from './ContextSuggestModal';
 
 export class CommentModal extends Modal {
-    plugin: MinaPlugin;
+    plugin: DiwaPlugin;
     parentId: string;
     parentText: string;
     onSave: (text: string) => Promise<void>;
 
-    constructor(app: App, plugin: MinaPlugin, parentId: string, parentText: string, onSave: (text: string) => Promise<void>) {
+    constructor(app: App, plugin: DiwaPlugin, parentId: string, parentText: string, onSave: (text: string) => Promise<void>) {
         super(app);
         this.plugin = plugin;
         this.parentId = parentId;

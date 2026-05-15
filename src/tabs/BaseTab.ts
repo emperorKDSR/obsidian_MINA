@@ -1,5 +1,5 @@
 import { Platform, MarkdownRenderer, Notice, TFile, moment, setIcon } from 'obsidian';
-import type { MinaView } from '../view';
+import type { DiwaView } from '../view';
 import type { ThoughtEntry, TaskEntry, ReplyEntry } from '../types';
 import { NINJA_AVATAR_SVG, ICON_PIN, ICON_EDIT, ICON_TRASH, ICON_REPLY, ICON_LINK, ICON_EYE, ICON_EYE_OFF, ICON_CHECKLIST, ICON_MESSAGE_SQUARE } from '../constants';
 import { EditEntryModal } from '../modals/EditEntryModal';
@@ -10,8 +10,8 @@ import { ViewCommentsModal } from '../modals/ViewCommentsModal';
 import { isTablet, parseContextString } from '../utils';
 
 export class BaseTab {
-    view: MinaView;
-    constructor(view: MinaView) { this.view = view; }
+    view: DiwaView;
+    constructor(view: DiwaView) { this.view = view; }
 
     // Unified Access to Services
     get plugin() { return this.view.plugin; }

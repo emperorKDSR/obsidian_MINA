@@ -1,5 +1,5 @@
 import { App, Modal, Platform, Notice, moment, setIcon } from 'obsidian';
-import MinaPlugin from '../main';
+import DiwaPlugin from '../main';
 import { isTablet, parseNaturalDate, parseContextString, attachInlineTriggers, attachMediaPasteHandler } from '../utils';
 import { FileSuggestModal } from './FileSuggestModal';
 import { ContextSuggestModal } from './ContextSuggestModal';
@@ -13,7 +13,7 @@ export class EditEntryModal extends Modal {
     initialContexts: string[];
     initialDueDate: string | null;
     isTask: boolean;
-    plugin: MinaPlugin;
+    plugin: DiwaPlugin;
     onSave: (
         newText: string,
         newContexts: string,
@@ -41,7 +41,7 @@ export class EditEntryModal extends Modal {
 
     constructor(
         app: App,
-        plugin: MinaPlugin,
+        plugin: DiwaPlugin,
         initialText: string,
         initialContext: string,
         initialDueDate: string | null,

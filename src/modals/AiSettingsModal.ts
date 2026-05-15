@@ -1,10 +1,10 @@
 import { App, Modal, Setting, Notice } from 'obsidian';
-import MinaPlugin from '../main';
+import DiwaPlugin from '../main';
 
 export class AiSettingsModal extends Modal {
-    plugin: MinaPlugin;
+    plugin: DiwaPlugin;
 
-    constructor(app: App, plugin: MinaPlugin) {
+    constructor(app: App, plugin: DiwaPlugin) {
         super(app);
         this.plugin = plugin;
     }

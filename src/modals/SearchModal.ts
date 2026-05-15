@@ -1,5 +1,5 @@
 import { App, Modal, setIcon, Platform } from 'obsidian';
-import type MinaPlugin from '../main';
+import type DiwaPlugin from '../main';
 import { isTablet } from '../utils';
 import { VIEW_TYPE_MINA } from '../constants';
 
@@ -40,7 +40,7 @@ const QUICKJUMP_TABS = [
 ];
 
 export class SearchModal extends Modal {
-    private plugin: MinaPlugin;
+    private plugin: DiwaPlugin;
     private inputEl: HTMLInputElement;
     private bodyEl: HTMLElement;
     private scopeBar: HTMLElement;
@@ -51,7 +51,7 @@ export class SearchModal extends Modal {
     private panelEl: HTMLElement;
     private viewportResizeHandler: (() => void) | null = null;
 
-    constructor(app: App, plugin: MinaPlugin) {
+    constructor(app: App, plugin: DiwaPlugin) {
         super(app);
         this.plugin = plugin;
     }

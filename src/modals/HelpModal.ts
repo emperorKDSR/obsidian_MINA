@@ -11,14 +11,14 @@ const SECTIONS: HelpSection[] = [
             { label: 'Zen Mode 🎯', desc: 'Tap the target icon to collapse all navigation and enter deep focus. Tap again to exit.', tip: 'Best used when you only want to see your intelligence card and capture bar.' },
             { label: 'Intelligence Card', desc: 'Live snapshot: open tasks, habits completed, unprocessed thoughts, and total dues. Hit "SYNTHESIZE BRIEFING" to get an AI strategy summary.', tip: 'Requires a Gemini API key configured in Settings → AI.' },
             { label: 'Navigation Clusters', desc: 'Four grouped rows: ACTION (Focus, Habits, Journal, Synthesis, Timeline), MANAGEMENT (Tasks, Finance, Projects, Calendar, Weekly, Monthly, Compass), FEATURES (AI Chat, Voice, Compasee, Memento), and SYSTEM (Settings, Manual, Export). Each cluster wraps to the next row automatically on narrow screens.', tip: 'Tap any icon to jump directly to that tab.' },
-            { label: 'Tablet Experience', desc: 'On tablets (iPad, etc.), MINA automatically upgrades to a desktop-like layout: inline capture bar, horizontal habit bar, expanded navigation, sidebar manual, and hover effects.', tip: 'Tablet is detected when the device short-edge is ≥768px.' },
-            { label: 'Global Search 🔍', desc: 'Tap the search icon (before Help) or press Mod+Shift+F to open Global Search. Instantly find anything across Thoughts, Tasks, Dues, Projects, and Habits.', tip: 'Also available via Obsidian command palette: "MINA: Global Search".' },
+            { label: 'Tablet Experience', desc: 'On tablets (iPad, etc.), DIWA automatically upgrades to a desktop-like layout: inline capture bar, horizontal habit bar, expanded navigation, sidebar manual, and hover effects.', tip: 'Tablet is detected when the device short-edge is ≥768px.' },
+            { label: 'Global Search 🔍', desc: 'Tap the search icon (before Help) or press Mod+Shift+F to open Global Search. Instantly find anything across Thoughts, Tasks, Dues, Projects, and Habits.', tip: 'Also available via Obsidian command palette: "DIWA: Global Search".' },
         ]
     },
     {
-        id: 'search', icon: 'lucide-search', title: 'Global Search', subtitle: 'Find anything across MINA instantly',
+        id: 'search', icon: 'lucide-search', title: 'Global Search', subtitle: 'Find anything across DIWA instantly',
         items: [
-            { label: 'Opening Search', desc: 'Tap the 🔍 icon in the Command Center header, or press Mod+Shift+F. On phone, tap the search pill that appears between the greeting and capture bar for instant access.', tip: 'Also available via Obsidian command palette: "MINA: Global Search".' },
+            { label: 'Opening Search', desc: 'Tap the 🔍 icon in the Command Center header, or press Mod+Shift+F. On phone, tap the search pill that appears between the greeting and capture bar for instant access.', tip: 'Also available via Obsidian command palette: "DIWA: Global Search".' },
             { label: 'Search Pill (Phone)', desc: 'On phone, a tappable search pill sits in the Command Center between the greeting and the capture bar. Tapping it opens the full-screen search overlay directly.', tip: 'The pill only appears on phone-sized screens — on tablet/desktop use the header icon.' },
             { label: 'Mobile Full-Screen Mode', desc: 'On phone, search opens as a full-screen iOS Spotlight-style takeover: 16px input (prevents iOS zoom), results scroll above the keyboard automatically, and safe-area insets are respected for notched phones.' },
             { label: 'Swipe to Dismiss', desc: 'On phone, swipe down on the search overlay or tap the ← back button to close. Supports reduced-motion preferences.', tip: 'The back button appears in the top-left corner of the full-screen overlay.' },
@@ -133,7 +133,7 @@ const SECTIONS: HelpSection[] = [
     {
         id: 'ai', icon: 'lucide-sparkles', title: 'AI Chat', subtitle: 'Gemini 2.5 Pro intelligence',
         items: [
-            { label: 'Chat', desc: 'Ask MINA anything — strategy, writing help, idea development, or note analysis. Powered by Gemini 2.5 Pro.' },
+            { label: 'Chat', desc: 'Ask DIWA anything — strategy, writing help, idea development, or note analysis. Powered by Gemini 2.5 Pro.' },
             { label: 'Keyboard', desc: 'Press Enter to send, Shift+Enter for a new line.', tip: 'The send button also works on mobile.' },
             { label: 'Suggestion Chips', desc: 'On empty chat, tap a suggestion to prefill your prompt.' },
             { label: 'Web Search', desc: 'Toggle the globe icon (🌐) in the header to let AI pull current information from the internet.' },
@@ -168,7 +168,7 @@ const SECTIONS: HelpSection[] = [
         ]
     },
     {
-        id: 'settings', icon: 'lucide-settings', title: 'Settings', subtitle: 'Configure MINA to your workflow',
+        id: 'settings', icon: 'lucide-settings', title: 'Settings', subtitle: 'Configure DIWA to your workflow',
         items: [
             { label: 'Folders', desc: 'Set where thoughts, tasks, habits, and voice memos are stored in your vault.' },
             { label: 'Contexts', desc: 'Manage your global context tags (#work, #personal, etc.).' },
@@ -179,7 +179,7 @@ const SECTIONS: HelpSection[] = [
     {
         id: 'desktop-hub', icon: 'lucide-layout-dashboard', title: 'Desktop Hub', subtitle: 'Premium 3-column cockpit for desktop',
         items: [
-            { label: 'Opening the Hub', desc: 'Click the cockpit icon in the Obsidian ribbon, or use the command palette → "MINA: Open Desktop Hub". Opens as a dedicated popout window.', tip: 'Requires Obsidian 0.16.0+. On mobile, a notice is shown instead.' },
+            { label: 'Opening the Hub', desc: 'Click the cockpit icon in the Obsidian ribbon, or use the command palette → "DIWA: Open Desktop Hub". Opens as a dedicated popout window.', tip: 'Requires Obsidian 0.16.0+. On mobile, a notice is shown instead.' },
             { label: '3-Column Layout', desc: 'LEFT: icon-only navigation sidebar (hover to expand with labels). CENTER: thought capture + today\'s live feed. RIGHT: stats panel + AI Intelligence briefing.' },
             { label: 'Thought Capture', desc: 'Type your thought in the center textarea and press Enter to save instantly. Use ⌘K to open the inline context tagger and assign tags before saving.', tip: 'Shift+Enter inserts a newline without saving.' },
             { label: "Today's Feed", desc: 'All thoughts captured today are shown in the center panel, newest first. Each entry shows timestamp, body text, and context chips.' },
@@ -228,7 +228,7 @@ export class HelpModal extends Modal {
         const titleWrap = header.createEl('div', { cls: 'mina-help-header-title' });
         const titleIcon = titleWrap.createEl('span', { cls: 'mina-help-header-icon' });
         setIcon(titleIcon, 'lucide-book-open');
-        titleWrap.createEl('h2', { text: 'MINA Manual', cls: 'mina-help-title' });
+        titleWrap.createEl('h2', { text: 'DIWA Manual', cls: 'mina-help-title' });
         titleWrap.createEl('p', { text: 'Your Personal Operating System', cls: 'mina-help-subtitle' });
 
         // Search
@@ -290,7 +290,7 @@ export class HelpModal extends Modal {
         const titleWrap = header.createEl('div', { cls: 'mina-help-header-title' });
         const titleIcon = titleWrap.createEl('span', { cls: 'mina-help-header-icon' });
         setIcon(titleIcon, 'lucide-book-open');
-        titleWrap.createEl('h2', { text: 'MINA Manual', cls: 'mina-help-title' });
+        titleWrap.createEl('h2', { text: 'DIWA Manual', cls: 'mina-help-title' });
 
         const searchWrap = header.createEl('div', { cls: 'mina-help-search-wrap' });
         const searchIcon = searchWrap.createEl('span', { cls: 'mina-help-search-icon' });

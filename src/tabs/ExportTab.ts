@@ -1,5 +1,5 @@
 import { Notice, TFile, moment } from 'obsidian';
-import type { MinaView } from '../view';
+import type { DiwaView } from '../view';
 import { BaseTab } from './BaseTab';
 
 function csvField(val: string | number | undefined): string {
@@ -8,7 +8,7 @@ function csvField(val: string | number | undefined): string {
 }
 
 export class ExportTab extends BaseTab {
-    constructor(view: MinaView) { super(view); }
+    constructor(view: DiwaView) { super(view); }
 
     render(container: HTMLElement) {
         container.empty();
@@ -62,7 +62,7 @@ export class ExportTab extends BaseTab {
                 ].map(csvField).join(','))
             ];
             const content = rows.join('\n');
-            const folder = (this.settings.thoughtsFolder || '000 Bin/MINA V2').replace(/\\/g, '/');
+            const folder = (this.settings.thoughtsFolder || '000 Bin/DIWA V2').replace(/\\/g, '/');
             const path = `${folder}/MINA_Export_Thoughts.csv`;
             await this._writeFile(path, content);
             new Notice(`Exported ${thoughts.length} thoughts to thoughts folder ✓`);
@@ -92,7 +92,7 @@ export class ExportTab extends BaseTab {
                 ].map(csvField).join(','))
             ];
             const content = rows.join('\n');
-            const folder = (this.settings.tasksFolder || '000 Bin/MINA V2 Tasks').replace(/\\/g, '/');
+            const folder = (this.settings.tasksFolder || '000 Bin/DIWA V2 Tasks').replace(/\\/g, '/');
             const path = `${folder}/MINA_Export_Tasks.csv`;
             await this._writeFile(path, content);
             new Notice(`Exported ${tasks.length} tasks to tasks folder ✓`);
@@ -125,7 +125,7 @@ export class ExportTab extends BaseTab {
                 },
             };
             const content = JSON.stringify(backup, null, 2);
-            const folder = (this.settings.thoughtsFolder || '000 Bin/MINA V2').replace(/\\/g, '/');
+            const folder = (this.settings.thoughtsFolder || '000 Bin/DIWA V2').replace(/\\/g, '/');
             const fileName = `MINA_Backup_${dateStr}.json`;
             const path = `${folder}/${fileName}`;
             await this._writeFile(path, content);

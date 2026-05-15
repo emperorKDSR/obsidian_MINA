@@ -2,8 +2,8 @@ import {
     ItemView, WorkspaceLeaf, setIcon, TFile,
     prepareFuzzySearch, prepareSimpleSearch, renderMatches,
 } from 'obsidian';
-import type MinaPlugin from '../main';
-import { VIEW_TYPE_SEARCH, VIEW_TYPE_MINA } from '../constants';
+import type DiwaPlugin from '../main';
+import { VIEW_TYPE_SEARCH, VIEW_TYPE_DIWA } from '../constants';
 import type { SearchMatches } from 'obsidian';
 
 interface RichResult {
@@ -46,7 +46,7 @@ const QUICKJUMP_TABS = [
 ];
 
 export class SearchView extends ItemView {
-    plugin: MinaPlugin;
+    plugin: DiwaPlugin;
     private _closed = false;
 
     private inputEl!: HTMLInputElement;
@@ -60,7 +60,7 @@ export class SearchView extends ItemView {
 
     private _debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-    constructor(leaf: WorkspaceLeaf, plugin: MinaPlugin) {
+    constructor(leaf: WorkspaceLeaf, plugin: DiwaPlugin) {
         super(leaf);
         this.plugin = plugin;
     }
@@ -368,7 +368,7 @@ export class SearchView extends ItemView {
             }
         }
         // Fallback: navigate MINA view tab (habits + unresolved paths)
-        const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MINA);
+        const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_DIWA);
         if (leaves.length > 0) {
             const view = leaves[0].view as any;
             this.app.workspace.setActiveLeaf(leaves[0], { focus: true });

@@ -160,7 +160,7 @@ export function attachInlineTriggers(
  *
  * @param app             The Obsidian App instance
  * @param textarea        The target textarea element
- * @param getFolder       Callback returning the attachments folder path (e.g. '000 Bin/MINA V2 Attachments')
+ * @param getFolder       Callback returning the attachments folder path (e.g. '000 Bin/DIWA V2 Attachments')
  */
 export function attachMediaPasteHandler(
     app: App,
@@ -169,7 +169,7 @@ export function attachMediaPasteHandler(
 ): void {
     const saveFile = async (file: File): Promise<string | null> => {
         try {
-            const folder = (getFolder() || '000 Bin/MINA V2 Attachments').trim();
+            const folder = (getFolder() || '000 Bin/DIWA V2 Attachments').trim();
             if (!app.vault.getAbstractFileByPath(folder)) {
                 await app.vault.createFolder(folder);
             }

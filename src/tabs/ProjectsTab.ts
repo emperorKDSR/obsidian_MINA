@@ -1,5 +1,5 @@
 import { moment, TFile, setIcon } from 'obsidian';
-import type { MinaView } from '../view';
+import type { DiwaView } from '../view';
 import { BaseTab } from './BaseTab';
 import { NewProjectModal } from '../modals/NewProjectModal';
 import { EditProjectModal } from '../modals/EditProjectModal';
@@ -27,7 +27,7 @@ export class ProjectsTab extends BaseTab {
     private filter: ProjectFilter = 'all';
     private expandedIds: Set<string> = new Set();
 
-    constructor(view: MinaView) { super(view); }
+    constructor(view: DiwaView) { super(view); }
 
     render(container: HTMLElement) {
         container.empty();

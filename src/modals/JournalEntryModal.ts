@@ -1,5 +1,5 @@
 import { App, Modal, Platform, Notice, moment, setIcon } from 'obsidian';
-import MinaPlugin from '../main';
+import DiwaPlugin from '../main';
 import { isTablet, attachMediaPasteHandler, attachInlineTriggers } from '../utils';
 
 const JOURNAL_TYPES = [
@@ -13,7 +13,7 @@ const JOURNAL_TYPES = [
 const TYPE_TAGS: Set<string> = new Set(JOURNAL_TYPES.filter(t => t.tag).map(t => t.tag));
 
 export class JournalEntryModal extends Modal {
-    private plugin: MinaPlugin;
+    private plugin: DiwaPlugin;
     private mode: 'new' | 'edit';
     private initialText: string;
     private filePath: string | null;
@@ -23,7 +23,7 @@ export class JournalEntryModal extends Modal {
 
     constructor(
         app: App,
-        plugin: MinaPlugin,
+        plugin: DiwaPlugin,
         mode: 'new' | 'edit',
         initialText: string,
         filePath: string | null,
@@ -160,7 +160,7 @@ export class JournalEntryModal extends Modal {
         });
 
         attachMediaPasteHandler(this.app, textArea, () =>
-            this.plugin.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments'
+            this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments'
         );
         attachInlineTriggers(
             this.app, textArea,
@@ -301,7 +301,7 @@ export class JournalEntryModal extends Modal {
         modalEl.addEventListener('drop', () => modalEl.removeClass('is-dragover'));
 
         attachMediaPasteHandler(this.app, textArea, () =>
-            this.plugin.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments'
+            this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments'
         );
         attachInlineTriggers(
             this.app, textArea,
@@ -376,7 +376,7 @@ export class JournalEntryModal extends Modal {
         previewStrip: HTMLElement | null
     ) {
         try {
-            const folder = (this.plugin.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments').trim();
+            const folder = (this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments').trim();
             if (!this.app.vault.getAbstractFileByPath(folder)) {
                 await this.app.vault.createFolder(folder);
             }

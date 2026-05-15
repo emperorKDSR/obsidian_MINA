@@ -1,5 +1,5 @@
 import { moment, setIcon, Notice } from 'obsidian';
-import type { MinaView } from '../view';
+import type { DiwaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { EditEntryModal } from "../modals/EditEntryModal";
 import { EditTaskModal } from "../modals/EditTaskModal";
@@ -22,7 +22,7 @@ export class TasksTab extends BaseTab {
     private viewMode: TaskViewMode = 'open';
     private listContainer: HTMLElement | null = null;
 
-    constructor(view: MinaView) {
+    constructor(view: DiwaView) {
         super(view);
         this.viewMode = this.view.tasksViewMode === 'inbox' ? 'open' : ((this.view.tasksViewMode as TaskViewMode) || 'open');
     }

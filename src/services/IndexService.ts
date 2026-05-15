@@ -1,5 +1,5 @@
 import { App, TFile, moment } from 'obsidian';
-import { MinaSettings, ThoughtEntry, TaskEntry, DueEntry, ProjectEntry } from '../types';
+import { DiwaSettings, ThoughtEntry, TaskEntry, DueEntry, ProjectEntry } from '../types';
 
 export interface ChecklistItem {
     text: string;
@@ -16,7 +16,7 @@ export interface ThoughtChecklistItem {
 
 export class IndexService {
     app: App;
-    settings: MinaSettings;
+    settings: DiwaSettings;
     
     // Memory Indices
     thoughtIndex: Map<string, ThoughtEntry> = new Map();
@@ -34,12 +34,12 @@ export class IndexService {
     radarQueue: TaskEntry[] = [];
     totalDues: number = 0;
 
-    constructor(app: App, settings: MinaSettings) {
+    constructor(app: App, settings: DiwaSettings) {
         this.app = app;
         this.settings = settings;
     }
 
-    updateSettings(settings: MinaSettings) {
+    updateSettings(settings: DiwaSettings) {
         this.settings = settings;
     }
 
@@ -74,7 +74,7 @@ export class IndexService {
     }
 
     async buildChecklistIndex(): Promise<void> {
-        const folder = this.settings.captureFolder.trim() || '000 Bin/MINA V2';
+        const folder = this.settings.captureFolder.trim() || '000 Bin/DIWA V2';
         const filename = this.settings.captureFilePath.trim() || 'Daily Capture.md';
         const path = folder && folder !== '/' ? `${folder}/${filename}` : filename;
         const file = this.app.vault.getAbstractFileByPath(path);
@@ -96,7 +96,7 @@ export class IndexService {
 
     async refreshHabitIndex(): Promise<void> {
         const todayStr = moment().format('YYYY-MM-DD');
-        const habitsFolder = (this.settings.habitsFolder || '000 Bin/MINA V2 Habits').replace(/\\/g, '/');
+        const habitsFolder = (this.settings.habitsFolder || '000 Bin/DIWA V2 Habits').replace(/\\/g, '/');
         const path = `${habitsFolder}/${todayStr}.md`;
         const file = this.app.vault.getAbstractFileByPath(path);
         this.habitStatusIndex = [];
@@ -143,7 +143,7 @@ export class IndexService {
     }
 
     async buildDueIndex(): Promise<void> {
-        const pfFolder = (this.settings.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/');
+        const pfFolder = (this.settings.pfFolder || '000 Bin/DIWA V2 PF').replace(/\\/g, '/');
         this.dueIndex.clear();
         const files = this.app.vault.getMarkdownFiles().filter(f => f.path.startsWith(pfFolder + '/'));
         for (const file of files) {
@@ -267,19 +267,19 @@ export class IndexService {
     }
 
     isThoughtFile(path: string): boolean {
-        const folder = (this.settings.thoughtsFolder || '000 Bin/MINA V2').trim();
+        const folder = (this.settings.thoughtsFolder || '000 Bin/DIWA V2').trim();
         // Use folder + '/' to prevent prefix collision with sibling folders
-        // e.g. '000 Bin/MINA V2' must NOT match '000 Bin/MINA V2 Tasks/...'
+        // e.g. '000 Bin/DIWA V2' must NOT match '000 Bin/DIWA V2 Tasks/...'
         return path.startsWith(folder + '/') && path.endsWith('.md') && !path.includes('/trash/');
     }
 
     isTaskFile(path: string): boolean {
-        const folder = (this.settings.tasksFolder || '000 Bin/MINA V2 Tasks').trim();
+        const folder = (this.settings.tasksFolder || '000 Bin/DIWA V2 Tasks').trim();
         return path.startsWith(folder + '/') && path.endsWith('.md') && !path.includes('/trash/');
     }
 
     isDueFile(path: string): boolean {
-        const folder = (this.settings.pfFolder || '000 Bin/MINA V2 PF').replace(/\\/g, '/').trim();
+        const folder = (this.settings.pfFolder || '000 Bin/DIWA V2 PF').replace(/\\/g, '/').trim();
         return path.startsWith(folder + '/') && path.endsWith('.md');
     }
 

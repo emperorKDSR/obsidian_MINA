@@ -1,5 +1,5 @@
 import { moment, Platform, MarkdownRenderer, Notice, setIcon, Modal, TFile } from 'obsidian';
-import type { MinaView } from '../view';
+import type { DiwaView } from '../view';
 import type { ThoughtEntry } from '../types';
 import { BaseTab } from './BaseTab';
 import { isTablet, parseContextString } from '../utils';
@@ -226,7 +226,7 @@ export class SynthesisTab extends BaseTab {
     /** Phone: pending thought for the bottom-sheet assign flow. */
     private pendingAssignThought: ThoughtEntry | null = null;
 
-    constructor(view: MinaView) { super(view); }
+    constructor(view: DiwaView) { super(view); }
 
     render(container: HTMLElement): void {
         this.renderSynthesisMode(container);

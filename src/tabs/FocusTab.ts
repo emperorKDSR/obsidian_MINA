@@ -1,10 +1,10 @@
 import { moment, Notice, setIcon } from 'obsidian';
-import type { MinaView } from '../view';
+import type { DiwaView } from '../view';
 import { BaseTab } from './BaseTab';
 import type { TaskEntry } from '../types';
 
 export class FocusTab extends BaseTab {
-    constructor(view: MinaView) { super(view); }
+    constructor(view: DiwaView) { super(view); }
 
     render(container: HTMLElement) {
         container.empty();
