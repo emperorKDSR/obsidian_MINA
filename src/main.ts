@@ -1,19 +1,19 @@
 import { Plugin, TFile, Notice, WorkspaceLeaf, Platform, moment, addIcon } from 'obsidian';
-import { VIEW_TYPE_MINA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG, GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG, MEMENTO_ICON_ID, MEMENTO_ICON_SVG, TASK_ICON_ID, TASK_ICON_SVG, PF_ICON_ID, PF_ICON_SVG, SETTINGS_ICON_ID, SETTINGS_ICON_SVG, VOICE_ICON_ID, VOICE_ICON_SVG, HOME_ICON_ID, HOME_ICON_SVG, PROJECT_ICON_ID, PROJECT_ICON_SVG, SYNTHESIS_ICON_ID, SYNTHESIS_ICON_SVG, COMPASS_ICON_ID, COMPASS_ICON_SVG, REVIEW_ICON_ID, REVIEW_ICON_SVG, VIEW_TYPE_DESKTOP_HUB, DESKTOP_HUB_ICON_ID, DESKTOP_HUB_ICON_SVG, VIEW_TYPE_SEARCH } from './constants';
-import { MinaSettings } from './types';
+import { VIEW_TYPE_DIWA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG, GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG, MEMENTO_ICON_ID, MEMENTO_ICON_SVG, TASK_ICON_ID, TASK_ICON_SVG, PF_ICON_ID, PF_ICON_SVG, SETTINGS_ICON_ID, SETTINGS_ICON_SVG, VOICE_ICON_ID, VOICE_ICON_SVG, HOME_ICON_ID, HOME_ICON_SVG, PROJECT_ICON_ID, PROJECT_ICON_SVG, SYNTHESIS_ICON_ID, SYNTHESIS_ICON_SVG, COMPASS_ICON_ID, COMPASS_ICON_SVG, REVIEW_ICON_ID, REVIEW_ICON_SVG, VIEW_TYPE_DESKTOP_HUB, DESKTOP_HUB_ICON_ID, DESKTOP_HUB_ICON_SVG, VIEW_TYPE_SEARCH } from './constants';
+import { DiwaSettings } from './types';
 import { isTablet } from './utils';
-import { MinaView } from './view';
+import { DiwaView } from './view';
 import { DesktopHubView } from './views/DesktopHubView';
 import { SearchView } from './views/SearchView';
-import { MinaSettingTab } from './settings';
+import { DiwaSettingTab } from './settings';
 
 import { AiService } from './services/AiService';
 import { VaultService } from './services/VaultService';
 import { IndexService } from './services/IndexService';
 import { SearchModal } from './modals/SearchModal';
 
-export default class MinaPlugin extends Plugin {
-	settings: MinaSettings;
+export default class DiwaPlugin extends Plugin {
+	settings: DiwaSettings;
     settingsInitialized: boolean = false;
     zenCaptureDraft: string = '';
     
@@ -47,7 +47,7 @@ export default class MinaPlugin extends Plugin {
                 if (this.index.isThoughtFile(f.path)) { await this.index.indexThoughtFile(f as TFile); shouldRefresh = true; }
                 else if (this.index.isTaskFile(f.path)) { await this.index.indexTaskFile(f as TFile); shouldRefresh = true; }
                 else if (this.index.isDueFile(f.path)) { await this.index.buildDueIndex(); shouldRefresh = true; }
-                else if (f.path.startsWith((this.settings.habitsFolder || '000 Bin/MINA V2 Habits').replace(/\\/g, '/'))) { await this.index.refreshHabitIndex(); shouldRefresh = true; }
+                else if (f.path.startsWith((this.settings.habitsFolder || '000 Bin/DIWA V2 Habits').replace(/\\/g, '/'))) { await this.index.refreshHabitIndex(); shouldRefresh = true; }
                 if (shouldRefresh) this.notifyRefresh();
             }));
             
@@ -79,7 +79,7 @@ export default class MinaPlugin extends Plugin {
             }));
         });
 
-        this.registerView(VIEW_TYPE_MINA, (leaf) => new MinaView(leaf, this));
+        this.registerView(VIEW_TYPE_DIWA, (leaf) => new DiwaView(leaf, this));
         this.registerView(VIEW_TYPE_DESKTOP_HUB, (leaf) => new DesktopHubView(leaf, this));
         this.registerView(VIEW_TYPE_SEARCH, (leaf) => new SearchView(leaf, this));
 
@@ -107,14 +107,14 @@ export default class MinaPlugin extends Plugin {
         addIcon(HOME_ICON_ID, HOME_ICON_SVG);
         addIcon(DESKTOP_HUB_ICON_ID, DESKTOP_HUB_ICON_SVG);
 
-		this.addRibbonIcon(HOME_ICON_ID, 'MINA Hub', () => { this.activateView('home', true); });
-        this.addRibbonIcon(DESKTOP_HUB_ICON_ID, 'MINA Desktop Hub', () => { this.activateDesktopHub(); });
+		this.addRibbonIcon(HOME_ICON_ID, 'DIWA Hub', () => { this.activateView('home', true); });
+        this.addRibbonIcon(DESKTOP_HUB_ICON_ID, 'DIWA Desktop Hub', () => { this.activateDesktopHub(); });
 
-        this.addCommand({ id: 'open-mina-home-mode', name: 'MINA: Open Command Center', icon: HOME_ICON_ID, callback: () => { this.activateView('home', true); } });
-        this.addCommand({ id: 'open-mina-desktop-hub', name: 'MINA: Open Desktop Hub', icon: DESKTOP_HUB_ICON_ID, callback: () => { this.activateDesktopHub(); } });
-        this.addCommand({ id: 'mina-global-search', name: 'MINA: Global Search', icon: 'lucide-search', hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'f' }], callback: () => { new SearchModal(this.app, this).open(); } });
+        this.addCommand({ id: 'open-diwa-home-mode', name: 'DIWA: Open Command Center', icon: HOME_ICON_ID, callback: () => { this.activateView('home', true); } });
+        this.addCommand({ id: 'open-diwa-desktop-hub', name: 'DIWA: Open Desktop Hub', icon: DESKTOP_HUB_ICON_ID, callback: () => { this.activateDesktopHub(); } });
+        this.addCommand({ id: 'diwa-global-search', name: 'DIWA: Global Search', icon: 'lucide-search', hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'f' }], callback: () => { new SearchModal(this.app, this).open(); } });
 
-		this.addSettingTab(new MinaSettingTab(this.app, this));
+		this.addSettingTab(new DiwaSettingTab(this.app, this));
         setTimeout(() => this.migrateLegacyTableData(), 2000);
 	}
 
@@ -194,15 +194,15 @@ export default class MinaPlugin extends Plugin {
     async activateView(tabId?: string, isDedicated: boolean = false) {
         const { workspace } = this.app;
         const targetTab = tabId || 'home';
-        const leaves = workspace.getLeavesOfType(VIEW_TYPE_MINA);
+        const leaves = workspace.getLeavesOfType(VIEW_TYPE_DIWA);
         let targetLeaf: WorkspaceLeaf | null = null;
         for (const leaf of leaves) {
-            const view = leaf.view as MinaView;
+            const view = leaf.view as DiwaView;
             if (view && view.isDedicated === isDedicated && view.activeTab === targetTab) { targetLeaf = leaf; break; }
         }
         if (!targetLeaf && isDedicated && !Platform.isMobile) {
             for (const leaf of leaves) {
-                const view = leaf.view as MinaView;
+                const view = leaf.view as DiwaView;
                 if (view && view.isDedicated) {
                     targetLeaf = leaf;
                     break;
@@ -215,7 +215,7 @@ export default class MinaPlugin extends Plugin {
         }
         if (!targetLeaf) targetLeaf = Platform.isMobile ? workspace.getLeaf(false) : workspace.getLeaf('window');
         if (targetLeaf) {
-            await targetLeaf.setViewState({ type: VIEW_TYPE_MINA, active: true, state: { activeTab: targetTab, isDedicated } });
+            await targetLeaf.setViewState({ type: VIEW_TYPE_DIWA, active: true, state: { activeTab: targetTab, isDedicated } });
             workspace.revealLeaf(targetLeaf);
         }
     }
@@ -267,7 +267,7 @@ export default class MinaPlugin extends Plugin {
         this._indexDebounceTimer = setTimeout(() => {
             const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_MINA);
             for (const leaf of leaves) {
-                const view = leaf.view as MinaView;
+                const view = leaf.view as DiwaView;
                 if (view && typeof view.renderView === 'function') {
                     // Don't re-render while the user is mid-toggle — let optimistic UI stand
                     if (view._taskTogglePending > 0 || view._habitTogglePending > 0 || view._checklistTogglePending > 0 || view._capturePending > 0 || view._synthesisCaptPending > 0 || view._mergePending > 0) continue;
@@ -299,7 +299,7 @@ export default class MinaPlugin extends Plugin {
             const completed = this.index.habitStatusIndex ?? [];
             const incomplete = allHabits.filter(h => !completed.includes(h.id));
             if (incomplete.length > 0) {
-                new Notice(`🌿 MINA: ${incomplete.length} habit${incomplete.length > 1 ? 's' : ''} pending today`, 5000);
+                new Notice(`🌿 DIWA: ${incomplete.length} habit${incomplete.length > 1 ? 's' : ''} pending today`, 5000);
             }
         }
 
@@ -308,7 +308,7 @@ export default class MinaPlugin extends Plugin {
             const dueTasks = Array.from(this.index.taskIndex.values())
                 .filter(t => t.status !== 'done' && t.due === today);
             if (dueTasks.length > 0) {
-                new Notice(`✅ MINA: ${dueTasks.length} task${dueTasks.length > 1 ? 's' : ''} due today`, 5000);
+                new Notice(`✅ DIWA: ${dueTasks.length} task${dueTasks.length > 1 ? 's' : ''} due today`, 5000);
             }
         }
     }

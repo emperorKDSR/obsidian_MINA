@@ -1,10 +1,10 @@
 import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
-import MinaPlugin from './main';
+import DiwaPlugin from './main';
 
-export class MinaSettingTab extends PluginSettingTab {
-	plugin: MinaPlugin;
+export class DiwaSettingTab extends PluginSettingTab {
+	plugin: DiwaPlugin;
 
-	constructor(app: App, plugin: MinaPlugin) {
+	constructor(app: App, plugin: DiwaPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -12,19 +12,19 @@ export class MinaSettingTab extends PluginSettingTab {
 	display(): void {
 		const {containerEl} = this;
 		containerEl.empty();
-		containerEl.createEl('h2', {text: 'MINA V2 Settings'});
+		containerEl.createEl('h2', {text: 'DIWA V2 Settings'});
 
         containerEl.createEl('h3', { text: 'Storage & Capture' });
-		new Setting(containerEl).setName('Capture Folder').setDesc('Folder for daily capture logs (tables).').addText(text => text.setPlaceholder('000 Bin/MINA V2').setValue(this.plugin.settings.captureFolder).onChange(async (value) => { this.plugin.settings.captureFolder = value; await this.plugin.saveSettings(); }));
-		new Setting(containerEl).setName('Thoughts Folder').setDesc('Folder for individual thought files (YAML).').addText(text => text.setPlaceholder('000 Bin/MINA V2').setValue(this.plugin.settings.thoughtsFolder).onChange(async (value) => { this.plugin.settings.thoughtsFolder = value; await this.plugin.saveSettings(); }));
-		new Setting(containerEl).setName('Tasks Folder').setDesc('Folder for individual task files (YAML).').addText(text => text.setPlaceholder('000 Bin/MINA V2 Tasks').setValue(this.plugin.settings.tasksFolder).onChange(async (value) => { this.plugin.settings.tasksFolder = value; await this.plugin.saveSettings(); }));
-		new Setting(containerEl).setName('Finance Folder').setDesc('Folder for personal finance (PF) dues.').addText(text => text.setPlaceholder('000 Bin/MINA V2 PF').setValue(this.plugin.settings.pfFolder).onChange(async (value) => { this.plugin.settings.pfFolder = value; await this.plugin.saveSettings(); }));
-        new Setting(containerEl).setName('People Folder').setDesc('Folder where new people notes are created when using the / trigger.').addText(text => text.setPlaceholder('000 Bin/MINA V2 People').setValue(this.plugin.settings.peopleFolder ?? '000 Bin/MINA V2 People').onChange(async (value) => { this.plugin.settings.peopleFolder = value; await this.plugin.saveSettings(); }));
-        new Setting(containerEl).setName('Voice Memo Folder').setDesc('Folder for voice recording clips.').addText(text => text.setPlaceholder('000 Bin/MINA V2 Voice').setValue(this.plugin.settings.voiceMemoFolder).onChange(async (value) => { this.plugin.settings.voiceMemoFolder = value; await this.plugin.saveSettings(); }));
-        new Setting(containerEl).setName('Habits Folder').setDesc('Folder for habit tracking files.').addText(text => text.setPlaceholder('000 Bin/MINA V2 Habits').setValue(this.plugin.settings.habitsFolder).onChange(async (value) => { this.plugin.settings.habitsFolder = value; await this.plugin.saveSettings(); }));
-        new Setting(containerEl).setName('Attachments Folder').setDesc('Folder where pasted/dropped images and files are saved.').addText(text => text.setPlaceholder('000 Bin/MINA V2 Attachments').setValue(this.plugin.settings.attachmentsFolder ?? '000 Bin/MINA V2 Attachments').onChange(async (value) => { this.plugin.settings.attachmentsFolder = value; await this.plugin.saveSettings(); }));
+		new Setting(containerEl).setName('Capture Folder').setDesc('Folder for daily capture logs (tables).').addText(text => text.setPlaceholder('000 Bin/DIWA V2').setValue(this.plugin.settings.captureFolder).onChange(async (value) => { this.plugin.settings.captureFolder = value; await this.plugin.saveSettings(); }));
+		new Setting(containerEl).setName('Thoughts Folder').setDesc('Folder for individual thought files (YAML).').addText(text => text.setPlaceholder('000 Bin/DIWA V2').setValue(this.plugin.settings.thoughtsFolder).onChange(async (value) => { this.plugin.settings.thoughtsFolder = value; await this.plugin.saveSettings(); }));
+		new Setting(containerEl).setName('Tasks Folder').setDesc('Folder for individual task files (YAML).').addText(text => text.setPlaceholder('000 Bin/DIWA V2 Tasks').setValue(this.plugin.settings.tasksFolder).onChange(async (value) => { this.plugin.settings.tasksFolder = value; await this.plugin.saveSettings(); }));
+		new Setting(containerEl).setName('Finance Folder').setDesc('Folder for personal finance (PF) dues.').addText(text => text.setPlaceholder('000 Bin/DIWA V2 PF').setValue(this.plugin.settings.pfFolder).onChange(async (value) => { this.plugin.settings.pfFolder = value; await this.plugin.saveSettings(); }));
+        new Setting(containerEl).setName('People Folder').setDesc('Folder where new people notes are created when using the / trigger.').addText(text => text.setPlaceholder('000 Bin/DIWA V2 People').setValue(this.plugin.settings.peopleFolder ?? '000 Bin/DIWA V2 People').onChange(async (value) => { this.plugin.settings.peopleFolder = value; await this.plugin.saveSettings(); }));
+        new Setting(containerEl).setName('Voice Memo Folder').setDesc('Folder for voice recording clips.').addText(text => text.setPlaceholder('000 Bin/DIWA V2 Voice').setValue(this.plugin.settings.voiceMemoFolder).onChange(async (value) => { this.plugin.settings.voiceMemoFolder = value; await this.plugin.saveSettings(); }));
+        new Setting(containerEl).setName('Habits Folder').setDesc('Folder for habit tracking files.').addText(text => text.setPlaceholder('000 Bin/DIWA V2 Habits').setValue(this.plugin.settings.habitsFolder).onChange(async (value) => { this.plugin.settings.habitsFolder = value; await this.plugin.saveSettings(); }));
+        new Setting(containerEl).setName('Attachments Folder').setDesc('Folder where pasted/dropped images and files are saved.').addText(text => text.setPlaceholder('000 Bin/DIWA V2 Attachments').setValue(this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments').onChange(async (value) => { this.plugin.settings.attachmentsFolder = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('New Note Folder').setDesc('Default folder for new synthesized notes.').addText(text => text.setPlaceholder('000 Bin').setValue(this.plugin.settings.newNoteFolder).onChange(async (value) => { this.plugin.settings.newNoteFolder = value; await this.plugin.saveSettings(); }));
-        new Setting(containerEl).setName('Reviews Folder').setDesc('Root folder for Weekly, Monthly, and Compass review files.').addText(text => text.setPlaceholder('000 Bin/MINA V2 Reviews').setValue(this.plugin.settings.reviewsFolder ?? '000 Bin/MINA V2 Reviews').onChange(async (value) => { this.plugin.settings.reviewsFolder = value; await this.plugin.saveSettings(); }));
+        new Setting(containerEl).setName('Reviews Folder').setDesc('Root folder for Weekly, Monthly, and Compass review files.').addText(text => text.setPlaceholder('000 Bin/DIWA V2 Reviews').setValue(this.plugin.settings.reviewsFolder ?? '000 Bin/DIWA V2 Reviews').onChange(async (value) => { this.plugin.settings.reviewsFolder = value; await this.plugin.saveSettings(); }));
 
         containerEl.createEl('h3', { text: 'Formats' });
 		new Setting(containerEl).setName('Date Format').setDesc('moment.js format for dates.').addText(text => text.setPlaceholder('YYYY-MM-DD').setValue(this.plugin.settings.dateFormat).onChange(async (value) => { this.plugin.settings.dateFormat = value; await this.plugin.saveSettings(); this.plugin.notifyRefresh(); }));
