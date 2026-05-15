@@ -1,7 +1,7 @@
 {
-  "name": "diwa_v2",
+  "name": "diwa",
   "version": "2.0.0",
-  "description": "DIWA: Quickly capture thoughts and tasks to a file.",
+  "description": "diwa: Quickly capture thoughts and tasks to a file.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
