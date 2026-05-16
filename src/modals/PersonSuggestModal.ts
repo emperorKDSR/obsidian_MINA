@@ -54,7 +54,7 @@ export class PersonSuggestModal extends SuggestModal<PersonItem> {
         el.style.cssText = 'display:flex; align-items:center; gap:8px;';
         if ('create' in item) {
             el.createSpan({ text: '➕', attr: { style: 'font-size:1em; flex-shrink:0;' } });
-            el.createEl('span', { text: `Create "${item.name}"`, attr: { style: 'color:var(--interactive-accent);' } });
+            el.createEl('span', { text: `Create "${item.name}"`, cls: 'diwa-create-hint' });
         } else {
             el.createSpan({ text: '👤', attr: { style: 'font-size:1em; flex-shrink:0;' } });
             const info = el.createEl('div', { attr: { style: 'display:flex; flex-direction:column;' } });

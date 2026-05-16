@@ -67,7 +67,7 @@ export class HabitConfigModal extends Modal {
                 this.plugin.settings.habits.forEach((habit) => {
                     if (!habit.archived) return;
                     const row = body.createEl('div', { attr: { style: 'display: flex; align-items: center; gap: 8px; padding-bottom: 8px; opacity: 0.6;' } });
-                    row.createEl('span', { text: `${habit.icon || '●'} ${habit.name}`, attr: { style: 'flex: 1; font-size: 0.85em; color: var(--text-muted);' } });
+                    row.createEl('span', { text: `${habit.icon || '●'} ${habit.name}`, cls: 'diwa-habit-list-label' });
                     const restoreBtn = row.createEl('button', { attr: { title: 'Restore habit', style: 'background: transparent; border: none; color: var(--interactive-accent); cursor: pointer; font-size: 0.75em; font-weight: 700;' } });
                     restoreBtn.textContent = 'Restore';
                     restoreBtn.addEventListener('click', async () => {

@@ -27,10 +27,10 @@ export class SettingsTab extends BaseTab {
             attr: { style: 'display: flex; gap: 8px; margin-bottom: 12px;' }
         });
 
-        const actionBtnStyle = 'flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); font-size: 0.8em; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.1s;';
+        const actionBtnStyle = 'diwa-settings-action-btn';
 
         const folderConfigBtn = actionRow.createEl('button', {
-            attr: { style: actionBtnStyle }
+            cls: actionBtnStyle
         });
         folderConfigBtn.createSpan({ text: '📁' });
         folderConfigBtn.createSpan({ text: 'Folder Config' });
@@ -39,7 +39,7 @@ export class SettingsTab extends BaseTab {
         });
 
         const habitConfigBtn = actionRow.createEl('button', {
-            attr: { style: actionBtnStyle }
+            cls: actionBtnStyle
         });
         habitConfigBtn.createSpan({ text: '✨' });
         habitConfigBtn.createSpan({ text: 'Habit Config' });

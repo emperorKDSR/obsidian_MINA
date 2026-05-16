@@ -45,7 +45,7 @@ export class FinanceAnalyticsTab extends BaseTab {
             const fill = barWrap.createEl('div', { cls: 'diwa-fanalytics-obligations-fill' });
             fill.style.width = `${pct}%`;
             fill.style.background = pct > 80 ? 'var(--color-red, #ef4444)' : pct > 60 ? 'var(--color-orange, #f97316)' : 'var(--interactive-accent)';
-            cashCard.createEl('div', { text: `Obligations = ${pct}% of income`, attr: { style: 'font-size: 0.75em; color: var(--text-muted); margin-top: 6px;' } });
+            cashCard.createEl('div', { text: `Obligations = ${pct}% of income`, cls: 'diwa-finance-footnote' });
         }
 
         // ── Obligations by Category card ──────────────────────────────────

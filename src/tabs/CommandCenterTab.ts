@@ -452,14 +452,14 @@ export class CommandCenterTab extends BaseTab {
     }
 
     private renderTacticalRow(parent: HTMLElement, text: string, done: boolean, onToggle: () => void) {
-        const row = parent.createEl('div', { cls: `diwa-tactical-row${done ? ' is-done' : ''}`, attr: { style: 'cursor: default;' } });
+        const row = parent.createEl('div', { cls: `diwa-tactical-row${done ? ' is-done' : ''}` });
         const isPhone = Platform.isMobile && !isTablet();
         const cbWrap = row.createDiv({ attr: { style: `padding: ${isPhone ? '12px' : '4px'}; cursor: pointer;` } });
         if (isPhone) (row as HTMLElement).style.minHeight = '48px';
         const cb = cbWrap.createDiv({ cls: 'diwa-tactical-checkbox' });
         if (done) setIcon(cb, 'lucide-check');
         cbWrap.addEventListener('click', (e) => { e.stopPropagation(); onToggle(); });
-        row.createEl('span', { text, cls: 'diwa-tactical-text', attr: { style: done ? 'text-decoration: line-through; opacity: 0.45;' : '' } });
+        row.createEl('span', { text, cls: 'diwa-tactical-text' });
     }
 
     private renderNavigationFooter(parent: HTMLElement) {

@@ -160,7 +160,7 @@ export class DiwaView extends ItemView {
 
     private renderTab(container: HTMLElement) {
         // arch-04: Error boundaries on all dynamic imports — silent failures leave blank panels
-        const loadErr = (e: any) => container.createEl('p', { text: `Failed to load tab: ${e.message}`, attr: { style: 'color: var(--text-error); padding: 20px;' } });
+        const loadErr = (e: any) => container.createEl('p', { text: `Failed to load tab: ${e.message}`, cls: 'diwa-tab-error' });
         const instantiate = (promise: Promise<any>, name: string) => {
             promise.then((mod: any) => {
                 try {
