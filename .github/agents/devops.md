@@ -28,19 +28,17 @@ When code work is initiated (new feature, bug fix, refactor, or any user request
 4. When the work is complete and the user requests a push/merge, open a PR or merge into `main` with a conventional merge commit, then delete the feature branch locally.
 
 Branch naming convention:
-- New capability → `feature/<slug>` (e.g., `feature/accent-toggle-buttons`)
-- Bug fix → `fix/<slug>` (e.g., `fix/c-key-blocked-capture`)
-- Tooling / config / docs → `chore/<slug>` (e.g., `chore/bump-v1-0-14`)
+- New capability → `feature/<slug>` (e.g., `feature/weekly-plan-view`)
+- Bug fix → `fix/<slug>` (e.g., `fix/task-toggle-pending-race`)
+- Tooling / config / docs → `chore/<slug>` (e.g., `chore/bump-v2-0-1`)
 
 # Release Checklist (run before every `npm run build` + ship)
 
 Before compiling and shipping any release, the following steps **must** be completed in order:
 
-> Note (roadmap releases): For the recent roadmap work, treat the Monthly Review release as v1.6 and the Synthesis redesign as v1.7. Ensure the manual, changelog, and version files reflect those labels when performing the release checklist.
-
 1. **Update the manual** — Open `src/modals/HelpModal.ts`. Review the `SECTIONS` array and update or add entries to reflect any new or changed features in this release. Every user-facing feature must have a plain-language description. Add 💡 tips for non-obvious behaviour.
-2. **Update CHANGELOG** — Add a `## [x.y.z] - YYYY-MM-DD` entry in `CHANGELOG.md` with a clear description of what changed, the architecture impact, and files modified.
-3. **Bump version files** — Increment the version in `manifest.json`, `package.json`, and add the new version key to `versions.json`.
+2. **Update CHANGELOG** — Add a `## [x.y.z] — <Title>` entry in `CHANGELOG.md` with a clear description of what changed, the architecture impact, and files modified.
+3. **Bump version files** — Increment the version in `manifest.json`, `package.json`, and add the new version key to `versions.json` (format: `"x.y.z": "0.16.0"`).
 4. **Build** — `npm run build` (must exit 0 before proceeding).
 5. **Deploy to vault** — Copy `main.js`, `manifest.json`, and `styles.css` to the vault plugin folder.
 6. **Commit** — Stage all changed files and commit with a conventional message on the feature/fix branch.
@@ -50,6 +48,13 @@ Before compiling and shipping any release, the following steps **must** be compl
 
 > **Manual-first rule**: If a feature ships without a manual entry, the release is incomplete. The `HelpModal` in `src/modals/HelpModal.ts` is the authoritative in-product documentation and must stay in sync with the codebase.
 
+## Version Files
+- `manifest.json` — `version` field
+- `package.json` — `version` field
+- `versions.json` — add `"x.y.z": "0.16.0"` (minAppVersion is `0.16.0` since v1.27.0)
+
+## Current Version
+- **v2.0.0** — MINA Personal OS: Desktop Hub Major Release
 
 - Inspect workspace git status (is a repo? untracked/modified files?).
 - Propose and (when approved) execute repository initialization: .gitignore, initial commit, create 'main' branch.
@@ -92,7 +97,7 @@ After every successful build + deploy + push, output a structured **Ship Report*
 ```
 
 Rules:
-- The **Fixes / Features** section mirrors the CHANGELOG entry for this release — one bullet per logical change, using bold area labels (e.g. **Mobile**, **Tablet**, **Finance**, **AI**).
+- The **Fixes / Features** section mirrors the CHANGELOG entry for this release — one bullet per logical change, using bold area labels (e.g. **Mobile**, **Tablet**, **Finance**, **AI**, **Desktop Hub**).
 - The **DevOps** section is always present and always lists branch, tag, push target, and deploy confirmation.
 - Keep each bullet to a single concise sentence — enough to understand *what* changed without reading the diff.
 - This report is the final output of every release cycle. Nothing ships silently.

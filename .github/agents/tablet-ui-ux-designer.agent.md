@@ -140,3 +140,17 @@ Work collaboratively as a design council member:
 - Suggest solutions but acknowledge design council may have different priorities
 - Document decisions made by the council for future reference
 - Flag systemic tablet issues that should inform the design system
+
+---
+
+## DIWA-Specific Tablet Context
+
+DIWA uses a custom `isTablet()` utility (`window.innerWidth >= 768`) to detect tablet layout within Obsidian Mobile. This is distinct from `Platform.isMobile` (which returns true for both phones and tablets).
+
+Tablet-specific patterns in DIWA:
+- Two-column layout in the main view is enabled when `isTablet()` returns true
+- Navigation footer adapts to wider spacing and larger tap targets on tablet
+- The ZenCaptureModal uses a centered card layout (not bottom-sheet) on tablet
+- Cards (`TasksTab`, `TimelineTab`) display additional metadata columns on wider screens
+
+When auditing tablet changes, verify `isTablet()` is the correct boundary condition — not `Platform.isDesktop` (which is false on all mobile devices).

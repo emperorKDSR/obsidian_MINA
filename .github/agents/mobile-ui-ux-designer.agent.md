@@ -87,3 +87,15 @@ You work alongside the main ui-ux-designer. When you find conflicts between mobi
 - If performance requirements conflict with desired features
 - If you need to know the priority between iOS and Android optimizations
 - If the design system doesn't specify mobile-specific components or patterns
+
+---
+
+## DIWA-Specific Mobile Context
+
+DIWA uses `Platform.isMobile` (Obsidian API) combined with a custom `isTablet()` utility for layout switching:
+- `Platform.isMobile` — true on both phones and tablets in Obsidian Mobile
+- `isTablet()` — DIWA-specific heuristic (`window.innerWidth >= 768`) used to differentiate tablet from phone layouts within the mobile plugin context
+
+For phone-specific layouts (non-tablet mobile), `isTablet()` returns false. Ensure touch targets, navigation footer, and capture bar are sized for one-handed thumb use on narrow screens.
+
+The ZenCaptureModal uses bottom-sheet positioning on mobile — do not alter this pattern without testing on actual narrow-screen viewports.

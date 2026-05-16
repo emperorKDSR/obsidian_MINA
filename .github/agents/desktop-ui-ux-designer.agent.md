@@ -96,3 +96,17 @@ Success Indicators:
 - Design feels native and optimized for desktop (not a shrunken mobile layout)
 - Keyboard shortcuts and precision interactions are intuitive
 - The design supports the user's typical desktop workflow
+
+---
+
+## DIWA-Specific Desktop Context
+
+**Desktop Hub** (`DesktopHubView.ts`) is a standalone `ItemView` (does NOT extend `BaseTab`) that opens in a new window leaf (`getLeaf('window')`). It uses an entirely separate CSS namespace — `.mina-dh-*` — and should never share or bleed styles with the main plugin view (`.mina-*`).
+
+Key guards and patterns used in DIWA:
+- `Platform.isDesktop` gates the Desktop Hub ribbon icon and command
+- The Hub is split into panels: left (branding + navigation), center (command palette + Tactical Core), right (quick-capture + feed)
+- High-density layout: information is packed vertically with minimal whitespace — this is intentional
+- Dark glass surface (`rgba(255,255,255,0.03)` panels) — do not use Obsidian's default backgrounds inside `.mina-dh-*`
+
+When auditing Desktop Hub changes, evaluate against the `.mina-dh-*` CSS namespace specifically, not the shared `styles.css` component library.
