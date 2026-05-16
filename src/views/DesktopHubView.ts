@@ -339,7 +339,8 @@ export class DesktopHubView extends ItemView {
         if (ctx === 'all') {
             thoughts = thoughts.filter(t => t.day === today);
         } else {
-            thoughts = thoughts.filter(t => t.context.includes(ctx));
+            const ctxLow = ctx.toLowerCase();
+            thoughts = thoughts.filter(t => t.context.some(c => c.toLowerCase() === ctxLow));
             if (this._feedScope === 'today') thoughts = thoughts.filter(t => t.day === today);
         }
         thoughts.sort((a, b) => (b.created || '').localeCompare(a.created || ''));
@@ -357,7 +358,12 @@ export class DesktopHubView extends ItemView {
             const item = list.createEl('div', { cls: 'diwa-dh-feed-item' });
             item.createEl('span', { cls: 'diwa-dh-feed-dot' });
             const content = item.createEl('div', { cls: 'diwa-dh-feed-content' });
-            const ts = t.created ? moment(t.created, 'YYYY-MM-DD HH:mm:ss').format('HH:mm') : '';
+            const isToday = t.day === today;
+            const ts = t.created
+                ? (isToday
+                    ? moment(t.created, 'YYYY-MM-DD HH:mm:ss').format('HH:mm')
+                    : moment(t.created, 'YYYY-MM-DD HH:mm:ss').format('MMM D · HH:mm'))
+                : '';
             content.createEl('span', { text: ts, cls: 'diwa-dh-feed-time' });
             const mdEl = content.createEl('div', { cls: 'diwa-dh-feed-text' });
             await MarkdownRenderer.render(this.app, t.body || t.title || '', mdEl, t.filePath, this);

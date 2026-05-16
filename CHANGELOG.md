@@ -1,4 +1,16 @@
-## [2.5.0] — Remove Focus Mode & Memento Mori
+## [2.5.2] — Context Feed All-Time Bug Fix
+
+### Fixed
+- **All-Time feed only showing today's entries** — Context filter now uses case-insensitive comparison, so notes with `context: grundfos` correctly match the `Grundfos` context pill (and vice versa).
+- **Non-today entries now show date prefix** — Feed timestamps show `MMM D · HH:mm` (e.g. `May 10 · 14:32`) for entries outside today, making it easy to confirm historical data is present.
+
+## [2.5.1] — Context Normalization Fix
+
+### Fixed
+- **Context stored as YAML string scalar** (`context: Grundfos`) was excluded from hub feed filters that required `Array.isArray`. Added `IndexService.normalizeContext()` to guarantee `string[]` at index time.
+- Removed over-defensive `Array.isArray` guards from `DesktopHubView`, `MobileHubView`, and `TabletHubView` feed filters.
+
+
 
 ### Removed
 - **Focus Mode tab** (`FocusTab.ts`) — The distraction-free task mission view, including the AI time-block plan generator and session-pinned task state.
