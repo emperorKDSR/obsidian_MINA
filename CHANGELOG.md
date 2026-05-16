@@ -1,3 +1,17 @@
+## [2.2.0] — HIGH Priority Performance & Architecture Fixes
+
+### Fixed
+- **[HIGH-01]** `src/tabs/TasksTab.ts` — Replaced 6 sequential `.filter()` passes for badge count with a single `for...of` loop + `switch` statement. Reduces badge computation from O(6n) to O(n). (Closes #6)
+- **[HIGH-02]** `src/tabs/CommandCenterTab.ts` + `src/utils.ts` — Removed duplicated inline-trigger listener on the task input (was registering `@date`, `@context`, `@person` listeners twice). Broadened `attachInlineTriggers()` signature to accept `HTMLTextAreaElement | HTMLInputElement`. Fixed broken context picker that was passing `[]` instead of `this.settings.contexts`. Added `taskDueDate` closure variable so `saveTask()` does not re-parse `@tokens` from the title. (Closes #7)
+- **[HIGH-03]** `src/utils.ts` + `src/tabs/CommandCenterTab.ts` + `src/views/DesktopHubView.ts` — Extracted `createThoughtCaptureWidget()` utility function. Eliminates ~155 lines of duplicated thought-capture DOM construction between CommandCenterTab and DesktopHubView. Net −73 lines. (Closes #8)
+- **[HIGH-04]** `src/tabs/ReviewTab.ts` — Removed duplicate `getHabitHighlightText()` call inside `doSave()`. The outer-scope `highlightText` variable (computed once at render time) is now reused in the save closure, eliminating a redundant O(n) scan of habit entries. (Closes #9)
+- **[HIGH-05]** `src/tabs/AiTab.ts` — Extracted `appendMessage(chatArea, msg)` private method. `sendMessage()` now appends individual messages instead of calling `renderHistory()` (full O(n) re-render) twice per round-trip. In a 20-message session this reduces `MarkdownRenderer.render()` calls from 40× to 2× per exchange. (Closes #10)
+- **[HIGH-06]** `src/constants.ts` + `src/modals/SearchModal.ts` + `src/views/SearchView.ts` — Moved `SCOPES`, `TYPE_ICONS`, and `QUICKJUMP_TABS` to canonical exports `SEARCH_SCOPES`, `SEARCH_TYPE_ICONS`, `SEARCH_QUICKJUMP_TABS` in `constants.ts`. Eliminated divergent local copies (habit icon was `lucide-activity` in SearchModal vs `lucide-flame` in SearchView; Finance label was `'Dues'` vs `'Finance'`). Both consumers now import from the single source of truth. (Closes #11)
+- **[HIGH-07]** `src/services/AiService.ts` — Added `GeminiPart`, `GeminiContent`, `GeminiRequestBody`, `GeminiResponse` interfaces. Replaced all `any` types at the Gemini API boundary including `customHistory`, `imageParts`, `contents`, request body, and response parsing. Typed `ChatMessage[]` for history. `catch` blocks now use `unknown` + `instanceof Error` guards. Breaking API shape changes now surface at compile time. (Closes #12)
+- **[HIGH-08]** `src/services/IndexService.ts` — Replaced `thoughtChecklistIndex`/`thoughtDoneChecklistIndex` flat arrays with private `Map<string, ThoughtChecklistItem[]>` fields. Public getters maintain full backward compatibility. `indexThoughtFile()` now does `Map.set()` (O(1)) instead of `Array.filter()` (O(n)), reducing `buildThoughtIndex()` across N files from O(n²) to O(n). (Closes #13)
+
+---
+
 ## [2.1.0] — Critical Performance & Reliability Fixes
 
 ### Fixed
