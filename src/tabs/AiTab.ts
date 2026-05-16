@@ -141,17 +141,7 @@ export class AiTab extends BaseTab {
 
         // ─── Grounded Files Chips ───
         const contextBar = wrap.createEl('div', { cls: `diwa-ai-context-bar${this.view.groundedFiles.length > 0 ? '' : ' is-empty'}` });
-        if (this.view.groundedFiles.length > 0) {
-            this.view.groundedFiles.forEach((file, idx) => {
-                const chip = contextBar.createEl('span', { cls: 'diwa-ai-file-chip' });
-                chip.createEl('span', { text: file.basename, cls: 'diwa-ai-chip-name' });
-                const removeBtn = chip.createEl('span', { text: '×', cls: 'diwa-ai-chip-remove' });
-                removeBtn.addEventListener('click', () => {
-                    this.view.groundedFiles.splice(idx, 1);
-                    this.renderAiMode(container);
-                });
-            });
-        }
+        this.renderContextChips(contextBar);
 
         // ─── Input Area ───
         const inputArea = wrap.createEl('div', { cls: 'diwa-ai-input-area' });
@@ -233,6 +223,20 @@ export class AiTab extends BaseTab {
         };
 
         sendBtn.addEventListener('click', sendMessage);
+    }
+
+    private renderContextChips(contextBar: HTMLElement): void {
+        contextBar.empty();
+        contextBar.toggleClass('is-empty', this.view.groundedFiles.length === 0);
+        this.view.groundedFiles.forEach((file, idx) => {
+            const chip = contextBar.createEl('span', { cls: 'diwa-ai-file-chip' });
+            chip.createEl('span', { text: file.basename, cls: 'diwa-ai-chip-name' });
+            const removeBtn = chip.createEl('span', { text: '×', cls: 'diwa-ai-chip-remove' });
+            removeBtn.addEventListener('click', () => {
+                this.view.groundedFiles.splice(idx, 1);
+                this.renderContextChips(contextBar);
+            });
+        });
     }
 
     private renderWelcomeState(container: HTMLElement) {
