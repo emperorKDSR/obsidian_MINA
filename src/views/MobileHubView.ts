@@ -1,8 +1,9 @@
-import { ItemView, WorkspaceLeaf, Platform, moment, setIcon, Notice, ViewStateResult, MarkdownRenderer } from 'obsidian';
+import { ItemView, WorkspaceLeaf, Platform, moment, setIcon, Notice, ViewStateResult, MarkdownRenderer, TFile } from 'obsidian';
 import { VIEW_TYPE_MOBILE_HUB } from '../constants';
 import type DiwaPlugin from '../main';
 import { attachInlineTriggers, createThoughtCaptureWidget, isTablet } from '../utils';
 import type { ThoughtEntry } from '../types';
+import { InlineContextPickerModal } from '../modals/InlineContextPickerModal';
 
 export class MobileHubView extends ItemView {
     plugin: DiwaPlugin;
@@ -262,21 +263,52 @@ export class MobileHubView extends ItemView {
             const mdEl = content.createEl('div', { cls: 'diwa-mh-feed-text' });
             await MarkdownRenderer.render(this.app, t.body || t.title || '', mdEl, t.filePath, this);
 
-            const editBtn = item.createEl('button', { cls: 'diwa-mh-feed-edit-btn', attr: { title: 'Edit', 'aria-label': 'Edit thought' } });
+            const feedActions = item.createEl('div', { cls: 'diwa-mh-feed-actions' });
+            const tagBtn = feedActions.createEl('button', {
+                cls: `diwa-mh-feed-tag-btn${t.context.length > 0 ? ' has-context' : ''}`,
+                attr: { title: 'Assign topic', 'aria-label': 'Assign topic' }
+            });
+            setIcon(tagBtn, 'lucide-tag');
+            tagBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                new InlineContextPickerModal(
+                    this.app, this.plugin, t.context,
+                    async () => {},
+                    `Assign topic — ${(t.body || t.title || '').substring(0, 45)}…`,
+                    true,
+                    async (contexts, topic) => {
+                        await this.plugin.vault.assignContextToThought(t.filePath, contexts, topic);
+                        const file = this.app.vault.getAbstractFileByPath(t.filePath);
+                        if (file instanceof TFile) await this.plugin.index.indexThoughtFile(file);
+                        tagBtn.toggleClass('has-context', contexts.length > 0);
+                        if (this._activeContextTab !== 'all') {
+                            const ctxLow = this._activeContextTab.toLowerCase();
+                            const stillVisible = contexts.some(c => c.toLowerCase() === ctxLow);
+                            if (!stillVisible) {
+                                item.style.transition = 'opacity 0.2s';
+                                item.style.opacity = '0';
+                                setTimeout(() => item.remove(), 210);
+                            }
+                        }
+                    }
+                ).open();
+            });
+
+            const editBtn = feedActions.createEl('button', { cls: 'diwa-mh-feed-edit-btn', attr: { title: 'Edit', 'aria-label': 'Edit thought' } });
             setIcon(editBtn, 'lucide-pencil');
             editBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                this.makeThoughtEditable(item, content, editBtn, t);
+                this.makeThoughtEditable(item, content, feedActions, t);
             });
         }
     }
 
-    private makeThoughtEditable(item: HTMLElement, content: HTMLElement, editBtn: HTMLElement, t: ThoughtEntry) {
+    private makeThoughtEditable(item: HTMLElement, content: HTMLElement, actionsEl: HTMLElement, t: ThoughtEntry) {
         if (item.hasClass('is-editing')) return;
         item.addClass('is-editing');
         this._capturePending++;
         content.style.display = 'none';
-        editBtn.style.display = 'none';
+        actionsEl.style.display = 'none';
 
         let editContexts = [...(t.context || [])];
         const form = item.createEl('div', { cls: 'diwa-edit-form' });
@@ -312,7 +344,7 @@ export class MobileHubView extends ItemView {
             item.removeClass('is-editing');
             form.remove();
             this._capturePending = Math.max(0, this._capturePending - 1);
-            if (restore) { content.style.display = ''; editBtn.style.display = ''; }
+            if (restore) { content.style.display = ''; actionsEl.style.display = ''; }
         };
 
         const save = async () => {
@@ -325,7 +357,7 @@ export class MobileHubView extends ItemView {
             } catch {
                 new Notice('Error updating thought', 2500);
                 content.style.display = '';
-                editBtn.style.display = '';
+                actionsEl.style.display = '';
             }
         };
 

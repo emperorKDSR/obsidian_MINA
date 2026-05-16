@@ -1,4 +1,20 @@
-## [2.5.2] — Context Feed All-Time Bug Fix
+## [2.6.0] — Topic Tag Button on Feed Items
+
+### Added
+- **Tag button (🏷) on every feed item** in Desktop Hub, Mobile Hub, and Tablet Hub.
+  - Appears alongside the existing pencil (edit) button; hover-revealed on desktop, always visible on mobile.
+  - Tag button shows in **accent color** when a context is already assigned (`has-context` state).
+- **`InlineContextPickerModal` — topic mode**: Single-select context pills + optional "Sub-topic" free-text input (e.g. `Meeting`, `Q2 Review`).
+- **`VaultService.assignContextToThought(filePath, contexts, topic?)`**: Frontmatter-only update — atomically sets `context` (base label, e.g. `Grundfos`) and `tags` (hierarchical, e.g. `Grundfos/Meeting`). Does not touch body text.
+
+### Changed
+- Feed item action buttons (`tag` + `pencil`) are now grouped in a `.diwa-[dh|mh|th]-feed-actions` wrapper; the `makeThoughtEditable` flow hides the entire action group during editing.
+
+### Format
+- `context` frontmatter → plain base label: `Grundfos`
+- `tags` frontmatter → Obsidian hierarchical tag: `Grundfos/Meeting` (auto-composed by plugin)
+
+
 
 ### Fixed
 - **All-Time feed only showing today's entries** — Context filter now uses case-insensitive comparison, so notes with `context: grundfos` correctly match the `Grundfos` context pill (and vice versa).

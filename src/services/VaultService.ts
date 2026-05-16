@@ -186,6 +186,29 @@ export class VaultService {
         }
     }
 
+    /** Assign context + optional topic to an existing thought without modifying body text.
+     *  `context` FM field = base context labels (e.g. ['Grundfos'])
+     *  `tags` FM field    = context/topic format (e.g. ['Grundfos/Meeting']) for Obsidian tag search */
+    async assignContextToThought(filePath: string, contexts: string[], topic?: string): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return;
+        try {
+            const safeContexts = contexts.map(c => this.sanitizeContext(c));
+            const safeTopic = topic ? topic.replace(/[^a-zA-Z0-9 _-]/g, '').trim() : '';
+            const tags = safeContexts.map(c => safeTopic ? `${c}/${safeTopic}` : c);
+            const nowStr = this.formatDateTime(new Date());
+            await this.app.fileManager.processFrontMatter(file, (fm) => {
+                fm['context'] = safeContexts;
+                fm['tags'] = tags;
+                fm['modified'] = nowStr;
+                // preserve: created, title, day, body, pinned, project
+            });
+        } catch (e) {
+            console.error('[DIWA VaultService]', e);
+            new Notice(VaultService.toUserMessage(e));
+        }
+    }
+
     async editTask(filePath: string, newText: string, contexts: string[], dueDate?: string, opts?: { priority?: string | null; energy?: string | null; status?: string }): Promise<void> {
         // arch-08: Normalize <br> → newline at service boundary
         newText = newText.replace(/<br>/g, '\n');

@@ -5,20 +5,26 @@ export class InlineContextPickerModal extends Modal {
     private plugin: DiwaPlugin;
     private currentContexts: string[];
     private onConfirm: (selected: string[]) => Promise<void>;
+    private onConfirmWithTopic?: (contexts: string[], topic: string) => Promise<void>;
     private title: string;
+    private topicMode: boolean;
 
     constructor(
         app: App,
         plugin: DiwaPlugin,
         currentContexts: string[],
         onConfirm: (selected: string[]) => Promise<void>,
-        title?: string
+        title?: string,
+        topicMode?: boolean,
+        onConfirmWithTopic?: (contexts: string[], topic: string) => Promise<void>
     ) {
         super(app);
         this.plugin = plugin;
         this.currentContexts = [...currentContexts];
         this.onConfirm = onConfirm;
+        this.onConfirmWithTopic = onConfirmWithTopic;
         this.title = title || 'Assign Contexts';
+        this.topicMode = topicMode ?? false;
     }
 
     onOpen(): void {
@@ -67,12 +73,19 @@ export class InlineContextPickerModal extends Modal {
                     attr: { 'data-ctx': ctx },
                 });
                 pill.addEventListener('click', () => {
-                    if (selected.includes(ctx)) {
-                        selected = selected.filter(c => c !== ctx);
-                        pill.classList.remove('is-active');
+                    if (this.topicMode) {
+                        // Single-select in topic mode
+                        selected = selected.includes(ctx) ? [] : [ctx];
+                        pillGrid.querySelectorAll('.diwa-chip--ctx').forEach(p => p.classList.remove('is-active'));
+                        if (selected.includes(ctx)) pill.classList.add('is-active');
                     } else {
-                        selected.push(ctx);
-                        pill.classList.add('is-active');
+                        if (selected.includes(ctx)) {
+                            selected = selected.filter(c => c !== ctx);
+                            pill.classList.remove('is-active');
+                        } else {
+                            selected.push(ctx);
+                            pill.classList.add('is-active');
+                        }
                     }
                 });
             }
@@ -87,32 +100,49 @@ export class InlineContextPickerModal extends Modal {
         buildGrid('');
         searchInput.addEventListener('input', () => buildGrid(searchInput.value.toLowerCase().trim()));
 
-        // Create new context row
-        const newRow = body.createEl('div', { cls: 'diwa-ctx-picker-new' });
-        const newInput = newRow.createEl('input', {
-            cls: 'diwa-ctx-picker-new-input',
-            type: 'text',
-            attr: { placeholder: 'New context name…' },
-        });
-        const newBtn = newRow.createEl('button', {
-            cls: 'diwa-ctx-picker-new-btn',
-            text: 'Create',
-        });
+        // Topic input (topic mode only)
+        let topicInput: HTMLInputElement | null = null;
+        if (this.topicMode) {
+            const topicRow = body.createEl('div', { cls: 'diwa-ctx-picker-topic-row' });
+            topicRow.createEl('label', {
+                text: 'Sub-topic (optional)',
+                attr: { style: 'font-size:0.78em; color:var(--text-muted); display:block; margin-bottom:4px;' }
+            });
+            topicInput = topicRow.createEl('input', {
+                cls: 'diwa-ctx-picker-topic-input',
+                type: 'text',
+                attr: { placeholder: 'e.g. Meeting, Q2 Review, Design…', spellcheck: 'false' },
+            });
+        }
 
-        const doCreate = async () => {
-            const val = newInput.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
-            if (!val) { new Notice('Invalid context name.'); return; }
-            if (!this.plugin.settings.contexts.includes(val)) {
-                this.plugin.settings.contexts.push(val);
-                await this.plugin.saveSettings();
-            }
-            if (!selected.includes(val)) selected.push(val);
-            newInput.value = '';
-            buildGrid(searchInput.value.toLowerCase().trim());
-        };
+        // Create new context row (hidden in topic mode)
+        if (!this.topicMode) {
+            const newRow = body.createEl('div', { cls: 'diwa-ctx-picker-new' });
+            const newInput = newRow.createEl('input', {
+                cls: 'diwa-ctx-picker-new-input',
+                type: 'text',
+                attr: { placeholder: 'New context name…' },
+            });
+            const newBtn = newRow.createEl('button', {
+                cls: 'diwa-ctx-picker-new-btn',
+                text: 'Create',
+            });
 
-        newBtn.addEventListener('click', doCreate);
-        newInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doCreate(); });
+            const doCreate = async () => {
+                const val = newInput.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+                if (!val) { new Notice('Invalid context name.'); return; }
+                if (!this.plugin.settings.contexts.includes(val)) {
+                    this.plugin.settings.contexts.push(val);
+                    await this.plugin.saveSettings();
+                }
+                if (!selected.includes(val)) selected.push(val);
+                newInput.value = '';
+                buildGrid(searchInput.value.toLowerCase().trim());
+            };
+
+            newBtn.addEventListener('click', doCreate);
+            newInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doCreate(); });
+        }
 
         // Footer
         const footer = contentEl.createEl('div', { cls: 'diwa-modal-footer' });
@@ -121,7 +151,11 @@ export class InlineContextPickerModal extends Modal {
 
         cancelBtn.addEventListener('click', () => this.close());
         applyBtn.addEventListener('click', async () => {
-            await this.onConfirm(selected);
+            if (this.topicMode && this.onConfirmWithTopic) {
+                await this.onConfirmWithTopic(selected, topicInput?.value.trim() ?? '');
+            } else {
+                await this.onConfirm(selected);
+            }
             this.close();
         });
 

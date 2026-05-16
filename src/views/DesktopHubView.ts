@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, Platform, moment, setIcon, Notice, ViewStateResult, MarkdownRenderer } from 'obsidian';
+import { ItemView, WorkspaceLeaf, Platform, moment, setIcon, Notice, ViewStateResult, MarkdownRenderer, TFile } from 'obsidian';
 import type DiwaPlugin from '../main';
 import {
     VIEW_TYPE_DESKTOP_HUB,
@@ -7,6 +7,7 @@ import {
 } from '../constants';
 import { attachInlineTriggers, attachMediaPasteHandler, createThoughtCaptureWidget } from '../utils';
 import type { ThoughtEntry, TaskEntry } from '../types';
+import { InlineContextPickerModal } from '../modals/InlineContextPickerModal';
 
 export class DesktopHubView extends ItemView {
     plugin: DiwaPlugin;
@@ -367,21 +368,58 @@ export class DesktopHubView extends ItemView {
             content.createEl('span', { text: ts, cls: 'diwa-dh-feed-time' });
             const mdEl = content.createEl('div', { cls: 'diwa-dh-feed-text' });
             await MarkdownRenderer.render(this.app, t.body || t.title || '', mdEl, t.filePath, this);
-            const editBtn = item.createEl('button', { cls: 'diwa-dh-feed-edit-btn', attr: { title: 'Edit thought', 'aria-label': 'Edit thought' } });
+
+            const actions = item.createEl('div', { cls: 'diwa-dh-feed-actions' });
+            const tagBtn = actions.createEl('button', {
+                cls: `diwa-dh-feed-tag-btn${t.context.length > 0 ? ' has-context' : ''}`,
+                attr: { title: 'Assign topic', 'aria-label': 'Assign topic' }
+            });
+            setIcon(tagBtn, 'lucide-tag');
+            tagBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.openTopicModal(item, tagBtn, t, this._activeContextTab);
+            });
+
+            const editBtn = actions.createEl('button', { cls: 'diwa-dh-feed-edit-btn', attr: { title: 'Edit thought', 'aria-label': 'Edit thought' } });
             setIcon(editBtn, 'lucide-pencil');
             editBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                this.makeThoughtEditable(item, content, editBtn, t);
+                this.makeThoughtEditable(item, content, actions, t);
             });
         }
     }
 
-    private makeThoughtEditable(item: HTMLElement, content: HTMLElement, editBtn: HTMLElement, t: ThoughtEntry) {
+    private openTopicModal(item: HTMLElement, tagBtn: HTMLElement, t: ThoughtEntry, activeCtx: string) {
+        new InlineContextPickerModal(
+            this.app, this.plugin, t.context,
+            async () => { /* unused in topicMode */ },
+            `Assign topic — ${(t.body || t.title || '').substring(0, 45)}…`,
+            true,
+            async (contexts, topic) => {
+                await this.plugin.vault.assignContextToThought(t.filePath, contexts, topic);
+                const file = this.app.vault.getAbstractFileByPath(t.filePath);
+                if (file instanceof TFile) await this.plugin.index.indexThoughtFile(file);
+                tagBtn.toggleClass('has-context', contexts.length > 0);
+                // Fade out if item no longer matches active context filter
+                if (activeCtx !== 'all') {
+                    const ctxLow = activeCtx.toLowerCase();
+                    const stillVisible = contexts.some(c => c.toLowerCase() === ctxLow);
+                    if (!stillVisible) {
+                        item.style.transition = 'opacity 0.2s';
+                        item.style.opacity = '0';
+                        setTimeout(() => item.remove(), 210);
+                    }
+                }
+            }
+        ).open();
+    }
+
+    private makeThoughtEditable(item: HTMLElement, content: HTMLElement, actionsEl: HTMLElement, t: ThoughtEntry) {
         if (item.hasClass('is-editing')) return;
         item.addClass('is-editing');
         this._capturePending++;
         content.style.display = 'none';
-        editBtn.style.display = 'none';
+        actionsEl.style.display = 'none';
 
         let editContexts = [...(t.context || [])];
         const form = item.createEl('div', { cls: 'diwa-edit-form' });
@@ -417,7 +455,7 @@ export class DesktopHubView extends ItemView {
             item.removeClass('is-editing');
             form.remove();
             this._capturePending = Math.max(0, this._capturePending - 1);
-            if (restore) { content.style.display = ''; editBtn.style.display = ''; }
+            if (restore) { content.style.display = ''; actionsEl.style.display = ''; }
         };
 
         const save = async () => {
@@ -430,7 +468,7 @@ export class DesktopHubView extends ItemView {
             } catch {
                 new Notice('Error updating thought', 2500);
                 content.style.display = '';
-                editBtn.style.display = '';
+                actionsEl.style.display = '';
             }
         };
 
