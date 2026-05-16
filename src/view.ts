@@ -4,6 +4,11 @@ import type DiwaPlugin from './main';
 import { BaseTab } from './tabs/BaseTab';
 import type { ChatMessage } from './types';
 
+interface DiwaViewState extends Record<string, unknown> {
+    activeTab?: string;
+    isDedicated?: boolean;
+}
+
 export class DiwaView extends ItemView {
     plugin: DiwaPlugin;
     content: string = '';
@@ -78,14 +83,12 @@ export class DiwaView extends ItemView {
     // Voice State
     isRecording: boolean = false;
 
-    private _baseTabDelegate: BaseTab;
     // Managed current tab instance for lifecycle cleanup
     private currentTab: BaseTab | null = null;
 
     constructor(leaf: WorkspaceLeaf, plugin: DiwaPlugin) {
         super(leaf);
         this.plugin = plugin;
-        this._baseTabDelegate = new (class extends BaseTab { render() {} })(this);
     }
 
     getViewType(): string { return VIEW_TYPE_DIWA; }
@@ -132,15 +135,18 @@ export class DiwaView extends ItemView {
         this.renderView();
     }
 
-    async onClose() {}
+    async onClose() {
+        const header = this.containerEl.children[0] as HTMLElement;
+        if (header) header.style.display = '';
+    }
 
     /** Persist activeTab + isDedicated so Obsidian can restore the window on reload. */
-    getState(): Record<string, unknown> {
+    getState(): DiwaViewState {
         return { activeTab: this.activeTab, isDedicated: this.isDedicated };
     }
 
     /** Called by Obsidian after setViewState() — apply activeTab/isDedicated then re-render. */
-    async setState(state: any, result: ViewStateResult): Promise<void> {
+    async setState(state: DiwaViewState, result: ViewStateResult): Promise<void> {
         if (state?.activeTab) {
             // Migrate removed tab to home
             this.activeTab = state.activeTab === 'daily-workspace' ? 'home' : state.activeTab;
