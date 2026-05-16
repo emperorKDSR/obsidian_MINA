@@ -229,6 +229,23 @@ export class DesktopHubView extends ItemView {
         const bar = parent.createEl('div', { cls: 'diwa-dh-ctx-tabbar' });
         let dragIndex = -1;
 
+        // Mouse drag-to-scroll
+        let isMouseDown = false, scrollStartX = 0, scrollLeft = 0;
+        bar.addEventListener('mousedown', (e) => {
+            if ((e.target as HTMLElement).closest('button')) return; // let pill clicks pass
+            isMouseDown = true;
+            scrollStartX = e.pageX - bar.offsetLeft;
+            scrollLeft = bar.scrollLeft;
+            bar.addClass('is-scrolling');
+        });
+        bar.addEventListener('mouseleave', () => { isMouseDown = false; bar.removeClass('is-scrolling'); });
+        bar.addEventListener('mouseup', () => { isMouseDown = false; bar.removeClass('is-scrolling'); });
+        bar.addEventListener('mousemove', (e) => {
+            e.preventDefault();
+            const x = e.pageX - bar.offsetLeft;
+            bar.scrollLeft = scrollLeft - (x - scrollStartX) * 1.5;
+        });
+
         const tabs = [...displayContexts, 'all'];
 
         tabs.forEach((ctx, idx) => {

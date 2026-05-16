@@ -4102,10 +4102,15 @@ body.is-mobile .diwa-syn-float-bar{position:fixed}.modal.diwa-zen-capture .modal
   flex-direction: row;
   gap: 6px;
   overflow-x: auto;
-  padding: 0 0 10px 0;
-  scrollbar-width: none;
+  padding: 0 0 8px 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--diwa-dh-accent) transparent;
+  cursor: grab;
 }
-.diwa-dh-ctx-tabbar::-webkit-scrollbar { display: none; }
+.diwa-dh-ctx-tabbar.is-scrolling { cursor: grabbing; }
+.diwa-dh-ctx-tabbar::-webkit-scrollbar { height: 3px; }
+.diwa-dh-ctx-tabbar::-webkit-scrollbar-track { background: transparent; }
+.diwa-dh-ctx-tabbar::-webkit-scrollbar-thumb { background: var(--diwa-dh-accent); border-radius: 4px; opacity: 0.5; }
 
 .diwa-dh-ctx-tab {
   flex-shrink: 0;
