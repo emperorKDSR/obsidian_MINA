@@ -1,4 +1,14 @@
-## [2.0.0] — MINA Personal OS: Desktop Hub Major Release
+## [2.1.0] — Critical Performance & Reliability Fixes
+
+### Fixed
+- **[CRIT-01]** `src/main.ts` — Eliminated double-indexing on every vault write. Added `_reindexCooldown` Map to `DiwaPlugin` so `_reindexFile()` is a no-op when the same file path fires again within 300ms, collapsing the duplicate `vault.on('modify')` + `metadataCache.on('changed')` events into a single index operation. Eliminates 2× `vault.read()` + 2× index updates per keystroke-save. Map is cleared in `onunload()`. (Closes #2)
+- **[CRIT-02]** `src/tabs/VoiceTab.ts` — Fixed resource leak on tab switch. Extended `VoiceTab.cleanup()` to also release `audioChunks` blob buffer and close the `AudioContext`, ensuring the microphone stream, recording timer, waveform RAF, and keyboard listener are all fully released when the user navigates away. (Closes #3)
+- **[CRIT-03]** `src/tabs/AiTab.ts` — Eliminated O(n) chat re-render on grounded file chip removal. Extracted `renderContextChips(contextBar)` private method; chip `×` handlers now call this method for an O(1) DOM update of just the chip bar, instead of calling `renderAiMode(container)` which re-rendered the entire chat shell and all messages via `MarkdownRenderer.render()`. (Closes #4)
+- **[CRIT-04]** `src/services/VaultService.ts` — Replaced fragile regex-based frontmatter mutation in `appendComment()`. The `String.replace(/^modified: .+$/m, ...)` that could silently corrupt note bodies containing `modified:` (e.g. in code blocks) is now replaced with the safe two-step pattern: `processFrontMatter()` to atomically update the YAML `modified` key, then `vault.modify()` to append the comment body. (Closes #5)
+
+---
+
+
 
 ### Major Release
 MINA V2 becomes a full **Personal Operating System** with the introduction of the Desktop Hub — a dedicated premium cockpit for desktop users. This release marks the architectural completion of the MINA platform: mobile-first Command Center + desktop-first Hub + reactive Omni-Cache Engine.
