@@ -41,7 +41,7 @@ export class CalendarTab extends BaseTab {
 
     private _buildHabitMap(): Map<string, Set<string>> {
         const map = new Map<string, Set<string>>();
-        const folder = (this.settings.habitsFolder || '000 Bin/DIWA V2 Habits').replace(/\\/g, '/');
+        const folder = (this.settings.habitsFolder || '000 Bin/DIWA Habits').replace(/\\/g, '/');
         const { start, end } = this._getDisplayRange();
         const cur = start.clone();
         while (cur.isSameOrBefore(end, 'day')) {
@@ -345,5 +345,6 @@ export class CalendarTab extends BaseTab {
         } catch { /* no review for this week */ }
     }
 }
+
 
 

@@ -36,7 +36,7 @@ export class HabitsTab extends BaseTab {
     /** Scan vault habit files for the past 90 days and build in-memory history */
     private async loadHabitHistory(): Promise<void> {
         const habits = (this.settings.habits || []).filter(h => !h.archived);
-        const habitsFolder = (this.settings.habitsFolder || '000 Bin/DIWA V2 Habits').replace(/\\/g, '/');
+        const habitsFolder = (this.settings.habitsFolder || '000 Bin/DIWA Habits').replace(/\\/g, '/');
         this.habitHistoryCache.clear();
         habits.forEach(h => this.habitHistoryCache.set(h.id, new Set()));
 
@@ -371,7 +371,7 @@ export class HabitsTab extends BaseTab {
         resetBtn.addEventListener('click', () => {
             new ConfirmModal(this.app, 'Clear all habit completions for today?', async () => {
                 const today = moment().format('YYYY-MM-DD');
-                const habitsFolder = (this.settings.habitsFolder || '000 Bin/DIWA V2 Habits').replace(/\\/g, '/');
+                const habitsFolder = (this.settings.habitsFolder || '000 Bin/DIWA Habits').replace(/\\/g, '/');
                 const path = `${habitsFolder}/${today}.md`;
                 const file = this.app.vault.getAbstractFileByPath(path);
                 if (file instanceof TFile) {
@@ -382,5 +382,6 @@ export class HabitsTab extends BaseTab {
         });
     }
 }
+
 
 

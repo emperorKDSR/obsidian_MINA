@@ -160,7 +160,7 @@ export class JournalEntryModal extends Modal {
         });
 
         attachMediaPasteHandler(this.app, textArea, () =>
-            this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments'
+            this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA Attachments'
         );
         attachInlineTriggers(
             this.app, textArea,
@@ -301,7 +301,7 @@ export class JournalEntryModal extends Modal {
         modalEl.addEventListener('drop', () => modalEl.removeClass('is-dragover'));
 
         attachMediaPasteHandler(this.app, textArea, () =>
-            this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments'
+            this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA Attachments'
         );
         attachInlineTriggers(
             this.app, textArea,
@@ -376,7 +376,7 @@ export class JournalEntryModal extends Modal {
         previewStrip: HTMLElement | null
     ) {
         try {
-            const folder = (this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments').trim();
+            const folder = (this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA Attachments').trim();
             if (!this.app.vault.getAbstractFileByPath(folder)) {
                 await this.app.vault.createFolder(folder);
             }
@@ -459,5 +459,6 @@ export class JournalEntryModal extends Modal {
         modalEl.addEventListener('touchend', onTouchEnd, { passive: true });
     }
 }
+
 
 

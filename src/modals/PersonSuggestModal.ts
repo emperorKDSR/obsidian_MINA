@@ -16,7 +16,7 @@ export class PersonSuggestModal extends SuggestModal<PersonItem> {
     constructor(app: App, onChoose: (file: TFile) => void, peopleFolder?: string, initialQuery?: string) {
         super(app);
         this.onChoose = onChoose;
-        this.peopleFolder = (peopleFolder || '000 Bin/DIWA V2 People').replace(/\\/g, '/');
+        this.peopleFolder = (peopleFolder || '000 Bin/DIWA People').replace(/\\/g, '/');
         this.initialQuery = initialQuery || '';
         this.setPlaceholder('Search people… or type a name to create');
     }
@@ -97,4 +97,5 @@ export class PersonSuggestModal extends SuggestModal<PersonItem> {
         }
     }
 }
+
 

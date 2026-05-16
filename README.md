@@ -1,4 +1,4 @@
-# DIWA V2 — Personal OS for Obsidian
+# diwa — Personal OS for Obsidian
 
 **DIWA** is a professional-grade Personal Operating System plugin for [Obsidian](https://obsidian.md). It transforms your vault into a unified command centre for thoughts, tasks, habits, projects, finance, and AI-powered synthesis.
 
@@ -80,7 +80,7 @@ npm run build
 Deploy by copying `main.js`, `manifest.json`, and `styles.css` to your vault plugin folder:
 
 ```
-<vault>/.obsidian/plugins/diwa_v2/
+<vault>/.obsidian/plugins/diwa/
 ```
 
 ---

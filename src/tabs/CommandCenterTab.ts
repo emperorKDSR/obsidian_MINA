@@ -172,7 +172,7 @@ export class CommandCenterTab extends BaseTab {
             () => thoughtContexts,
             this.settings.peopleFolder,
         );
-        attachMediaPasteHandler(this.app, thoughtArea, () => this.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments');
+        attachMediaPasteHandler(this.app, thoughtArea, () => this.settings.attachmentsFolder ?? '000 Bin/DIWA Attachments');
 
         const saveThought = async () => {
             const raw = thoughtArea.value.trim();
@@ -213,7 +213,7 @@ export class CommandCenterTab extends BaseTab {
             cls: 'diwa-capture-box-input',
             attr: { placeholder: 'Add a task… use @tomorrow to set due date', type: 'text' }
         }) as HTMLInputElement;
-        attachMediaPasteHandler(this.app, taskInput, () => this.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments');
+        attachMediaPasteHandler(this.app, taskInput, () => this.settings.attachmentsFolder ?? '000 Bin/DIWA Attachments');
 
         taskInput.addEventListener('focus', () => { this.view._capturePending = 1; });
         taskInput.addEventListener('input', () => {
@@ -698,5 +698,6 @@ export class CommandCenterTab extends BaseTab {
         return { setDueDate };
     }
 }
+
 
 

@@ -52,7 +52,7 @@ export class ReviewTab extends BaseTab {
         const habits = (this.settings.habits || []).filter(h => !h.archived);
         if (habits.length === 0) return '';
         const weekStart = moment().startOf('isoWeek');
-        const habitsFolder = (this.settings.habitsFolder || '000 Bin/DIWA V2 Habits').replace(/\\/g, '/');
+        const habitsFolder = (this.settings.habitsFolder || '000 Bin/DIWA Habits').replace(/\\/g, '/');
         const completionCounts: Map<string, number> = new Map();
         habits.forEach(h => completionCounts.set(h.id, 0));
         for (let d = 0; d < 7; d++) {
@@ -289,7 +289,7 @@ export class ReviewTab extends BaseTab {
             prevCard.classList.toggle('is-collapsed');
             if (isCollapsed && !prevLoaded) {
                 prevLoaded = true;
-                const reviewsRoot = (this.settings.reviewsFolder || '000 Bin/DIWA V2 Reviews').trim();
+                const reviewsRoot = (this.settings.reviewsFolder || '000 Bin/DIWA Reviews').trim();
                 const prevFile = this.app.vault.getAbstractFileByPath(`${reviewsRoot}/Weekly/${prevWeekId}.md`);
                 if (prevFile instanceof TFile) {
                     prevBody.createEl('span', { cls: 'diwa-review-readonly-badge', text: 'READ-ONLY' });
@@ -715,7 +715,7 @@ export class ReviewTab extends BaseTab {
             .slice(0, 8);
 
         const habits = (this.settings.habits || []).filter(h => !h.archived);
-        const habitsFolder = (this.settings.habitsFolder || '000 Bin/DIWA V2 Habits').replace(/\\/g, '/');
+        const habitsFolder = (this.settings.habitsFolder || '000 Bin/DIWA Habits').replace(/\\/g, '/');
         const habitCounts: Map<string, number> = new Map();
         habits.forEach(h => habitCounts.set(h.id, 0));
         for (let d = 0; d < 7; d++) {
@@ -915,7 +915,7 @@ export class ReviewTab extends BaseTab {
 
         // Habits
         const habits = (this.settings.habits || []).filter(h => !h.archived);
-        const habitsFolder = (this.settings.habitsFolder || '000 Bin/DIWA V2 Habits').replace(/\\/g, '/');
+        const habitsFolder = (this.settings.habitsFolder || '000 Bin/DIWA Habits').replace(/\\/g, '/');
         const counts: Map<string, number> = new Map();
         habits.forEach(h => counts.set(h.id, 0));
         for (let d = 0; d < 7; d++) {
@@ -1027,6 +1027,7 @@ export class ReviewTab extends BaseTab {
         });
     }
 }
+
 
 
 

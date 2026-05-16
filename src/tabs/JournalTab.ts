@@ -244,7 +244,7 @@ export class JournalTab extends BaseTab {
         });
 
         attachMediaPasteHandler(this.app, textarea, () =>
-            this.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments'
+            this.settings.attachmentsFolder ?? '000 Bin/DIWA Attachments'
         );
         attachInlineTriggers(
             this.app, textarea,
@@ -277,7 +277,7 @@ export class JournalTab extends BaseTab {
 
     private async _saveComposeAttachment(file: File, textarea: HTMLTextAreaElement): Promise<void> {
         try {
-            const folder = (this.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments').trim();
+            const folder = (this.settings.attachmentsFolder ?? '000 Bin/DIWA Attachments').trim();
             if (!this.app.vault.getAbstractFileByPath(folder)) {
                 await this.app.vault.createFolder(folder);
             }
@@ -385,5 +385,6 @@ export class JournalTab extends BaseTab {
         s.createEl('div', { cls: 'diwa-journal-stat-lbl', text: label });
     }
 }
+
 
 

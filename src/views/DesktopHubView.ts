@@ -239,7 +239,7 @@ export class DesktopHubView extends ItemView {
         attachMediaPasteHandler(
             this.app,
             textarea,
-            () => this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments'
+            () => this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA Attachments'
         );
 
         const saveThought = async () => {
@@ -435,7 +435,7 @@ export class DesktopHubView extends ItemView {
         attachMediaPasteHandler(
             this.app,
             textarea,
-            () => this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA V2 Attachments'
+            () => this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA Attachments'
         );
 
         const saveTask = async () => {
@@ -654,5 +654,6 @@ export class DesktopHubView extends ItemView {
         });
     }
 }
+
 
 

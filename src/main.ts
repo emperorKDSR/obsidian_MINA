@@ -47,7 +47,7 @@ export default class DiwaPlugin extends Plugin {
                 if (this.index.isThoughtFile(f.path)) { await this.index.indexThoughtFile(f as TFile); shouldRefresh = true; }
                 else if (this.index.isTaskFile(f.path)) { await this.index.indexTaskFile(f as TFile); shouldRefresh = true; }
                 else if (this.index.isDueFile(f.path)) { await this.index.buildDueIndex(); shouldRefresh = true; }
-                else if (f.path.startsWith((this.settings.habitsFolder || '000 Bin/DIWA V2 Habits').replace(/\\/g, '/'))) { await this.index.refreshHabitIndex(); shouldRefresh = true; }
+                else if (f.path.startsWith((this.settings.habitsFolder || '000 Bin/DIWA Habits').replace(/\\/g, '/'))) { await this.index.refreshHabitIndex(); shouldRefresh = true; }
                 if (shouldRefresh) this.notifyRefresh();
             }));
             
@@ -251,8 +251,8 @@ export default class DiwaPlugin extends Plugin {
 
     /** Re-indexes a single file based on its type. Called by both vault and metadataCache events. */
     private async _reindexFile(file: TFile): Promise<void> {
-        const habitsFolder = (this.settings.habitsFolder || '000 Bin/DIWA V2 Habits').replace(/\\/g, '/');
-        const capPath = `${this.settings.captureFolder.trim() || '000 Bin/DIWA V2'}/${this.settings.captureFilePath.trim() || 'Daily Capture.md'}`;
+        const habitsFolder = (this.settings.habitsFolder || '000 Bin/DIWA Habits').replace(/\\/g, '/');
+        const capPath = `${this.settings.captureFolder.trim() || '000 Bin/DIWA'}/${this.settings.captureFilePath.trim() || 'Daily Capture.md'}`;
 
         if (this.index.isThoughtFile(file.path)) await this.index.indexThoughtFile(file);
         else if (this.index.isTaskFile(file.path)) await this.index.indexTaskFile(file);
@@ -325,4 +325,5 @@ export default class DiwaPlugin extends Plugin {
         }
     }
 }
+
 

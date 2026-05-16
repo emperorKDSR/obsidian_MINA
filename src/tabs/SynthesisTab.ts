@@ -193,7 +193,7 @@ class MergeModal extends Modal {
     onClose(): void { this.contentEl.empty(); }
 }
 
-// ── SynthesisTab V2.1 ─────────────────────────────────────────────────────────
+// ── SynthesisTab ─────────────────────────────────────────────────────────
 export class SynthesisTab extends BaseTab {
     /**
      * State stored on the class.
@@ -1988,4 +1988,5 @@ export class SynthesisTab extends BaseTab {
         }
     }
 }
+
 

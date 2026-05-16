@@ -13,7 +13,7 @@ export class AiTab extends BaseTab {
     }
 
     private chatFolder(): string {
-        return (this.settings.aiChatFolder || '000 Bin/DIWA V2 AI Chat').trim();
+        return (this.settings.aiChatFolder || '000 Bin/DIWA AI Chat').trim();
     }
 
     private async ensureChatFolder(): Promise<void> {
@@ -262,5 +262,6 @@ export class AiTab extends BaseTab {
         });
     }
 }
+
 
 

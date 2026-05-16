@@ -72,7 +72,7 @@ export class ZenCaptureModal extends Modal {
         attachMediaPasteHandler(
             this.app,
             this.textarea,
-            () => this.plugin.settings.attachmentsFolder || '000 Bin/DIWA V2 Attachments'
+            () => this.plugin.settings.attachmentsFolder || '000 Bin/DIWA Attachments'
         );
 
         // Restore draft
@@ -160,5 +160,6 @@ export class ZenCaptureModal extends Modal {
         }
     }
 }
+
 
 

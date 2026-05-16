@@ -74,7 +74,7 @@ export class IndexService {
     }
 
     async buildChecklistIndex(): Promise<void> {
-        const folder = this.settings.captureFolder.trim() || '000 Bin/DIWA V2';
+        const folder = this.settings.captureFolder.trim() || '000 Bin/DIWA';
         const filename = this.settings.captureFilePath.trim() || 'Daily Capture.md';
         const path = folder && folder !== '/' ? `${folder}/${filename}` : filename;
         const file = this.app.vault.getAbstractFileByPath(path);
@@ -96,7 +96,7 @@ export class IndexService {
 
     async refreshHabitIndex(): Promise<void> {
         const todayStr = moment().format('YYYY-MM-DD');
-        const habitsFolder = (this.settings.habitsFolder || '000 Bin/DIWA V2 Habits').replace(/\\/g, '/');
+        const habitsFolder = (this.settings.habitsFolder || '000 Bin/DIWA Habits').replace(/\\/g, '/');
         const path = `${habitsFolder}/${todayStr}.md`;
         const file = this.app.vault.getAbstractFileByPath(path);
         this.habitStatusIndex = [];
@@ -143,7 +143,7 @@ export class IndexService {
     }
 
     async buildDueIndex(): Promise<void> {
-        const pfFolder = (this.settings.pfFolder || '000 Bin/DIWA V2 PF').replace(/\\/g, '/');
+        const pfFolder = (this.settings.pfFolder || '000 Bin/DIWA PF').replace(/\\/g, '/');
         this.dueIndex.clear();
         const files = this.app.vault.getMarkdownFiles().filter(f => f.path.startsWith(pfFolder + '/'));
         for (const file of files) {
@@ -267,19 +267,19 @@ export class IndexService {
     }
 
     isThoughtFile(path: string): boolean {
-        const folder = (this.settings.thoughtsFolder || '000 Bin/DIWA V2').trim();
+        const folder = (this.settings.thoughtsFolder || '000 Bin/DIWA').trim();
         // Use folder + '/' to prevent prefix collision with sibling folders
-        // e.g. '000 Bin/DIWA V2' must NOT match '000 Bin/DIWA V2 Tasks/...'
+        // e.g. '000 Bin/DIWA' must NOT match '000 Bin/DIWA Tasks/...'
         return path.startsWith(folder + '/') && path.endsWith('.md') && !path.includes('/trash/');
     }
 
     isTaskFile(path: string): boolean {
-        const folder = (this.settings.tasksFolder || '000 Bin/DIWA V2 Tasks').trim();
+        const folder = (this.settings.tasksFolder || '000 Bin/DIWA Tasks').trim();
         return path.startsWith(folder + '/') && path.endsWith('.md') && !path.includes('/trash/');
     }
 
     isDueFile(path: string): boolean {
-        const folder = (this.settings.pfFolder || '000 Bin/DIWA V2 PF').replace(/\\/g, '/').trim();
+        const folder = (this.settings.pfFolder || '000 Bin/DIWA PF').replace(/\\/g, '/').trim();
         return path.startsWith(folder + '/') && path.endsWith('.md');
     }
 
@@ -296,4 +296,5 @@ export class IndexService {
         return Array.from(c);
     }
 }
+
 

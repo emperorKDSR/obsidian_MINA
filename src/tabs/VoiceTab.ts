@@ -261,7 +261,7 @@ export class VoiceTab extends BaseTab {
     // ─── CLIPS ──────────────────────────────────────────────────────────────────
 
     private renderClips(parent: HTMLElement) {
-        const voiceFolder = this.settings.voiceMemoFolder || '000 Bin/DIWA V2 Voice';
+        const voiceFolder = this.settings.voiceMemoFolder || '000 Bin/DIWA Voice';
         const clips = this.app.vault.getFiles()
             .filter(f => f.path.startsWith(voiceFolder) && ['m4a', 'mp3', 'webm', 'wav'].includes(f.extension))
             .sort((a, b) => b.stat.ctime - a.stat.ctime)
@@ -393,7 +393,7 @@ export class VoiceTab extends BaseTab {
     }
 
     private async processRecording(blob: Blob, ext: string, durationMs: number) {
-        const folder = this.settings.voiceMemoFolder || '000 Bin/DIWA V2 Voice';
+        const folder = this.settings.voiceMemoFolder || '000 Bin/DIWA Voice';
         if (!this.app.vault.getAbstractFileByPath(folder)) {
             await this.app.vault.createFolder(folder);
         }
@@ -475,7 +475,7 @@ export class VoiceTab extends BaseTab {
     }
 
     private playAudio(filename: string) {
-        const folder = this.settings.voiceMemoFolder || '000 Bin/DIWA V2 Voice';
+        const folder = this.settings.voiceMemoFolder || '000 Bin/DIWA Voice';
         const file = this.app.vault.getAbstractFileByPath(`${folder}/${filename}`);
         if (file instanceof TFile) {
             const src = this.app.vault.getResourcePath(file);
@@ -615,5 +615,6 @@ export class VoiceTab extends BaseTab {
 
     onunload() { this.cleanup(); }
 }
+
 
 

@@ -56,7 +56,7 @@ export class MonthlyReviewTab extends BaseTab {
         } else {
             const daysInMonth = now.daysInMonth();
             // Count completions per habit by reading each day's frontmatter
-            const folder = (this.settings.habitsFolder || '000 Bin/DIWA V2 Habits').trim();
+            const folder = (this.settings.habitsFolder || '000 Bin/DIWA Habits').trim();
             const habitCounts = new Map<string, number>(habits.map(h => [h.id, 0]));
             for (let d = 1; d <= now.date(); d++) {
                 const dateStr = now.clone().date(d).format('YYYY-MM-DD');
@@ -137,5 +137,6 @@ export class MonthlyReviewTab extends BaseTab {
         }
     }
 }
+
 
 
