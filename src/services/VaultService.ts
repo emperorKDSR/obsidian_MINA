@@ -370,17 +370,20 @@ export class VaultService {
         if (!(file instanceof TFile)) return false;
         
         try {
-            // ob-perf-04: Combine body + modified-date update into single vault.modify call
             const now = new Date();
             const anchor = `reply-${Date.now()}`;
             const dateStr = this.formatDate(now);
             const timeStr = this.formatTime(now);
             const header = `## [[${dateStr}]] ${timeStr} ^${anchor}`;
-            const existing = await this.app.vault.read(file);
-            const withComment = existing.trimEnd() + `\n\n${header}\n${text}\n`;
-            const final = withComment.replace(/^modified: .+$/m, `modified: ${this.formatDateTime(now)}`);
-            await this.app.vault.modify(file, final);
-            
+
+            // Step 1: update modified timestamp safely via processFrontMatter
+            await this.app.fileManager.processFrontMatter(file, (fm) => {
+                fm['modified'] = this.formatDateTime(now);
+            });
+            // Step 2: append comment body to the (now-updated) file
+            const content = await this.app.vault.read(file);
+            await this.app.vault.modify(file, content.trimEnd() + `\n\n${header}\n${text}\n`);
+
             return true;
         } catch (e) {
             console.error('[DIWA VaultService]', e);
