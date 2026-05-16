@@ -4,7 +4,6 @@ import {
     VIEW_TYPE_DESKTOP_HUB,
     PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID,
     SETTINGS_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID, COMPASS_ICON_ID,
-    FOCUS_ICON_ID, MEMENTO_ICON_ID,
 } from '../constants';
 import { attachInlineTriggers, attachMediaPasteHandler, createThoughtCaptureWidget } from '../utils';
 import type { ThoughtEntry, TaskEntry } from '../types';
@@ -129,7 +128,6 @@ export class DesktopHubView extends ItemView {
                 title: 'ACTION',
                 items: [
                     { label: 'Search', icon: 'lucide-search', tab: 'search' },
-                    { label: 'Focus', icon: FOCUS_ICON_ID, tab: 'focus' },
                     { label: 'Synthesis', icon: SYNTHESIS_ICON_ID, tab: 'synthesis' },
                     { label: 'Journal', icon: JOURNAL_ICON_ID, tab: 'journal' },
                     { label: 'Timeline', icon: TIMELINE_ICON_ID, tab: 'timeline' },
@@ -152,7 +150,6 @@ export class DesktopHubView extends ItemView {
                     { label: 'AI Chat', icon: AI_CHAT_ICON_ID, tab: 'diwa-ai' },
                     { label: 'Voice', icon: 'lucide-mic', tab: 'voice-note' },
                     { label: 'Habits', icon: 'lucide-flame', tab: 'habits' },
-                    { label: 'Memento', icon: MEMENTO_ICON_ID, tab: 'memento-mori' },
                 ],
             },
             {

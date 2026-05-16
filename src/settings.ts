@@ -55,10 +55,6 @@ export class DiwaSettingTab extends PluginSettingTab {
             }
         }));
 
-        containerEl.createEl('h3', { text: 'Memento Mori' });
-        new Setting(containerEl).setName('Birth Date').setDesc('Your date of birth (YYYY-MM-DD).').addText(text => text.setPlaceholder('1990-01-01').setValue(this.plugin.settings.birthDate).onChange(async (value) => { this.plugin.settings.birthDate = value; await this.plugin.saveSettings(); this.plugin.notifyRefresh(); }));
-        new Setting(containerEl).setName('Life Expectancy').setDesc('Target age (e.g. 90).').addText(text => text.setPlaceholder('90').setValue(this.plugin.settings.lifeExpectancy.toString()).onChange(async (value) => { this.plugin.settings.lifeExpectancy = parseInt(value) || 90; await this.plugin.saveSettings(); this.plugin.notifyRefresh(); }));
-
         containerEl.createEl('h3', { text: 'Reminders' });
         new Setting(containerEl).setName('Habit Reminders').setDesc('Hourly nudge for pending habits (quiet hours: 8 AM – 10 PM).').addToggle(toggle => toggle.setValue(this.plugin.settings.reminderHabitsEnabled ?? true).onChange(async (value) => { this.plugin.settings.reminderHabitsEnabled = value; await this.plugin.saveSettings(); }));
         new Setting(containerEl).setName('Task Reminders').setDesc('Hourly nudge for tasks due today (quiet hours: 8 AM – 10 PM).').addToggle(toggle => toggle.setValue(this.plugin.settings.reminderTasksEnabled ?? true).onChange(async (value) => { this.plugin.settings.reminderTasksEnabled = value; await this.plugin.saveSettings(); }));

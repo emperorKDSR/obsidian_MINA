@@ -44,7 +44,6 @@ export interface DiwaSettings {
     showDailyThoughts: boolean;
     showDailyPinned: boolean;
     showDailySummary: boolean;
-    focusModeOrder: string[];
     grundfosModeOrder: string[];
     journalModeOrder: string[];
     pfModeOrder: string[];
@@ -52,8 +51,6 @@ export interface DiwaSettings {
     journalKeywords: string[];
     blurredNotes: string[];
     isCompactView: boolean;
-    birthDate: string;
-    lifeExpectancy: number;
     customModes: CustomMode[];
     customModeOrders: Record<string, string[]>;
     habitsFolder: string;

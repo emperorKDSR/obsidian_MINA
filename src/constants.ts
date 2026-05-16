@@ -66,24 +66,12 @@ export const TIMELINE_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <path d="M12 6v6l4 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </g>`;
 
-export const FOCUS_ICON_ID = "diwa-focus-icon";
-export const FOCUS_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
-    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
-    <circle cx="12" cy="12" r="3" fill="currentColor"/>
-    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-</g>`;
-
 export const GRUNDFOS_ICON_ID = "diwa-grundfos-icon";
 export const GRUNDFOS_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
     <circle cx="9" cy="14" r="5" fill="none" stroke="currentColor" stroke-width="2"/>
     <path d="M14 14h5M16.5 14v-6M19 8h-2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
     <path d="M9 9V5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
     <path d="M12 5H6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-</g>`;
-
-export const MEMENTO_ICON_ID = "diwa-memento-icon";
-export const MEMENTO_ICON_SVG = `<g transform="translate(10,10) scale(3.5)">
-    <path d="M5 2h14M5 22h14M5 2l7 8 7-8M5 22l7-8 7 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </g>`;
 
 export const TASK_ICON_ID = "diwa-task-icon";
@@ -196,7 +184,6 @@ export const DEFAULT_SETTINGS: DiwaSettings = {
     showDailyThoughts: true,
     showDailyPinned: true,
     showDailySummary: true,
-    focusModeOrder: [],
     grundfosModeOrder: [],
     journalModeOrder: [],
     pfModeOrder: [],
@@ -204,8 +191,6 @@ export const DEFAULT_SETTINGS: DiwaSettings = {
     journalKeywords: [],
     blurredNotes: [],
     isCompactView: false,
-    birthDate: '',
-    lifeExpectancy: 90,
     customModes: [],
     customModeOrders: {},
     habitsFolder: '000 Bin/DIWA Habits',

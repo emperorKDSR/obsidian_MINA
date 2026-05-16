@@ -1,7 +1,7 @@
 import { moment, Platform, Notice, TFile, setIcon } from 'obsidian';
 import type { DiwaView } from '../view';
 import { BaseTab } from "./BaseTab";
-import { PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, SETTINGS_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID, COMPASS_ICON_ID, FOCUS_ICON_ID, MEMENTO_ICON_ID } from '../constants';
+import { PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, SETTINGS_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID, COMPASS_ICON_ID } from '../constants';
 import { parseNaturalDate, isTablet, attachInlineTriggers, attachMediaPasteHandler, createThoughtCaptureWidget } from '../utils';
 import { HabitConfigModal } from '../modals/HabitConfigModal';
 import { HelpModal } from '../modals/HelpModal';
@@ -497,7 +497,6 @@ export class CommandCenterTab extends BaseTab {
 
         // ACTION row (reordered)
         renderCluster('ACTION',     [
-            { label: 'Focus', icon: FOCUS_ICON_ID, tab: 'focus' },
             { label: 'Habits', icon: 'lucide-flame', tab: 'habits' },
             { label: 'Journal', icon: JOURNAL_ICON_ID, tab: 'journal' },
             { label: 'Synthesis', icon: SYNTHESIS_ICON_ID, tab: 'synthesis' },
@@ -519,8 +518,7 @@ export class CommandCenterTab extends BaseTab {
         renderCluster('FEATURES', [
             { label: 'AI Chat', icon: AI_CHAT_ICON_ID, tab: 'diwa-ai' },
             { label: 'Voice', icon: 'lucide-mic', tab: 'voice-note' },
-            { label: 'Compasee', icon: COMPASS_ICON_ID, tab: 'compass' },
-            { label: 'Memento', icon: MEMENTO_ICON_ID, tab: 'memento-mori' }
+            { label: 'Compasee', icon: COMPASS_ICON_ID, tab: 'compass' }
         ], 'diwa-pillar-cluster--features');
 
         // SYSTEM row

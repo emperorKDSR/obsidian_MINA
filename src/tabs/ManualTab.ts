@@ -13,7 +13,7 @@ const SECTIONS: HelpSection[] = [
             { label: 'Greeting & Date', desc: 'Shows today\'s date, your greeting, and your North Star vision at the top.' },
             { label: 'Zen Mode 🎯', desc: 'Tap the target icon to collapse all navigation and enter deep focus. Tap again to exit.', tip: 'Best used when you only want to see your intelligence card and capture bar.' },
             { label: 'Intelligence Card', desc: 'Live snapshot: open tasks, habits completed, unprocessed thoughts, and total dues. Hit "SYNTHESIZE BRIEFING" to get an AI strategy summary.', tip: 'Requires a Gemini API key configured in Settings → AI.' },
-            { label: 'Navigation Clusters', desc: 'Four grouped rows: ACTION (Focus, Habits, Journal, Synthesis, Timeline), MANAGEMENT (Tasks, Finance, Projects, Calendar, Weekly, Monthly, Compass), FEATURES (AI Chat, Voice, Compasee, Memento), and SYSTEM (Settings, Manual, Export). Each cluster wraps to the next row automatically on narrow screens.', tip: 'Tap any icon to jump directly to that tab.' },
+            { label: 'Navigation Clusters', desc: 'Four grouped rows: ACTION (Habits, Journal, Synthesis, Timeline), MANAGEMENT (Tasks, Finance, Projects, Calendar, Weekly, Monthly, Compass), FEATURES (AI Chat, Voice, Compasee), and SYSTEM (Settings, Manual, Export). Each cluster wraps to the next row automatically on narrow screens.', tip: 'Tap any icon to jump directly to that tab.' },
             { label: 'Tablet Experience', desc: 'On tablets (iPad, etc.), DIWA automatically upgrades to a desktop-like layout: inline capture bar, horizontal habit bar, expanded navigation, and hover effects.', tip: 'Tablet is detected when the device short-edge is ≥768px.' },
             { label: 'Global Search 🔍', desc: 'Tap the search icon in the header or press Mod+Shift+F to open Global Search. Instantly find anything across Thoughts, Tasks, Dues, Projects, and Habits.', tip: 'Also available via Obsidian command palette: "MINA: Global Search".' },
         ]
@@ -194,28 +194,6 @@ const SECTIONS: HelpSection[] = [
         ]
     },
     {
-        id: 'focus', icon: 'lucide-crosshair', title: 'Task Focus Mode', subtitle: "Today's mission — overdue and due tasks",
-        items: [
-            { label: 'Access', desc: 'Open from the ACTION cluster in Command Center (Focus icon — first button in the row).', tip: 'Focus is always the first action — make it your daily starting point.' },
-            { label: "Today's Mission", desc: 'Shows all overdue tasks and tasks due today sorted by urgency: overdue first, then due today, then manually pinned tasks.' },
-            { label: 'Pin Any Task', desc: 'Tap "Add to Mission" on any task in the Tasks tab to pin it to Focus for the current session, even if it has no due date.', tip: 'Pinned tasks persist only for the current session — they reset when you close the plugin.' },
-            { label: 'Complete from Focus', desc: 'Tap the checkbox on any mission task to mark it done. The card fades and the task moves to the Done filter in Tasks.' },
-            { label: 'AI Time-Block Plan', desc: 'Tap "✨ Generate Time-Block Plan" to get a Gemini-powered daily schedule: each task gets a focused time slot with duration estimates.', tip: 'Requires a Gemini API key. The plan is based on your actual mission task list.' },
-            { label: 'Empty State', desc: 'When all tasks are done, Focus shows "All clear! No tasks due today. 🎯" — a satisfying completion signal.' },
-        ]
-    },
-    {
-        id: 'memento-mori', icon: 'lucide-hourglass', title: 'Memento Mori', subtitle: 'Your life in weeks — stay present',
-        items: [
-            { label: 'Access', desc: 'Open from the FEATURES cluster in Command Center (Memento button).', tip: 'A powerful daily reminder to focus on what matters.' },
-            { label: 'Setup', desc: 'Set your birth date (YYYY-MM-DD) and life expectancy in Settings → Memento Mori. Without a birth date, the tab shows a setup prompt.' },
-            { label: 'Stats Row', desc: 'Shows four key numbers at a glance: your current age, total weeks lived, weeks remaining, and years remaining.' },
-            { label: 'Life-in-Weeks Grid', desc: 'Each small square represents one week of your life. Filled squares are weeks already lived; the current week is highlighted in accent colour. The grid spans your full expected lifespan.', tip: 'Scrollable on mobile — the full grid can be tall for a 90-year lifespan.' },
-            { label: 'Stoic Quotes', desc: 'A rotating Marcus Aurelius or Epictetus quote is displayed daily — cycling by day of year so it changes each morning.' },
-            { label: 'Life Expectancy', desc: 'Default life expectancy is 90 years. Override in Settings → Memento Mori → Life Expectancy.' },
-        ]
-    },
-    {
         id: 'export', icon: 'lucide-download', title: 'Export & Backup', subtitle: 'Portable copies of your data',
         items: [
             { label: 'Access', desc: 'Open from the SYSTEM cluster in Command Center (Export button).', tip: 'Run a backup before major vault reorganisations.' },
@@ -246,7 +224,6 @@ const SECTIONS: HelpSection[] = [
             { label: 'AI Key', desc: 'Enter your Gemini API key to enable AI Chat and Intelligence features.' },
             { label: 'Habits', desc: 'Add, edit, and archive habits from the ⚙ icon on the Home screen.' },
             { label: 'Reminders', desc: 'Toggle habit reminders and task reminders independently. Both respect quiet hours (8 AM – 10 PM) and fire on mobile app resume.' },
-            { label: 'Memento Mori', desc: 'Enter your birth date (YYYY-MM-DD) and life expectancy to activate the Memento Mori life-in-weeks grid.' },
             { label: 'Monthly Income', desc: 'Set your monthly income (number) to unlock the cashflow overview in Finance Analytics.' },
         ]
     },

@@ -73,10 +73,6 @@ export class DiwaView extends ItemView {
     weekPlanDraft: Record<string, string> | null = null;
     weekPlanTargetMode: 'next' | 'this' = 'next';
 
-    // Focus State
-    focusedTaskIds: Set<string> = new Set();
-    focusAiPlan: string | null = null;
-
     // Journal State
     journalSearch: string = '';
 
@@ -119,9 +115,7 @@ export class DiwaView extends ItemView {
             case 'daily-workspace': return "Home";
             case 'manual': return "Manual";
             case 'calendar': return "Calendar";
-            case 'memento-mori': return "Memento Mori";
             case 'export': return "Export";
-            case 'focus': return "Today's Mission";
             case 'finance-analytics': return "Finance Analytics";
             case 'milestones': return "Project Milestones";
             default: return "DIWA";
@@ -197,9 +191,7 @@ export class DiwaView extends ItemView {
         else if (tab === 'daily-workspace') instantiate(import('./tabs/CommandCenterTab'), 'CommandCenterTab');
         else if (tab === 'manual') instantiate(import('./tabs/ManualTab'), 'ManualTab');
         else if (tab === 'calendar') instantiate(import('./tabs/CalendarTab'), 'CalendarTab');
-        else if (tab === 'memento-mori') instantiate(import('./tabs/MementoMoriTab'), 'MementoMoriTab');
         else if (tab === 'export') instantiate(import('./tabs/ExportTab'), 'ExportTab');
-        else if (tab === 'focus') instantiate(import('./tabs/FocusTab'), 'FocusTab');
         else if (tab === 'finance-analytics') instantiate(import('./tabs/FinanceAnalyticsTab'), 'FinanceAnalyticsTab');
     }
 

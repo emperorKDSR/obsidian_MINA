@@ -95,12 +95,6 @@ Daily habit tracker backed by date-keyed YAML files. Configurable habit list wit
 ### 📓 Journal
 Filtered thought feed surfacing entries tagged with journal-specific keywords.
 
-### ⏱ Focus Mode
-Distraction-free task view. Select tasks for deep-focus sessions with an optional AI-generated action plan.
-
-### 💀 Memento Mori
-Life calendar visualisation. Configure your birth date and life expectancy to see weeks-remaining at a glance.
-
 ### 📤 Export
 Export thoughts and tasks to various formats for external use.
 
@@ -206,8 +200,6 @@ Copy `main.js`, `manifest.json`, and `styles.css` to your vault's plugin folder:
 | `contexts` | `string[]` | `[]` | All registered context tags |
 | `hiddenContexts` | `string[]` | `[]` | Contexts hidden from the Synthesis panel |
 | `monthlyIncome` | `number` | `0` | Used for the Finance cashflow dashboard |
-| `birthDate` | `string` | `''` | Birth date for Memento Mori (`YYYY-MM-DD`) |
-| `lifeExpectancy` | `number` | `90` | Target age for Memento Mori |
 | `reminderHabitsEnabled` | `boolean` | `true` | Hourly habit reminders |
 | `reminderTasksEnabled` | `boolean` | `true` | Hourly task-due reminders |
 
@@ -228,13 +220,13 @@ Copy `main.js`, `manifest.json`, and `styles.css` to your vault's plugin folder:
 | Projects | `ProjectsTab.ts` | Project lifecycle management |
 | Habits | `HabitsTab.ts` | Daily habit tracker |
 | Journal | `JournalTab.ts` | Keyword-filtered journal feed |
-| Focus | `FocusTab.ts` | Deep-focus task mode |
+| Focus | `FocusTab.ts` | ~~Removed in v2.5.0~~ |
 | Weekly Review | `ReviewTab.ts` | AI weekly brief + habit matrix |
 | Monthly Review | `MonthlyReviewTab.ts` | Monthly retrospective |
 | Compass | `CompassTab.ts` | North Star goals (quarterly) |
 | Calendar | `CalendarTab.ts` | Month/week calendar view |
 | Timeline (legacy) | `TimelineTab.ts` | Date-based thought navigation |
-| Memento Mori | `MementoMoriTab.ts` | Life calendar visualisation |
+| Memento Mori | `MementoMoriTab.ts` | ~~Removed in v2.5.0~~ |
 | Export | `ExportTab.ts` | Data export |
 | Manual | `ManualTab.ts` | In-app help (mirrors HelpModal) |
 | Settings | `SettingsTab.ts` | Settings tab |

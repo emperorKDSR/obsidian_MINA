@@ -1,3 +1,24 @@
+## [2.5.0] — Remove Focus Mode & Memento Mori
+
+### Removed
+- **Focus Mode tab** (`FocusTab.ts`) — The distraction-free task mission view, including the AI time-block plan generator and session-pinned task state.
+- **Memento Mori tab** (`MementoMoriTab.ts`) — The life-in-weeks calendar visualisation and related settings (birth date, life expectancy).
+- **Memento Mori Settings Modal** (`MementoMoriSettingsModal.ts`) — The dedicated settings modal for Memento Mori configuration.
+
+### Changed
+- `src/view.ts` — Removed `focusedTaskIds`, `focusAiPlan` state fields; removed `case 'focus'` and `case 'memento-mori'` from tab title resolver and tab router.
+- `src/tabs/CommandCenterTab.ts` — Removed Focus button from ACTION cluster; removed Memento button from FEATURES cluster.
+- `src/views/DesktopHubView.ts` — Removed Focus link from ACTION group; removed Memento link from FEATURES group.
+- `src/main.ts` — Removed `addIcon()` calls and imports for both icon sets.
+- `src/constants.ts` — Removed `FOCUS_ICON_ID/SVG`, `MEMENTO_ICON_ID/SVG`, `focusModeOrder` from DEFAULT_SETTINGS.
+- `src/types.ts` — Removed `focusModeOrder`, `birthDate`, `lifeExpectancy` from `DiwaSettings`.
+- `src/settings.ts` — Removed Memento Mori settings section UI.
+- `styles.css` — Removed all `.diwa-memento-*` CSS rules.
+- `src/tabs/ManualTab.ts` — Removed Focus Mode and Memento Mori manual sections; updated navigation cluster descriptions.
+- `README.md` — Removed Focus Mode and Memento Mori feature sections; cleaned up settings table and tabs reference.
+
+---
+
 ## [2.4.0] — Mobile Hub & Tablet Hub
 
 ### Added
