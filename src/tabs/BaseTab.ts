@@ -132,7 +132,7 @@ export class BaseTab {
     async renderTaskRow(entry: TaskEntry, container: HTMLElement, hideMetadata = false) {
         const isDone = entry.status === 'done';
         const row = container.createEl('div', { cls: 'diwa-card-row', attr: { style: 'position:relative; margin-bottom:12px;' } });
-        const card = row.createEl('div', { cls: 'diwa-card', attr: { style: `${isDone ? 'opacity:0.6;' : ''}` } });
+        const card = row.createEl('div', { cls: `diwa-card${isDone ? ' is-done-card' : ''}` });
         const topRow = card.createEl('div', { attr: { style: 'display:flex; gap:12px; align-items:flex-start;' } });
         const cb = topRow.createEl('input', { type: 'checkbox', attr: { style: 'margin-top:4px; cursor:pointer; width: 18px; height: 18px;' } });
         cb.checked = isDone;
@@ -142,7 +142,7 @@ export class BaseTab {
         });
 
         const content = topRow.createEl('div', { attr: { style: 'flex:1; min-width:0;' } });
-        const textEl = content.createEl('div', { cls: 'diwa-card-text', attr: { style: `word-break:break-word; font-size:0.95em; line-height:1.6; ${isDone ? 'text-decoration:line-through; opacity:0.7;' : ''}` } });
+        const textEl = content.createEl('div', { cls: `diwa-card-text${isDone ? ' is-done-text' : ''}` });
         await MarkdownRenderer.render(this.app, entry.body || entry.title, textEl, entry.filePath, this.view);
         this.hookInternalLinks(textEl, entry.filePath); this.hookImageZoom(textEl);
 
@@ -180,7 +180,7 @@ export class BaseTab {
                 metaRow.createEl('span', { text: `📅 ${entry.due}`, attr: { style: `font-size:0.75em; color:${isOverdue ? 'var(--text-error)' : 'var(--text-muted)'}; font-weight:700; text-transform: uppercase; letter-spacing: 0.05em;` } });
             }
             const ctxRight = metaRow.createEl('div', { attr: { style: 'display:flex; flex-wrap:wrap; gap:6px;' } });
-            for (const ctx of entry.context) ctxRight.createEl('span', { text: `#${ctx}`, attr: { style: 'font-size:0.7em; color:var(--text-accent); background:rgba(var(--interactive-accent-rgb), 0.1); padding:2px 8px; border-radius:6px; font-weight:700; text-transform: uppercase; letter-spacing: 0.05em;' } });
+            for (const ctx of entry.context) ctxRight.createEl('span', { text: `#${ctx}`, cls: 'diwa-context-chip' });
         }
     }
 
@@ -191,7 +191,7 @@ export class BaseTab {
         const iconSection = itemEl.createEl('div', { attr: { style: 'width: 36px; margin-right: 12px; margin-top: 4px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center;' } });
         if (level === 0 && !hideAvatar) {
             const iconContainer = iconSection.createEl('div', { attr: { style: 'width: 36px; height: 36px; border-radius: 50%; overflow: hidden; border: 2px solid var(--background-modifier-border-faint); box-shadow: var(--diwa-shadow);' } });
-            const img = iconContainer.createEl('img', { attr: { style: 'width: 100%; height: 100%;' } }); img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(NINJA_AVATAR_SVG)}`;
+            const img = iconContainer.createEl('img'); img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(NINJA_AVATAR_SVG)}`;
         }
 
         const contentDiv = itemEl.createEl('div', { cls: 'diwa-thought-content', attr: { style: 'flex-grow: 1; min-width: 0; position: relative;' } });
@@ -224,7 +224,7 @@ export class BaseTab {
 
         if (entry.context.length > 0) {
             const ctxRow = card.createEl('div', { attr: { style: 'display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;' } });
-            for (const ctx of entry.context) ctxRow.createEl('span', { text: `#${ctx}`, attr: { style: 'font-size: 0.7em; color: var(--text-accent); background: rgba(var(--interactive-accent-rgb), 0.1); padding: 2px 8px; border-radius: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;' } });
+            for (const ctx of entry.context) ctxRow.createEl('span', { text: `#${ctx}`, cls: 'diwa-context-chip' });
         }
 
 
@@ -243,5 +243,4 @@ export class BaseTab {
 
     render(container: HTMLElement, ...args: any[]): void {}
 }
-
 
