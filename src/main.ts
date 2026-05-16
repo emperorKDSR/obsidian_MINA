@@ -116,7 +116,9 @@ export default class DiwaPlugin extends Plugin {
         this.addCommand({ id: 'diwa-global-search', name: 'DIWA: Global Search', icon: 'lucide-search', hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'f' }], callback: () => { new SearchModal(this.app, this).open(); } });
 
 		this.addSettingTab(new DiwaSettingTab(this.app, this));
-        setTimeout(() => this.migrateLegacyTableData(), 2000);
+        if (!this.settings.legacyMigrated) {
+            setTimeout(() => this.migrateLegacyTableData(), 2000);
+        }
 	}
 
     async onunload() {
@@ -153,6 +155,8 @@ export default class DiwaPlugin extends Plugin {
         };
         await migrateFile(thoughtsPath, false);
         await migrateFile(tasksPath, true);
+        this.settings.legacyMigrated = true;
+        await this.saveSettings();
     }
 
     async activateDesktopHub() {
@@ -314,10 +318,12 @@ export default class DiwaPlugin extends Plugin {
 
         if (this.settings.reminderTasksEnabled) {
             const today = new Date().toISOString().split('T')[0];
-            const dueTasks = Array.from(this.index.taskIndex.values())
-                .filter(t => t.status !== 'done' && t.due === today);
-            if (dueTasks.length > 0) {
-                new Notice(`✅ DIWA: ${dueTasks.length} task${dueTasks.length > 1 ? 's' : ''} due today`, 5000);
+            let dueCount = 0;
+            for (const t of this.index.taskIndex.values()) {
+                if (t.status !== 'done' && t.due === today) dueCount++;
+            }
+            if (dueCount > 0) {
+                new Notice(`✅ DIWA: ${dueCount} task${dueCount > 1 ? 's' : ''} due today`, 5000);
             }
         }
     }

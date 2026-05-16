@@ -219,5 +219,6 @@ export const DEFAULT_SETTINGS: DiwaSettings = {
     reminderHabitsEnabled: true,
     reminderTasksEnabled: true,
     peopleFolder: '000 Bin/DIWA People',
+    legacyMigrated: false,
 }
 

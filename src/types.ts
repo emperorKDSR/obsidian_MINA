@@ -70,6 +70,7 @@ export interface DiwaSettings {
     reminderHabitsEnabled: boolean;
     reminderTasksEnabled: boolean;
     peopleFolder: string;
+    legacyMigrated?: boolean;
 }
 
 export interface Milestone {
