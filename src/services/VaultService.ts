@@ -199,6 +199,7 @@ export class VaultService {
             const nowStr = this.formatDateTime(new Date());
             await this.app.fileManager.processFrontMatter(file, (fm) => {
                 fm['context'] = safeContexts;
+                fm['topic'] = safeTopic || null;
                 fm['tags'] = tags;
                 fm['modified'] = nowStr;
                 // preserve: created, title, day, body, pinned, project
