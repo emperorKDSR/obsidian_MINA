@@ -1,3 +1,24 @@
+## [2.4.0] — Mobile Hub & Tablet Hub
+
+### Added
+- **MobileHubView** — Single-column phone-first hub: quick-capture textarea → context pills → markdown feed. Opened automatically when the ribbon icon is tapped on a phone.
+- **TabletHubView** — Two-column tablet hub: left sidebar shows tasks list, right main area has capture → context pills → markdown feed. Opened automatically on tablets.
+- **Platform-aware ribbon routing** — Ribbon hub icon now opens the correct hub for the current device (Tablet Hub → Mobile Hub → Desktop Hub).
+- **New commands** — `DIWA: Open Mobile Hub` and `DIWA: Open Tablet Hub` available in the command palette.
+- **Touch-drag pill reorder** — Both mobile and tablet hubs support long-press (500 ms) to enter reorder mode, then touch-drag to reposition context pills. Order is persisted via `settings.contextOrder`.
+- **44 px tap targets** — All interactive elements in mobile/tablet hubs meet WCAG touch target guidance.
+
+### Changed
+- `src/constants.ts` — Added `VIEW_TYPE_MOBILE_HUB` and `VIEW_TYPE_TABLET_HUB`.
+- `src/main.ts` — Registers both new views; ribbon routes by `isTablet()` / `Platform.isMobile`; added `activateMobileHub()`, `activateTabletHub()` methods and two new commands.
+- `styles.css` — Added `.diwa-mh-*` (Mobile Hub) and `.diwa-th-*` (Tablet Hub) CSS sections.
+
+### New Files
+- `src/views/MobileHubView.ts`
+- `src/views/TabletHubView.ts`
+
+---
+
 ## [2.3.2] — Context Pill Drag-and-Drop Reorder
 
 ### Added

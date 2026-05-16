@@ -1,9 +1,11 @@
 import { Plugin, TFile, Notice, WorkspaceLeaf, Platform, moment, addIcon } from 'obsidian';
-import { VIEW_TYPE_DIWA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG, GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG, MEMENTO_ICON_ID, MEMENTO_ICON_SVG, TASK_ICON_ID, TASK_ICON_SVG, PF_ICON_ID, PF_ICON_SVG, SETTINGS_ICON_ID, SETTINGS_ICON_SVG, VOICE_ICON_ID, VOICE_ICON_SVG, HOME_ICON_ID, HOME_ICON_SVG, PROJECT_ICON_ID, PROJECT_ICON_SVG, SYNTHESIS_ICON_ID, SYNTHESIS_ICON_SVG, COMPASS_ICON_ID, COMPASS_ICON_SVG, REVIEW_ICON_ID, REVIEW_ICON_SVG, VIEW_TYPE_DESKTOP_HUB, DESKTOP_HUB_ICON_ID, DESKTOP_HUB_ICON_SVG, VIEW_TYPE_SEARCH } from './constants';
+import { VIEW_TYPE_DIWA, KATANA_ICON_ID, KATANA_ICON_SVG, DEFAULT_SETTINGS, JOURNAL_ICON_ID, JOURNAL_ICON_SVG, DAILY_ICON_ID, DAILY_ICON_SVG, AI_CHAT_ICON_ID, AI_CHAT_ICON_SVG, TIMELINE_ICON_ID, TIMELINE_ICON_SVG, FOCUS_ICON_ID, FOCUS_ICON_SVG, GRUNDFOS_ICON_ID, GRUNDFOS_ICON_SVG, MEMENTO_ICON_ID, MEMENTO_ICON_SVG, TASK_ICON_ID, TASK_ICON_SVG, PF_ICON_ID, PF_ICON_SVG, SETTINGS_ICON_ID, SETTINGS_ICON_SVG, VOICE_ICON_ID, VOICE_ICON_SVG, HOME_ICON_ID, HOME_ICON_SVG, PROJECT_ICON_ID, PROJECT_ICON_SVG, SYNTHESIS_ICON_ID, SYNTHESIS_ICON_SVG, COMPASS_ICON_ID, COMPASS_ICON_SVG, REVIEW_ICON_ID, REVIEW_ICON_SVG, VIEW_TYPE_DESKTOP_HUB, DESKTOP_HUB_ICON_ID, DESKTOP_HUB_ICON_SVG, VIEW_TYPE_SEARCH, VIEW_TYPE_MOBILE_HUB, VIEW_TYPE_TABLET_HUB } from './constants';
 import { DiwaSettings } from './types';
 import { isTablet } from './utils';
 import { DiwaView } from './view';
 import { DesktopHubView } from './views/DesktopHubView';
+import { MobileHubView } from './views/MobileHubView';
+import { TabletHubView } from './views/TabletHubView';
 import { SearchView } from './views/SearchView';
 import { DiwaSettingTab } from './settings';
 
@@ -82,6 +84,8 @@ export default class DiwaPlugin extends Plugin {
 
         this.registerView(VIEW_TYPE_DIWA, (leaf) => new DiwaView(leaf, this));
         this.registerView(VIEW_TYPE_DESKTOP_HUB, (leaf) => new DesktopHubView(leaf, this));
+        this.registerView(VIEW_TYPE_MOBILE_HUB,  (leaf) => new MobileHubView(leaf, this));
+        this.registerView(VIEW_TYPE_TABLET_HUB,  (leaf) => new TabletHubView(leaf, this));
         this.registerView(VIEW_TYPE_SEARCH, (leaf) => new SearchView(leaf, this));
 
         // Reminders: hourly nudge for habits and due tasks
@@ -109,10 +113,16 @@ export default class DiwaPlugin extends Plugin {
         addIcon(DESKTOP_HUB_ICON_ID, DESKTOP_HUB_ICON_SVG);
 
 		this.addRibbonIcon(HOME_ICON_ID, 'DIWA Hub', () => { this.activateView('home', true); });
-        this.addRibbonIcon(DESKTOP_HUB_ICON_ID, 'DIWA Desktop Hub', () => { this.activateDesktopHub(); });
+        this.addRibbonIcon(DESKTOP_HUB_ICON_ID, 'DIWA Hub', () => {
+            if (isTablet()) this.activateTabletHub();
+            else if (Platform.isMobile) this.activateMobileHub();
+            else this.activateDesktopHub();
+        });
 
         this.addCommand({ id: 'open-diwa-home-mode', name: 'DIWA: Open Command Center', icon: HOME_ICON_ID, callback: () => { this.activateView('home', true); } });
         this.addCommand({ id: 'open-diwa-desktop-hub', name: 'DIWA: Open Desktop Hub', icon: DESKTOP_HUB_ICON_ID, callback: () => { this.activateDesktopHub(); } });
+        this.addCommand({ id: 'open-diwa-mobile-hub',  name: 'DIWA: Open Mobile Hub',  icon: 'smartphone', callback: () => { this.activateMobileHub(); } });
+        this.addCommand({ id: 'open-diwa-tablet-hub',  name: 'DIWA: Open Tablet Hub',  icon: 'tablet',     callback: () => { this.activateTabletHub(); } });
         this.addCommand({ id: 'diwa-global-search', name: 'DIWA: Global Search', icon: 'lucide-search', hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'f' }], callback: () => { new SearchModal(this.app, this).open(); } });
 
 		this.addSettingTab(new DiwaSettingTab(this.app, this));
@@ -177,6 +187,30 @@ export default class DiwaPlugin extends Plugin {
             await leaf.setViewState({ type: VIEW_TYPE_DESKTOP_HUB, active: true });
             workspace.revealLeaf(leaf);
         }
+    }
+
+    async activateMobileHub() {
+        const { workspace } = this.app;
+        const existing = workspace.getLeavesOfType(VIEW_TYPE_MOBILE_HUB);
+        if (existing.length > 0) { workspace.revealLeaf(existing[0]); return; }
+        if (!Platform.isMobile || isTablet()) {
+            new Notice('DIWA Mobile Hub is available on phones only.', 2500);
+            return;
+        }
+        const leaf = workspace.getLeaf(false);
+        if (leaf) { await leaf.setViewState({ type: VIEW_TYPE_MOBILE_HUB, active: true }); workspace.revealLeaf(leaf); }
+    }
+
+    async activateTabletHub() {
+        const { workspace } = this.app;
+        const existing = workspace.getLeavesOfType(VIEW_TYPE_TABLET_HUB);
+        if (existing.length > 0) { workspace.revealLeaf(existing[0]); return; }
+        if (!isTablet()) {
+            new Notice('DIWA Tablet Hub is available on tablets only.', 2500);
+            return;
+        }
+        const leaf = workspace.getLeaf(false);
+        if (leaf) { await leaf.setViewState({ type: VIEW_TYPE_TABLET_HUB, active: true }); workspace.revealLeaf(leaf); }
     }
 
     async activateSearchView() {
