@@ -241,9 +241,8 @@ export class ReviewTab extends BaseTab {
             if (saveBtn.disabled) return;
             saveBtn.textContent = 'Saving…';
             saveBtn.disabled = true;
-            const habitHighlight = this.getHabitHighlightText();
             try {
-                await this.vault.saveWeeklyReview(weekId, dateRange, wins, lessons, focus, habitHighlight, this.view.weeklyAiReport ?? undefined, dayPlans);
+                await this.vault.saveWeeklyReview(weekId, dateRange, wins, lessons, focus, highlightText, this.view.weeklyAiReport ?? undefined, dayPlans);
                 isDirty = false;
                 dirtyDot.style.display = 'none';
                 saveBtn.textContent = '✓  Saved';

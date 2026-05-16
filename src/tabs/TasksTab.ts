@@ -73,14 +73,16 @@ export class TasksTab extends BaseTab {
 
         // ── Segmented control ──
         const allTasks = Array.from(this.index.taskIndex.values());
-        const counts: Record<TaskViewMode, number> = {
-            'open':      allTasks.filter(t => t.status === 'open').length,
-            'not-due':   allTasks.filter(t => t.status === 'open' && (!t.due || t.due.trim() === "")).length,
-            'waiting':   allTasks.filter(t => t.status === 'waiting').length,
-            'someday':   allTasks.filter(t => t.status === 'someday').length,
-            'recurring': allTasks.filter(t => !!t.recurrence).length,
-            'done':      allTasks.filter(t => t.status === 'done').length,
-        };
+        const counts: Record<TaskViewMode, number> = { open: 0, 'not-due': 0, waiting: 0, someday: 0, recurring: 0, done: 0 };
+        for (const t of allTasks) {
+            if (t.recurrence) counts.recurring++;
+            switch (t.status) {
+                case 'open':    counts.open++; if (!t.due || !t.due.trim()) counts['not-due']++; break;
+                case 'waiting': counts.waiting++; break;
+                case 'someday': counts.someday++; break;
+                case 'done':    counts.done++; break;
+            }
+        }
         const segBar = wrap.createEl('div', { cls: 'diwa-seg-bar' });
         MODES.forEach(({ mode, label }) => {
             const btn = segBar.createEl('button', { cls: `diwa-seg-btn${this.viewMode === mode ? ' is-active' : ''}`, attr: { 'data-mode': mode } });
