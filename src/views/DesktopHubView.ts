@@ -7,7 +7,7 @@ import {
 } from '../constants';
 import { attachInlineTriggers, attachMediaPasteHandler, createThoughtCaptureWidget } from '../utils';
 import type { ThoughtEntry, TaskEntry } from '../types';
-import { InlineContextPickerModal } from '../modals/InlineContextPickerModal';
+import { InlineTopicInput } from '../utils/InlineTopicInput';
 
 export class DesktopHubView extends ItemView {
     plugin: DiwaPlugin;
@@ -377,7 +377,21 @@ export class DesktopHubView extends ItemView {
             setIcon(tagBtn, 'lucide-tag');
             tagBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                this.openTopicModal(item, tagBtn, t, this._activeContextTab);
+                InlineTopicInput.open(tagBtn, t, this._activeContextTab, this.plugin, async (contexts, topic) => {
+                    await this.plugin.vault.assignContextToThought(t.filePath, contexts, topic);
+                    const file = this.app.vault.getAbstractFileByPath(t.filePath);
+                    if (file instanceof TFile) await this.plugin.index.indexThoughtFile(file);
+                    tagBtn.toggleClass('has-context', contexts.length > 0);
+                    if (this._activeContextTab !== 'all') {
+                        const ctxLow = this._activeContextTab.toLowerCase();
+                        const stillVisible = contexts.some(c => c.toLowerCase() === ctxLow);
+                        if (!stillVisible) {
+                            item.style.transition = 'opacity 0.2s';
+                            item.style.opacity = '0';
+                            setTimeout(() => item.remove(), 210);
+                        }
+                    }
+                });
             });
 
             const editBtn = actions.createEl('button', { cls: 'diwa-dh-feed-edit-btn', attr: { title: 'Edit thought', 'aria-label': 'Edit thought' } });
@@ -387,31 +401,6 @@ export class DesktopHubView extends ItemView {
                 this.makeThoughtEditable(item, content, actions, t);
             });
         }
-    }
-
-    private openTopicModal(item: HTMLElement, tagBtn: HTMLElement, t: ThoughtEntry, activeCtx: string) {
-        new InlineContextPickerModal(
-            this.app, this.plugin, t.context,
-            async () => { /* unused in topicMode */ },
-            `Assign topic — ${(t.body || t.title || '').substring(0, 45)}…`,
-            true,
-            async (contexts, topic) => {
-                await this.plugin.vault.assignContextToThought(t.filePath, contexts, topic);
-                const file = this.app.vault.getAbstractFileByPath(t.filePath);
-                if (file instanceof TFile) await this.plugin.index.indexThoughtFile(file);
-                tagBtn.toggleClass('has-context', contexts.length > 0);
-                // Fade out if item no longer matches active context filter
-                if (activeCtx !== 'all') {
-                    const ctxLow = activeCtx.toLowerCase();
-                    const stillVisible = contexts.some(c => c.toLowerCase() === ctxLow);
-                    if (!stillVisible) {
-                        item.style.transition = 'opacity 0.2s';
-                        item.style.opacity = '0';
-                        setTimeout(() => item.remove(), 210);
-                    }
-                }
-            }
-        ).open();
     }
 
     private makeThoughtEditable(item: HTMLElement, content: HTMLElement, actionsEl: HTMLElement, t: ThoughtEntry) {

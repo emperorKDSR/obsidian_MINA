@@ -1,4 +1,28 @@
-## [2.6.0] — Topic Tag Button on Feed Items
+## [2.7.0] — Inline Topic Input with Autocomplete
+
+### Added
+- **Inline topic input** replaces the modal for topic assignment. Clicking the 🏷 tag button now opens a small floating panel anchored below the button — no modal overlay.
+- **Autocomplete suggestions**: as the user types, existing topics from the vault are suggested (prefix-matched). Arrow keys navigate, Enter confirms, Escape cancels.
+- **`InlineTopicInput` utility** (`src/utils/InlineTopicInput.ts`): shared DOM helper used by all three hub views (Desktop, Mobile, Tablet).
+- **Context auto-detection**: if the note already has a context, the topic input opens directly. If not but the active tab is a specific context, that context is auto-assigned. If both are absent (All tab), an inline context pill row is shown first, then transitions to topic input.
+- **`topic` frontmatter field**: `VaultService.assignContextToThought` now writes a dedicated `topic` field (e.g. `Meeting`) in addition to `context` and `tags`.
+- **`ThoughtEntry.topic`**: indexed from `fm.topic` in `IndexService.indexThoughtFile()`.
+- **`IndexService.getExistingTopics()`**: returns all unique non-empty topic strings from the in-memory index.
+
+### Changed
+- Tag button no longer opens `InlineContextPickerModal`; that modal's `topicMode` is no longer used by hub views.
+
+### Frontmatter result
+```yaml
+context:
+  - Grundfos          # DIWA hub filter (base label)
+topic: Meeting        # raw sub-topic text (new)
+tags:
+  - Grundfos/Meeting  # Obsidian native tag search (context/topic)
+```
+
+
+
 
 ### Added
 - **Tag button (🏷) on every feed item** in Desktop Hub, Mobile Hub, and Tablet Hub.

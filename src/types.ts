@@ -108,6 +108,7 @@ export interface ThoughtEntry {
     day: string;               // e.g. "2026-03-28"
     allDates: string[];        // all [[YYYY-MM-DD]] links found in full content
     context: string[];         // from frontmatter context list
+    topic?: string | null;     // sub-topic label, e.g. "Meeting"
     body: string;              // text before first ## reply header
     lastThreadUpdate: number;  // ms timestamp for sorting
     pinned?: boolean;          // true if the thought is pinned

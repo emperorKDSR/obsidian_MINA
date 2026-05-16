@@ -25,6 +25,15 @@ export class IndexService {
         const arr = Array.isArray(raw) ? raw : [raw];
         return arr.map(v => String(v).replace(/^#+/, '').trim()).filter(Boolean);
     }
+
+    /** Returns all unique non-empty topic strings across the thought index. */
+    getExistingTopics(): string[] {
+        const seen = new Set<string>();
+        for (const entry of this.thoughtIndex.values()) {
+            if (entry.topic) seen.add(entry.topic);
+        }
+        return Array.from(seen).sort();
+    }
     
     // Memory Indices
     thoughtIndex: Map<string, ThoughtEntry> = new Map();
@@ -220,6 +229,7 @@ export class IndexService {
             created: fm.created || '',
             modified: fm.modified || '',
             context: IndexService.normalizeContext(fm.context ?? fm.contexts),
+            topic: fm.topic || null,
             synthesized: fm.synthesized || false,
             project: fm.project || null,
             allDates: fm.allDates || [],
