@@ -124,18 +124,7 @@ export class AiTab extends BaseTab {
                 this.renderWelcomeState(chatArea);
                 return;
             }
-            this.view.chatHistory.forEach(msg => {
-                const isUser = msg.role === 'user';
-                const row = chatArea.createEl('div', { cls: `diwa-ai-msg-row ${isUser ? 'is-user' : 'is-bot'}` });
-                if (!isUser) {
-                    const avatar = row.createEl('div', { cls: 'diwa-ai-avatar' });
-                    setIcon(avatar, 'lucide-sparkles');
-                }
-                const bubble = row.createEl('div', { cls: isUser ? 'diwa-ai-user-bubble' : 'diwa-ai-bot-bubble' });
-                MarkdownRenderer.render(this.app, msg.text, bubble, '', this.view);
-                this.hookInternalLinks(bubble, '');
-            });
-            chatArea.scrollTop = chatArea.scrollHeight;
+            this.view.chatHistory.forEach(msg => this.appendMessage(chatArea, msg));
         };
         renderHistory();
 
@@ -189,7 +178,8 @@ export class AiTab extends BaseTab {
             textArea.value = '';
             textArea.style.height = 'auto';
             this.view.chatHistory.push({ role: 'user', text });
-            renderHistory();
+            if (this.view.chatHistory.length === 1) chatArea.empty();
+            this.appendMessage(chatArea, { role: 'user', text });
 
             this.view.isAiLoading = true;
             sendBtn.addClass('is-loading');
@@ -208,7 +198,7 @@ export class AiTab extends BaseTab {
                 const response = await this.ai.callGemini(text, this.view.groundedFiles, this.view.webSearchEnabled, this.view.chatHistory, this.index.thoughtIndex);
                 typingRow.remove();
                 this.view.chatHistory.push({ role: 'model', text: response });
-                renderHistory();
+                this.appendMessage(chatArea, { role: 'model', text: response });
                 this.saveChatHistory().catch(e => console.error('[DIWA AiTab] save failed', e));
             } catch (e: any) {
                 typingRow.remove();
@@ -223,6 +213,19 @@ export class AiTab extends BaseTab {
         };
 
         sendBtn.addEventListener('click', sendMessage);
+    }
+
+    private appendMessage(chatArea: HTMLElement, msg: ChatMessage): void {
+        const isUser = msg.role === 'user';
+        const row = chatArea.createEl('div', { cls: `diwa-ai-msg-row ${isUser ? 'is-user' : 'is-bot'}` });
+        if (!isUser) {
+            const avatar = row.createEl('div', { cls: 'diwa-ai-avatar' });
+            setIcon(avatar, 'lucide-sparkles');
+        }
+        const bubble = row.createEl('div', { cls: isUser ? 'diwa-ai-user-bubble' : 'diwa-ai-bot-bubble' });
+        MarkdownRenderer.render(this.app, msg.text, bubble, '', this.view);
+        this.hookInternalLinks(bubble, '');
+        chatArea.scrollTop = chatArea.scrollHeight;
     }
 
     private renderContextChips(contextBar: HTMLElement): void {

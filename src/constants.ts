@@ -138,6 +138,34 @@ export const ICON_EYE = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" 
 export const ICON_EYE_OFF = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
 export const ICON_CHECKLIST = '<polyline points="9 11 12 14 22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
 
+// ── Search shared constants ────────────────────────────────────────────────
+
+export const SEARCH_SCOPES = [
+    { id: 'all',     label: 'All' },
+    { id: 'thought', label: 'Thoughts' },
+    { id: 'task',    label: 'Tasks' },
+    { id: 'due',     label: 'Dues' },
+    { id: 'project', label: 'Projects' },
+    { id: 'habit',   label: 'Habits' },
+] as const;
+
+export const SEARCH_TYPE_ICONS: Record<string, string> = {
+    thought: 'lucide-message-circle',
+    task:    'lucide-check-square-2',
+    due:     'lucide-wallet',
+    project: 'lucide-folder-kanban',
+    habit:   'lucide-flame',
+};
+
+export const SEARCH_QUICKJUMP_TABS = [
+    { id: 'timeline',     label: 'Timeline', icon: 'lucide-message-circle' },
+    { id: 'review-tasks', label: 'Tasks',    icon: 'lucide-check-square-2' },
+    { id: 'dues',         label: 'Finance',  icon: 'lucide-wallet' },
+    { id: 'projects',     label: 'Projects', icon: 'lucide-folder-kanban' },
+    { id: 'habits',       label: 'Habits',   icon: 'lucide-flame' },
+    { id: 'journal',      label: 'Journal',  icon: 'lucide-book-open' },
+];
+
 export const DEFAULT_SETTINGS: DiwaSettings = {
     captureFolder: '000 Bin',
 	captureFilePath: 'diwa.md',

@@ -1,7 +1,7 @@
 import { App, Modal, setIcon, Platform } from 'obsidian';
 import type DiwaPlugin from '../main';
 import { isTablet } from '../utils';
-import { VIEW_TYPE_DIWA } from '../constants';
+import { VIEW_TYPE_DIWA, SEARCH_SCOPES, SEARCH_TYPE_ICONS, SEARCH_QUICKJUMP_TABS } from '../constants';
 
 interface SearchResult {
     type: 'thought' | 'task' | 'due' | 'project' | 'habit';
@@ -13,31 +13,6 @@ interface SearchResult {
 }
 
 const SCOPE_ALL = 'all';
-const SCOPES = [
-    { id: 'all', label: 'All' },
-    { id: 'thought', label: 'Thoughts' },
-    { id: 'task', label: 'Tasks' },
-    { id: 'due', label: 'Dues' },
-    { id: 'project', label: 'Projects' },
-    { id: 'habit', label: 'Habits' },
-];
-
-const TYPE_ICONS: Record<string, string> = {
-    thought: 'lucide-message-circle',
-    task: 'lucide-check-square-2',
-    due: 'lucide-wallet',
-    project: 'lucide-folder-kanban',
-    habit: 'lucide-activity',
-};
-
-const QUICKJUMP_TABS = [
-    { id: 'timeline', label: 'Timeline', icon: 'lucide-message-circle' },
-    { id: 'review-tasks', label: 'Tasks', icon: 'lucide-check-square-2' },
-    { id: 'dues', label: 'Dues', icon: 'lucide-wallet' },
-    { id: 'projects', label: 'Projects', icon: 'lucide-folder-kanban' },
-    { id: 'habits', label: 'Habits', icon: 'lucide-activity' },
-    { id: 'journal', label: 'Journal', icon: 'lucide-book-open' },
-];
 
 export class SearchModal extends Modal {
     private plugin: DiwaPlugin;
@@ -110,7 +85,7 @@ export class SearchModal extends Modal {
 
         // Scope bar
         this.scopeBar = this.panelEl.createEl('div', { cls: 'diwa-search-scope-bar', attr: { role: 'tablist' } });
-        for (const scope of SCOPES) {
+        for (const scope of SEARCH_SCOPES) {
             const btn = this.scopeBar.createEl('button', {
                 cls: `diwa-search-scope-btn${scope.id === this.activeScope ? ' is-active' : ''}`,
                 attr: { 'data-scope': scope.id }
@@ -403,7 +378,7 @@ export class SearchModal extends Modal {
             const section = this.bodyEl.createEl('div', { cls: 'diwa-search-section' });
             const header = section.createEl('div', { cls: 'diwa-search-section-header' });
             const typeIcon = header.createEl('span', { cls: 'diwa-search-section-type-icon' });
-            setIcon(typeIcon, TYPE_ICONS[type] || 'lucide-file');
+            setIcon(typeIcon, SEARCH_TYPE_ICONS[type] || 'lucide-file');
             header.createEl('span', { cls: 'diwa-search-section-type-label', text: type.charAt(0).toUpperCase() + type.slice(1) + 's' });
             header.createEl('span', { cls: 'diwa-search-section-result-count', text: String(items.length) });
 
@@ -415,7 +390,7 @@ export class SearchModal extends Modal {
                 });
 
                 const iconWrap = row.createEl('div', { cls: `diwa-search-result-icon diwa-search-result-icon--${item.type}` });
-                setIcon(iconWrap, TYPE_ICONS[item.type] || 'lucide-file');
+                setIcon(iconWrap, SEARCH_TYPE_ICONS[item.type] || 'lucide-file');
 
                 const body = row.createEl('div', { cls: 'diwa-search-result-body' });
                 const titleEl = body.createEl('span', { cls: 'diwa-search-result-title' });
@@ -445,7 +420,7 @@ export class SearchModal extends Modal {
         initial.createEl('span', { cls: 'diwa-search-recents-label', text: 'Quick Jump' });
 
         const grid = initial.createEl('div', { cls: 'diwa-search-quickjump-grid' });
-        for (const tab of QUICKJUMP_TABS) {
+        for (const tab of SEARCH_QUICKJUMP_TABS) {
             const btn = grid.createEl('button', { cls: 'diwa-search-quickjump-btn', attr: { 'data-tab': tab.id } });
             const icon = btn.createEl('span', { cls: 'svg-icon' });
             setIcon(icon, tab.icon);
