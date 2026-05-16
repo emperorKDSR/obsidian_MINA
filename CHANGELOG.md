@@ -1,3 +1,24 @@
+## [2.3.0] — LOW + ARCH Priority Refactors & Cleanups
+
+### Fixed / Refactored
+- **[LOW-01]** `src/tabs/CommandCenterTab.ts` — Deleted dead `renderWeeklyGoals()` and `renderMonthlyGoals()` methods (~80 lines of unreachable code; methods were commented out in `render()` but never removed). (Closes #14)
+- **[LOW-02]** `src/tabs/CommandCenterTab.ts` + `src/tabs/HabitsTab.ts` — Replaced inline SVG gear strings with `setIcon(btn, 'lucide-settings-2')`, removing ~3KB of duplicated SVG markup from the JS bundle. (Closes #15)
+- **[LOW-03]** `src/main.ts` + `src/types.ts` + `src/constants.ts` — `migrateLegacyTableData()` now guarded by `settings.legacyMigrated` flag. After a successful migration the flag is persisted so subsequent Obsidian launches skip the 2-second delayed vault read entirely. (Closes #16)
+- **[LOW-04]** `src/types.ts` — `DueEntry.dueMoment` now typed as `import('moment').Moment | null` instead of `any`. Type-safe access throughout the codebase. (Closes #17)
+- **[LOW-05]** `src/services/VaultService.ts` — `formatDateTime()`, `formatDate()`, and `formatTime()` now delegate to `moment(d).format(...)`, removing manual `Date` arithmetic and `padStart()` calls. (Closes #18)
+- **[LOW-06]** Already closed by HIGH-06 (v2.2.0). (Closes #19)
+- **[LOW-07]** `src/tabs/CommandCenterTab.ts` — Fixed double `moment()` parse per task in the overdue filter. Single strict-mode parse reduces per-task allocations in the Intelligence widget. (Closes #20)
+- **[LOW-08]** `src/view.ts` — Added `DiwaViewState` interface (`activeTab`, `isDedicated`). `getState()` and `setState()` are now fully typed, eliminating the `any` parameter. (Closes #21)
+- **[LOW-09]** `src/main.ts` — `_checkReminders()` replaces `Array.from().filter()` with a `for...of` loop over `taskIndex.values()`, eliminating the intermediate array allocation on every hourly tick. (Closes #22)
+- **[LOW-10]** `src/view.ts` — `onClose()` now restores the hidden native Obsidian header (`header.style.display = ''`) preventing it from being permanently hidden if the view is closed and re-opened in a different leaf. (Closes #23)
+- **[LOW-11]** Multiple files + `styles.css` — Extracted 10 static inline style patterns to named CSS classes (`.diwa-context-chip`, `.diwa-reply-row`, `.diwa-card-text`, `.diwa-card.is-done-card`, `.diwa-settings-action-btn`, `.diwa-finance-footnote`, `.diwa-create-hint`, `.diwa-habit-list-label`, `.diwa-tab-error`). Dynamic styles preserved inline. (Closes #24)
+- **[ARCH-01]** `src/types.ts` + `src/services/IndexService.ts` + `src/tabs/BaseTab.ts` + `src/tabs/JournalTab.ts` + `src/modals/ViewCommentsModal.ts` — Removed vestigial `ThoughtEntry.children` field (always `[]`, never populated). `TaskEntry.children` (used for task comments/replies) is unaffected. `ViewCommentsModal` narrowed to accept only `TaskEntry`. (Closes #25)
+- **[ARCH-02]** `src/tabs/AiTab.ts` — Removed dead hidden `<input type="file">` element (5 lines) that was part of an old file-upload flow superseded by drag-and-drop. The `attachBtn` and drag-and-drop path are unaffected. (Closes #26)
+- **[ARCH-03]** `src/view.ts` — Removed `_baseTabDelegate` anonymous class field that was constructed in the constructor but never used — vestigial scaffolding from an abandoned delegate pattern. (Closes #27)
+- **[ARCH-04]** Already closed by HIGH-04 (v2.2.0). (Closes #28)
+
+---
+
 ## [2.2.0] — HIGH Priority Performance & Architecture Fixes
 
 ### Fixed
