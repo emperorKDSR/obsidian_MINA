@@ -140,11 +140,6 @@ export class AiTab extends BaseTab {
         const attachIcon = attachBtn.createEl('span');
         setIcon(attachIcon, 'lucide-paperclip');
         attachBtn.addEventListener('click', () => {
-            // Open file suggester
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.style.display = 'none';
-            // Use Obsidian's internal file search instead
             new Notice('Drag a file from your vault sidebar to attach it, or type @filename in the chat.');
         });
 
