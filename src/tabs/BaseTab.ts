@@ -227,9 +227,7 @@ export class BaseTab {
             for (const ctx of entry.context) ctxRow.createEl('span', { text: `#${ctx}`, attr: { style: 'font-size: 0.7em; color: var(--text-accent); background: rgba(var(--interactive-accent-rgb), 0.1); padding: 2px 8px; border-radius: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;' } });
         }
 
-        if (level === 0 && !isCollapsed && entry.children.length > 0) {
-            for (const reply of entry.children) await this.renderReplyRow(reply, entry, container, isBlurred);
-        }
+
     }
 
     async renderReplyRow(reply: ReplyEntry, parent: ThoughtEntry, container: HTMLElement, blur?: boolean) {

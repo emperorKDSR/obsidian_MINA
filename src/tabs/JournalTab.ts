@@ -156,16 +156,10 @@ export class JournalTab extends BaseTab {
 
         // ── Footer: context chips + reply count ───────────────────────────
         const visibleCtx = entry.context.filter(c => c !== 'journal');
-        if (visibleCtx.length > 0 || entry.children.length > 0) {
+        if (visibleCtx.length > 0) {
             const footer = card.createEl('div', { cls: 'diwa-journal-card-footer' });
             for (const ctx of visibleCtx) {
                 footer.createEl('span', { cls: 'diwa-journal-ctx-chip', text: `#${ctx}` });
-            }
-            if (entry.children.length > 0) {
-                footer.createEl('span', {
-                    cls: 'diwa-journal-reply-badge',
-                    text: `${entry.children.length} repl${entry.children.length === 1 ? 'y' : 'ies'}`
-                });
             }
         }
     }

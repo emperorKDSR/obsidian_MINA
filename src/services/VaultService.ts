@@ -29,20 +29,9 @@ export class VaultService {
         return firstLine.replace(/[#*_`\[\]]/g, '').trim();
     }
 
-    private formatDateTime(d: Date): string {
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-    }
-
-    private formatDate(d: Date): string {
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    }
-
-    private formatTime(d: Date): string {
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-    }
+    private formatDateTime(d: Date): string { return moment(d).format('YYYY-MM-DD HH:mm:ss'); }
+    private formatDate(d: Date): string     { return moment(d).format('YYYY-MM-DD'); }
+    private formatTime(d: Date): string     { return moment(d).format('HH:mm:ss'); }
 
     private buildFrontmatter(title: string, created: string, modified: string, dayStr: string, contexts: string[], pinned: boolean = false, project?: string): string {
         // sec-006: Sanitize title and contexts before YAML embedding to prevent injection

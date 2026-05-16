@@ -1,16 +1,16 @@
 import { App, Modal, TFile, Notice, MarkdownRenderer, setIcon, moment } from 'obsidian';
 import DiwaPlugin from '../main';
-import { TaskEntry, ThoughtEntry, ReplyEntry } from '../types';
+import { TaskEntry, ReplyEntry } from '../types';
 import { ICON_EDIT, ICON_TRASH } from '../constants';
 import { EditEntryModal } from './EditEntryModal';
 import { ConfirmModal } from './ConfirmModal';
 
 export class ViewCommentsModal extends Modal {
     plugin: DiwaPlugin;
-    entry: TaskEntry | ThoughtEntry;
+    entry: TaskEntry;
     onRefresh: () => void;
 
-    constructor(app: App, plugin: DiwaPlugin, entry: TaskEntry | ThoughtEntry, onRefresh: () => void) {
+    constructor(app: App, plugin: DiwaPlugin, entry: TaskEntry, onRefresh: () => void) {
         super(app);
         this.plugin = plugin;
         this.entry = entry;
@@ -93,8 +93,8 @@ export class ViewCommentsModal extends Modal {
     async refresh() {
         const file = this.app.vault.getAbstractFileByPath(this.entry.filePath);
         if (file instanceof TFile) {
-            const content = await this.app.vault.read(file);
-            const updated = this.plugin.index.isTaskFile(file.path) ? (this.plugin.index as any).parseTaskFile(file.path, content) : (this.plugin.index as any).parseThoughtFile(file.path, content);
+            await this.plugin.index.indexTaskFile(file);
+            const updated = this.plugin.index.taskIndex.get(file.path);
             if (updated) this.entry = updated;
             this.render();
             this.onRefresh();
