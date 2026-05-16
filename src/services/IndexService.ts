@@ -215,7 +215,6 @@ export class IndexService {
             synthesized: fm.synthesized || false,
             project: fm.project || null,
             allDates: fm.allDates || [],
-            children: [],
             lastThreadUpdate: file.stat.mtime
         });
 

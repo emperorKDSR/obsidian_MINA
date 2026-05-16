@@ -110,7 +110,6 @@ export interface ThoughtEntry {
     allDates: string[];        // all [[YYYY-MM-DD]] links found in full content
     context: string[];         // from frontmatter context list
     body: string;              // text before first ## reply header
-    children: ReplyEntry[];    // parsed from ## sections in body
     lastThreadUpdate: number;  // ms timestamp for sorting
     pinned?: boolean;          // true if the thought is pinned
     project?: string;          // associated project name
@@ -143,7 +142,7 @@ export interface DueEntry {
     path: string; 
     dueDate: string; 
     lastPayment: string; 
-    dueMoment: any; 
+    dueMoment: import('moment').Moment | null; 
     hasRecurring: boolean; 
     isActive: boolean;
     amount?: number;
