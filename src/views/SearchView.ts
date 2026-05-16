@@ -3,7 +3,7 @@ import {
     prepareFuzzySearch, prepareSimpleSearch, renderMatches,
 } from 'obsidian';
 import type DiwaPlugin from '../main';
-import { VIEW_TYPE_SEARCH, VIEW_TYPE_DIWA } from '../constants';
+import { VIEW_TYPE_SEARCH, VIEW_TYPE_DIWA, SEARCH_SCOPES, SEARCH_TYPE_ICONS, SEARCH_QUICKJUMP_TABS } from '../constants';
 import type { SearchMatches } from 'obsidian';
 
 interface RichResult {
@@ -18,32 +18,6 @@ interface RichResult {
     tabId: string;
     id: string;
 }
-
-const SCOPES = [
-    { id: 'all',     label: 'All' },
-    { id: 'thought', label: 'Thoughts' },
-    { id: 'task',    label: 'Tasks' },
-    { id: 'due',     label: 'Dues' },
-    { id: 'project', label: 'Projects' },
-    { id: 'habit',   label: 'Habits' },
-] as const;
-
-const TYPE_ICONS: Record<string, string> = {
-    thought: 'lucide-message-circle',
-    task:    'lucide-check-square-2',
-    due:     'lucide-wallet',
-    project: 'lucide-folder-kanban',
-    habit:   'lucide-flame',
-};
-
-const QUICKJUMP_TABS = [
-    { id: 'timeline',     label: 'Timeline', icon: 'lucide-message-circle' },
-    { id: 'review-tasks', label: 'Tasks',    icon: 'lucide-check-square-2' },
-    { id: 'dues',         label: 'Finance',  icon: 'lucide-wallet' },
-    { id: 'projects',     label: 'Projects', icon: 'lucide-folder-kanban' },
-    { id: 'habits',       label: 'Habits',   icon: 'lucide-flame' },
-    { id: 'journal',      label: 'Journal',  icon: 'lucide-book-open' },
-];
 
 export class SearchView extends ItemView {
     plugin: DiwaPlugin;
@@ -112,7 +86,7 @@ export class SearchView extends ItemView {
 
         // Scope bar
         this.scopeBar = topBarInner.createEl('div', { cls: 'diwa-sv-scope-bar', attr: { role: 'tablist' } });
-        for (const scope of SCOPES) {
+        for (const scope of SEARCH_SCOPES) {
             const btn = this.scopeBar.createEl('button', {
                 cls: `diwa-sv-scope-btn${scope.id === this.activeScope ? ' is-active' : ''}`,
                 attr: { 'data-scope': scope.id, role: 'tab' }
@@ -315,7 +289,7 @@ export class SearchView extends ItemView {
             const section = this.resultsEl.createEl('div', { cls: 'diwa-sv-section', attr: { 'data-type': type } });
             const secHdr = section.createEl('div', { cls: 'diwa-sv-section-header' });
             const secIcon = secHdr.createEl('span', { cls: 'diwa-sv-section-icon' });
-            setIcon(secIcon, TYPE_ICONS[type] ?? 'lucide-file');
+            setIcon(secIcon, SEARCH_TYPE_ICONS[type] ?? 'lucide-file');
             secHdr.createEl('span', {
                 text: (type.charAt(0).toUpperCase() + type.slice(1)) + 's',
                 cls: 'diwa-sv-section-label',
@@ -329,7 +303,7 @@ export class SearchView extends ItemView {
                 });
 
                 const rowIcon = row.createEl('div', { cls: `diwa-sv-result-icon diwa-sv-result-icon--${item.type}` });
-                setIcon(rowIcon, TYPE_ICONS[item.type] ?? 'lucide-file');
+                setIcon(rowIcon, SEARCH_TYPE_ICONS[item.type] ?? 'lucide-file');
 
                 const body = row.createEl('div', { cls: 'diwa-sv-result-body' });
 
@@ -392,7 +366,7 @@ export class SearchView extends ItemView {
         initial.createEl('span', { text: 'Quick Jump', cls: 'diwa-sv-quickjump-label' });
 
         const grid = initial.createEl('div', { cls: 'diwa-sv-quickjump-grid' });
-        for (const tab of QUICKJUMP_TABS) {
+        for (const tab of SEARCH_QUICKJUMP_TABS) {
             const btn = grid.createEl('button', { cls: 'diwa-sv-quickjump-btn', attr: { 'data-tab': tab.id } });
             const ic = btn.createEl('span', { cls: 'diwa-sv-quickjump-icon' });
             setIcon(ic, tab.icon);
