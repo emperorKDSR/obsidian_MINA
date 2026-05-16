@@ -4087,14 +4087,19 @@ body.is-mobile .diwa-syn-float-bar{position:fixed}.modal.diwa-zen-capture .modal
   -webkit-user-select: text;
   cursor: text;
 }
-.diwa-dh-feed-ctx { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
-.diwa-dh-feed-ctx-chip {
-  font-size: 0.67em;
-  font-weight: 600;
-  color: var(--diwa-dh-accent);
-  opacity: 0.6;
-  letter-spacing: 0.02em;
+/* Normalize Obsidian markdown renderer output inside feed items */
+.diwa-dh-feed-text > .markdown-rendered,
+.diwa-dh-feed-text .markdown-preview-view { font-size: inherit; padding: 0; }
+.diwa-dh-feed-text p { margin: 0 0 2px 0; }
+.diwa-dh-feed-text h1, .diwa-dh-feed-text h2, .diwa-dh-feed-text h3 {
+  font-size: 0.95em; font-weight: 700; margin: 2px 0;
 }
+.diwa-dh-feed-text ul, .diwa-dh-feed-text ol { margin: 2px 0 2px 16px; padding: 0; }
+.diwa-dh-feed-text li { margin: 1px 0; }
+.diwa-dh-feed-text .task-list-item { display: flex; align-items: baseline; gap: 4px; }
+.diwa-dh-feed-text .task-list-item-checkbox { width: 13px; height: 13px; flex-shrink: 0; cursor: default; }
+.diwa-dh-feed-text code { font-size: 0.82em; }
+.diwa-dh-feed-text blockquote { margin: 2px 0 2px 8px; padding-left: 8px; border-left: 2px solid var(--diwa-dh-accent); opacity: 0.8; }
 
 /* ── Context Tab Bar ───────────────────────────────────────────── */
 .diwa-dh-ctx-tabbar {

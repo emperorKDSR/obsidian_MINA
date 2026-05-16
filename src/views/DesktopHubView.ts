@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, Platform, moment, setIcon, Notice, ViewStateResult } from 'obsidian';
+import { ItemView, WorkspaceLeaf, Platform, moment, setIcon, Notice, ViewStateResult, MarkdownRenderer } from 'obsidian';
 import type DiwaPlugin from '../main';
 import {
     VIEW_TYPE_DESKTOP_HUB,
@@ -60,7 +60,7 @@ export class DesktopHubView extends ItemView {
         this._closed = true;
     }
 
-    renderView() {
+    async renderView() {
         if (this._capturePending > 0 || this._taskPending > 0) return;
 
         const root = this.containerEl.children[1] as HTMLElement;
@@ -82,7 +82,7 @@ export class DesktopHubView extends ItemView {
 
         const cols = wrap.createEl('div', { cls: 'diwa-dh-cols' });
         this.renderSidebar(cols);
-        this.renderCenter(cols);
+        await this.renderCenter(cols);
         this.renderRight(cols);
     }
 
@@ -184,13 +184,13 @@ export class DesktopHubView extends ItemView {
     }
 
     // ── CENTER Column ─────────────────────────────────────────────────────────
-    private renderCenter(parent: HTMLElement) {
+    private async renderCenter(parent: HTMLElement) {
         const center = parent.createEl('div', { cls: 'diwa-dh-center' });
         const activeCtx = this._activeContextTab;
         this.renderCapture(center, activeCtx !== 'all' ? [activeCtx] : []);
         const inner = center.createEl('div', { cls: 'diwa-dh-center-inner' });
         this.renderContextTabs(inner);
-        this.renderFeed(inner);
+        await this.renderFeed(inner);
     }
 
     private renderCapture(parent: HTMLElement, initialContexts: string[] = []) {
@@ -313,7 +313,7 @@ export class DesktopHubView extends ItemView {
         });
     }
 
-    private renderFeed(parent: HTMLElement) {
+    private async renderFeed(parent: HTMLElement) {
         const feed = parent.createEl('div', { cls: 'diwa-dh-feed' });
         const ctx = this._activeContextTab;
         const today = moment().format('YYYY-MM-DD');
@@ -362,13 +362,8 @@ export class DesktopHubView extends ItemView {
             const content = item.createEl('div', { cls: 'diwa-dh-feed-content' });
             const ts = t.created ? moment(t.created, 'YYYY-MM-DD HH:mm:ss').format('HH:mm') : '';
             content.createEl('span', { text: ts, cls: 'diwa-dh-feed-time' });
-            content.createEl('p', { text: t.body || t.title || '', cls: 'diwa-dh-feed-text' });
-            if (t.context && t.context.length > 0) {
-                const ctxWrap = content.createEl('div', { cls: 'diwa-dh-feed-ctx' });
-                for (const c of t.context) {
-                    ctxWrap.createEl('span', { text: `#${c}`, cls: 'diwa-dh-feed-ctx-chip' });
-                }
-            }
+            const mdEl = content.createEl('div', { cls: 'diwa-dh-feed-text' });
+            await MarkdownRenderer.render(this.app, t.body || t.title || '', mdEl, t.filePath, this);
             const editBtn = item.createEl('button', { cls: 'diwa-dh-feed-edit-btn', attr: { title: 'Edit thought', 'aria-label': 'Edit thought' } });
             setIcon(editBtn, 'lucide-pencil');
             editBtn.addEventListener('click', (e) => {
