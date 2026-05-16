@@ -2,10 +2,7 @@ import { moment, Platform, Notice, TFile, setIcon } from 'obsidian';
 import type { DiwaView } from '../view';
 import { BaseTab } from "./BaseTab";
 import { PF_ICON_ID, SYNTHESIS_ICON_ID, AI_CHAT_ICON_ID, REVIEW_ICON_ID, SETTINGS_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID, COMPASS_ICON_ID, FOCUS_ICON_ID, MEMENTO_ICON_ID } from '../constants';
-import { parseNaturalDate, isTablet, attachInlineTriggers, attachMediaPasteHandler } from '../utils';
-import { FileSuggestModal } from '../modals/FileSuggestModal';
-import { ContextSuggestModal } from '../modals/ContextSuggestModal';
-import { PersonSuggestModal } from '../modals/PersonSuggestModal';
+import { parseNaturalDate, isTablet, attachInlineTriggers, attachMediaPasteHandler, createThoughtCaptureWidget } from '../utils';
 import { HabitConfigModal } from '../modals/HabitConfigModal';
 import { HelpModal } from '../modals/HelpModal';
 import { SearchModal } from '../modals/SearchModal';
@@ -132,75 +129,25 @@ export class CommandCenterTab extends BaseTab {
             new ZenCaptureModal(this.app, this.plugin).open();
         });
 
-        // Context chips row (populated when user types #tag)
-        const thoughtChipRow = thoughtBox.createEl('div', { cls: 'diwa-capture-chip-row' });
-        let thoughtContexts: string[] = [];
-
-        const addThoughtChip = (tag: string) => {
-            if (thoughtContexts.includes(tag)) return;
-            thoughtContexts.push(tag);
-            const chip = thoughtChipRow.createEl('span', { cls: 'diwa-capture-chip', text: `#${tag}` });
-            chip.addEventListener('click', () => {
-                thoughtContexts = thoughtContexts.filter(c => c !== tag);
-                chip.remove();
-            });
-        };
-
-        const thoughtArea = thoughtBox.createEl('textarea', {
-            cls: 'diwa-capture-box-input diwa-capture-box-textarea',
-            attr: { placeholder: "What's on your mind… (Enter to save, Shift+Enter for new line)", rows: '1' }
-        }) as HTMLTextAreaElement;
-
-        const syncThoughtHeight = () => {
-            thoughtArea.style.height = 'auto';
-            thoughtArea.style.overflowY = 'hidden';
-            thoughtArea.style.height = `${thoughtArea.scrollHeight}px`;
-        };
-
-        thoughtArea.addEventListener('focus', () => { this.view._capturePending = 1; });
-        thoughtArea.addEventListener('input', () => {
-            syncThoughtHeight();
-            this.view._capturePending = thoughtArea.value.trim().length > 0 ? 1 : 0;
-        });
-
-        // @word<space> → date link in text (no due date for thoughts), [[ → file picker, # → context chip
-        attachInlineTriggers(
-            this.app,
-            thoughtArea,
-            () => {},               // thoughts have no due date — no-op
-            (tag) => addThoughtChip(tag),
-            () => thoughtContexts,
-            this.settings.peopleFolder,
-        );
-        attachMediaPasteHandler(this.app, thoughtArea, () => this.settings.attachmentsFolder ?? '000 Bin/DIWA Attachments');
-
-        const saveThought = async () => {
-            const raw = thoughtArea.value.trim();
-            if (!raw) return;
-            const ctxSnapshot = [...thoughtContexts];
-            this.view._capturePending = 0;
-            thoughtArea.value = '';
-            thoughtArea.style.height = '';
-            thoughtArea.style.overflowY = '';
-            thoughtContexts = [];
-            thoughtChipRow.empty();
-            try {
-                await this.vault.createThoughtFile(raw, ctxSnapshot);
-                new Notice('✦ Thought saved', 1200);
-            } catch {
-                new Notice('Error saving thought — please try again', 2500);
-            }
-        };
-
-        thoughtArea.addEventListener('keydown', (e: KeyboardEvent) => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveThought(); }
-            if (e.key === 'Escape') {
-                thoughtArea.value = '';
-                thoughtContexts = [];
-                thoughtChipRow.empty();
-                this.view._capturePending = 0;
-                thoughtArea.blur();
-            }
+        // Context chips row + textarea (populated when user types #tag)
+        createThoughtCaptureWidget(thoughtBox, {
+            app: this.app,
+            containerCls: 'diwa-capture',
+            textareaCls: 'diwa-capture-box-input diwa-capture-box-textarea',
+            chipCls: 'diwa-capture-chip',
+            placeholder: "What's on your mind… (Enter to save, Shift+Enter for new line)",
+            getContexts: () => [],
+            peopleFolder: this.settings.peopleFolder,
+            attachmentsFolder: () => this.settings.attachmentsFolder ?? '000 Bin/DIWA Attachments',
+            onSave: async (raw, ctxs) => {
+                try {
+                    await this.vault.createThoughtFile(raw, ctxs);
+                    new Notice('✦ Thought saved', 1200);
+                } catch {
+                    new Notice('Error saving thought — please try again', 2500);
+                }
+            },
+            setPending: (v) => { this.view._capturePending = v; },
         });
 
         // ── Task Box ─────────────────────────────────────────────────────────
@@ -209,6 +156,7 @@ export class CommandCenterTab extends BaseTab {
         taskLabel.createEl('span', { text: '✓', cls: 'diwa-capture-box-icon diwa-capture-box-icon--task' });
         taskLabel.createEl('span', { text: 'TASK', cls: 'diwa-capture-box-title' });
 
+        let taskDueDate: string | undefined;
         const taskInput = taskBox.createEl('input', {
             cls: 'diwa-capture-box-input',
             attr: { placeholder: 'Add a task… use @tomorrow to set due date', type: 'text' }
@@ -216,74 +164,32 @@ export class CommandCenterTab extends BaseTab {
         attachMediaPasteHandler(this.app, taskInput, () => this.settings.attachmentsFolder ?? '000 Bin/DIWA Attachments');
 
         taskInput.addEventListener('focus', () => { this.view._capturePending = 1; });
+        attachInlineTriggers(
+            this.app,
+            taskInput,
+            (d) => { taskDueDate = d; },
+            (tag) => {
+                const cur = taskInput.value;
+                const pos = taskInput.selectionStart ?? cur.length;
+                const insert = `#${tag} `;
+                taskInput.value = cur.substring(0, pos) + insert + cur.substring(pos);
+                taskInput.setSelectionRange(pos + insert.length, pos + insert.length);
+                taskInput.focus();
+            },
+            () => this.settings.contexts || [],
+            this.settings.peopleFolder,
+        );
         taskInput.addEventListener('input', () => {
             this.view._capturePending = taskInput.value.trim().length > 0 ? 1 : 0;
-
-            // [[ → wiki-link file picker
-            const val = taskInput.value;
-            const pos = taskInput.selectionStart ?? val.length;
-            const before = val.substring(0, pos);
-            if (before.endsWith('[[')) {
-                taskInput.value = val.substring(0, pos - 2) + val.substring(pos);
-                const insertAt = pos - 2;
-                taskInput.setSelectionRange(insertAt, insertAt);
-                new FileSuggestModal(this.app, (file) => {
-                    const link = `[[${file.basename}]]`;
-                    const cur = taskInput.value;
-                    const curPos = taskInput.selectionStart ?? insertAt;
-                    taskInput.value = cur.substring(0, curPos) + link + cur.substring(curPos);
-                    taskInput.setSelectionRange(curPos + link.length, curPos + link.length);
-                    taskInput.focus();
-                }).open();
-                return;
-            }
-            // # → context suggest
-            if (/(^|\s)#$/.test(before)) {
-                const insertAt = pos - 1;
-                taskInput.value = val.substring(0, insertAt) + val.substring(pos);
-                taskInput.setSelectionRange(insertAt, insertAt);
-                new ContextSuggestModal(this.app, [], (tag) => {
-                    const cur = taskInput.value;
-                    const curPos = taskInput.selectionStart ?? insertAt;
-                    const insert = `#${tag} `;
-                    taskInput.value = cur.substring(0, curPos) + insert + cur.substring(curPos);
-                    taskInput.setSelectionRange(curPos + insert.length, curPos + insert.length);
-                    taskInput.focus();
-                }).open();
-                return;
-            }
-            // / at start or after whitespace → person picker (type: people)
-            if (/(^|\s)\/$/.test(before)) {
-                const insertAt = pos - 1;
-                taskInput.value = val.substring(0, insertAt) + val.substring(pos);
-                taskInput.setSelectionRange(insertAt, insertAt);
-                new PersonSuggestModal(this.app, (file) => {
-                    const link = `[[${file.basename}]]`;
-                    const cur = taskInput.value;
-                    const curPos = taskInput.selectionStart ?? insertAt;
-                    taskInput.value = cur.substring(0, curPos) + link + cur.substring(curPos);
-                    taskInput.setSelectionRange(curPos + link.length, curPos + link.length);
-                    taskInput.focus();
-                }, this.settings.peopleFolder).open();
-            }
         });
 
         const saveTask = async () => {
             const raw = taskInput.value.trim();
             if (!raw) return;
-
-            // Strip @date tokens from title and parse the due date
-            let dueDate: string | undefined;
-            let title = raw;
-            const atMatch = raw.match(/@\S+/g);
-            if (atMatch) {
-                for (const token of atMatch) {
-                    const parsed = parseNaturalDate(token.slice(1));
-                    if (parsed) { dueDate = parsed; title = title.replace(token, '').trim(); break; }
-                }
-            }
-
+            const title = raw.replace(/\[\[\d{4}-\d{2}-\d{2}\]\]\s*/g, '').trim();
+            const dueDate = taskDueDate;
             this.view._capturePending = 0;
+            taskDueDate = undefined;
             taskInput.value = '';
             try {
                 await this.vault.createTaskFile(title, [], dueDate);

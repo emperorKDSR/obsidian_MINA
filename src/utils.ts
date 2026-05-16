@@ -59,7 +59,7 @@ export function parseNaturalDate(text: string): string | null {
  */
 export function attachInlineTriggers(
     app: App,
-    textArea: HTMLTextAreaElement,
+    textArea: HTMLTextAreaElement | HTMLInputElement,
     setDueDate: (d: string) => void,
     onContext?: (tag: string) => void,
     getContexts?: () => string[],
@@ -249,4 +249,90 @@ export function attachMediaPasteHandler(
     });
 }
 
+export interface ThoughtCaptureOptions {
+    app: App;
+    containerCls: string;
+    textareaCls: string;
+    chipCls: string;
+    placeholder: string;
+    getContexts?: () => string[];
+    peopleFolder?: string;
+    attachmentsFolder?: () => string;
+    onSave: (text: string, contexts: string[]) => Promise<void>;
+    setPending: (v: number) => void;
+}
+
+export function createThoughtCaptureWidget(parent: HTMLElement, options: ThoughtCaptureOptions): void {
+    const {
+        app, containerCls, textareaCls, chipCls, placeholder,
+        getContexts, peopleFolder, attachmentsFolder, onSave, setPending
+    } = options;
+
+    const chipRow = parent.createEl('div', { cls: `${containerCls}-chip-row` });
+    let contexts: string[] = [];
+
+    const addChip = (tag: string) => {
+        if (contexts.includes(tag)) return;
+        contexts.push(tag);
+        const chip = chipRow.createEl('span', { cls: chipCls, text: `#${tag}` });
+        chip.addEventListener('click', () => {
+            contexts = contexts.filter(c => c !== tag);
+            chip.remove();
+        });
+    };
+
+    const textarea = parent.createEl('textarea', {
+        cls: textareaCls,
+        attr: { placeholder, rows: '1' }
+    }) as HTMLTextAreaElement;
+
+    const syncHeight = () => {
+        textarea.style.height = 'auto';
+        textarea.style.overflowY = 'hidden';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+    };
+
+    textarea.addEventListener('focus', () => { setPending(1); syncHeight(); });
+    textarea.addEventListener('input', () => {
+        syncHeight();
+        setPending(textarea.value.trim().length > 0 ? 1 : 0);
+    });
+    textarea.addEventListener('keyup', syncHeight);
+
+    attachInlineTriggers(
+        app,
+        textarea,
+        () => {},
+        addChip,
+        getContexts,
+        peopleFolder,
+    );
+    if (attachmentsFolder) {
+        attachMediaPasteHandler(app, textarea, attachmentsFolder);
+    }
+
+    const save = async () => {
+        const raw = textarea.value.trim();
+        if (!raw) return;
+        const ctxSnapshot = [...contexts];
+        setPending(0);
+        textarea.value = '';
+        textarea.style.height = '';
+        textarea.style.overflowY = '';
+        contexts = [];
+        chipRow.empty();
+        await onSave(raw, ctxSnapshot);
+    };
+
+    textarea.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save(); }
+        if (e.key === 'Escape') {
+            textarea.value = '';
+            contexts = [];
+            chipRow.empty();
+            setPending(0);
+            textarea.blur();
+        }
+    });
+}
 

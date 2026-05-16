@@ -1,5 +1,36 @@
 import { App, TFile, moment, Notice } from 'obsidian';
-import type { DiwaSettings, ThoughtEntry, WeeklyReportContext } from '../types';
+import type { DiwaSettings, ThoughtEntry, WeeklyReportContext, ChatMessage } from '../types';
+
+interface GeminiPart {
+    text?: string;
+    inline_data?: { mime_type: string; data: string };
+    thought?: boolean;
+}
+
+interface GeminiContent {
+    role: 'user' | 'model';
+    parts: GeminiPart[];
+}
+
+interface GeminiRequestBody {
+    contents: GeminiContent[];
+    system_instruction: { parts: [{ text: string }] };
+    generationConfig: {
+        temperature: number;
+        maxOutputTokens: number;
+        topP: number;
+        topK: number;
+    };
+    tools?: Array<{ googleSearch: Record<string, never> }>;
+}
+
+interface GeminiResponse {
+    candidates?: Array<{
+        content?: { parts?: GeminiPart[] };
+        finishReason?: string;
+    }>;
+    promptFeedback?: { blockReason?: string };
+}
 
 // ai-04: Curated allowlist of stable/supported Gemini models
 const STABLE_GEMINI_MODELS = new Set([
@@ -65,7 +96,7 @@ export class AiService {
         userMessage: string, 
         groundedFiles: TFile[] = [], 
         webSearch: boolean = false, 
-        customHistory?: any[],
+        customHistory?: ChatMessage[],
         thoughtIndex?: Map<string, ThoughtEntry>
     ): Promise<string> {
         const s = this.settings;
@@ -89,7 +120,7 @@ export class AiService {
             sources.push({ id: sourceCounter++, title: t.title, path: t.filePath, type: 'thought', content: t.body }); 
         });
 
-        const imageParts: any[] = [];
+        const imageParts: GeminiPart[] = [];
         for (const file of groundedFiles) {
             const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'heic', 'heif'].includes(file.extension.toLowerCase());
             if (isImage) {
@@ -123,14 +154,14 @@ FORMAT: Use Markdown. Be concise. Use bullet points or headers only when they ge
             });
         }
 
-        const contents = (customHistory || []).map((msg: any, idx: number) => {
+        const contents: GeminiContent[] = (customHistory || []).map((msg: ChatMessage, idx: number) => {
             const isLastMessage = idx === (customHistory?.length || 0) - 1;
-            const parts: any[] = [{ text: msg.text }];
+            const parts: GeminiPart[] = [{ text: msg.text }];
             if (isLastMessage && msg.role === 'user' && imageParts.length > 0) parts.push(...imageParts);
-            return { role: msg.role === 'user' ? 'user' : 'model', parts: parts };
+            return { role: msg.role, parts } as GeminiContent;
         });
         
-        const body: any = {
+        const body: GeminiRequestBody = {
             contents: contents,
             system_instruction: { parts: [{ text: systemPrompt }] },
             generationConfig: { 
@@ -159,9 +190,9 @@ FORMAT: Use Markdown. Be concise. Use bullet points or headers only when they ge
             if (resp.status === 404) throw new Error(`Model not found (HTTP 404). "${modelId}" is invalid or unavailable in your region. Open AI Config and choose a different model.`);
             if (!resp.ok) throw new Error(`AI Error (HTTP ${resp.status}). Model: ${modelId}.`);
 
-            const data = await resp.json();
+            const data = await resp.json() as GeminiResponse;
             const candidate = data?.candidates?.[0];
-            let reply = (candidate?.content?.parts ?? []).map((p: any) => p.text ?? '').join('').trim() || '(no response)';
+            let reply = (candidate?.content?.parts ?? []).map((p: GeminiPart) => p.text ?? '').join('').trim() || '(no response)';
 
             // ai-block-1: Fixed citation regex — properly escapes [1], [2] brackets
             sources.forEach(src => {
@@ -172,8 +203,9 @@ FORMAT: Use Markdown. Be concise. Use bullet points or headers only when they ge
             });
 
             return reply;
-        } catch (e: any) {
-            const safeMsg = (e?.message || '').replace(/x-goog-api-key=[^\s&]+/g, 'x-goog-api-key=[REDACTED]');
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : String(e);
+            const safeMsg = msg.replace(/x-goog-api-key=[^\s&]+/g, 'x-goog-api-key=[REDACTED]');
             console.error("MINA AI Fetch Error:", safeMsg);
             throw e;
         }
@@ -286,7 +318,7 @@ Rules: No preamble. No sign-off. Under 300 words total. Be direct, specific, and
             if (resp.status === 404) throw new Error(`Model not found (HTTP 404). "${modelId}" is invalid or unavailable. Open AI Config and choose a different model.`);
             if (!resp.ok) throw new Error(`AI Error (HTTP ${resp.status}). Model: ${modelId}.`);
 
-            const data = await resp.json();
+            const data = await resp.json() as GeminiResponse;
             const blockReason = data?.promptFeedback?.blockReason;
             if (blockReason) throw new Error(`Request blocked by Gemini safety filters (${blockReason}).`);
             const candidate = data?.candidates?.[0];
@@ -295,16 +327,17 @@ Rules: No preamble. No sign-off. Under 300 words total. Be direct, specific, and
                 throw new Error(`Generation ended unexpectedly (finishReason: ${finishReason}). Try again or switch models.`);
             }
             // Filter out thought-token parts (gemini-2.5 thinking models)
-            const parts: any[] = candidate?.content?.parts ?? [];
-            const reply = parts.filter((p: any) => !p.thought).map((p: any) => p.text ?? '').join('').trim();
+            const parts: GeminiPart[] = (candidate?.content?.parts ?? []) as GeminiPart[];
+            const reply = parts.filter(p => !p.thought).map(p => p.text ?? '').join('').trim();
             if (!reply) {
                 console.warn('[DIWA] generateWeeklyReport: empty reply. Raw response:', JSON.stringify(data));
                 throw new Error('Gemini returned an empty response. Try again or check your quota in Google AI Studio.');
             }
             return reply;
-        } catch (e: any) {
-            if (e?.name === 'AbortError') throw new Error('Weekly report generation was cancelled.');
-            const safeMsg = (e?.message || '').replace(/x-goog-api-key=[^\s&]+/g, 'x-goog-api-key=[REDACTED]');
+        } catch (e: unknown) {
+            if (e instanceof Error && e.name === 'AbortError') throw new Error('Weekly report generation was cancelled.');
+            const msg = e instanceof Error ? e.message : String(e);
+            const safeMsg = msg.replace(/x-goog-api-key=[^\s&]+/g, 'x-goog-api-key=[REDACTED]');
             console.error('[DIWA AiService] generateWeeklyReport:', safeMsg);
             throw e;
         }
@@ -384,21 +417,22 @@ Rules:
             if (resp.status === 404) throw new Error(`Model not found (HTTP 404). "${modelId}" is invalid.`);
             if (!resp.ok) throw new Error(`AI Error (HTTP ${resp.status}).`);
 
-            const data = await resp.json();
+            const data = await resp.json() as GeminiResponse;
             const blockReason = data?.promptFeedback?.blockReason;
             if (blockReason) throw new Error(`Request blocked by safety filters (${blockReason}).`);
             const candidate = data?.candidates?.[0];
-            const parts: any[] = candidate?.content?.parts ?? [];
-            const reply = parts.filter((p: any) => !p.thought).map((p: any) => p.text ?? '').join('').trim();
+            const parts: GeminiPart[] = (candidate?.content?.parts ?? []) as GeminiPart[];
+            const reply = parts.filter(p => !p.thought).map(p => p.text ?? '').join('').trim();
             if (!reply) throw new Error('Gemini returned an empty response.');
 
             // Parse JSON — strip markdown fences if present
             const cleaned = reply.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
             const parsed = JSON.parse(cleaned);
             return parsed;
-        } catch (e: any) {
-            if (e?.name === 'AbortError') throw new Error('Week plan generation was cancelled.');
-            const safeMsg = (e?.message || '').replace(/x-goog-api-key=[^\s&]+/g, 'x-goog-api-key=[REDACTED]');
+        } catch (e: unknown) {
+            if (e instanceof Error && e.name === 'AbortError') throw new Error('Week plan generation was cancelled.');
+            const msg = e instanceof Error ? e.message : String(e);
+            const safeMsg = msg.replace(/x-goog-api-key=[^\s&]+/g, 'x-goog-api-key=[REDACTED]');
             console.error('[DIWA AiService] generateWeekPlan:', safeMsg);
             throw e;
         }

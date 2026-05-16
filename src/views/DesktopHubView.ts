@@ -6,7 +6,7 @@ import {
     SETTINGS_ICON_ID, TIMELINE_ICON_ID, JOURNAL_ICON_ID, COMPASS_ICON_ID,
     FOCUS_ICON_ID, MEMENTO_ICON_ID,
 } from '../constants';
-import { attachInlineTriggers, attachMediaPasteHandler } from '../utils';
+import { attachInlineTriggers, attachMediaPasteHandler, createThoughtCaptureWidget } from '../utils';
 import type { ThoughtEntry, TaskEntry } from '../types';
 
 export class DesktopHubView extends ItemView {
@@ -187,90 +187,25 @@ export class DesktopHubView extends ItemView {
 
     private renderCapture(parent: HTMLElement) {
         const section = parent.createEl('div', { cls: 'diwa-dh-capture-section' });
-        section.addEventListener('click', (e) => {
-            if (e.target !== textarea) textarea.focus();
+        createThoughtCaptureWidget(section, {
+            app: this.app,
+            containerCls: 'diwa-dh-capture',
+            textareaCls: 'diwa-dh-capture-textarea',
+            chipCls: 'diwa-dh-chip',
+            placeholder: "What's on your mind…",
+            getContexts: () => (this.plugin.settings.contexts ?? []),
+            peopleFolder: this.plugin.settings.peopleFolder,
+            attachmentsFolder: () => this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA Attachments',
+            onSave: async (raw, ctxs) => {
+                try {
+                    await this.plugin.vault.createThoughtFile(raw, ctxs);
+                    new Notice('✦ Thought saved', 1200);
+                } catch {
+                    new Notice('Error saving thought — please try again', 2500);
+                }
+            },
+            setPending: (v) => { this._capturePending = v; },
         });
-
-        const chipRow = section.createEl('div', { cls: 'diwa-dh-chip-row' });
-        let contexts: string[] = [];
-
-        const addChip = (tag: string) => {
-            if (contexts.includes(tag)) return;
-            contexts.push(tag);
-            const chip = chipRow.createEl('span', { cls: 'diwa-dh-chip', text: `#${tag}` });
-            chip.addEventListener('click', () => {
-                contexts = contexts.filter(c => c !== tag);
-                chip.remove();
-            });
-        };
-
-        const textarea = section.createEl('textarea', {
-            cls: 'diwa-dh-capture-textarea',
-            attr: {
-                placeholder: "What's on your mind…",
-                rows: '2'
-            }
-        }) as HTMLTextAreaElement;
-
-        const syncHeight = () => {
-            textarea.style.height = 'auto';
-            textarea.style.overflowY = 'hidden';
-            textarea.style.height = `${textarea.scrollHeight}px`;
-        };
-
-        textarea.addEventListener('focus', () => {
-            this._capturePending = 1;
-            syncHeight();
-        });
-        textarea.addEventListener('input', () => {
-            syncHeight();
-            this._capturePending = textarea.value.trim().length > 0 ? 1 : 0;
-        });
-        textarea.addEventListener('keyup', () => syncHeight());
-
-        attachInlineTriggers(
-            this.app,
-            textarea,
-            () => {},
-            (tag) => addChip(tag),
-            () => (this.plugin.settings.contexts ?? []).filter(c => !contexts.includes(c)),
-            this.plugin.settings.peopleFolder,
-        );
-        attachMediaPasteHandler(
-            this.app,
-            textarea,
-            () => this.plugin.settings.attachmentsFolder ?? '000 Bin/DIWA Attachments'
-        );
-
-        const saveThought = async () => {
-            const raw = textarea.value.trim();
-            if (!raw) return;
-            const ctxSnapshot = [...contexts];
-            this._capturePending = 0;
-            textarea.value = '';
-            textarea.style.height = '';
-            textarea.style.overflowY = '';
-            contexts = [];
-            chipRow.empty();
-            try {
-                await this.plugin.vault.createThoughtFile(raw, ctxSnapshot);
-                new Notice('✦ Thought saved', 1200);
-            } catch {
-                new Notice('Error saving thought — please try again', 2500);
-            }
-        };
-
-        textarea.addEventListener('keydown', (e: KeyboardEvent) => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveThought(); }
-            if (e.key === 'Escape') {
-                textarea.value = '';
-                contexts = [];
-                chipRow.empty();
-                this._capturePending = 0;
-                textarea.blur();
-            }
-        });
-
     }
 
     private renderTodayFeed(parent: HTMLElement) {

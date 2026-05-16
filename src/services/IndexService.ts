@@ -24,9 +24,20 @@ export class IndexService {
     // ob-perf-03: Full DueEntry index — DuesTab reads from here instead of scanning vault on every render
     dueIndex: Map<string, DueEntry> = new Map();
     checklistIndex: ChecklistItem[] = [];
-    thoughtChecklistIndex: ThoughtChecklistItem[] = [];
-    // - [x] items from DIWA V2 files modified today
-    thoughtDoneChecklistIndex: ThoughtChecklistItem[] = [];
+    private _thoughtChecklistMap: Map<string, ThoughtChecklistItem[]> = new Map();
+    private _thoughtDoneChecklistMap: Map<string, ThoughtChecklistItem[]> = new Map();
+
+    get thoughtChecklistIndex(): ThoughtChecklistItem[] {
+        const result: ThoughtChecklistItem[] = [];
+        this._thoughtChecklistMap.forEach(items => result.push(...items));
+        return result;
+    }
+
+    get thoughtDoneChecklistIndex(): ThoughtChecklistItem[] {
+        const result: ThoughtChecklistItem[] = [];
+        this._thoughtDoneChecklistMap.forEach(items => result.push(...items));
+        return result;
+    }
     habitStatusIndex: string[] = [];
     projectIndex: Map<string, ProjectEntry> = new Map();
     
@@ -173,8 +184,8 @@ export class IndexService {
 
     async buildThoughtIndex(): Promise<void> {
         this.thoughtIndex.clear();
-        this.thoughtChecklistIndex = [];
-        this.thoughtDoneChecklistIndex = [];
+        this._thoughtChecklistMap.clear();
+        this._thoughtDoneChecklistMap.clear();
         const files = this.app.vault.getMarkdownFiles().filter(f => this.isThoughtFile(f.path));
         for (const f of files) await this.indexThoughtFile(f);
     }
@@ -208,21 +219,21 @@ export class IndexService {
             lastThreadUpdate: file.stat.mtime
         });
 
-        // Collect open checklist items from this thought file (clear stale entries first)
-        this.thoughtChecklistIndex = this.thoughtChecklistIndex.filter(item => item.filePath !== file.path);
-        this.thoughtDoneChecklistIndex = this.thoughtDoneChecklistIndex.filter(item => item.filePath !== file.path);
+        // Collect open checklist items from this thought file (replace stale entries via Map)
+        const newCheckItems: ThoughtChecklistItem[] = [];
+        const newDoneItems: ThoughtChecklistItem[] = [];
         const lines = body.split('\n');
         const fileModifiedToday = moment(file.stat.mtime).isSame(moment(), 'day');
         lines.forEach((line, lineIndex) => {
             if (line.includes('- [ ]')) {
-                this.thoughtChecklistIndex.push({
+                newCheckItems.push({
                     filePath: file.path,
                     text: line.replace(/^[\s>]*- \[ \] /, '').trim(),
                     line,
                     lineIndex
                 });
             } else if (fileModifiedToday && line.includes('- [x]')) {
-                this.thoughtDoneChecklistIndex.push({
+                newDoneItems.push({
                     filePath: file.path,
                     text: line.replace(/^[\s>]*- \[x\] /i, '').trim(),
                     line,
@@ -230,6 +241,8 @@ export class IndexService {
                 });
             }
         });
+        this._thoughtChecklistMap.set(file.path, newCheckItems);
+        this._thoughtDoneChecklistMap.set(file.path, newDoneItems);
     }
 
     // arch-02: skipRebuild param prevents O(n²) calls during bulk index build
