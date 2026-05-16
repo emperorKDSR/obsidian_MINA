@@ -17,6 +17,14 @@ export interface ThoughtChecklistItem {
 export class IndexService {
     app: App;
     settings: DiwaSettings;
+
+    /** Normalize a raw frontmatter context value to a clean string[].
+     *  Handles: string scalar, string[], missing/null, and '#'-prefixed values. */
+    static normalizeContext(raw: unknown): string[] {
+        if (!raw) return [];
+        const arr = Array.isArray(raw) ? raw : [raw];
+        return arr.map(v => String(v).replace(/^#+/, '').trim()).filter(Boolean);
+    }
     
     // Memory Indices
     thoughtIndex: Map<string, ThoughtEntry> = new Map();
@@ -211,7 +219,7 @@ export class IndexService {
             day: String(fm.day || '').replace(/^\[\[|\]\]$/g, ''),
             created: fm.created || '',
             modified: fm.modified || '',
-            context: fm.context || fm.contexts || [],
+            context: IndexService.normalizeContext(fm.context ?? fm.contexts),
             synthesized: fm.synthesized || false,
             project: fm.project || null,
             allDates: fm.allDates || [],
@@ -267,7 +275,7 @@ export class IndexService {
             modified: fm.modified || '',
             lastUpdate: file.stat.mtime,
             day: String(fm.day || '').replace(/^\[\[|\]\]$/g, ''),
-            context: fm.context || fm.contexts || [],
+            context: IndexService.normalizeContext(fm.context ?? fm.contexts),
             children: [],
             project: fm.project || undefined,
             priority: fm.priority || undefined,

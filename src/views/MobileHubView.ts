@@ -239,7 +239,7 @@ export class MobileHubView extends ItemView {
         if (ctx === 'all') {
             thoughts = thoughts.filter(t => t.day === today);
         } else {
-            thoughts = thoughts.filter(t => Array.isArray(t.context) && t.context.includes(ctx));
+            thoughts = thoughts.filter(t => t.context.includes(ctx));
             if (this._feedScope === 'today') thoughts = thoughts.filter(t => t.day === today);
         }
         thoughts.sort((a, b) => (b.created || '').localeCompare(a.created || ''));
