@@ -232,7 +232,7 @@ export class DesktopHubView extends ItemView {
         const tabs = [...displayContexts, 'all'];
 
         tabs.forEach((ctx, idx) => {
-            const label = ctx === 'all' ? 'All' : `#${ctx}`;
+            const label = ctx === 'all' ? 'All' : ctx;
             const isActive = this._activeContextTab === ctx;
             const isDraggable = ctx !== 'all';
             const pill = bar.createEl('button', {

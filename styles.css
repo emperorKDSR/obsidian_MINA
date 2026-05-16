@@ -4123,6 +4123,7 @@ body.is-mobile .diwa-syn-float-bar{position:fixed}.modal.diwa-zen-capture .modal
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: center;
+  text-transform: uppercase;
   transition: background var(--diwa-dh-transition), color var(--diwa-dh-transition), border-color var(--diwa-dh-transition), opacity var(--diwa-dh-transition);
 }
 .diwa-dh-ctx-tab:hover {
