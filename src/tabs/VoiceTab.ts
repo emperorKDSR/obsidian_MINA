@@ -610,6 +610,12 @@ export class VoiceTab extends BaseTab {
             try { this.mediaRecorder.stop(); } catch { /* already stopped */ }
         }
         this.mediaRecorder = null;
+        this.audioChunks = [];
+        // Close AudioContext
+        if (this.audioCtx) {
+            this.audioCtx.close();
+            this.audioCtx = null;
+        }
         this.view.isRecording = false;
     }
 
