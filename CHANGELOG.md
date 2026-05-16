@@ -1,3 +1,18 @@
+## [2.3.1] — Desktop Hub Context Tabs
+
+### Added
+- **Context Tab Bar** — Desktop Hub center pane now shows a horizontal scrollable pill tab bar. Each pill represents a context from `settings.contexts` (alphabetical). "All" tab is pinned last and shows today's thoughts (existing behavior).
+- **Scope Toggle** — Context-specific tabs show a **Today / All Time** toggle in the feed header, allowing per-context scope filtering without affecting other tabs.
+- **Capture Pre-fill** — When a context tab is active, the thought capture widget automatically pre-fills that context tag (removable before saving).
+- **State Persistence** — Active tab (`activeContextTab`) and scope (`feedScope`) are persisted in Obsidian view state and restored on re-open.
+
+### Changed
+- `src/utils.ts` — `ThoughtCaptureOptions` gains optional `initialContexts?: string[]`; chips are pre-rendered on mount.
+- `src/views/DesktopHubView.ts` — `renderTodayFeed()` replaced by `renderContextTabs()` + `renderFeed()`.
+- `styles.css` — Added `.diwa-dh-ctx-tabbar`, `.diwa-dh-ctx-tab`, `.diwa-dh-feed-header`, `.diwa-dh-scope-toggle`, `.diwa-dh-scope-pill`.
+
+---
+
 ## [2.3.0] — LOW + ARCH Priority Refactors & Cleanups
 
 ### Fixed / Refactored

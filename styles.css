@@ -4096,6 +4096,79 @@ body.is-mobile .diwa-syn-float-bar{position:fixed}.modal.diwa-zen-capture .modal
   letter-spacing: 0.02em;
 }
 
+/* ── Context Tab Bar ───────────────────────────────────────────── */
+.diwa-dh-ctx-tabbar {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 0 0 10px 0;
+  scrollbar-width: none;
+}
+.diwa-dh-ctx-tabbar::-webkit-scrollbar { display: none; }
+
+.diwa-dh-ctx-tab {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--diwa-dh-border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background var(--diwa-dh-transition), color var(--diwa-dh-transition), border-color var(--diwa-dh-transition);
+}
+.diwa-dh-ctx-tab:hover {
+  background: rgba(124,58,237,0.08);
+  color: var(--text-normal);
+  border-color: var(--diwa-dh-accent);
+}
+.diwa-dh-ctx-tab.is-active {
+  background: var(--diwa-dh-accent);
+  color: #fff;
+  border-color: var(--diwa-dh-accent);
+}
+
+/* ── Feed Header (label + scope toggle) ───────────────────────── */
+.diwa-dh-feed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.diwa-dh-feed-header .diwa-dh-feed-label {
+  flex: 1;
+}
+
+.diwa-dh-scope-toggle {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.diwa-dh-scope-pill {
+  padding: 2px 9px;
+  border-radius: 12px;
+  border: 1px solid var(--diwa-dh-border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.67em;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: background var(--diwa-dh-transition), color var(--diwa-dh-transition), border-color var(--diwa-dh-transition);
+}
+.diwa-dh-scope-pill:hover {
+  color: var(--text-normal);
+  border-color: var(--diwa-dh-accent);
+}
+.diwa-dh-scope-pill.is-active {
+  background: var(--diwa-dh-accent);
+  color: #fff;
+  border-color: var(--diwa-dh-accent);
+}
+
 /* ── RIGHT Panel ───────────────────────────────────────────────── */
 .diwa-dh-right {
   flex-shrink: 0;

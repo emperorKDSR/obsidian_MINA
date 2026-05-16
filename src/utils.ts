@@ -256,6 +256,7 @@ export interface ThoughtCaptureOptions {
     chipCls: string;
     placeholder: string;
     getContexts?: () => string[];
+    initialContexts?: string[];
     peopleFolder?: string;
     attachmentsFolder?: () => string;
     onSave: (text: string, contexts: string[]) => Promise<void>;
@@ -265,11 +266,11 @@ export interface ThoughtCaptureOptions {
 export function createThoughtCaptureWidget(parent: HTMLElement, options: ThoughtCaptureOptions): void {
     const {
         app, containerCls, textareaCls, chipCls, placeholder,
-        getContexts, peopleFolder, attachmentsFolder, onSave, setPending
+        getContexts, initialContexts, peopleFolder, attachmentsFolder, onSave, setPending
     } = options;
 
     const chipRow = parent.createEl('div', { cls: `${containerCls}-chip-row` });
-    let contexts: string[] = [];
+    let contexts: string[] = initialContexts ? [...initialContexts] : [];
 
     const addChip = (tag: string) => {
         if (contexts.includes(tag)) return;
@@ -280,6 +281,11 @@ export function createThoughtCaptureWidget(parent: HTMLElement, options: Thought
             chip.remove();
         });
     };
+
+    // Pre-render chips for any initial contexts
+    if (initialContexts) {
+        for (const ctx of initialContexts) addChip(ctx);
+    }
 
     const textarea = parent.createEl('textarea', {
         cls: textareaCls,

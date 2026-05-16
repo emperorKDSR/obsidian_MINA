@@ -20,6 +20,10 @@ export class DesktopHubView extends ItemView {
     // Task panel filter: 'upcoming' = next 2 days + undated; 'all' = everything
     _taskFilter: 'upcoming' | 'all' = 'upcoming';
 
+    // Center pane context tab + scope
+    _activeContextTab: string = 'all';
+    _feedScope: 'today' | 'all' = 'today';
+
     // Guard against DOM updates after view is closed
     private _closed: boolean = false;
 
@@ -33,11 +37,13 @@ export class DesktopHubView extends ItemView {
     getIcon(): string { return 'layout-dashboard'; }
 
     getState(): Record<string, unknown> {
-        return { isFocusMode: this.isFocusMode };
+        return { isFocusMode: this.isFocusMode, activeContextTab: this._activeContextTab, feedScope: this._feedScope };
     }
 
     async setState(state: any, result: ViewStateResult): Promise<void> {
         if (state?.isFocusMode !== undefined) this.isFocusMode = !!state.isFocusMode;
+        if (state?.activeContextTab !== undefined) this._activeContextTab = String(state.activeContextTab);
+        if (state?.feedScope === 'all' || state?.feedScope === 'today') this._feedScope = state.feedScope;
         await super.setState(state, result);
         this.renderView();
     }
@@ -180,12 +186,14 @@ export class DesktopHubView extends ItemView {
     // ── CENTER Column ─────────────────────────────────────────────────────────
     private renderCenter(parent: HTMLElement) {
         const center = parent.createEl('div', { cls: 'diwa-dh-center' });
-        this.renderCapture(center);
+        const activeCtx = this._activeContextTab;
+        this.renderCapture(center, activeCtx !== 'all' ? [activeCtx] : []);
         const inner = center.createEl('div', { cls: 'diwa-dh-center-inner' });
-        this.renderTodayFeed(inner);
+        this.renderContextTabs(inner);
+        this.renderFeed(inner);
     }
 
-    private renderCapture(parent: HTMLElement) {
+    private renderCapture(parent: HTMLElement, initialContexts: string[] = []) {
         const section = parent.createEl('div', { cls: 'diwa-dh-capture-section' });
         createThoughtCaptureWidget(section, {
             app: this.app,
@@ -205,28 +213,78 @@ export class DesktopHubView extends ItemView {
                 }
             },
             setPending: (v) => { this._capturePending = v; },
+            initialContexts,
         });
     }
 
-    private renderTodayFeed(parent: HTMLElement) {
+    private renderContextTabs(parent: HTMLElement) {
+        const contexts = (this.plugin.settings.contexts ?? []).slice().sort();
+        if (contexts.length === 0) return;
+
+        const bar = parent.createEl('div', { cls: 'diwa-dh-ctx-tabbar' });
+        const tabs = [...contexts, 'all'];
+
+        for (const ctx of tabs) {
+            const label = ctx === 'all' ? 'All' : `#${ctx}`;
+            const isActive = this._activeContextTab === ctx;
+            const pill = bar.createEl('button', {
+                cls: `diwa-dh-ctx-tab${isActive ? ' is-active' : ''}`,
+                text: label,
+                attr: { title: ctx === 'all' ? 'Show all thoughts from today' : `Filter by #${ctx}` }
+            });
+            pill.addEventListener('click', () => {
+                if (this._activeContextTab === ctx) return;
+                this._activeContextTab = ctx;
+                if (ctx === 'all') this._feedScope = 'today';
+                this.renderView();
+            });
+        }
+    }
+
+    private renderFeed(parent: HTMLElement) {
         const feed = parent.createEl('div', { cls: 'diwa-dh-feed' });
-        feed.createEl('div', { text: 'TODAY', cls: 'diwa-dh-feed-label' });
-
+        const ctx = this._activeContextTab;
         const today = moment().format('YYYY-MM-DD');
-        const todayThoughts = Array.from(this.plugin.index.thoughtIndex.values())
-            .filter(t => t.day === today)
-            .sort((a, b) => (b.created || '').localeCompare(a.created || ''));
 
-        if (todayThoughts.length === 0) {
+        // Header row: label + scope toggle (only on context tabs)
+        const header = feed.createEl('div', { cls: 'diwa-dh-feed-header' });
+        const labelText = ctx === 'all' ? 'TODAY' : `#${ctx}`.toUpperCase();
+        header.createEl('div', { text: labelText, cls: 'diwa-dh-feed-label' });
+
+        if (ctx !== 'all') {
+            const toggle = header.createEl('div', { cls: 'diwa-dh-scope-toggle' });
+            const todayPill = toggle.createEl('button', {
+                cls: `diwa-dh-scope-pill${this._feedScope === 'today' ? ' is-active' : ''}`,
+                text: 'Today'
+            });
+            const allPill = toggle.createEl('button', {
+                cls: `diwa-dh-scope-pill${this._feedScope === 'all' ? ' is-active' : ''}`,
+                text: 'All Time'
+            });
+            todayPill.addEventListener('click', () => { if (this._feedScope !== 'today') { this._feedScope = 'today'; this.renderView(); } });
+            allPill.addEventListener('click', () => { if (this._feedScope !== 'all') { this._feedScope = 'all'; this.renderView(); } });
+        }
+
+        // Filter thoughts
+        let thoughts = Array.from(this.plugin.index.thoughtIndex.values());
+        if (ctx === 'all') {
+            thoughts = thoughts.filter(t => t.day === today);
+        } else {
+            thoughts = thoughts.filter(t => Array.isArray(t.context) && t.context.includes(ctx));
+            if (this._feedScope === 'today') thoughts = thoughts.filter(t => t.day === today);
+        }
+        thoughts.sort((a, b) => (b.created || '').localeCompare(a.created || ''));
+
+        if (thoughts.length === 0) {
             feed.createEl('div', {
-                text: 'Nothing captured yet — your mind is clear.',
+                text: ctx === 'all' ? 'Nothing captured yet — your mind is clear.' : `No thoughts tagged #${ctx}${this._feedScope === 'today' ? ' today' : ''}.`,
                 cls: 'diwa-dh-feed-empty'
             });
             return;
         }
 
         const list = feed.createEl('div', { cls: 'diwa-dh-feed-list' });
-        for (const t of todayThoughts) {
+        for (const t of thoughts) {
             const item = list.createEl('div', { cls: 'diwa-dh-feed-item' });
             item.createEl('span', { cls: 'diwa-dh-feed-dot' });
             const content = item.createEl('div', { cls: 'diwa-dh-feed-content' });
@@ -235,8 +293,8 @@ export class DesktopHubView extends ItemView {
             content.createEl('p', { text: t.body || t.title || '', cls: 'diwa-dh-feed-text' });
             if (t.context && t.context.length > 0) {
                 const ctxWrap = content.createEl('div', { cls: 'diwa-dh-feed-ctx' });
-                for (const ctx of t.context) {
-                    ctxWrap.createEl('span', { text: `#${ctx}`, cls: 'diwa-dh-feed-ctx-chip' });
+                for (const c of t.context) {
+                    ctxWrap.createEl('span', { text: `#${c}`, cls: 'diwa-dh-feed-ctx-chip' });
                 }
             }
             const editBtn = item.createEl('button', { cls: 'diwa-dh-feed-edit-btn', attr: { title: 'Edit thought', 'aria-label': 'Edit thought' } });
