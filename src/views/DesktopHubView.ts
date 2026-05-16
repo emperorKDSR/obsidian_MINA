@@ -218,27 +218,75 @@ export class DesktopHubView extends ItemView {
     }
 
     private renderContextTabs(parent: HTMLElement) {
-        const contexts = (this.plugin.settings.contexts ?? []).slice().sort();
-        if (contexts.length === 0) return;
+        const known = this.plugin.settings.contexts ?? [];
+        if (known.length === 0) return;
+
+        // Resolve display order: user-defined order first, new contexts appended
+        const order = (this.plugin.settings.contextOrder ?? []).filter(c => known.includes(c));
+        const unordered = known.filter(c => !order.includes(c));
+        const displayContexts = [...order, ...unordered];
 
         const bar = parent.createEl('div', { cls: 'diwa-dh-ctx-tabbar' });
-        const tabs = [...contexts, 'all'];
+        let dragIndex = -1;
 
-        for (const ctx of tabs) {
+        const tabs = [...displayContexts, 'all'];
+
+        tabs.forEach((ctx, idx) => {
             const label = ctx === 'all' ? 'All' : `#${ctx}`;
             const isActive = this._activeContextTab === ctx;
+            const isDraggable = ctx !== 'all';
             const pill = bar.createEl('button', {
                 cls: `diwa-dh-ctx-tab${isActive ? ' is-active' : ''}`,
                 text: label,
-                attr: { title: ctx === 'all' ? 'Show all thoughts from today' : `Filter by #${ctx}` }
+                attr: {
+                    title: ctx === 'all' ? 'Show all thoughts from today' : `Filter by #${ctx}`,
+                    ...(isDraggable ? { draggable: 'true' } : {})
+                }
             });
+
             pill.addEventListener('click', () => {
                 if (this._activeContextTab === ctx) return;
                 this._activeContextTab = ctx;
                 if (ctx === 'all') this._feedScope = 'today';
                 this.renderView();
             });
-        }
+
+            if (!isDraggable) return;
+
+            pill.addEventListener('dragstart', (e) => {
+                dragIndex = idx;
+                pill.addClass('is-dragging');
+                e.dataTransfer?.setData('text/plain', String(idx));
+            });
+
+            pill.addEventListener('dragend', () => {
+                pill.removeClass('is-dragging');
+                bar.querySelectorAll('.diwa-dh-ctx-tab').forEach(p => p.removeClass('is-drag-over'));
+            });
+
+            pill.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                bar.querySelectorAll('.diwa-dh-ctx-tab').forEach(p => p.removeClass('is-drag-over'));
+                if (dragIndex !== idx) pill.addClass('is-drag-over');
+            });
+
+            pill.addEventListener('dragleave', () => {
+                pill.removeClass('is-drag-over');
+            });
+
+            pill.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                pill.removeClass('is-drag-over');
+                const dropIndex = idx;
+                if (dragIndex < 0 || dragIndex === dropIndex) return;
+                const newOrder = [...displayContexts];
+                const [moved] = newOrder.splice(dragIndex, 1);
+                newOrder.splice(dropIndex, 0, moved);
+                this.plugin.settings.contextOrder = newOrder;
+                await this.plugin.saveSettings();
+                this.renderView();
+            });
+        });
     }
 
     private renderFeed(parent: HTMLElement) {

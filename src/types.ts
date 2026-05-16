@@ -71,6 +71,7 @@ export interface DiwaSettings {
     reminderTasksEnabled: boolean;
     legacyMigrated?: boolean;
     peopleFolder: string;
+    contextOrder: string[];
 }
 
 export interface Milestone {

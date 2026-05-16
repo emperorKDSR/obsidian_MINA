@@ -1,3 +1,18 @@
+## [2.3.2] — Context Pill Drag-and-Drop Reorder
+
+### Added
+- **Drag-and-drop reorder** — Context pills in the Desktop Hub center pane can be reordered by dragging. The new order is persisted to `settings.contextOrder` in `data.json` and restored on next open.
+- **Uniform pill width** — All pills (including "All") share a fixed `88px` width with text truncated via ellipsis, ensuring a consistent visual rhythm regardless of context name length.
+- **Drag states** — Dragging pill fades to 35% opacity (`.is-dragging`); drop target shows accent dashed border (`.is-drag-over`). `cursor: grab` on draggable pills.
+
+### Changed
+- `src/types.ts` — `contextOrder: string[]` added to `DiwaSettings`
+- `src/constants.ts` — `contextOrder: []` added to `DEFAULT_SETTINGS`
+- `src/views/DesktopHubView.ts` — `renderContextTabs()` resolves display order from `contextOrder`; HTML5 drag-and-drop handlers write back to `settings.contextOrder`
+- `styles.css` — uniform pill sizing, `.is-dragging`, `.is-drag-over`, `cursor: grab`
+
+---
+
 ## [2.3.1] — Desktop Hub Context Tabs
 
 ### Added

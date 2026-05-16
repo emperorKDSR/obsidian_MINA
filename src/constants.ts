@@ -178,6 +178,7 @@ export const DEFAULT_SETTINGS: DiwaSettings = {
     contexts: [],
     hiddenContexts: [],
     selectedContexts: [],
+        contextOrder: [],
     geminiApiKey: '',
     geminiModel: 'gemini-1.5-pro',
     maxOutputTokens: 65536,
