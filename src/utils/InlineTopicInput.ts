@@ -20,6 +20,8 @@ export class InlineTopicInput {
     private keyHandler: (e: KeyboardEvent) => void;
     private selectedSuggIndex = -1;
     private suggestions: string[] = [];
+    private ownerDoc: Document;
+    private ownerWin: Window;
 
     private constructor(
         private plugin: DiwaPlugin,
@@ -27,7 +29,9 @@ export class InlineTopicInput {
         private resolvedContexts: string[],
         private onSave: (contexts: string[], topic: string) => Promise<void>,
     ) {
-        this.wrap = document.body.createEl('div', { cls: 'diwa-inline-topic-wrap' });
+        this.ownerDoc = anchorEl.ownerDocument;
+        this.ownerWin = this.ownerDoc.defaultView ?? window;
+        this.wrap = this.ownerDoc.body.createEl('div', { cls: 'diwa-inline-topic-wrap' });
 
         this.outsideHandler = (e: MouseEvent) => {
             if (!this.wrap.contains(e.target as Node) && e.target !== this.anchorEl) {
@@ -47,7 +51,6 @@ export class InlineTopicInput {
         plugin: DiwaPlugin,
         onSave: (contexts: string[], topic: string) => Promise<void>,
     ) {
-        // Resolve contexts immediately when possible
         let resolvedContexts: string[] | null = null;
         if (entry.context.length > 0) {
             resolvedContexts = entry.context;
@@ -64,14 +67,14 @@ export class InlineTopicInput {
             instance.renderContextPicker(plugin.settings.contexts ?? []);
         }
 
-        document.addEventListener('mousedown', instance.outsideHandler, true);
-        document.addEventListener('keydown', instance.keyHandler, true);
+        instance.ownerDoc.addEventListener('mousedown', instance.outsideHandler, true);
+        instance.ownerDoc.addEventListener('keydown', instance.keyHandler, true);
     }
 
     private position() {
         const rect = this.anchorEl.getBoundingClientRect();
-        this.wrap.style.top = `${rect.bottom + window.scrollY + 4}px`;
-        this.wrap.style.left = `${rect.left + window.scrollX}px`;
+        this.wrap.style.top = `${rect.bottom + this.ownerWin.scrollY + 4}px`;
+        this.wrap.style.left = `${rect.left + this.ownerWin.scrollX}px`;
     }
 
     /** Step 1 (conditional): inline context pill row */
@@ -165,8 +168,8 @@ export class InlineTopicInput {
     private remove() {
         if (this.removed) return;
         this.removed = true;
-        document.removeEventListener('mousedown', this.outsideHandler, true);
-        document.removeEventListener('keydown', this.keyHandler, true);
+        this.ownerDoc.removeEventListener('mousedown', this.outsideHandler, true);
+        this.ownerDoc.removeEventListener('keydown', this.keyHandler, true);
         this.wrap.remove();
     }
 }
