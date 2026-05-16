@@ -287,6 +287,13 @@ export class DesktopHubView extends ItemView {
                 this.renderView();
             });
         });
+
+        // Equalize all pills to the width of the longest one (+ 2ch padding already set via CSS)
+        requestAnimationFrame(() => {
+            const pills = Array.from(bar.querySelectorAll<HTMLElement>('.diwa-dh-ctx-tab'));
+            const maxW = Math.max(...pills.map(p => p.offsetWidth));
+            if (maxW > 0) pills.forEach(p => { p.style.width = maxW + 'px'; });
+        });
     }
 
     private renderFeed(parent: HTMLElement) {

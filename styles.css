@@ -4109,8 +4109,8 @@ body.is-mobile .diwa-syn-float-bar{position:fixed}.modal.diwa-zen-capture .modal
 
 .diwa-dh-ctx-tab {
   flex-shrink: 0;
-  width: 88px;
-  padding: 4px 0;
+  width: max-content;
+  padding: 4px 2ch;
   border-radius: 20px;
   border: 1px solid var(--diwa-dh-border);
   background: transparent;
