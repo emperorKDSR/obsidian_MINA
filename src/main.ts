@@ -23,6 +23,7 @@ export default class DiwaPlugin extends Plugin {
     index: IndexService;
 
     private _indexDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+    private _reindexCooldown: Map<string, number> = new Map();
 
 	async onload() {
 		await this.loadSettings();
@@ -124,6 +125,7 @@ export default class DiwaPlugin extends Plugin {
             clearTimeout(this._indexDebounceTimer);
             this._indexDebounceTimer = null;
         }
+        this._reindexCooldown.clear();
     }
 
     async migrateLegacyTableData() {
@@ -251,6 +253,13 @@ export default class DiwaPlugin extends Plugin {
 
     /** Re-indexes a single file based on its type. Called by both vault and metadataCache events. */
     private async _reindexFile(file: TFile): Promise<void> {
+        // CRIT-01: Deduplicate concurrent calls from vault 'modify' + metadataCache 'changed'.
+        // Both events fire on every local save; a 300ms cooldown window collapses them into one.
+        const now = Date.now();
+        const last = this._reindexCooldown.get(file.path) ?? 0;
+        if (now - last < 300) return;
+        this._reindexCooldown.set(file.path, now);
+
         const habitsFolder = (this.settings.habitsFolder || '000 Bin/DIWA Habits').replace(/\\/g, '/');
         const capPath = `${this.settings.captureFolder.trim() || '000 Bin/DIWA'}/${this.settings.captureFilePath.trim() || 'Daily Capture.md'}`;
 
